@@ -31,9 +31,13 @@
 return [
     'Development' => [
         'path' => 'dev',
+        'createSymlink' => [
+            'api/web/uploads' => 'backend/web/uploads'
+        ],
         'setWritable' => [
             'backend/runtime',
             'backend/web/assets',
+            'backend/web/uploads',
             'console/runtime',
             'frontend/runtime',
             'frontend/web/assets',
@@ -53,9 +57,13 @@ return [
     ],
     'Production' => [
         'path' => 'prod',
+        'createSymlink' => [
+            'api/web/uploads' => 'backend/web/uploads'
+        ],
         'setWritable' => [
             'backend/runtime',
             'backend/web/assets',
+            'backend/web/uploads',
             'console/runtime',
             'frontend/runtime',
             'frontend/web/assets',

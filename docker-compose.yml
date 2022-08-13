@@ -5,9 +5,9 @@ services:
   pgsql:
     image: postgres:9.5
     environment:
-     - POSTGRES_DB=newtimes
-     - POSTGRES_USER=newtimes
-     - POSTGRES_PASSWORD=newtimes
+     - POSTGRES_DB=example
+     - POSTGRES_USER=example
+     - POSTGRES_PASSWORD=example
     ports:
       - 54321:5432
 

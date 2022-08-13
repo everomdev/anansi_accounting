@@ -2,15 +2,6 @@ version: '3.2'
 
 services:
 
-#  pgsql:
-#    image: postgres:9.5
-#    environment:
-#      - POSTGRES_DB=newtimes
-#      - POSTGRES_USER=newtimes
-#      - POSTGRES_PASSWORD=newtimes
-#    ports:
-#      - 54321:5432
-
   api:
 #    depends_on:
 #      - pgsql
@@ -28,23 +19,9 @@ services:
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     labels:
       - "traefik.enable=true"
-
-      - "traefik.http.routers.apit.rule=Host(`api.lexuryscort.com`)"
-      - "traefik.http.routers.apit.entrypoints=http"
-      - "traefik.http.routers.apit.service=apit"
-      - "traefik.http.middlewares.apit-redirectscheme.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.apit-redirectscheme.redirectscheme.permanent=false"
-      - "traefik.http.routers.apit.middlewares=apit-redirectscheme"
-
-      - "traefik.http.routers.apit-secure.rule=Host(`api.lexuryscort.com`)"
-      - "traefik.http.routers.apit-secure.entrypoints=https"
-      - "traefik.http.routers.apit-secure.service=apit"
-      - "traefik.http.routers.apit-secure.tls=true"
-      - "traefik.http.routers.apit-secure.tls.certresolver=letsencrypt"
-
-      - "traefik.http.services.apit.loadbalancer.server.port=80"
-      - "traefik.http.services.apit.loadbalancer.server.scheme=http"
-      - "traefik.http.services.apit.loadbalancer.passhostheader=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.api-secure.entrypoints=websecure"
+      - "traefik.http.routers.api-secure.rule=Host(`api.example.com`)"
 
 
   backend:
@@ -64,23 +41,9 @@ services:
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     labels:
       - "traefik.enable=true"
-
-      - "traefik.http.routers.apit.rule=Host(`dashboard.lexuryscort.com`)"
-      - "traefik.http.routers.apit.entrypoints=http"
-      - "traefik.http.routers.apit.service=apit"
-      - "traefik.http.middlewares.apit-redirectscheme.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.apit-redirectscheme.redirectscheme.permanent=false"
-      - "traefik.http.routers.apit.middlewares=apit-redirectscheme"
-
-      - "traefik.http.routers.apit-secure.rule=Host(`dashboard.lexuryscort.com`)"
-      - "traefik.http.routers.apit-secure.entrypoints=https"
-      - "traefik.http.routers.apit-secure.service=apit"
-      - "traefik.http.routers.apit-secure.tls=true"
-      - "traefik.http.routers.apit-secure.tls.certresolver=letsencrypt"
-
-      - "traefik.http.services.apit.loadbalancer.server.port=80"
-      - "traefik.http.services.apit.loadbalancer.server.scheme=http"
-      - "traefik.http.services.apit.loadbalancer.passhostheader=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.backend-secure.entrypoints=websecure"
+      - "traefik.http.routers.backend-secure.rule=Host(`example.com`)"
 
 
 networks:
