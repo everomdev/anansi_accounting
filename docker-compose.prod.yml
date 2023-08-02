@@ -56,6 +56,9 @@ services:
     environment:
       - REDIS_REPLICATION_MODE=master
 
+volumes:
+  redis_data:
+
 networks:
   default:
     external:
