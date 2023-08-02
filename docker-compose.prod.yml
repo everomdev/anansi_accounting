@@ -45,6 +45,16 @@ services:
       - "traefik.http.routers.backendcosteo-secure.entrypoints=websecure"
       - "traefik.http.routers.backendcosteo-secure.rule=Host(`costeo.everom.net`)"
 
+  redis:
+    image: "redis:alpine"
+    command: redis-server --requirepass hrLmooHxLCIa
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis
+    #      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
 
 networks:
   default:
