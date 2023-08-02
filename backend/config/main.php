@@ -24,6 +24,11 @@ return [
                 'fromEmail' => $params['senderEmail'],
                 'reconfirmationMailSubject' => "Nuevo email en {$params['appName']}"
             ],
+            'classMap' => [
+                'Profile' => [
+                    'class' => \common\models\Profile::class
+                ]
+            ],
             'controllerMap' => [
                 'admin' => [
                     'class' => AdminController::class
@@ -33,17 +38,26 @@ return [
                 ],
                 'registration' => [
                     'class' => RegistrationController::class
-                ]
+                ],
             ],
-            'enableEmailConfirmation' => false,
+            'enableEmailConfirmation' => true,
             'administrators' => ['administrator'],
             'administratorPermissionName' => 'admin',
             // ...other configs from here: [Configuration Options](installation/configuration-options.md), e.g.
             'generatePasswords' => false,
             'switchIdentitySessionKey' => 'myown_usuario_admin_user_key',
             'enableSwitchIdentities' => true,
-            'allowUnconfirmedEmailLogin' => true,
+            'allowUnconfirmedEmailLogin' => false,
             'enableGdprCompliance' => false
+        ],
+        'yii2images' => [
+            'class' => 'rico\yii2images\Module',
+            //be sure, that permissions ok
+            //if you cant avoid permission errors you have to create "images" folder in web root manually and set 777 permissions
+            'imagesStorePath' => 'images/store', //path to origin images
+            'imagesCachePath' => 'images/cache', //path to resized copies
+            'graphicsLibrary' => 'Imagick', //but really its better to use 'Imagick'
+            'placeHolderPath' => '@web/images/placeholder.svg', // if you want to get placeholder when image not exists, string will be processed by Yii::getAlias
         ],
     ],
     'components' => [
@@ -58,6 +72,8 @@ return [
         'session' => [
             // this is the name of the session cookie used for login on the backend
             'name' => 'advanced-backend',
+            'class' => \yii\redis\Session::class,
+            'timeout' => (30 * 24 * 60) // 30 days
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

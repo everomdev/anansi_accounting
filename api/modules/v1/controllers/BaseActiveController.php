@@ -41,7 +41,12 @@ class BaseActiveController extends ActiveController
         $behaviors = parent::behaviors();
 
         $behaviors['corsFilter'] = [
-            'class' => Cors::className()
+            'class' => Cors::className(),
+            'cors' => [
+                'Origin' => ['*'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+            ],
         ];
 
         $behaviors['authenticator'] = [

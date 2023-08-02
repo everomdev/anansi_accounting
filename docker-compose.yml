@@ -2,18 +2,35 @@ version: '3.2'
 
 services:
 
-  pgsql:
-    image: postgres:9.5
+  mysql:
+    image: mysql/mysql-server:8.0.23
+    command: --sort-buffer-size=256000000
     environment:
-     - POSTGRES_DB=example
-     - POSTGRES_USER=example
-     - POSTGRES_PASSWORD=example
+      - MYSQL_ROOT_PASSWORD=verysecret
+      - MYSQL_DATABASE=anansi
+      - MYSQL_USER=anansi
+      - MYSQL_PASSWORD=anansi
     ports:
-      - 54321:5432
+      - 33061:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: "redis:alpine"
+    command: redis-server --requirepass sOmE_sEcUrE_pAsS
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis
+#      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
 
   api:
+    container_name: anansi_api
     depends_on:
-      - pgsql
+      - mysql
+      - redis
     build: api
     ports:
       - 20080:80
@@ -28,8 +45,10 @@ services:
       PHP_ENABLE_XDEBUG: 1
 
   backend:
+    container_name: anansi_backend
     depends_on:
-      - pgsql
+      - mysql
+      - redis
     build: backend
     ports:
       - 21080:80
@@ -43,4 +62,6 @@ services:
     environment:
       PHP_ENABLE_XDEBUG: 1
 
-
+volumes:
+  mysql_data:
+  redis_data:

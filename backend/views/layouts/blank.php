@@ -6,7 +6,7 @@
 use backend\assets\AppAsset;
 use yii\helpers\Html;
 
-AppAsset::register($this);
+\backend\assets\SneatAsset::register($this);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -23,10 +23,10 @@ AppAsset::register($this);
 <?php $this->beginBody() ?>
 
     <div class="wrap">
+        <?= \backend\widgets\FlashMessages::widget(); ?>
         <?= $content ?>
     </div>
 
-</div>
 
 <?php $this->endBody() ?>
 </body>

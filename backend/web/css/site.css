@@ -141,3 +141,20 @@
 .sidebar > ul > .nav-link {
     color: white
 }
+
+.help-block{
+    color: #dc3545;
+}
+
+.flowchart-circle{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #2a3a4c;
+    text-align: center;
+    font-size: 14px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

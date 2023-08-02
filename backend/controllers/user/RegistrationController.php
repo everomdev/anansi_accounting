@@ -11,11 +11,14 @@
 
 namespace backend\controllers\user;
 
+use backend\helpers\RedisKeys;
+use backend\models\RegistrationForm;
+use common\models\Business;
+use common\models\Profile;
 use Da\User\Event\FormEvent;
 use Da\User\Event\SocialNetworkConnectEvent;
 use Da\User\Event\UserEvent;
 use Da\User\Factory\MailFactory;
-use Da\User\Form\RegistrationForm;
 use Da\User\Form\ResendForm;
 use Da\User\Model\SocialNetworkAccount;
 use Da\User\Model\User;
@@ -46,11 +49,11 @@ class RegistrationController extends Controller
     /**
      * RegistrationController constructor.
      *
-     * @param string                    $id
-     * @param Module                    $module
-     * @param UserQuery                 $userQuery
+     * @param string $id
+     * @param Module $module
+     * @param UserQuery $userQuery
      * @param SocialNetworkAccountQuery $socialNetworkAccountQuery
-     * @param array                     $config
+     * @param array $config
      */
     public function __construct(
         $id,
@@ -58,7 +61,8 @@ class RegistrationController extends Controller
         UserQuery $userQuery,
         SocialNetworkAccountQuery $socialNetworkAccountQuery,
         array $config = []
-    ) {
+    )
+    {
         $this->userQuery = $userQuery;
         $this->socialNetworkAccountQuery = $socialNetworkAccountQuery;
         parent::__construct($id, $module, $config);
@@ -110,15 +114,15 @@ class RegistrationController extends Controller
 
             /** @var User $user */
 
-            // Create a temporay $user so we can get the attributes, then get
+            // Create a temporary $user, so we can get the attributes, then get
             // the intersection between the $form fields  and the $user fields.
-            $user = $this->make(User::class, [] );
+            $user = $this->make(User::class, []);
             $fields = array_intersect_key($form->attributes, $user->attributes);
 
             // Becomes password_hash
             $fields['password'] = $form['password'];
 
-            $user = $this->make(User::class, [], $fields );
+            $user = $this->make(User::class, [], $fields);
 
             $user->setScenario('register');
             $mailService = MailFactory::makeWelcomeMailerService($user);
@@ -138,13 +142,23 @@ class RegistrationController extends Controller
                 $this->trigger(FormEvent::EVENT_AFTER_REGISTER, $event);
                 $role = Yii::$app->authManager->getRole('client');
                 Yii::$app->authManager->assign($role, $user->id);
-                return $this->render(
-                    '/shared/message',
-                    [
-                        'title' => Yii::t('usuario', 'Your account has been created'),
-                        'module' => $this->module,
-                    ]
-                );
+
+                Yii::$app->db->createCommand()
+                    ->update(
+                        'profile',
+                        ['name' => $form->name],
+                        ['user_id' => $user->id]
+                    )->execute();
+
+                // create business
+                $business = new Business([
+                    'user_id' => $user->id,
+                    'name' => $form->businessName
+                ]);
+
+                $business->save();
+
+                return $this->redirect('/user/login');
             }
             Yii::$app->session->setFlash('danger', Yii::t('usuario', 'User could not be registered.'));
         }
@@ -200,6 +214,7 @@ class RegistrationController extends Controller
      */
     public function actionConfirm($id, $code)
     {
+        $this->layout = '@backend/views/layouts/blank.php';
         /** @var User $user */
         $user = $this->userQuery->whereId($id)->one();
 
@@ -218,6 +233,17 @@ class RegistrationController extends Controller
             Yii::$app->session->setFlash('success', Yii::t('usuario', 'Thank you, registration is now complete.'));
 
             $this->trigger(UserEvent::EVENT_AFTER_CONFIRMATION, $event);
+            RedisKeys::setValue(RedisKeys::USER_KEY, json_encode(Yii::$app->user->identity->attributes));
+            $profile = Profile::findOne(['user_id' => $user->id]);
+            if($profile) {
+                RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
+
+            }
+            $business = Business::findOne(['user_id' => $user->id]);
+            if($business){
+                RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
+            }
+            return $this->redirect(['//site/index']);
         } else {
             Yii::$app->session->setFlash(
                 'danger',
@@ -239,9 +265,11 @@ class RegistrationController extends Controller
      */
     public function actionResend()
     {
+
         if ($this->module->enableEmailConfirmation === false) {
             throw new NotFoundHttpException();
         }
+        $this->layout = '@backend/views/layouts/blank.php';
         /** @var ResendForm $form */
         $form = $this->make(ResendForm::class);
         $event = $this->make(FormEvent::class, [$form]);
@@ -276,15 +304,7 @@ class RegistrationController extends Controller
                 );
             }
 
-            return $this->render(
-                '/shared/message',
-                [
-                    'title' => $success
-                        ? Yii::t('usuario', 'A new confirmation link has been sent')
-                        : Yii::t('usuario', 'Unable to send confirmation link'),
-                    'module' => $this->module,
-                ]
-            );
+            return $this->redirect(['user/login']);
         }
 
         return $this->render(

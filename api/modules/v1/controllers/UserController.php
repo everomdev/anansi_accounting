@@ -3,15 +3,19 @@
 namespace api\modules\v1\controllers;
 
 
+use api\models\user\ConfirmForm;
 use api\models\user\LoginForm;
 use api\models\user\Profile;
 use api\models\user\RegistrationForm;
 use api\models\user\Token;
 use api\models\user\User;
+use common\models\Business;
 use Da\User\AuthClient\Facebook;
 use Da\User\Event\FormEvent;
 use Da\User\Event\ResetPasswordEvent;
 use Da\User\Event\UserEvent;
+use Da\User\Factory\MailFactory;
+use common\factory\TokenFactory;
 use Da\User\Form\RecoveryForm;
 use Da\User\Form\ResendForm;
 use Da\User\Module;
@@ -34,11 +38,10 @@ use yii\web\HttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\UnauthorizedHttpException;
 
-
 /**
- * Controller clas for user endpoints (appdomain/v1/user/action)
+ * Controller class for user endpoints (appdomain/v1/user/action)
  *
- * @author: Daniel A. Rodriguez Caballero
+ * @author: Dairon Ian García Roque
  * @since: DEVELOPMENT
  */
 class UserController extends BaseActiveController
@@ -360,7 +363,7 @@ class UserController extends BaseActiveController
                 $response->setStatusCode(200);
                 $id = implode(',', array_values($user->getPrimaryKey(true)));
 
-                
+
                 $responseData = [
                     'id' => (int)$id,
                     'access_token' => $user->access_token,
@@ -442,19 +445,41 @@ class UserController extends BaseActiveController
         $transaction = Yii::$app->db->beginTransaction();
         $post = Yii::$app->request->post();
         $post['email'] = $post['username'];
+
         if ($form->load($post) && $form->validate()) {
             $this->trigger(FormEvent::EVENT_BEFORE_REGISTER, $event);
 
             /** @var User $user */
             $user = $this->make(User::class, [], $form->getAttributes(['email', 'username', 'password']));
             $user->confirmed_at = time();
-            if($user->save(false)){
+            if ($user->save(false)) {
                 $authManager = Yii::$app->getAuthManager();
                 $role = $authManager->getRole('client');
                 $authManager->assign($role, $user->id);
+
+                $profile = new Profile([
+                    'user_id' => $user->id,
+                    'name' => $form->name
+                ]);
+
+                if (!$profile->save()) {
+                    $transaction->rollBack();
+                    throw new HttpException(422, json_encode($profile->errors));
+                }
+
+                $business = new Business([
+                    'name' => $form->business_name,
+                    'user_id' => $user->id
+                ]);
+                if (!$business->save()) {
+                    $transaction->rollBack();
+                    throw new HttpException(422, json_encode($business->errors));
+                }
             }
 
-//            MailFactory::makeWelcomeMailerService($user)->run();
+            MailFactory::makeWelcomeMailerService($user)->run();
+            $token = TokenFactory::makeConfirmationToken($user->id);
+            MailFactory::makeConfirmationMailerService($user, $token)->run();
 //            MailFactory::makeNewAthleteMailerService($user)->run();
 
             $this->trigger(FormEvent::EVENT_AFTER_REGISTER, $event);
@@ -554,19 +579,12 @@ class UserController extends BaseActiveController
             $this->trigger(UserEvent::EVENT_BEFORE_CONFIRMATION, $event);
 
             if ($this->make(AccountConfirmationService::class, [$form->code, $user, $userConfirmationService])->run()) {
-                if (!Yii::$app->params['isMultiBoxApp']) {
-                    $box = Box::find()->one();
-                    $userBox = new UserBox(['userClass' => User::class, 'scenario' => 'register']);
-                    $userBox->user_id = $id;
-                    $userBox->box_id = $box->id;
-                    $userBox->save();
-                }
                 $this->trigger(UserEvent::EVENT_AFTER_CONFIRMATION, $event);
             } else {
                 throw new HttpException(422, Yii::t('usuario', 'The confirmation link is invalid or expired. Please try requesting a new one.'));
             }
 
-            return 'true';
+            return true;
         } else {
             throw new HttpException(422, json_encode($form->errors));
         }
@@ -824,7 +842,6 @@ class UserController extends BaseActiveController
         }
         throw new HttpException(422, json_encode($form->errors));
     }
-
 
 
 }

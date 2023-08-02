@@ -21,6 +21,8 @@ return [
             'class' => Da\User\Module::class,
             'enableRegistration' => true,
             'enableFlashMessages' => false,
+            'allowUnconfirmedEmailLogin' => false,
+            'enableEmailConfirmation' => true,
             'mailParams' => [
                 'fromEmail' => $params['senderEmail'],
                 'reconfirmationMailSubject' => "Nuevo email en {$params['appName']}"
@@ -33,6 +35,15 @@ return [
             'routes' => [
 
             ],
+        ],
+        'yii2images' => [
+            'class' => 'rico\yii2images\Module',
+            //be sure, that permissions ok
+            //if you cant avoid permission errors you have to create "images" folder in web root manually and set 777 permissions
+            'imagesStorePath' => 'images/store', //path to origin images
+            'imagesCachePath' => 'images/cache', //path to resized copies
+            'graphicsLibrary' => 'Imagick', //but really its better to use 'Imagick'
+            'placeHolderPath' => '@webroot/images/placeHolder.png', // if you want to get placeholder when image not exists, string will be processed by Yii::getAlias
         ],
     ],
     'components' => [
@@ -81,14 +92,54 @@ return [
                     'controller' => 'v1/user',
                     'pluralize' => false,
                     'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
                         'POST login' => 'login',
-                        'POST signup' => 'signup'
+                        'POST signup' => 'signup',
+                        'POST confirm' => 'confirm'
                     ]
                 ],
                 [
                     'class' => 'yii\rest\UrlRule',
                     'controller' => 'v1/me',
-                    'pluralize' => false
+                    'pluralize' => false,
+                    'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
+                    ]
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'controller' => 'v1/business',
+                    'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
+                    ]
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'controller' => 'v1/ingredient',
+                    'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
+                    ]
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'controller' => 'v1/stock',
+                    'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
+                    ]
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'controller' => 'v1/recipes',
+                    'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
+                    ]
+                ],
+                [
+                    'class' => \yii\rest\UrlRule::class,
+                    'controller' => 'v1/menu',
+                    'extraPatterns' => [
+                        'OPTIONS <action:(.*)>' => 'options',
+                    ]
                 ],
             ],
         ],

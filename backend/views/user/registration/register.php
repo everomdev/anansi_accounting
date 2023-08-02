@@ -20,51 +20,53 @@ use yii\widgets\ActiveForm;
  * @var \Da\User\Module $module
  */
 
-
-AdminLtePluginAsset::register($this);
+\backend\assets\SneatAsset::register($this);
 
 $this->title = "Sign-up";
 ?>
-<div class="h-100">
-    <div class="row justify-content-center align-self-center">
-        <div class="col-sm-11 col-md-4 col-lg-4 col-xl-4">
-            <?php $form = ActiveForm::begin(
-                [
-                    'id' => $model->formName(),
-                    'enableAjaxValidation' => true,
-                    'enableClientValidation' => false,
-                ]
-            ); ?>
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title"><?= Html::encode($this->title) ?></span>
-                </div>
-                <div class="card-body">
-
-
-                    <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
-
-                    <?= $form->field($model, 'username') ?>
-
-                    <?php if ($module->generatePasswords === false): ?>
+<div class="vh-100 d-flex align-items-center justify-content-center">
+    <div style="max-width: 500px">
+        <?php $form = ActiveForm::begin(
+            [
+                'id' => $model->formName(),
+                'enableAjaxValidation' => true,
+                'enableClientValidation' => false,
+            ]
+        ); ?>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><?= Html::encode($this->title) ?></span>
+            </div>
+            <div class="card-body">
+                <div class="row gap-3">
+                    <div class="col-12">
+                        <?= $form->field($model, 'name')->textInput(['autofocus' => true]) ?>
+                    </div>
+                    <div class="col-12">
+                        <?= $form->field($model, 'businessName')->textInput(['autofocus' => true]) ?>
+                    </div>
+                    <div class="col-12">
+                        <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
+                    </div>
+                    <div class="col-12">
                         <?= $form->field($model, 'password')->passwordInput() ?>
-                    <?php endif ?>
-
-                    <?php if ($module->enableGdprCompliance): ?>
-                        <?= $form->field($model, 'gdpr_consent')->checkbox(['value' => 1]) ?>
-                    <?php endif ?>
-
-
-                </div>
-                <div class="card-footer">
-                    <?= Html::submitButton(Yii::t('usuario', 'Sign up'), ['class' => 'btn btn-success btn-block']) ?>
-
+                    </div>
                 </div>
             </div>
-            <p class="text-center">
-                <?= Html::a(Yii::t('usuario', 'Already registered? Sign in!'), ['/user/security/login']) ?>
-            </p>
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <?= Html::submitButton(Yii::t('usuario', 'Sign up'), ['class' => 'btn btn-success btn-block']) ?>
+                    </div>
+                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <?= Html::a(Yii::t('usuario', 'Already registered? Sign in!'), ['/user/security/login']) ?>
+                    </div>
+                </div>
+
+            </div>
         </div>
-        <?php ActiveForm::end(); ?>
     </div>
+    <?php ActiveForm::end(); ?>
+
+
 </div>

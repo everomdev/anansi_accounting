@@ -2,6 +2,9 @@
 
 namespace backend\controllers\user;
 
+use backend\helpers\RedisKeys;
+use common\models\Business;
+use common\models\Profile;
 use Da\User\Contracts\AuthClientInterface;
 use Da\User\Event\FormEvent;
 use Da\User\Event\UserEvent;
@@ -137,7 +140,16 @@ class SecurityController extends Controller
                 ]);
 
                 $this->trigger(FormEvent::EVENT_AFTER_LOGIN, $event);
+                RedisKeys::setValue(RedisKeys::USER_KEY, json_encode(Yii::$app->user->identity->attributes));
+                $profile = Profile::findOne(['user_id' => $form->getUser()->id]);
+                if($profile) {
+                    RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
 
+                }
+                $business = Business::findOne(['user_id' => $form->getUser()->id]);
+                if($business){
+                    RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
+                }
                 return $this->goBack();
             }
             else
@@ -191,7 +203,7 @@ class SecurityController extends Controller
 
                 $this->trigger(FormEvent::EVENT_AFTER_LOGIN, $event);
 
-                return $this->goBack();
+                return $this->redirect(['site/index']);
             }
         }
 
@@ -212,6 +224,9 @@ class SecurityController extends Controller
 
         if (Yii::$app->getUser()->logout()) {
             $this->trigger(UserEvent::EVENT_AFTER_LOGOUT, $event);
+            Yii::$app->session->remove(RedisKeys::USER_KEY);
+            Yii::$app->session->remove(RedisKeys::PROFILE_KEY);
+            Yii::$app->session->remove(RedisKeys::BUSINESS_KEY);
         }
 
         return $this->goHome();

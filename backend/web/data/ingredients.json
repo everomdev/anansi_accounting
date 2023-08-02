@@ -1,0 +1,2142 @@
+[
+  {
+    "name": "Aceite",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aceite de ajonjolí",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aceite de Oliva",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aceite en aerosol",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aceituna",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aceituna negra",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Achiote",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aderezo césar",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aderezo italiano",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aderezo mil islas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aderezo ranch",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Ajo granulado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Albahaca deshidratada",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Alcaparras",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Anchoas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Aros de cebolla",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Arroz",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Ate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Atún en aceite",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Atún en agua",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Avena",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Azúcar blanca",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Azúcar en sobre",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Azúcar glass",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Azúcar mascabado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Azúcar morena",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Cacao en polvo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Café en grano",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Café molido",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Café soluble",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Cajeta",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Canela molida",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Capacillo Rojo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Catsup",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Cerezas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Champiñón en lata",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chicharo en lata",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chile chipotle",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chile jalapeño",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chiles en vinagre",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chispas de chocolate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chocolate abuelita",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chocolate amargo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chocolate en barra",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chocolate en polvo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chocolate líquido",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Chocomilk",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Clamato",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Clara de huevo líquida",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Coco rallado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Codito (pasta)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Codo (pasta)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Colorante amarillo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Colorante azul",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Colorante púrpura",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Colorante rojo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Colorante verde",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Consomé de pollo en polvo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Crema de cacahuate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Crema de coco (Kalhua)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Crema para café",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Curry",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Duraznos en almibar",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Elotitos tiernos",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Ensalada de verduras enlatada",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Fécula de maíz",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Fideo (pasta)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Flan",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Frijol bayo ",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Frijol negro",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Galletas Marías",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Galletas saladas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Galletas suavicremas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Garbanzo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Garrafon de agua",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Gelatina de agua",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Gelatina de Leche",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Granadina",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Granillo de colores",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Grano de maíz pozolero",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Granola",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Granos de elote",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Harina de trigo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Harina integral",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Harina para hot cakes",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Hierbas finas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Hoja de laurel",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Huevo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jamón de pavo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jarabe de horchata (Concentrado )",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jarabe de jamaica (Concentrado )",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jarabe de tamarindo (Concentrado )",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de arándano envasado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de durazno envasado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de limón envasado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de naranja envasado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de piña envasado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de tomate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de toronja",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo de uva envasado",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Jugo maggi",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Knor Suiza",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Lasagna (láminas)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Leche condensada",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Leche de almendra",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Leche de coco",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Leche de soya",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Leche evaporada (Clavel)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Lechera",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Lenteja",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Levadura",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Machaca",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Maicena",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Maíz",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Maíz pozolero",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mangos en almibar",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Manteca de cerdo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Manteca de grasa vegetal",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mantequilla individual",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Maseca",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mayonesa",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mayonesa light",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Media crema",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mejorante S-500",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mermelada",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mermelada individual",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Miel de abeja",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Miel de abeja individual",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Miel maple individual",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Miguelito",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Mostaza",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Panko",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Papas a la francesa",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Paprika",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Pimentón molido",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Pimienta",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Pimienta blanca molida",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Pimienta gorda",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Pimienta molida",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Piña en rebanadas",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Piña en trozos",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Pipián",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Polvo para hornear",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Puré de tomate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Rompope",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Royal",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sal",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sal con ajo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sal de grano",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sal de gusano",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa bbq",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa búfalo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa catsup sobres",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa de soya",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa de soya (individual)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa de tomate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa Hoisin",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa inglesa",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa ostión",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa Sriracha",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa tabasco",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa valentina",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Salsa valentina (sobre)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sardina en aceite",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sardina en tomate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sobres de azúcar",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Spaghetti",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Splenda",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Stevia",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Sustituto de azúcar",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Tajín",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Tallarín",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té de frutos rojos",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té de hierbabuena",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té de limón",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té de manzanilla",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té manzana canela",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té negro",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Té verde",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Tizana frutal",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Tomillo",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Tostada",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Truja de chocolate",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Vainilla (esencia)",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Vinagre blanco",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Vinagre de manzana",
+    "category": "ABARROTES"
+  },
+  {
+    "name": "Acelga",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Aguacate",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Ajo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Ajo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Albahaca",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Apio",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Arúgula",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Betabel",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Brócoli",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Calabaza bola",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Calabaza italiana",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Cebolla blanca",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Cebolla cambray",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Cebolla morada",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Cebollín",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Champiñón",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chayote",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chicharo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chícharo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chilacayote",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile chiltepin",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile cuaresmeño",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile habanero",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile manzano",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile poblano",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile pulla",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chile serrano",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chiles güeros",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Chiles jalapeños",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Cilantro",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Col blanca",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Col morada",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Coliflor",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Ejote",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Elote",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Epazote morado",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Epazote verde",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Espinaca",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Flor de calabaza",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Germen de alfalfa",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Germen de soya",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Haba verde",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Hierbabuena",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Hierbas de olor",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Hinojo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Hoja de plátano",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Hoja santa",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Hojas de rábano",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Huazontle",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Jengibre",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Jícama",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Jitomate cherry",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Jitomate saladet",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Lechuga chicoria",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Lechuga italiana",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Lechuga romana",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Lechuga sangría",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Limón con semilla",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Limón sin semilla",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Menta",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Nabo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Nopal cambray",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Nopales",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Papa",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Papa alfa",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Papa cambray",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Pepinillos",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Pepino",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Perejil chino",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Perejil liso",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Pétalos de flores",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Pimiento morrón rojo",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Pimiento morrón verde",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Poro",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Rabano",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Setas",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Tomate verde",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Zanahoria",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Zanahoria baby",
+    "category": "VERDURAS"
+  },
+  {
+    "name": "Arándano",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Ciruela",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Frambuesa",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Fresa",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Granada",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Granada china (granadilla)",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Guanábana",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Guayaba",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Guayaba",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Kiwi",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Lima",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Limón",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Mamey",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Mandarina",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Mango",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Mango manila",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Manzana",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Maracuya",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Melón",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Naranja",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Papaya",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Pera",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Piña",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Plátano macho",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Plátano tabasco",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Sandía",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Tamarindo",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Toronja",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Uvas",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Zarzamora",
+    "category": "FRUTAS"
+  },
+  {
+    "name": "Baguette",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Bolillo",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Croissant",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Crutones",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Masa",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Pan blanco",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Pan molido",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Pan para hamburguesa",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Pan para hot dog",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Tortilla de harina",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Tortilla de huarache",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Tortilla de maíz",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Tortilla para flauta",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Tortilla para quesadilla",
+    "category": "PAN Y TORTILLAS"
+  },
+  {
+    "name": "Almeja",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Anca de rana",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Angulas",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Angulas de surimi",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Calamar",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Camarón 21/25",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Camarón 31/35",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Camarón 41/50",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Cayo de hacha",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Cola de langosta",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Concha de ostión",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Filete de pescado",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Huachinango",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Jaiba",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Langostino",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Mejillones",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Mero",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Mojarra",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Ostión",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Pámpano",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Pata de mula",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Pulpo",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Robalo",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Salmón ahumado",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Salmón fresco",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Tinta de pulpo",
+    "category": "PESCADOS Y MARISCOS"
+  },
+  {
+    "name": "Bistec de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Cabeza de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Cabeza de lomo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Carne de puerco",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Carne molida de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Carne surtida de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Carrillera de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Chicharrón",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Chicharrón prensado",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Chuleta ahumada",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Chuleta de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Costilla de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Espinazo de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Falda de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Filete de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Jamón serrano",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Lomo de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Maciza de puerco",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Manitas de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Pata",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Pierna",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Pierna de cerdo",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Tocino",
+    "category": "CARNE DE CERDO"
+  },
+  {
+    "name": "Arrachera",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Bistec de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Carne molida de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Carne para asar",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Carne para hamburguesa",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Carne surtida de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Cecina",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Chambarete",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Costilla cargada de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Falda de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Hígado",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Maciza de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Molleja de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Retazo de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Ribeye",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Sabanita de res",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Sirloin",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "T-bone",
+    "category": "CARNE DE RES"
+  },
+  {
+    "name": "Alitas",
+    "category": "POLLO"
+  },
+  {
+    "name": "Bistec de pechuga de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Carne molida de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Hígado de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Molleja de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Muslo de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Nuggets de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Pechuga de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Pierna con muslo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Pierna de pollo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Tocino de pavo",
+    "category": "POLLO"
+  },
+  {
+    "name": "Chistorra",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Chorizo",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Jamón de cerdo",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Jamón de pechuga de pavo",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Longaniza",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Mortadela",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Pepperoni",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Salami",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Salchicha",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Salchicha jumbo",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Telera",
+    "category": "EMBUTIDOS"
+  },
+  {
+    "name": "Crema",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Crema ácida",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Crema batida",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Crema Chantilly",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Leche deslactosada",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Leche entera",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Leche light",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Leche light deslactosada",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Mantequilla",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Margarina Danes Azul",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Margarina Feite Roja",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso amarillo",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso amarillo fundido",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso americano",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso asadero",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso azul",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso canasto",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso canasto rallado",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso cheddar liquido",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso chihuahua",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso con zarzamora",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso cotija",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso cotija rallado",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso cottage",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso crema",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso de cabra",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso gorgonzola",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso gouda",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso manchego",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso Oaxaca",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso panela",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso parmesano",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Queso rallado",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Requesón",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Tofu",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Yogurth natural",
+    "category": "LÁCTEOS"
+  },
+  {
+    "name": "Acitrón",
+    "category": "SECOS"
+  },
+  {
+    "name": "Ajonjolí",
+    "category": "SECOS"
+  },
+  {
+    "name": "Ajonjolí caramelizado",
+    "category": "SECOS"
+  },
+  {
+    "name": "Almendra",
+    "category": "SECOS"
+  },
+  {
+    "name": "Almendra fileteada",
+    "category": "SECOS"
+  },
+  {
+    "name": "Arroz blanco",
+    "category": "SECOS"
+  },
+  {
+    "name": "Arroz integral",
+    "category": "SECOS"
+  },
+  {
+    "name": "Cacahuate",
+    "category": "SECOS"
+  },
+  {
+    "name": "Canela en raja",
+    "category": "SECOS"
+  },
+  {
+    "name": "Cardamomo",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chía",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chile ancho",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chile cascabel",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chile de árbol",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chile guajillo",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chile morita",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chile pasilla",
+    "category": "SECOS"
+  },
+  {
+    "name": "Ciruela pasa",
+    "category": "SECOS"
+  },
+  {
+    "name": "Clavo",
+    "category": "SECOS"
+  },
+  {
+    "name": "Comino",
+    "category": "SECOS"
+  },
+  {
+    "name": "Flor de Jamaica",
+    "category": "SECOS"
+  },
+  {
+    "name": "Haba seca",
+    "category": "SECOS"
+  },
+  {
+    "name": "Hoja de Aguacate",
+    "category": "SECOS"
+  },
+  {
+    "name": "Mejorana",
+    "category": "SECOS"
+  },
+  {
+    "name": "Mole rojo",
+    "category": "SECOS"
+  },
+  {
+    "name": "Mole verde",
+    "category": "SECOS"
+  },
+  {
+    "name": "Nuez",
+    "category": "SECOS"
+  },
+  {
+    "name": "Nuez de la india",
+    "category": "SECOS"
+  },
+  {
+    "name": "Nuez picada",
+    "category": "SECOS"
+  },
+  {
+    "name": "Orégano",
+    "category": "SECOS"
+  },
+  {
+    "name": "Pasas",
+    "category": "SECOS"
+  },
+  {
+    "name": "Piloncillo",
+    "category": "SECOS"
+  },
+  {
+    "name": "Pimienta",
+    "category": "SECOS"
+  },
+  {
+    "name": "Pingüica",
+    "category": "SECOS"
+  },
+  {
+    "name": "Piñón",
+    "category": "SECOS"
+  },
+  {
+    "name": "Romero",
+    "category": "SECOS"
+  },
+  {
+    "name": "Semilla de calabaza",
+    "category": "SECOS"
+  },
+  {
+    "name": "Chícharo congelado",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Grano de elote congelado",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Helado de chocolate",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Helado de fresa",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Helado de vainilla",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Hielo",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Nieve de limón",
+    "category": "CONGELADOS"
+  },
+  {
+    "name": "Agua",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua ciel",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua Ciel 600ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua Ciel mineral 355ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua Ciel Mineral Sifón",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua embotelleda ciel 600ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua mineral 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua quina",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Agua Santa Maria 400 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca Cola",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca cola 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca cola 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca cola light 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca cola light 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca cola zero 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Coca cola zero 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Delaware punch 355",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Fanta 355",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Fanta 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Fanta 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Freska 355",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Fuze Te Verde Limon 600",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Gatorade",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Mundet rojo 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Mundet rojo 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Senzao 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Sidral 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Sidral 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Sprite 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Sprite 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Valle frut 355 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Yoli 600 ml",
+    "category": "BEBIDAS SIN ALCOHOL"
+  },
+  {
+    "name": "Cerveza Bohemia clara",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Bohemia obscura",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Corona ",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Heineken",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Indio",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza León",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Modelo Especial",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Negra Modelo",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Pacífico",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza Sol",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Cerveza XX Lager",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Ceveza Victoria",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Jeréz",
+    "category": "BEBIDAS CON ALCOHOL"
+  },
+  {
+    "name": "Contenedor 2 oz",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Contenedor ensalada",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Contenedor sandwich",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Envase para llevar",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Fajillas para café",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Papel aluminio",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Plato desechable",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Plato hamburguesero",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Porta vasos",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Servilletas",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Tenedores desechables",
+    "category": "DESECHABLES"
+  },
+  {
+    "name": "Vaso desechable",
+    "category": "DESECHABLES"
+  }
+]

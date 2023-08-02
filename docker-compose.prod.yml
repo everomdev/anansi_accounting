@@ -2,26 +2,26 @@ version: '3.2'
 
 services:
 
-  api:
-#    depends_on:
-#      - pgsql
-    container_name: api
-    build: api
-    expose:
-      - 80
-    restart: always
-    volumes:
-      # Re-use local composer cache via host-volume
-      - ~/.composer-docker/cache:/root/.composer/cache:delegated
-      # Mount source-code for development
-      - ./:/app
-      - ./docker/php/custom-config.ini:/usr/local/etc/php/conf.d/custom-config.ini
-      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.api-secure.entrypoints=websecure"
-      - "traefik.http.routers.api-secure.rule=Host(`api.example.com`)"
+#  api:
+##    depends_on:
+##      - pgsql
+#    container_name: api
+#    build: api
+#    expose:
+#      - 80
+#    restart: always
+#    volumes:
+#      # Re-use local composer cache via host-volume
+#      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+#      # Mount source-code for development
+#      - ./:/app
+#      - ./docker/php/custom-config.ini:/usr/local/etc/php/conf.d/custom-config.ini
+#      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.docker.network=proxy"
+#      - "traefik.http.routers.api-secure.entrypoints=websecure"
+#      - "traefik.http.routers.api-secure.rule=Host(`api.example.com`)"
 
 
   backend:
@@ -42,8 +42,8 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.backend-secure.entrypoints=websecure"
-      - "traefik.http.routers.backend-secure.rule=Host(`example.com`)"
+      - "traefik.http.routers.backendcosteo-secure.entrypoints=websecure"
+      - "traefik.http.routers.backendcosteo-secure.rule=Host(`costeo.everom.net`)"
 
 
 networks:

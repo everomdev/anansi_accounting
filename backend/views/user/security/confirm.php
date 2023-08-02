@@ -23,8 +23,6 @@ $this->title = Yii::t('usuario', 'Sign in');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
-<?= $this->render('/shared/_alert', ['module' => Yii::$app->getModule('user')]) ?>
-
 <div class="row">
     <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3">
         <div class="panel panel-default">

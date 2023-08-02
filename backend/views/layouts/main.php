@@ -13,70 +13,45 @@ use yii\helpers\Url;
 use yii\widgets\Breadcrumbs;
 use common\widgets\Alert;
 
-AdminLtePluginAsset::register($this);
+\backend\assets\SneatAsset::register($this);
 ?>
 <?php $this->beginPage() ?>
-    <!DOCTYPE html>
-    <html lang="<?= Yii::$app->language ?>">
+<!DOCTYPE html>
+<html lang="<?= Yii::$app->language ?>">
 
-    <head>
-        <meta charset="<?= Yii::$app->charset ?>">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <?php $this->registerCsrfMetaTags() ?>
-        <title><?= Html::encode($this->title) ?>
-        </title>
-        <?php $this->head() ?>
-    </head>
+<head>
+    <meta charset="<?= Yii::$app->charset ?>">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?php $this->registerCsrfMetaTags() ?>
+    <title><?= Html::encode($this->title) ?>
+    </title>
+    <?php $this->head() ?>
+</head>
 
-    <body class="hold-transition sidebar-mini layout-fixed sidebar-collapse">
-    <?php $this->beginBody() ?>
+<body>
+<?php $this->beginBody() ?>
 
-    <div class="wrapper">
-        <?php if (!Yii::$app->user->isGuest): ?>
-            <?= $this->render('_navbar.php') ?>
-            <!-- Main Sidebar Container -->
-            <?= $this->render('_aside.php') ?>
-        <?php endif; ?>
-        <div class="content-wrapper">
-            <section class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1><?= $this->title ?>
-                            </h1>
-                        </div>
-                        <div class="col-sm-6">
-                            <?= Breadcrumbs::widget([
-                                'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
-                                'options' => ['class' => 'breadcrumb float-sm-right'],
-                                'itemTemplate' => "<li class='breadcrumb-item'>{link}</li>\n",
-                                'activeItemTemplate' => "<li class=\"breadcrumb-item active\">{link}</li>\n",
-                                'encodeLabels' => false,
-                            ]) ?>
-                        </div>
-                    </div>
-                </div><!-- /.container-fluid -->
-            </section>
-            <section class="content">
-
-                <div class="container-fluid">
+<div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+        <?= $this->render('_aside') ?>
+        <div class="layout-page">
+            <?= $this->render('_navbar') ?>
+            <div class="content-wrapper">
+                <div class="container-xxl flex-grow-1 container-p-y">
+                    <?= \backend\widgets\FlashMessages::widget(); ?>
                     <?= $content ?>
                 </div>
-            </section>
+                <?= $this->render('_footer') ?>
+                <div class="content-backdrop fade"></div>
+            </div>
         </div>
     </div>
+    <div class="layout-overlay layout-menu-toggle"></div>
+</div>
 
-    <footer class="footer">
-        <div class="container">
-            <p class="float-left">&copy; <?= Html::encode(Yii::$app->name) ?> <?= date('Y') ?>
-            </p>
+<?php $this->endBody() ?>
+</body>
 
-        </div>
-    </footer>
-
-    <?php $this->endBody() ?>
-    </body>
-
-    </html>
+</html>
 <?php $this->endPage() ?>

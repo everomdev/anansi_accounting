@@ -1,0 +1,66 @@
+[
+  {
+    "name": "ABARROTES",
+    "builtin": 1
+  },
+  {
+    "name": "VERDURAS",
+    "builtin":  1
+  },
+  {
+    "name": "FRUTAS",
+    "builtin":  1
+  },
+  {
+    "name": "PAN Y TORTILLAS",
+    "builtin":  1
+  },
+  {
+    "name": "PESCADOS Y MARISCOS",
+    "builtin":  1
+  },
+  {
+    "name": "CARNE DE CERDO",
+    "builtin":  1
+  },
+  {
+    "name": "CARNE DE RES",
+    "builtin":  1
+  },
+  {
+    "name": "POLLO",
+    "builtin":  1
+  },
+  {
+    "name": "EMBUTIDOS",
+    "builtin":  1
+  },
+  {
+    "name": "LÁCTEOS",
+    "builtin":  1
+  },
+  {
+    "name": "SECOS",
+    "builtin":  1
+  },
+  {
+    "name": "CONGELADOS",
+    "builtin":  1
+  },
+  {
+    "name": "BEBIDAS SIN ALCOHOL",
+    "builtin":  1
+  },
+  {
+    "name": "BEBIDAS CON ALCOHOL",
+    "builtin":  1
+  },
+  {
+    "name": "DESECHABLES",
+    "builtin":  1
+  },
+  {
+    "name": "ARTÍCULOS DE LIMPIEZA",
+    "builtin":  1
+  }
+]

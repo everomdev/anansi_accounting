@@ -1,39 +1,99 @@
 <?php
 
+
 use backend\widgets\Menu;
 use backend\components\Menu as MenuItem;
 
+/**
+ * @var $this \yii\web\View
+ */
+
+$currentControllerId = $this->context->action->controller->id;
+$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$action = $this->context->action->id;
+if($action == 'price-trend'){
+    $currentControllerId = $action;
+}
 ?>
-<aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <!-- Brand Logo -->
-    <div href="#" class="text-center">
-        <img src="<?= Yii::getAlias("@web/images/logo.png") ?>"
-            alt="AdminLTE Logo" class="brand-image img-circle w-75">
-        <!--            <span class="brand-text font-weight-light">AdminLTE 3</span>-->
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+    <div class="app-brand demo">
+        <a href="index.html" class="app-brand-link">
+              <span class="app-brand-logo demo">
+
+              </span>
+            <span class="app-brand-text demo menu-text fw-bolder ms-2">
+                <?= $business['name'] ?>
+            </span>
+        </a>
+
+        <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+            <i class="bx bx-chevron-left bx-sm align-middle"></i>
+        </a>
     </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <!-- Sidebar user (optional) -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-            <div class="info">
-                <a href="#" class="d-block">@<?= Yii::$app->user->getIdentity()->username ?></a>
-            </div>
-        </div>
+    <div class="menu-inner-shadow"></div>
 
-        <!-- Sidebar Menu -->
-        <nav class="mt-2">
-            <?=
-                    Menu::widget([
-                        'items' => MenuItem::getItems(),
-                        'encodeLabels' => false,
-                    'options' => ['class' => 'nav nav-pills nav-sidebar flex-column', 'data-widget' => 'treeview', 'role' => 'menu'],
-                    'linkTemplate' => '<a class="nav-link {class}" href="{url}">{label}</a>',
-                    'itemOptions' => ['class' => 'nav-item'],
-                    ])
-                ?>
-        </nav>
-        <!-- /.sidebar-menu -->
-    </div>
-    <!-- /.sidebar -->
+    <ul class="menu-inner py-1">
+        <!-- Dashboard -->
+        <li class="menu-item <?= $currentControllerId == 'site' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="menu-link">
+
+                <div><?= Yii::t('app', 'Home') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'ingredient-stock' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['ingredient-stock/index']) ?>" class="menu-link">
+
+                <div><?= Yii::t('app', 'Storage') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'menu' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['menu/index']) ?>" class="menu-link">
+
+                <div><?= Yii::t('app', 'Menus') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'sub-standard-recipe' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['sub-standard-recipe/index']) ?>" class="menu-link">
+
+                <div><?= Yii::t('app', 'Sub recipes') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'standard-recipe' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['standard-recipe/index']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Recipes') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['category/index']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Categories') ?></div>
+            </a>
+        </li>
+
+        <li class="menu-item <?= $currentControllerId == 'movement' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['movement/index']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Movements') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'provider' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['provider/index']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Providers') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'price-trend' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['ingredient-stock/price-trend']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Price Trend') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['business/my-business']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'My business') ?></div>
+            </a>
+        </li>
+
+
+
+        <!-- Layouts -->
+
+    </ul>
 </aside>

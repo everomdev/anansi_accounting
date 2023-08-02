@@ -1,38 +1,103 @@
 <?php
 
 use yii\helpers\Url;
-use yii\bootstrap4\Html;
+use yii\bootstrap5\Html;
 use rmrevin\yii\fontawesome\FAS;
 
+$profile = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::PROFILE_KEY);
 ?>
-<nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-        <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-        </li>
+<nav
+    class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
+    id="layout-navbar"
+>
+    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+            <i class="bx bx-menu bx-sm"></i>
+        </a>
+    </div>
 
-    </ul>
+    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+        <!-- Search -->
+        <div class="navbar-nav align-items-center">
+            <div class="nav-item d-flex align-items-center" style="font-weight: bold; font-size: 22px">
+                <?= $this->title ?>
+            </div>
+        </div>
+        <!-- /Search -->
 
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
-        <!-- Messages Dropdown Menu -->
+        <ul class="navbar-nav flex-row align-items-center ms-auto">
+            <!-- Place this tag where you want the button to render. -->
 
-        <li class="nav-item">
-            <?=
-                    Html::a(
-                        FAS::icon(FAS::_DOOR_OPEN),
-                        Url::to(['//user/security/logout']),
-                        [
-                                'data' => [
-                                        'method' => 'post',
-                                    'slide' => "true"
-                                ],
-                            'class' => 'nav-link',
 
-                        ]
-                    )
-                ?>
-        </li>
-    </ul>
+            <!-- User -->
+            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <div class="avatar avatar-online">
+                        <img src="https://ui-avatars.com/api/?name=<?= $profile['name'] ?>" alt
+                             class="w-px-40 h-auto rounded-circle"/>
+                    </div>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="avatar avatar-online">
+                                        <img src="https://ui-avatars.com/api/?name=<?= $profile['name'] ?>" alt
+                                             class="w-px-40 h-auto rounded-circle"/>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <span class="fw-semibold d-block">
+                                        <?= $profile['name'] ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+<!--                    <li>-->
+<!--                        <div class="dropdown-divider"></div>-->
+<!--                    </li>-->
+<!--                    <li>-->
+<!--                        <a class="dropdown-item" href="#">-->
+<!--                            <i class="bx bx-user me-2"></i>-->
+<!--                            <span class="align-middle">My Profile</span>-->
+<!--                        </a>-->
+<!--                    </li>-->
+<!--                    <li>-->
+<!--                        <a class="dropdown-item" href="#">-->
+<!--                            <i class="bx bx-cog me-2"></i>-->
+<!--                            <span class="align-middle">Settings</span>-->
+<!--                        </a>-->
+<!--                    </li>-->
+<!--                    <li>-->
+<!--                        <a class="dropdown-item" href="#">-->
+<!--                        <span class="d-flex align-items-center align-middle">-->
+<!--                          <i class="flex-shrink-0 bx bx-credit-card me-2"></i>-->
+<!--                          <span class="flex-grow-1 align-middle">Billing</span>-->
+<!--                          <span class="flex-shrink-0 badge badge-center rounded-pill bg-danger w-px-20 h-px-20">4</span>-->
+<!--                        </span>-->
+<!--                        </a>-->
+<!--                    </li>-->
+                    <li>
+                        <div class="dropdown-divider"></div>
+                    </li>
+                    <li>
+                        <?=
+                        Html::a(
+                            "<i class='bx bx-power-off me-2'></i>
+                            <span class='align-middle'>".Yii::t('app', 'Logout')."</span>",
+                            Url::to(['//user/security/logout']), [
+                            'class' => 'dropdown-item',
+                            'data' => [
+                                'method' => 'post'
+                            ]
+                        ])
+                        ?>
+                    </li>
+                </ul>
+            </li>
+            <!--/ User -->
+        </ul>
+    </div>
 </nav>

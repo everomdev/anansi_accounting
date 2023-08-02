@@ -4,6 +4,7 @@
 namespace api\models\user;
 
 
+use common\models\Business;
 use Da\User\Helper\SecurityHelper;
 use Firebase\JWT\JWT;
 use Yii;
@@ -74,7 +75,7 @@ class User extends \common\models\User
     /**
      * Logins user by given JWT encoded string. If string is correctly decoded
      * - array (token) must contain 'jti' param - the id of existing user
-     * @param  string $accessToken access token to decode
+     * @param string $accessToken access token to decode
      * @return mixed|null          User model or null if there's no user
      * @throws \yii\web\ForbiddenHttpException if anything went wrong
      */
@@ -111,7 +112,7 @@ class User extends \common\models\User
             ->andWhere([
                 '>',
                 'access_token_expired_at',
-                new Expression('extract(epoch from now())')
+                new Expression('UNIX_TIMESTAMP()')
             ])->one();
 
         if ($user !== null &&
@@ -133,7 +134,7 @@ class User extends \common\models\User
     {
         // update client login, ip
         $this->last_login_ip = Yii::$app->request->getUserIP();
-        $this->last_login_at = new Expression('extract(epoch from now())');
+        $this->last_login_at = new Expression('UNIX_TIMESTAMP()');
 
         // check time is expired or not
         if ($forceRegenerate == true
@@ -237,7 +238,7 @@ class User extends \common\models\User
     {
         $fields = parent::fields();
         unset($fields['password']);
-        $fields['roles'] = function(User $model){
+        $fields['roles'] = function (User $model) {
 
             $authManager = Yii::$app->authManager;
             $roles = $authManager->getRolesByUser($this->id);
@@ -245,6 +246,15 @@ class User extends \common\models\User
         };
 
 
+        return $fields;
+    }
+
+    public function extraFields()
+    {
+        $fields = parent::extraFields();
+        $fields['business'] = function($model){
+            return Business::findOne(['user_id' => $this->id]);
+        };
         return $fields;
     }
 

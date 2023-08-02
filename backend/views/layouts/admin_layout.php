@@ -10,7 +10,7 @@
  */
 
 use yii\helpers\Html;
-use yii\bootstrap4\Nav;
+use yii\bootstrap5\Nav;
 /**
  * @var $content string
  */

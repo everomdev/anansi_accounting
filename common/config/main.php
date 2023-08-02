@@ -15,7 +15,7 @@ return [
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
     'components' => [
         'cache' => [
-            'class' => 'yii\caching\FileCache',
+            'class' => 'yii\redis\Cache',
         ],
         'authManager' => [
             'class' => 'yii\rbac\DbManager',
@@ -31,12 +31,30 @@ return [
         'authClientCollection' => [
             'class' => 'yii\authclient\Collection',
             'clients' => [
-                'facebook' => [
-                    'class' => 'Da\User\AuthClient\Facebook',
-                    'clientId' => 'client_id',
-                    'clientSecret' => 'client_secret'
+                'google' => [
+                    'google' => [
+                        'class' => 'yii\authclient\clients\Google',
+                        'clientId' => 'google_client_id',
+                        'clientSecret' => 'google_client_secret',
+                    ],
                 ]
             ]
         ],
+        'i18n' => [
+            'translations' => [
+                'app*' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@common/messages',
+                ],
+            ]
+        ],
+        'redis' => [
+            'class' => 'yii\redis\Connection',
+            'hostname' => 'redis',
+            'port' => 6379,
+            'database' => 0,
+            'password' => 'sOmE_sEcUrE_pAsS'
+        ],
+
     ],
 ];
