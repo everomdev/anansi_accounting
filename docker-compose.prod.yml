@@ -27,8 +27,8 @@ services:
   backend:
 #    depends_on:
 #      - pgsql
-    container_name: backend
-    build: backend
+    container_name: backendcosteo
+    build: backendcosteo
     expose:
       - 80
     restart: always
