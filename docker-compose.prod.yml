@@ -42,7 +42,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.backend.rule=Host(`costeo.diagnosticopararestaurantes.com`)"
+      - "traefik.http.routers.backend.rule=Host(`sistemapararestaurantes.com`)"
       - "traefik.http.routers.backend.entrypoints=http"
       - "traefik.http.routers.backend.service=backend"
       - "traefik.http.middlewares.backend-redirectscheme.redirectscheme.scheme=https"
@@ -77,7 +77,7 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.frontend.rule=Host(`sistemapararestaurantes.com`)"
+      - "traefik.http.routers.frontend.rule=Host(`admin.sistemapararestaurantes.com`)"
       - "traefik.http.routers.frontend.entrypoints=http"
       - "traefik.http.routers.frontend.service=frontend"
       - "traefik.http.middlewares.frontend-redirectscheme.redirectscheme.scheme=https"
@@ -93,6 +93,7 @@ services:
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
       - "traefik.http.services.frontend.loadbalancer.server.scheme=http"
       - "traefik.http.services.frontend.loadbalancer.passhostheader=true"
+
 
   redis:
     image: "redis:alpine"
