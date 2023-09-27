@@ -2,33 +2,11 @@ version: '3.2'
 
 services:
 
-#  api:
-##    depends_on:
-##      - pgsql
-#    container_name: api
-#    build: api
-#    expose:
-#      - 80
-#    restart: always
-#    volumes:
-#      # Re-use local composer cache via host-volume
-#      - ~/.composer-docker/cache:/root/.composer/cache:delegated
-#      # Mount source-code for development
-#      - ./:/app
-#      - ./docker/php/custom-config.ini:/usr/local/etc/php/conf.d/custom-config.ini
-#      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.docker.network=proxy"
-#      - "traefik.http.routers.api-secure.entrypoints=websecure"
-#      - "traefik.http.routers.api-secure.rule=Host(`api.example.com`)"
-
-
   backend:
     #    depends_on:
     #      - pgsql
     container_name: backend_costeo
-    build: api
+    build: backend
     expose:
       - 80
     restart: always
@@ -63,7 +41,7 @@ services:
     #    depends_on:
     #      - pgsql
     container_name: frontend_costeo
-    build: api
+    build: frontend
     expose:
       - 80
     restart: always
