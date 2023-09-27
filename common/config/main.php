@@ -53,7 +53,7 @@ return [
             'hostname' => 'redis',
             'port' => 6379,
             'database' => 0,
-            'password' => 'sOmE_sEcUrE_pAsS'
+            'password' => 'hrLmooHxLCIa'
         ],
         'formatter' => [
             'locale' => 'es_MX',
