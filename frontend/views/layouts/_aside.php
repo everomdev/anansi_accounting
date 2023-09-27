@@ -1,6 +1,7 @@
 <?php
 
 
+use backend\helpers\RedisKeys;
 use backend\widgets\Menu;
 use backend\components\Menu as MenuItem;
 
@@ -9,7 +10,7 @@ use backend\components\Menu as MenuItem;
  */
 
 $currentControllerId = $this->context->action->controller->id;
-$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+
 $action = $this->context->action->id;
 if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yield'])) {
     $currentControllerId = $action;
@@ -22,7 +23,7 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
 
               </span>
             <span class="app-brand-text demo menu-text fw-bolder ms-2">
-                <?= $business['name'] ?>
+                <?= "Sistema de costeo" ?>
             </span>
         </a>
 
