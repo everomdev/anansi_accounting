@@ -49,7 +49,7 @@ services:
       - "traefik.http.middlewares.backend-redirectscheme.redirectscheme.permanent=false"
       - "traefik.http.routers.backend.middlewares=backend-redirectscheme"
 
-      - "traefik.http.routers.backend-secure.rule=Host(`costeo.diagnosticopararestaurantes.com`)"
+      - "traefik.http.routers.backend-secure.rule=Host(`sistemapararestaurantes.com`)"
       - "traefik.http.routers.backend-secure.entrypoints=https"
       - "traefik.http.routers.backend-secure.service=backend"
       - "traefik.http.routers.backend-secure.tls=true"
