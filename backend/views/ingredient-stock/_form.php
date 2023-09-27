@@ -26,7 +26,9 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
     'position' => $this::POS_END
 ]);
 
-
+$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$ums = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
+$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business['currency_code']));
 ?>
 
 <div class="ingredient-stock-form">
@@ -34,9 +36,12 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
     <?php $form = ActiveForm::begin([
         'enableAjaxValidation' => true
     ]); ?>
+
     <div class="card">
         <div class="card-body">
+            <?= $form->field($model, 'final_quantity')->hiddenInput()->label(false) ?>
             <div class="row gap-2">
+
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
                     <?= $form->field($model, 'ingredient')->widget(\kartik\typeahead\Typeahead::class, [
                         'scrollable' => true,
@@ -52,42 +57,13 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
                     ]) ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
-                    <?= $form->field($model, '_category')->widget(\kartik\typeahead\Typeahead::class, [
-                        'scrollable' => true,
-                        'defaultSuggestions' => $autocompleteCategories,
-                        'dataset' => [
-                            [
-                                'local' => $autocompleteCategories,
-                                'limit' => 10,
-
-                            ]
-                        ],
-
-                    ]) ?>
+                    <?= $form->field($model, 'category_id')->dropDownList(\yii\helpers\ArrayHelper::map(Category::find()->all(), 'id', 'name'), ['prompt' => '----', 'data-url' => Url::to(['ingredient-stock/generate-key'])]) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?= $form->field($model, 'quantity')->textInput() ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
-                    <?= $form->field($model, 'final_quantity')->textInput() ?>
-                </div>
-
-
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
-                    <?= $form->field($model, 'um')->widget(\kartik\typeahead\Typeahead::class, [
-                        'scrollable' => true,
-                        'defaultSuggestions' => $autocompleteUm,
-                        'dataset' => [
-                            [
-                                'local' => $autocompleteUm,
-                                'limit' => 10,
-
-                            ]
-                        ],
-                        'options' => [
-                                'autocomplete' => "off"
-                        ]
-                    ]) ?>
+                    <?= $form->field($model, 'um')->dropDownList(\yii\helpers\ArrayHelper::map($ums, 'name', 'name')) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?= $form->field($model, 'portions_per_unit')->widget(\kartik\typeahead\Typeahead::class, [
@@ -108,25 +84,24 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
                         $model,
                         'yield',
                         [
-                            'template' => "{label}<br><div class='input-group'>{input} <button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular</button></div>"
+                            'template' => "{label}<br><div class='input-group'>{input} <span class='input-group-text'>%</span><button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular</button></div>"
                         ]
                     )
                         ->textInput() ?>
                 </div>
 
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
-                    <?= $form->field($model, 'portion_um')->widget(\kartik\typeahead\Typeahead::class, [
-                        'scrollable' => true,
-                        'defaultSuggestions' => $autocompletePortionsUm,
-                        'dataset' => [
-                            [
-                                'local' => $autocompletePortionsUm,
-                                'limit' => 10,
-
-                            ]
-                        ],
-
-                    ]) ?>
+                    <?= $form->field($model, 'portion_um')->dropDownList(\yii\helpers\ArrayHelper::map($ums, 'name', 'name')) ?>
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    <?= $form->field($model, 'key')->textInput() ?>
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    <?= $form->field($model, 'price',
+                        [
+                            'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
+                        ]
+                    )->textInput() ?>
                 </div>
                 <div class="col-12">
                     <?= $form->field($model, 'observations')->textarea(['rows' => 6]) ?>
@@ -144,3 +119,24 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
     <?php ActiveForm::end(); ?>
 
 </div>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-yield',
+]);
+
+echo \yii\bootstrap5\Html::label(Yii::t('app', 'Final Quantity'), 'final-quantity');
+echo \yii\bootstrap5\Html::input(
+    'number',
+    'final-quantity',
+    '',
+    ['class' => 'form-control', 'id' => 'final-quantity']
+);
+
+echo \yii\bootstrap5\Html::button(Yii::t('app', 'Calcular rendimiento'), [
+    'class' => 'btn btn-outline-primary mt-3',
+    'id' => 'btn-compute-yield'
+]);
+
+\yii\bootstrap5\Modal::end();
+
+?>

@@ -34,7 +34,7 @@ class IngredientStandardRecipe extends \yii\db\ActiveRecord
             [['standard_recipe_id', 'ingredient_id'], 'required'],
             [['standard_recipe_id', 'ingredient_id'], 'integer'],
             [['quantity'], 'number'],
-            [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => Ingredient::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
+            [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
             [['standard_recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => StandardRecipe::className(), 'targetAttribute' => ['standard_recipe_id' => 'id']],
         ];
     }

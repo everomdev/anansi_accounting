@@ -101,6 +101,18 @@ class BusinessController extends Controller
         ]);
     }
 
+    public function actionUpdateSales()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $model = $this->findModel($businessData['id']);
+
+        $model->monthly_plate_sales = Yii::$app->request->post('plate_sales');
+
+        $model->save(false);
+
+        return $this->asJson(true);
+    }
+
     public function actionMyBusiness()
     {
         $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
@@ -111,6 +123,11 @@ class BusinessController extends Controller
             'businessName' => $business->name,
             'userId' => $user->getId(),
             'name' => $user->profile->name,
+            'currency_code' => $business->currency_code,
+            'decimal_separator' => $business->decimal_separator,
+            'thousands_separator' => $business->thousands_separator,
+            'timezone' => $business->timezone,
+            'locale' => $business->locale,
         ]);
 
         $post = Yii::$app->request->post();

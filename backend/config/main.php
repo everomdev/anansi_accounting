@@ -39,6 +39,9 @@ return [
                 'registration' => [
                     'class' => RegistrationController::class
                 ],
+                'recovery' => [
+                    'class' => \backend\controllers\user\RecoveryController::class
+                ]
             ],
             'enableEmailConfirmation' => true,
             'administrators' => ['administrator'],
@@ -111,7 +114,9 @@ return [
             'showScriptName' => false,
             'enableStrictParsing' => false,
             'rules' => [
-// ...
+                'resources' => 'ingredient-stock/index',
+                'storage' => 'ingredient-stock/storage',
+                'theoretical-yield' => 'standard-recipe/theoretical-yield'
             ],
         ]
     ],
@@ -126,9 +131,22 @@ return [
                     'linkContainerOptions' => ['class' => 'page-item'],
                     'linkOptions' => ['class' => 'page-link', 'data-pjax-scrollto' => '1'],
                     'disabledListItemSubTagOptions' => ['class' => 'page-link']
+                ],
+                'headerRowOptions' => [
+                    'class' => 'text-warning'
+                ]
+//                'formatter' => [
+//                    'class' => \yii\i18n\Formatter::class,
+//                    'currencyCode' => 'eur'
+//                ]
+            ],
+            \yii\grid\ActionColumn::class => [
+                'buttonOptions' => [
+                    'class' => 'text-warning'
                 ]
             ]
-        ]
+        ],
+
     ],
     'params' => $params,
 ];

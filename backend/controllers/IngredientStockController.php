@@ -2,7 +2,9 @@
 
 namespace backend\controllers;
 
+use backend\helpers\ExcelHelper;
 use backend\helpers\RedisKeys;
+use common\models\Business;
 use common\models\Category;
 use common\models\StockPrice;
 use Da\User\Traits\ContainerAwareTrait;
@@ -11,9 +13,11 @@ use http\Url;
 use Yii;
 use common\models\IngredientStock;
 use common\models\IngredientStockSearch;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
 
 /**
  * IngredientStockController implements the CRUD actions for IngredientStock model.
@@ -32,6 +36,73 @@ class IngredientStockController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                    'import-ingredients' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::className(),
+                'rules' => [
+                    [
+                        'actions' => ['login', 'error'],
+                        'allow' => true,
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+                            'generate-key'
+                        ],
+                        'allow' => true,
+                        'roles' => ['ingredients_create'],
+                    ],
+                    [
+                        'actions' => [
+                            'update',
+                            'generate-key'
+                        ],
+                        'allow' => true,
+                        'roles' => ['ingredients_update'],
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+                        ],
+                        'allow' => true,
+                        'roles' => ['ingredients_delete'],
+                    ],
+                    [
+                        'actions' => [
+                            'index',
+                            'download-references',
+                            'download-template',
+                            'export',
+                            'import-ingredients',
+                            'view'
+                        ],
+                        'allow' => true,
+                        'roles' => ['ingredients_list','ingredients_view'],
+                    ],
+                    [
+                        'actions' => [
+                            'delete',
+                        ],
+                        'allow' => true,
+                        'roles' => ['ingredients_delete'],
+                    ],
+                    [
+                        'actions' => [
+                            'price-trend',
+                        ],
+                        'allow' => true,
+                        'roles' => ['price_trend_view'],
+                    ],
+                    [
+                        'actions' => [
+                            'storage',
+                        ],
+                        'allow' => true,
+                        'roles' => ['storage', 'storage_list', 'storage_view'],
+                    ],
+
                 ],
             ],
         ];
@@ -55,6 +126,29 @@ class IngredientStockController extends Controller
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
+    }
+
+    public function actionStorage()
+    {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $searchModel = new IngredientStockSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        $dataProvider->query->andWhere([
+            'business_id' => $business['id']
+        ]);
+
+        return $this->render('storage', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+
+    public function actionGenerateKey($categoryId)
+    {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+
+        return $this->asJson(IngredientStock::keyGenerator($categoryId, $business['id']));
     }
 
     /**
@@ -144,12 +238,11 @@ class IngredientStockController extends Controller
             $from = (new \DateTime())->modify("-3 months")->format('Y-m-d');
         }
         $category = null;
-        $model = null;
-        if (empty($ingredientId) && empty($categoryId)) {
-            $model = IngredientStock::find()->where(['business_id' => $business['id']])->orderBy("RAND()")->one();
+        $model = IngredientStock::find()->where(['business_id' => $business['id']])->orderBy("RAND()")->one();
+        if (empty($ingredientId) && empty($categoryId) && !empty($model)) {
             $ingredientId = $model->id;
         } elseif (empty($categoryId)) {
-            $model = $this->findModel($ingredientId);
+            $model = IngredientStock::findOne(['id' => $ingredientId]);
         } else {
             $category = Category::find()
                 ->where([
@@ -160,7 +253,7 @@ class IngredientStockController extends Controller
                 ->one();
 
         }
-
+        $prices = [];
         if (!empty($model)) {
 
             $prices = $model->getStockPrices()
@@ -191,6 +284,39 @@ class IngredientStockController extends Controller
             'categoryId' => $categoryId,
             'ingredientId' => $ingredientId
         ]);
+    }
+
+    public function actionDownloadReferences($id)
+    {
+        $business = Business::findOne(['id' => $id]);
+
+        ExcelHelper::generateReferenceTemplate($business);
+    }
+
+    public function actionDownloadTemplate()
+    {
+        ExcelHelper::generateIngredientsTemplate();
+    }
+
+    public function actionImportIngredients($id)
+    {
+        $business = Business::findOne(['id' => $id]);
+
+        $file = UploadedFile::getInstanceByName('ingredient-file');
+
+        if ($file) {
+            ExcelHelper::importIngredients($business, $file->tempName);
+        }
+
+        return $this->redirect(['ingredient-stock/index']);
+    }
+
+    public function actionExport()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = Business::findOne(['id' => $businessData['id']]);
+
+        ExcelHelper::exportIngredients($business);
     }
 
     /**

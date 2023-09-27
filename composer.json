@@ -48,7 +48,12 @@
     "kartik-v/yii2-widget-datetimepicker": "dev-master",
     "kartik-v/yii2-editors": "dev-master",
     "2amigos/yii2-chartjs-widget": "~2.0",
-    "kartik-v/yii2-widget-fileinput": "dev-master"
+    "kartik-v/yii2-widget-fileinput": "dev-master",
+    "kartik-v/yii2-grid": "dev-master",
+    "symfony/intl": "^5.4",
+    "kartik-v/yii2-widget-colorinput": "dev-master",
+    "phpoffice/phpspreadsheet": "^1.29",
+    "stripe/stripe-php": "^12.4"
   },
   "require-dev": {
     "yiisoft/yii2-debug": "~2.1.0",

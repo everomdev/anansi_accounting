@@ -13,35 +13,34 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /**
- * @var yii\web\View               $this
- * @var yii\widgets\ActiveForm     $form
+ * @var yii\web\View $this
+ * @var yii\widgets\ActiveForm $form
  * @var \Da\User\Form\RecoveryForm $model
  */
 
 $this->title = Yii::t('usuario', 'Recover your password');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="row">
-    <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title"><?= Html::encode($this->title) ?></h3>
+<div class="vh-100 d-flex justify-content-center align-items-center">
+    <div style="max-width: 500px; min-width: 350px">
+        <?php $form = ActiveForm::begin(
+            [
+                'id' => $model->formName(),
+                'enableAjaxValidation' => true,
+                'enableClientValidation' => false,
+            ]
+        ); ?>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><?= Html::encode($this->title) ?></h3>
             </div>
-            <div class="panel-body">
-                <?php $form = ActiveForm::begin(
-                    [
-                        'id' => $model->formName(),
-                        'enableAjaxValidation' => true,
-                        'enableClientValidation' => false,
-                    ]
-                ); ?>
-
+            <div class="card-body">
                 <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
-
+            </div>
+            <div class="card-footer">
                 <?= Html::submitButton(Yii::t('usuario', 'Continue'), ['class' => 'btn btn-primary btn-block']) ?><br>
-
-                <?php ActiveForm::end(); ?>
             </div>
         </div>
+        <?php ActiveForm::end(); ?>
     </div>
 </div>

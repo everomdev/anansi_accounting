@@ -11,6 +11,9 @@
 
 namespace backend\controllers\user;
 
+use backend\helpers\RedisKeys;
+use backend\models\CreateUserForm;
+use Codeception\Module\Redis;
 use Da\User\Event\UserEvent;
 use Da\User\Factory\MailFactory;
 use Da\User\Filter\AccessRuleFilter;
@@ -34,6 +37,7 @@ use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\helpers\Url;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 
 class AdminController extends Controller
 {
@@ -48,10 +52,10 @@ class AdminController extends Controller
     /**
      * AdminController constructor.
      *
-     * @param string    $id
-     * @param Module    $module
+     * @param string $id
+     * @param Module $module
      * @param UserQuery $userQuery
-     * @param array     $config
+     * @param array $config
      */
     public function __construct($id, Module $module, UserQuery $userQuery, array $config = [])
     {
@@ -105,6 +109,11 @@ class AdminController extends Controller
                         'allow' => true,
                         'roles' => ['admin'],
                     ],
+                    [
+                        'actions' => ['users', 'create-user', 'update-user', 'delete-user'],
+                        'allow' => true,
+                        'roles' => ['manage_users']
+                    ]
                 ],
             ],
         ];
@@ -330,7 +339,7 @@ class AdminController extends Controller
 
         return $this->redirect(['index']);
     }
-    
+
     /**
      * Forces the user to change password at next login
      * @param integer $id
@@ -345,5 +354,70 @@ class AdminController extends Controller
             Yii::$app->session->setFlash("danger", Yii::t('usuario', 'There was an error in saving user'));
         }
         $this->redirect(['index']);
+    }
+
+    public function actionCreateUser()
+    {
+        $user = Yii::$app->user->identity;
+        if ($user->hasRestrictions('users')) {
+            Yii::$app->session->setFlash('warning', "Haz alcanzado el límite de usuarios");
+            return $this->redirect(['//user/admin/users']);
+        }
+        $form = new CreateUserForm(['scenario' => CreateUserForm::SCENARIO_CREATE]);
+        $post = Yii::$app->request->post();
+        if (array_key_exists('ajax', $post)) {
+            $this->make(AjaxRequestModelValidator::class, [$form])->validate();
+        }
+
+        if ($form->load($post) && $form->save()) {
+            return $this->redirect(['//user/admin/users']);
+        }
+
+        return $this->render('create_user', [
+            'model' => $form
+        ]);
+    }
+
+    public function actionUpdateUser($id)
+    {
+        $user = User::findOne(['id' => $id]);
+        if (empty($user)) {
+            throw new NotFoundHttpException("Este usuario no existe");
+        }
+
+        $form = new CreateUserForm([
+            'email' => $user->email,
+            'name' => $user->profile->name,
+            'userId' => $user->id,
+            'scenario' => CreateUserForm::SCENARIO_UPDATE
+        ]);
+
+        $post = Yii::$app->request->post();
+        if (array_key_exists('ajax', $post)) {
+            $this->make(AjaxRequestModelValidator::class, [$form])->validate();
+        }
+
+        if ($form->load($post) && $form->save()) {
+            return $this->redirect(['//user/admin/users']);
+        }
+
+        return $this->render('update_user', [
+            'model' => $form
+        ]);
+    }
+
+    public function actionUsers()
+    {
+        $business = RedisKeys::getBusiness();
+        $users = $business->getUsers()->all();
+
+        return $this->render('users', [
+            'users' => $users
+        ]);
+    }
+
+    public function actionDeleteUser()
+    {
+
     }
 }

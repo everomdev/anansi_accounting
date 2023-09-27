@@ -48,6 +48,22 @@ use yii\web\UploadedFile;
  * @property-read mixed $recipeLastPrice
  * @property-read RecipeStep[] $recipeSteps
  * @property bool $in_construction [tinyint(1)]
+ * @property string $type_of_recipe [varchar(255)]
+ * @property float $price [float]
+ * @property int $convoy_id [int]
+ * @property string $other_specs
+ * @property float $sales [float]
+ * @property-read null|string $mainImageUrl
+ * @property-read string $name
+ * @property-read array $recipeImagesId
+ * @property-read null|array $mainImageId
+ * @property-read float $costPercent
+ * @property-read array $recipeImagesUrl
+ * @property-read mixed $convoy
+ * @property bool $in_menu [tinyint(1)]
+ * @property float $custom_cost [float]
+ * @property-read mixed $cost
+ * @property float $custom_price [float]
  */
 class StandardRecipe extends \yii\db\ActiveRecord
 {
@@ -63,6 +79,19 @@ class StandardRecipe extends \yii\db\ActiveRecord
     public static function tableName()
     {
         return 'standard_recipe';
+    }
+
+    public static function populateRecord($record, $row)
+    {
+        parent::populateRecord($record, $row);
+
+        if (empty($record->custom_price)) {
+            $record->custom_price = $record->price;
+        }
+
+        if (empty($record->custom_cost)) {
+            $record->custom_cost = $record->cost;
+        }
     }
 
     public function behaviors()
@@ -81,19 +110,23 @@ class StandardRecipe extends \yii\db\ActiveRecord
     {
         return [
             [['business_id', 'type', 'title'], 'required'],
-            [['business_id'], 'integer'],
-            [['yield', 'yield_um', 'portions'], 'required', 'when' => function(){
+            [['business_id', 'convoy_id'], 'integer'],
+            [['yield', 'yield_um', 'portions'], 'required', 'when' => function () {
                 return !$this->isNewRecord;
             }],
-            [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime',], 'string'],
+            [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime', 'type_of_recipe', 'other_specs'], 'string'],
             [['type'], 'string', 'max' => 255],
             [['type'], 'in', 'range' => [self::STANDARD_RECIPE_TYPE_MAIN, self::STANDARD_RECIPE_TYPE_SUB]],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [[
                 'yield',
                 'portions',
+                'price',
+                'sales',
+                'custom_cost',
+                'custom_price'
             ], 'number'],
-            [['in_construction'], 'boolean'],
+            [['in_construction', 'in_menu'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe']
         ];
     }
@@ -113,6 +146,14 @@ class StandardRecipe extends \yii\db\ActiveRecord
             'type' => Yii::t('app', 'Type'),
             'mainImage' => Yii::t('app', 'Recipe Image'),
             'stepsImages' => Yii::t('app', 'Steps images'),
+            'type_of_recipe' => Yii::t('app', 'Type of Recipe'),
+            'yield' => Yii::t('app', "Yield"),
+            'yield_um' => Yii::t('app', 'Unit of measurement'),
+            'price' => Yii::t('app', 'Price'),
+            'convoy_id' => Yii::t('app', 'Convoy'),
+            'other_specs' => Yii::t('app', 'Other specifications'),
+            'sales' => Yii::t('app', 'Sales'),
+            'in_menu' => Yii::t('app', 'In menu'),
         ];
     }
 
@@ -197,12 +238,12 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 )
                 ->execute();
         } else {
-            Yii::$app->db->createCommand()
-                ->insert(
-                    'ingredient_standard_recipe',
-                    ['ingredient_id' => $ingredientId, 'quantity' => $quantity, 'standard_recipe_id' => $this->id],
-                )
-                ->execute();
+            $model = new IngredientStandardRecipe([
+                'ingredient_id' => intval($ingredientId),
+                'quantity' => floatval($quantity),
+                'standard_recipe_id' => intval($this->id)
+            ]);
+            $model->save();
         }
     }
 
@@ -287,12 +328,16 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
     public function getRecipeLastPrice()
     {
-        $ingredients = $this->getIngredients()->all();
-        $lastPrices = ArrayHelper::getColumn($ingredients, 'lastUnitPrice');
+        $ingredients = $this->ingredientRelations;
+        $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
+            return $ingredient->lastUnitPrice * $ingredient->quantity;
+        });
 
         $subRecipes = $this->getSubStandardRecipes()->all();
         $lastPrices = array_merge($lastPrices, ArrayHelper::getColumn($subRecipes, 'subRecipeLastPrice'));
-
+        if (!empty($this->convoy_id)) {
+            $lastPrices[] = $this->convoy->amount;
+        }
         return array_sum($lastPrices);
     }
 
@@ -375,8 +420,8 @@ class StandardRecipe extends \yii\db\ActiveRecord
         /** @var Image[] $images */
         $images = $this->getImages();
         $urls = [];
-        foreach ($images as $image){
-            if(($image->getPrimaryKey() != null || $image->getPrimaryKey() > 0) && $image->isMain == 0){
+        foreach ($images as $image) {
+            if (($image->getPrimaryKey() != null || $image->getPrimaryKey() > 0) && $image->isMain == 0) {
                 $urls[] = Yii::$app->request->hostInfo . $image->getUrl(400);
             }
         }
@@ -389,19 +434,20 @@ class StandardRecipe extends \yii\db\ActiveRecord
         /** @var Image[] $images */
         $images = $this->getImages();
         $ids = [];
-        foreach ($images as $image){
-            if(($image->getPrimaryKey() != null || $image->getPrimaryKey() > 0) && $image->isMain == 0){
+        foreach ($images as $image) {
+            if (($image->getPrimaryKey() != null || $image->getPrimaryKey() > 0) && $image->isMain == 0) {
                 $ids[] = ['key' => $image->id];
             }
         }
 
         return $ids;
     }
+
     public function getMainImageUrl()
     {
         /** @var Image[] $images */
         $image = $this->getImage();
-        if(($image->getPrimaryKey() != null || $image->getPrimaryKey() > 0) && $image->isMain == 1){
+        if (($image->getPrimaryKey() != null || $image->getPrimaryKey() > 0) && $image->isMain == 1) {
             return Yii::$app->request->hostInfo . $image->getUrl(400);
         }
         return null;
@@ -415,5 +461,100 @@ class StandardRecipe extends \yii\db\ActiveRecord
         return ($image) ? ['key' => $image->id] : null;
     }
 
+    public function getCostPercent($custom = false)
+    {
+        if (empty($this->price)) {
+            return 0.0;
+        }
+
+        if ($custom) {
+            return round(($this->custom_cost / $this->custom_price), 2);
+        }
+
+        return round(($this->lastPrice / $this->price), 2);
+    }
+    public function getCategory()
+    {
+        return $this->hasOne(RecipeCategory::class, ['name' => 'type_of_recipe']);
+    }
+
+    public function getName()
+    {
+        return $this->title;
+    }
+
+    public function getConvoy()
+    {
+        return $this->hasOne(Convoy::class, ['id' => 'convoy_id']);
+    }
+
+    public function getCost()
+    {
+        return $this->recipeLastPrice;
+    }
+
+    public function getSalesPercent($totalSales)
+    {
+
+        if (empty($totalSales)) {
+            return 0;
+        }
+
+        return round($this->sales / $totalSales, 2);
+    }
+
+    public function getSalesAmount()
+    {
+        return $this->sales * $this->price;
+    }
+
+    public function getSalesAmountPercent($totalSalesAmount)
+    {
+        if (empty($totalSalesAmount)) {
+            return 0;
+        }
+
+        return round($this->salesAmount / $totalSalesAmount, 2);
+    }
+
+    public function getCpr($totalSales = 0)
+    {
+        return $this->costPercent * $this->getSalesPercent($totalSales);
+    }
+
+    public function getPopularity($popularityAxis, $totalSales)
+    {
+        $salesPercent = $this->getSalesPercent($totalSales);
+        if ($salesPercent >= $popularityAxis) {
+            return 'ALTA';
+        } else {
+            return 'BAJA';
+        }
+    }
+
+    public function getEffectiveness($costEffectivenessAxis, $totalSales)
+    {
+        $retributionMargin = $this->sales - $this->cost;
+        if ($retributionMargin >= $costEffectivenessAxis) {
+            return 'ALTA';
+        } else {
+            return 'BAJA';
+        }
+    }
+
+    public function getBcg($popularityAxis, $costEffectivenessAxis, $totalSales)
+    {
+        $quadrants = [
+            "ALTAALTA" => "ESTRELLA",
+            "ALTABAJA" => "VACA",
+            "BAJABAJA" => "PERRO",
+            "BAJAALTA" => "ENIGMA",
+        ];
+
+        $popularity = $this->getPopularity($popularityAxis, $totalSales);
+        $effectiveness = $this->getEffectiveness($costEffectivenessAxis, $totalSales);
+
+        return $quadrants[$popularity . $effectiveness];
+    }
 
 }

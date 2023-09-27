@@ -14,5 +14,8 @@ return [
     'defaultLanguage' => 'es',
     'jwtSecretCode' => "as&*^d.ASdasdgfhjsdASDNVasfbnvASM&@%676A%A%s45a4d65adasdjhHJGASd",
     'backendBaseUrl' => "http://localhost:21080",
-    'frontendBaseUrl' => "http://localhost:3000"
+    'frontendBaseUrl' => "http://localhost:3000",
+    'stripe.secretKey' => "",
+    'stripe.publicKey' => "",
+    'stripe.webhook' => ""
 ];

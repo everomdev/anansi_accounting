@@ -39,6 +39,7 @@ class Movement extends \yii\db\ActiveRecord
     const PAYMENT_TYPE_CARD = 'card';
     const PAYMENT_TYPE_BANK_TRANSFERENCE = 'bank_transference';
     const PAYMENT_TYPE_CASH = 'cash';
+    const PAYMENT_TYPE_OTHER = 'other';
 
     /**
      * {@inheritdoc}
@@ -78,13 +79,13 @@ class Movement extends \yii\db\ActiveRecord
             'invoice' => Yii::t('app', 'Invoice'),
             'quantity' => Yii::t('app', 'Quantity'),
             'um' => Yii::t('app', 'Um'),
-            'amount' => Yii::t('app', 'Amount'),
+            'amount' => Yii::t('app', 'Precio de compra'),
             'tax' => Yii::t('app', 'Tax'),
             'retention' => Yii::t('app', 'Retention'),
             'unit_price' => Yii::t('app', 'Unit Price'),
             'total' => Yii::t('app', 'Total'),
             'observations' => Yii::t('app', 'Observations'),
-            'ingredient_id' => Yii::t('app', 'Ingredient'),
+            'ingredient_id' => Yii::t('app', 'Resource'),
             'business_id' => Yii::t('app', 'Business ID'),
             'created_at' => Yii::t('app', 'Created At'),
         ];
@@ -105,11 +106,12 @@ class Movement extends \yii\db\ActiveRecord
             return false;
         }
 
-        if ($insert) {
+        if ($insert and empty($this->created_at)) {
             $this->created_at = date('Y-m-d H:i:s');
         }
 
         $this->um = $this->ingredient->portion_um;
+
         return true;
     }
 
@@ -121,9 +123,36 @@ class Movement extends \yii\db\ActiveRecord
             } elseif ($this->type == self::TYPE_OUTPUT) {
                 $this->applyOutput();
             }
+
+            $lastBalance = Balance::find()
+                ->where(['business_id' => $this->business_id])
+                ->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])
+                ->one();
+
+            if (empty($lastBalance)) {
+                $lastBalance = new Balance([
+                    'business_id' => $this->business_id,
+                    'date' => date('Y-m-d'),
+                    'current_balance' => 0,
+                    'created_by' => Yii::$app->user->id
+                ]);
+            }
+
+            $lastBalance->expense = $this->total;
+            $lastBalance->save();
+
+            $nextBalance = new Balance([
+                'business_id' => $this->business_id,
+                'date' => date('Y-m-d'),
+                'current_balance' => $lastBalance->current_balance - $lastBalance->expense,
+                'created_by' => Yii::$app->user->id,
+                'expense' => 0
+            ]);
+            $nextBalance->save();
         }
 
         $this->saveProvider();
+
 
         parent::afterSave($insert, $changedAttributes);
     }
@@ -163,6 +192,7 @@ class Movement extends \yii\db\ActiveRecord
             self::PAYMENT_TYPE_CARD => Yii::t('app', "Card"),
             self::PAYMENT_TYPE_BANK_TRANSFERENCE => Yii::t('app', "Bank Transfer"),
             self::PAYMENT_TYPE_CASH => Yii::t('app', "Cash"),
+            self::PAYMENT_TYPE_OTHER => Yii::t('app', "Otro"),
         ];
     }
 
@@ -183,7 +213,7 @@ class Movement extends \yii\db\ActiveRecord
         $ingredient->save();
         $ingredient->addPrice($this);
         $menus = Menu::findAll(['business_id' => $this->business_id]);
-        foreach ($menus as $menu){
+        foreach ($menus as $menu) {
             $menu->updatePrices();
         }
     }
@@ -194,5 +224,6 @@ class Movement extends \yii\db\ActiveRecord
         $ingredient->quantity -= $this->quantity;
         $ingredient->save();
     }
+
 
 }

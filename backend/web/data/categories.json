@@ -1,66 +1,2489 @@
 [
   {
-    "name": "ABARROTES",
-    "builtin": 1
+    "name": "Alimentos",
+    "color": "#FFFF54",
+    "categories": [
+      {
+        "name": "ABARROTES",
+        "builtin": 1,
+        "key_prefix": "1001",
+        "ingredients": [
+          {
+            "name": "ACEITE AEROSOL PAM 340GR",
+            "um": "PZA",
+            "unit_price": 40.58
+          },
+          {
+            "name": "ACEITE DE AJONJOLI LATA 320ML",
+            "um": "PZA",
+            "unit_price": 95.21
+          },
+          {
+            "name": "ACEITE MEMBERS MARK 20L",
+            "um": "PZA",
+            "unit_price": 919.68
+          },
+          {
+            "name": "ACEITE OLIVA FILIPPO BERIO 1L",
+            "um": "PZA",
+            "unit_price": 224.03
+          },
+          {
+            "name": "ACEITE VEGETAL AVE 850ML",
+            "um": "PZA",
+            "unit_price": 41.50
+          },
+          {
+            "name": "ACEITUNA VERDE 3K",
+            "um": "PZA",
+            "unit_price": 143.77
+          },
+          {
+            "name": "ACHIOTE",
+            "um": "PZA",
+            "unit_price": 12.00
+          },
+          {
+            "name": "AJONJOLI GRANEL KG",
+            "um": "KG",
+            "unit_price": 120.00
+          },
+          {
+            "name": "AJONJOLI NEGRO",
+            "um": "KG",
+            "unit_price": 120.00
+          },
+          {
+            "name": "ALMENDRAS",
+            "um": "KG",
+            "unit_price": 220.00
+          },
+          {
+            "name": "ALMENDRAS FILETEADAS",
+            "um": "KG",
+            "unit_price": 290.00
+          },
+          {
+            "name": "ALMENDRAS MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 230.17
+          },
+          {
+            "name": "ANIS ESTRELLA",
+            "um": "KG",
+            "unit_price": 620.00
+          },
+          {
+            "name": "ARROZ",
+            "um": "KG",
+            "unit_price": 38.00
+          },
+          {
+            "name": "ATE GRANDE",
+            "um": "PZA",
+            "unit_price": 91.00
+          },
+          {
+            "name": "ATE INDVIDUAL",
+            "um": "PZA",
+            "unit_price": 17.00
+          },
+          {
+            "name": "AVENA QUAKER OATS BOTE DE 510 GR.",
+            "um": "PZA",
+            "unit_price": 43.00
+          },
+          {
+            "name": "AZUCAR MASCABADO 2K",
+            "um": "PZA",
+            "unit_price": 54.11
+          },
+          {
+            "name": "AZUCAR MASCABADO METCO GENUINO 2K",
+            "um": "PZA",
+            "unit_price": 57.28
+          },
+          {
+            "name": "BERRIES MEMBERS MARK 1.36K",
+            "um": "PZA",
+            "unit_price": 179.02
+          },
+          {
+            "name": "BICARBONATO",
+            "um": "PZA",
+            "unit_price": 5.00
+          },
+          {
+            "name": "BLUEBERRIES MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 172.89
+          },
+          {
+            "name": "BOLSA DE PAPAS FRANCESA 2KG",
+            "um": "PZA",
+            "unit_price": 108.00
+          },
+          {
+            "name": "CACAHUATE PELADO",
+            "um": "KG",
+            "unit_price": 65.00
+          },
+          {
+            "name": "CAJETA MEMBERS MARK 1.2 KG.",
+            "um": "PZA",
+            "unit_price": 117.63
+          },
+          {
+            "name": "CANELA EN POLVO MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 162.65
+          },
+          {
+            "name": "CANELA EN RAJAS GRANEL KG",
+            "um": "PZA",
+            "unit_price": 48.00
+          },
+          {
+            "name": "CANELA MEMBERS MARK 400 GR",
+            "um": "PZA",
+            "unit_price": 162.66
+          },
+          {
+            "name": "CARDAMOMO",
+            "um": "PZA",
+            "unit_price": 75.00
+          },
+          {
+            "name": "CATSUP MEMBERS MARK 3.8K",
+            "um": "PZA",
+            "unit_price": 74.77
+          },
+          {
+            "name": "CHAROLA DE FRIJOL",
+            "um": "PZA",
+            "unit_price": 20.00
+          },
+          {
+            "name": "CHILE CHIPOTLE",
+            "um": "PZA",
+            "unit_price": 45.90
+          },
+          {
+            "name": "CHILES JALAPEÑOS EN RAJAS LA COSTEÑA LATA DE 2.8 KG.",
+            "um": "PZA",
+            "unit_price": 120.71
+          },
+          {
+            "name": "CHILI SAUCE MAE PLOY 4 KG",
+            "um": "PZA",
+            "unit_price": 593.74
+          },
+          {
+            "name": "CHIPOTLES LA COSTEÑA 10 LATAS DE 105 GR.",
+            "um": "PZA",
+            "unit_price": 128.89
+          },
+          {
+            "name": "CHOCOLATE ABUELITA NESTLE 6PZ/90GR",
+            "um": "PZA",
+            "unit_price": 13.25
+          },
+          {
+            "name": "CLAVO EN POLVO",
+            "um": "KG",
+            "unit_price": 370.00
+          },
+          {
+            "name": "COCADA",
+            "um": "PZA",
+            "unit_price": 16.00
+          },
+          {
+            "name": "CREMA DE CACAHUATE MEMBERS MARK 1.13K",
+            "um": "PZA",
+            "unit_price": 94.77
+          },
+          {
+            "name": "DURAZNOS EN ALMIMBAR LA COSTEÑA 8PZ/820GR",
+            "um": "PZA",
+            "unit_price": 88.33
+          },
+          {
+            "name": "DURAZNOS EN MITADES MEMBERS MARK 3 KG.",
+            "um": "PZA",
+            "unit_price": 172.89
+          },
+          {
+            "name": "EDAMAME SIN VAINA GREENLAND BOLSA DE 454 GR.",
+            "um": "PZA",
+            "unit_price": 69.33
+          },
+          {
+            "name": "ELOTE EN GRANO",
+            "um": "KG",
+            "unit_price": 9.50
+          },
+          {
+            "name": "ELOTE HERDEZ 8 LATAS DE 220 GR.",
+            "um": "PZA",
+            "unit_price": 67.42
+          },
+          {
+            "name": "EMPANIZADOR PANKO BOLSA .50 KG.",
+            "um": "KG",
+            "unit_price": 90.00
+          },
+          {
+            "name": "ESCENCIA DE NUEZ 120 ML.",
+            "um": "PZA",
+            "unit_price": 44.41
+          },
+          {
+            "name": "FETTUCINE BARILLA 500GR",
+            "um": "PZA",
+            "unit_price": 25.57
+          },
+          {
+            "name": "FLOR DE CALABAZA LATA 20",
+            "um": "PZA",
+            "unit_price": 46.50
+          },
+          {
+            "name": "FRAMBUESA 510 GR.",
+            "um": "PZA",
+            "unit_price": 198.00
+          },
+          {
+            "name": "FRIJOL",
+            "um": "KG",
+            "unit_price": 20.00
+          },
+          {
+            "name": "FRIJOL BAYO",
+            "um": "PZA",
+            "unit_price": 20.00
+          },
+          {
+            "name": "FRIJOL BAYO LATA",
+            "um": "PZA",
+            "unit_price": 16.60
+          },
+          {
+            "name": "FRIJOL NEGRO",
+            "um": "KG",
+            "unit_price": 35.00
+          },
+          {
+            "name": "FUSILLI BARILLA 500GR",
+            "um": "PZA",
+            "unit_price": 22.76
+          },
+          {
+            "name": "GALLETA OREO 1368 GR.",
+            "um": "PZA",
+            "unit_price": 151.75
+          },
+          {
+            "name": "GALLETA OREO CAJA CON 14PAQ DE 10PZ",
+            "um": "PZA",
+            "unit_price": 184.14
+          },
+          {
+            "name": "GALLETA OREO CAJA CON 30 PAQ. DE 4 PZA.",
+            "um": "PZA",
+            "unit_price": 151.75
+          },
+          {
+            "name": "GARBANZO",
+            "um": "KG",
+            "unit_price": 50.00
+          },
+          {
+            "name": "GEL COLOR AMARILLO 20GR",
+            "um": "PZA",
+            "unit_price": 18.56
+          },
+          {
+            "name": "GEL COLOR CAFÉ 20GR",
+            "um": "PZA",
+            "unit_price": 20.54
+          },
+          {
+            "name": "GRANOLA",
+            "um": "PZA",
+            "unit_price": 244.48
+          },
+          {
+            "name": "HABA SECA",
+            "um": "KG",
+            "unit_price": 125.00
+          },
+          {
+            "name": "HARINA DE MAIZ 500 GR.",
+            "um": "PZA",
+            "unit_price": 29.00
+          },
+          {
+            "name": "HARINA PRONTO PARA HOT CAKE 3 CAJAS DE 500 GR.",
+            "um": "PZA",
+            "unit_price": 66.49
+          },
+          {
+            "name": "HUEVO",
+            "um": "KG",
+            "unit_price": 48.00
+          },
+          {
+            "name": "JENGIBRE CRISTALIZADO",
+            "um": "KG",
+            "unit_price": 265.00
+          },
+          {
+            "name": "JENGIBRE EN POLVO",
+            "um": "KG",
+            "unit_price": 200.00
+          },
+          {
+            "name": "JUGO DE YUZU 1.8L",
+            "um": "PZA",
+            "unit_price": 1846.41
+          },
+          {
+            "name": "KNORR SUIZA CALDO DE POLLO 3.5 KG",
+            "um": "PZA",
+            "unit_price": 376.46
+          },
+          {
+            "name": "LECHE DE SOYA ADES 12 PZA DE 946 ML",
+            "um": "PZA",
+            "unit_price": 276.21
+          },
+          {
+            "name": "LECHE ENTERA 6 PZA. 1 LT.",
+            "um": "PZA",
+            "unit_price": 132.50
+          },
+          {
+            "name": "LECHE EVAPORADA CARNATION PAQ. DE 4 PZA. DE 944.3 ML.",
+            "um": "PZA",
+            "unit_price": 187.48
+          },
+          {
+            "name": "LECHERA 8 PZA.",
+            "um": "PZA",
+            "unit_price": 168.81
+          },
+          {
+            "name": "MAEPLOY SWEET CHILI SAUCE 4 KG",
+            "um": "PZA",
+            "unit_price": 593.25
+          },
+          {
+            "name": "MAIZ PONIZTBLAN1",
+            "um": "KG",
+            "unit_price": 20.00
+          },
+          {
+            "name": "MASECA 1 KG.",
+            "um": "KG",
+            "unit_price": 19.50
+          },
+          {
+            "name": "MAYONESA WILSEY 3.78LT",
+            "um": "PZA",
+            "unit_price": 208.93
+          },
+          {
+            "name": "MIEL DE ABEJA",
+            "um": "KG",
+            "unit_price": 55.00
+          },
+          {
+            "name": "MIEL PARA BEBE KARO",
+            "um": "PZA",
+            "unit_price": 42.50
+          },
+          {
+            "name": "MIX DE BERRIES MEMBERS MARK BOLSA DE 1.36 KG.",
+            "um": "PZA",
+            "unit_price": 179.02
+          },
+          {
+            "name": "MOSTAZA DIJON MAILLE 865GR",
+            "um": "PZA",
+            "unit_price": 120.86
+          },
+          {
+            "name": "NUEZ GARAPIÑADA POR KILO",
+            "um": "KG",
+            "unit_price": 240.00
+          },
+          {
+            "name": "NUEZ GRANILLO FINO",
+            "um": "PZA",
+            "unit_price": 200.00
+          },
+          {
+            "name": "NUEZ PEDAZO CHICO POR KILO",
+            "um": "PZA",
+            "unit_price": 279.92
+          },
+          {
+            "name": "ORGANIC MISO 375GR",
+            "um": "PZA",
+            "unit_price": 164.85
+          },
+          {
+            "name": "PAPEL DE ARROZ CUADRADO 340 GR.",
+            "um": "PZA",
+            "unit_price": 83.13
+          },
+          {
+            "name": "PASTA DE TOMATE MEMBERS MARK 3 KG",
+            "um": "PZA",
+            "unit_price": 158.56
+          },
+          {
+            "name": "PASTA YEMINA 200",
+            "um": "PZA",
+            "unit_price": 8.00
+          },
+          {
+            "name": "PEKKING EGG ROLL SKIN 907GR",
+            "um": "PZA",
+            "unit_price": 116.93
+          },
+          {
+            "name": "PEPINILLOS 3.94 KG.",
+            "um": "PZA",
+            "unit_price": 97.18
+          },
+          {
+            "name": "PIMIENTA GORDA",
+            "um": "PZA",
+            "unit_price": 60.00
+          },
+          {
+            "name": "PIMIENTA NEGRA MEMBERS MARK 545 GR",
+            "um": "PZA",
+            "unit_price": 236.82
+          },
+          {
+            "name": "PIMIENTO ROJO QUEBRADO",
+            "um": "PZA",
+            "unit_price": 150.38
+          },
+          {
+            "name": "PLATANO TIRAS",
+            "um": "PZA",
+            "unit_price": 20.00
+          },
+          {
+            "name": "QUINOA ORGANICA 1.2 KG.",
+            "um": "PZA",
+            "unit_price": 146.28
+          },
+          {
+            "name": "SAL BAHIA DE MESA",
+            "um": "PZA",
+            "unit_price": 11.80
+          },
+          {
+            "name": "SAZONADOR MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 233.14
+          },
+          {
+            "name": "SPAGHETTI BARILLA 500GR",
+            "um": "PZA",
+            "unit_price": 25.57
+          },
+          {
+            "name": "THREE LADIES PAPEL DE ARROZ REDONDO PAQ. DE 340 GR.",
+            "um": "PZA",
+            "unit_price": 76.74
+          },
+          {
+            "name": "VINAGRE BALSAMICO BERTOLLI 1 LT",
+            "um": "PZA",
+            "unit_price": 99.23
+          },
+          {
+            "name": "VINAGRE MEMBERS MARK 6 LT.",
+            "um": "PZA",
+            "unit_price": 60.36
+          },
+          {
+            "name": "VINO BLANCO DON SIMON AIREN 750ML",
+            "um": "PZA",
+            "unit_price": 70.58
+          }
+        ]
+      },
+      {
+        "name": "Convoy",
+        "builtin": 1,
+        "key_prefix":  "1002",
+        "ingredients": [
+          {
+            "name": "AZUCAR MASCABADO SOBRE",
+            "um": "PZA",
+            "unit_price": 25.09
+          },
+          {
+            "name": "CATSUP HEINZ CAJA CON 200PZ DE 9GR",
+            "um": "PZA",
+            "unit_price": 95.53
+          },
+          {
+            "name": "ENDULCOLORANTE CON STEVIA CAJA CON 400 SOBRES DE 1 GR.",
+            "um": "PZA",
+            "unit_price": 131.97
+          },
+          {
+            "name": "JUGO SAZONADOR MAGGI PAQ. DE 6 PZA. DE 100 ML.",
+            "um": "PZA",
+            "unit_price": 184.14
+          },
+          {
+            "name": "SALSA CATSUP HEINZ CAJA CON 200 SOBRES DE 9 GR.",
+            "um": "PZA",
+            "unit_price": 115.59
+          },
+          {
+            "name": "SALSA INGLESA CROSSE & BLACKWELL 6 PZA. DE 145 ML.",
+            "um": "PZA",
+            "unit_price": 179.02
+          },
+          {
+            "name": "SALSA TABASCO 4PZ DE 60 ML",
+            "um": "PZA",
+            "unit_price": 145.98
+          },
+          {
+            "name": "SUSTITUTO DE CREMA COFFEE MATE NESTLE CAJA CON 200 SOBRES DE 4 GR.",
+            "um": "PZA",
+            "unit_price": 163.68
+          }
+        ]
+      },
+      {
+        "name": "Lácteos y Embutidos",
+        "builtin": 1,
+        "key_prefix":  "1003",
+        "ingredients": [
+          {
+            "name": "ASIENTO DE CERDO",
+            "um": "KG",
+            "unit_price": 140.00
+          },
+          {
+            "name": "CHICHARRON PRENSADO",
+            "um": "KG",
+            "unit_price": 260.00
+          },
+          {
+            "name": "CHISTORRA PARMA 800 GR.",
+            "um": "PZA",
+            "unit_price": 142.20
+          },
+          {
+            "name": "CHORIZO GOLIZ",
+            "um": "KG",
+            "unit_price": 120.00
+          },
+          {
+            "name": "CHORIZO QUELITE",
+            "um": "KG",
+            "unit_price": 120.00
+          },
+          {
+            "name": "CREMA FRESCA",
+            "um": "PZA",
+            "unit_price": 33.00
+          },
+          {
+            "name": "CREMA LYNCOTT 2PZ DE 980ML",
+            "um": "PZA",
+            "unit_price": 179.00
+          },
+          {
+            "name": "CREMA TOP VAINILLA 1LT",
+            "um": "PZA",
+            "unit_price": 150.00
+          },
+          {
+            "name": "CREMA TOP VAINILLA 2LT",
+            "um": "PZA",
+            "unit_price": 150.00
+          },
+          {
+            "name": "CREMA TOP VAINILLA CAJA CON 10PZ DE 1 LT",
+            "um": "PZA",
+            "unit_price": 800.00
+          },
+          {
+            "name": "CREMA TOP VAINILLA CAJA CON 8PZ DE 1 LT",
+            "um": "PZA",
+            "unit_price": 520.00
+          },
+          {
+            "name": "CUBETA DE CREMA LALA DE 3.92 KG.",
+            "um": "PZA",
+            "unit_price": 214.00
+          },
+          {
+            "name": "JAMON DE PAVO VIRGINIA FUD 450 GR.",
+            "um": "PZA",
+            "unit_price": 71.50
+          },
+          {
+            "name": "JAMON PECHUGA DE PAVO FUD",
+            "um": "PZA",
+            "unit_price": 240.00
+          },
+          {
+            "name": "JAMON SERRANO MEMBERS MARK EMPAQUE DE 1 KG.",
+            "um": "PZA",
+            "unit_price": 531.59
+          },
+          {
+            "name": "JAMON YORK PIAMONT 1 KG.",
+            "um": "PZA",
+            "unit_price": 160.00
+          },
+          {
+            "name": "MANTEQUILLA CHILCHOTA",
+            "um": "PZA",
+            "unit_price": 15.90
+          },
+          {
+            "name": "MANTEQUILLA SERRANA 1 KG.",
+            "um": "PZA",
+            "unit_price": 120.00
+          },
+          {
+            "name": "MEDIA CREMA LALA",
+            "um": "PZA",
+            "unit_price": 11.50
+          },
+          {
+            "name": "MEDIA CREMA NESTLE 4PZ. DE 1 LT.",
+            "um": "PZA",
+            "unit_price": 209.71
+          },
+          {
+            "name": "PAQ. JAMON YORK",
+            "um": "PZA",
+            "unit_price": 160.00
+          },
+          {
+            "name": "PAQ. SALCHICHA PARA ASAR",
+            "um": "KG",
+            "unit_price": 85.00
+          },
+          {
+            "name": "PAQUETE DE SALCHICHA JUMBO PIAMONT",
+            "um": "PZA",
+            "unit_price": 130.00
+          },
+          {
+            "name": "PAQUETE PEPPERONI",
+            "um": "PZA",
+            "unit_price": 180.00
+          },
+          {
+            "name": "PECHUGA DE PAVO AHUMADA TANGAMANGA 900GR",
+            "um": "PZA",
+            "unit_price": 428.63
+          },
+          {
+            "name": "PEPPERONI 2K",
+            "um": "PZA",
+            "unit_price": 190.42
+          },
+          {
+            "name": "PEPPERONI GREAT FOR CHEF 2 PAQ. DE 1 KG.",
+            "um": "PZA",
+            "unit_price": 224.03
+          },
+          {
+            "name": "PIEZA DE QUESO FRESCO",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "PIEZA DE QUESO PANELA INDIVIDUAL",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "QUESO CHEDDAR PARA NACHO 3.03 KG",
+            "um": "PZA",
+            "unit_price": 217.89
+          },
+          {
+            "name": "QUESO CHEDDAR SARGENTO SUAVE 907 KG",
+            "um": "PZA",
+            "unit_price": 275.18
+          },
+          {
+            "name": "QUESO CHIHUAHUA SELECTO POR KILO",
+            "um": "KG",
+            "unit_price": 146.00
+          },
+          {
+            "name": "QUESO DE CABRA NATURAL LE FROMAGE 500GR",
+            "um": "PZA",
+            "unit_price": 142.20
+          },
+          {
+            "name": "QUESO EDAM BABY KROON 870GR",
+            "um": "PZA",
+            "unit_price": 275.18
+          },
+          {
+            "name": "QUESO MAASDAM HOLLAND KROON EMPAQUE DE 800 GR.",
+            "um": "PZA",
+            "unit_price": 291.55
+          },
+          {
+            "name": "QUESO OAXACA",
+            "um": "KG",
+            "unit_price": 300.00
+          },
+          {
+            "name": "QUESO PANELA GRANDE",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "QUESO PANELA POR KILO",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "QUESO PHILADELPHIA 1.9K",
+            "um": "PZA",
+            "unit_price": 320.00
+          },
+          {
+            "name": "QUESO PROVOLONE AHUMADO PROVENZAL 900GR",
+            "um": "PZA",
+            "unit_price": 263.44
+          },
+          {
+            "name": "QUESO REGIANITO CANAPROLE TIPO PARMESANO 850GR",
+            "um": "PZA",
+            "unit_price": 275.19
+          },
+          {
+            "name": "SALAMI ESTILO MILANO DANIELE 340GR",
+            "um": "PZA",
+            "unit_price": 203.57
+          },
+          {
+            "name": "SALCHICHA PARA ASAR",
+            "um": "PZA",
+            "unit_price": 68.50
+          },
+          {
+            "name": "SALCHICHA PLENIA 340 GR",
+            "um": "PZA",
+            "unit_price": 32.90
+          },
+          {
+            "name": "TOCINO ROSARENSE PAQUETE DE 1 KG.",
+            "um": "PZA",
+            "unit_price": 120.00
+          },
+          {
+            "name": "YOGURT GRIEGO",
+            "um": "PZA",
+            "unit_price": 30.00
+          },
+          {
+            "name": "YOGURT GRIEGO YOPLAIT VASO DE 442 ML.",
+            "um": "PZA",
+            "unit_price": 48.00
+          },
+          {
+            "name": "YOGURT NATURAL 1 LT.",
+            "um": "PZA",
+            "unit_price": 48.00
+          }
+        ]
+      },
+      {
+        "name": "Pescados y mariscos",
+        "builtin": 1,
+        "key_prefix":  "1004",
+        "ingredients": [
+          {
+            "name": "CAMARON 21/25",
+            "um": "KG",
+            "unit_price": 240.00
+          },
+          {
+            "name": "MARLIN",
+            "um": "KG",
+            "unit_price": 190.00
+          },
+          {
+            "name": "MEDALLON DE ATUN",
+            "um": "KG",
+            "unit_price": 200.00
+          },
+          {
+            "name": "SALMON FILETE",
+            "um": "KG",
+            "unit_price": 350.00
+          },
+          {
+            "name": "TILAPIA 3/5",
+            "um": "KG",
+            "unit_price": 78.00
+          }
+        ]
+      },
+      {
+        "name": "Cárnicos y Aves",
+        "builtin": 1,
+        "key_prefix":  "1005",
+        "ingredients": [
+          {
+            "name": "ARRACHERA",
+            "um": "KG",
+            "unit_price": 220.00
+          },
+          {
+            "name": "CARNE MOLIDA DE RES",
+            "um": "KG",
+            "unit_price": 190.00
+          },
+          {
+            "name": "COSTILLA DE PUERCO",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "FILETE DE RES",
+            "um": "KG",
+            "unit_price": 320.00
+          },
+          {
+            "name": "MACHACA",
+            "um": "KG",
+            "unit_price": 320.00
+          },
+          {
+            "name": "MILANESA DE RES",
+            "um": "KG",
+            "unit_price": 190.00
+          },
+          {
+            "name": "PECHUGA DE POLLO",
+            "um": "KG",
+            "unit_price": 125.00
+          },
+          {
+            "name": "PECHUGA DE POLLO CON ALA",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "PIERNA DE PUERCO",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "POLLO ENTERO",
+            "um": "KG",
+            "unit_price": 68.00
+          },
+          {
+            "name": "RIB EYE",
+            "um": "KG",
+            "unit_price": 270.00
+          }
+        ]
+      },
+      {
+        "name": "Postres y Panadería",
+        "builtin": 1,
+        "key_prefix":  "1006",
+        "ingredients": [
+          {
+            "name": "ALMENDRAS FILETEADAS",
+            "um": "KG",
+            "unit_price": 290.00
+          },
+          {
+            "name": "AZUCAR ESTANDAR POSADA BOLSA DE 2 K",
+            "um": "PZA",
+            "unit_price": 48.00
+          },
+          {
+            "name": "AZUCAR ESTANDAR SACO DE 50 KG",
+            "um": "PZA",
+            "unit_price": 1093.00
+          },
+          {
+            "name": "AZUCAR GLASS MITLA 1 KG.",
+            "um": "KG",
+            "unit_price": 38.00
+          },
+          {
+            "name": "AZUCAR GLASS MITLA BOLSA DE 5 KG",
+            "um": "PZA",
+            "unit_price": 142.00
+          },
+          {
+            "name": "AZUCAR REFINADA SACO 50 KG",
+            "um": "PZA",
+            "unit_price": 1220.00
+          },
+          {
+            "name": "BRILLO CHABACANO CHANTILLY KG",
+            "um": "PZA",
+            "unit_price": 57.00
+          },
+          {
+            "name": "CHISPAS DE CHOCOLATE GRANILLO",
+            "um": "KG",
+            "unit_price": 165.00
+          },
+          {
+            "name": "CHOCOLATE CONFITIER SEMIAMARGO POR KILO",
+            "um": "KG",
+            "unit_price": 249.01
+          },
+          {
+            "name": "CHOCOLATE M&M",
+            "um": "PZA",
+            "unit_price": 273.80
+          },
+          {
+            "name": "COCOA HERSHEY 1 KG",
+            "um": "PZA",
+            "unit_price": 270.00
+          },
+          {
+            "name": "COCOA HERSHEY POR KILO",
+            "um": "KG",
+            "unit_price": 270.00
+          },
+          {
+            "name": "CREMA TOP VAINILLA CAJA CON 10 LT.",
+            "um": "PZA",
+            "unit_price": 800.00
+          },
+          {
+            "name": "DESMOLDANTE DEMOLPAN 1L",
+            "um": "PZA",
+            "unit_price": 74.99
+          },
+          {
+            "name": "ESCENCIA DEIMAN AZAHAR 120ML",
+            "um": "PZA",
+            "unit_price": 37.01
+          },
+          {
+            "name": "GLUCOSA POR KILO",
+            "um": "KG",
+            "unit_price": 35.00
+          },
+          {
+            "name": "HARINA CENTENO IMPORTADA KG",
+            "um": "PZA",
+            "unit_price": 75.00
+          },
+          {
+            "name": "HARINA GUADALUPE OPTIMA SACO DE 44 KG.",
+            "um": "KG",
+            "unit_price": 19.32
+          },
+          {
+            "name": "LEVADURA MAGIDELY .450 GR.",
+            "um": "PZA",
+            "unit_price": 58.00
+          },
+          {
+            "name": "MANTECA RANCHERA PAQ. 1 KG.",
+            "um": "PZA",
+            "unit_price": 77.00
+          },
+          {
+            "name": "MINI KISS BLANCO",
+            "um": "PZA",
+            "unit_price": 130.30
+          },
+          {
+            "name": "NIEVE DE VAINILA HELARTESANO BOTE DE 5 LT.",
+            "um": "PZA",
+            "unit_price": 550.00
+          },
+          {
+            "name": "NUEZ GRANILLO FINO",
+            "um": "PZA",
+            "unit_price": 200.00
+          },
+          {
+            "name": "NUEZ INDIA MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 377.49
+          },
+          {
+            "name": "NUEZ MOSCADA EN POLVO",
+            "um": "KG",
+            "unit_price": 835.00
+          },
+          {
+            "name": "NUEZ PECANA",
+            "um": "PZA",
+            "unit_price": 305.88
+          },
+          {
+            "name": "NUEZ PEDAZO GRANDE POR KILO",
+            "um": "KG",
+            "unit_price": 250.00
+          },
+          {
+            "name": "PASTEL DE VAINILLA",
+            "um": "PZA",
+            "unit_price": 400.00
+          },
+          {
+            "name": "PISTACHES SALADOS",
+            "um": "PZA",
+            "unit_price": 263.93
+          },
+          {
+            "name": "RELLENO CAJETA FAMESA MANGA",
+            "um": "KG",
+            "unit_price": 85.01
+          },
+          {
+            "name": "TARTA DE CHOCOCARAMELO",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "TARTA DE MARACUYA",
+            "um": "PZA",
+            "unit_price": 35.00
+          },
+          {
+            "name": "TARTA DE MOCHA",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "TARTA DE NUEZ",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "TARTA DE PLATANO",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "TARTA DE QUESO Y FRESA",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "TARTA DE TIRAMISU",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "VAINILLA TROPICAL CLARA LITRO",
+            "um": "PZA",
+            "unit_price": 44.00
+          }
+        ]
+      },
+      {
+        "name": "Frutas y Verduras",
+        "builtin": 1,
+        "key_prefix":  "1007",
+        "ingredients": [
+          {
+            "name": "AGUACATE HASS KG",
+            "um": "KG",
+            "unit_price": 49.00
+          },
+          {
+            "name": "AJO PELADO KG",
+            "um": "KG",
+            "unit_price": 155.00
+          },
+          {
+            "name": "AJONJOLI NEGRO KG",
+            "um": "KG",
+            "unit_price": 110.00
+          },
+          {
+            "name": "ALBAHACA MAZO",
+            "um": "MAZO",
+            "unit_price": 165.00
+          },
+          {
+            "name": "APIO KG",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "ARANDANO KG",
+            "um": "KG",
+            "unit_price": 170.00
+          },
+          {
+            "name": "ARPILLA DE LIMON PERSA 15KG",
+            "um": "PZA",
+            "unit_price": 300.00
+          },
+          {
+            "name": "ARUGULA KG",
+            "um": "KG",
+            "unit_price": 135.00
+          },
+          {
+            "name": "BETABEL KG",
+            "um": "KG",
+            "unit_price": 90.00
+          },
+          {
+            "name": "BROCOLI KG",
+            "um": "KG",
+            "unit_price": 35.00
+          },
+          {
+            "name": "BLUEBERRIES CAJA  ___ GR",
+            "um": "KG",
+            "unit_price": 60.00
+          },
+          {
+            "name": "CALABAZA DE ARBOL",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "CEBOLLA BLANCA",
+            "um": "KG",
+            "unit_price": 32.00
+          },
+          {
+            "name": "CEBOLLA MORADA",
+            "um": "KG",
+            "unit_price": 36.00
+          },
+          {
+            "name": "CEBOLLITA CAMBRAY",
+            "um": "KG",
+            "unit_price": 7.90
+          },
+          {
+            "name": "CEHILE MORRON ROJO",
+            "um": "KG",
+            "unit_price": 75.00
+          },
+          {
+            "name": "CHAMPIÑON PORTOBELLO",
+            "um": "PZA",
+            "unit_price": 130.00
+          },
+          {
+            "name": "CHAMPIÑONES",
+            "um": "KG",
+            "unit_price": 115.00
+          },
+          {
+            "name": "CHICHAROS",
+            "um": "KG",
+            "unit_price": 9.00
+          },
+          {
+            "name": "CHILE ANCHO",
+            "um": "KG",
+            "unit_price": 125.00
+          },
+          {
+            "name": "CHILE DE ARBOL",
+            "um": "KG",
+            "unit_price": 160.00
+          },
+          {
+            "name": "CHILE GUAJILLO",
+            "um": "KG",
+            "unit_price": 140.00
+          },
+          {
+            "name": "CHILE GÜERO",
+            "um": "KG",
+            "unit_price": 50.00
+          },
+          {
+            "name": "CHILE HABANERO",
+            "um": "KG",
+            "unit_price": 150.00
+          },
+          {
+            "name": "CHILE JALAPEÑO",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "CHILE MORRON  VERDE",
+            "um": "KG",
+            "unit_price": 55.00
+          },
+          {
+            "name": "CHILE MORRON AMARILLO",
+            "um": "KG",
+            "unit_price": 75.00
+          },
+          {
+            "name": "CHILE MORRON VERDE",
+            "um": "KG",
+            "unit_price": 55.00
+          },
+          {
+            "name": "CHILE POBLANO",
+            "um": "KG",
+            "unit_price": 32.00
+          },
+          {
+            "name": "CHILE POBLANO",
+            "um": "KG",
+            "unit_price": 32.00
+          },
+          {
+            "name": "CHILE SERRANO",
+            "um": "KG",
+            "unit_price": 42.00
+          },
+          {
+            "name": "CILANTRO EN MAZO",
+            "um": "PZA",
+            "unit_price": 10.00
+          },
+          {
+            "name": "COCO RALLADO",
+            "um": "KG",
+            "unit_price": 100.00
+          },
+          {
+            "name": "COLIFLOR",
+            "um": "KG",
+            "unit_price": 35.00
+          },
+          {
+            "name": "DATIL",
+            "um": "KG",
+            "unit_price": 130.00
+          },
+          {
+            "name": "DURAZNO AMERICANO",
+            "um": "KG",
+            "unit_price": 115.00
+          },
+          {
+            "name": "DURAZNOS SAN LUIS",
+            "um": "KG",
+            "unit_price": 70.00
+          },
+          {
+            "name": "EJOTE",
+            "um": "KG",
+            "unit_price": 44.00
+          },
+          {
+            "name": "ELOTE",
+            "um": "KG",
+            "unit_price": 6.00
+          },
+          {
+            "name": "EPAZOTE",
+            "um": "KG",
+            "unit_price": 25.00
+          },
+          {
+            "name": "ESPARRAGO",
+            "um": "KG",
+            "unit_price": 180.00
+          },
+          {
+            "name": "ESPINACA",
+            "um": "KG",
+            "unit_price": 50.00
+          },
+          {
+            "name": "FRESA EN CANASTA",
+            "um": "KG",
+            "unit_price": 95.00
+          },
+          {
+            "name": "GUAYABA",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "HINOJO EN MAZO",
+            "um": "PZA",
+            "unit_price": 175.00
+          },
+          {
+            "name": "HOJAS DE PLATANO",
+            "um": "KG",
+            "unit_price": 60.00
+          },
+          {
+            "name": "JAMAICA",
+            "um": "KG",
+            "unit_price": 220.00
+          },
+          {
+            "name": "JENGIBRE",
+            "um": "KG",
+            "unit_price": 135.00
+          },
+          {
+            "name": "JICAMA",
+            "um": "KG",
+            "unit_price": 26.00
+          },
+          {
+            "name": "KIWI",
+            "um": "KG",
+            "unit_price": 99.00
+          },
+          {
+            "name": "LECHUGA ITALIANA",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "LECHUGA OREJONA",
+            "um": "KG",
+            "unit_price": 23.00
+          },
+          {
+            "name": "LECHUGA SANGRIA",
+            "um": "KG",
+            "unit_price": 38.00
+          },
+          {
+            "name": "LIMON",
+            "um": "KG",
+            "unit_price": 25.00
+          },
+          {
+            "name": "LIMON EUREKA",
+            "um": "KG",
+            "unit_price": 23.50
+          },
+          {
+            "name": "LIMON EUREKA",
+            "um": "KG",
+            "unit_price": 52.00
+          },
+          {
+            "name": "MANGO HEIDI",
+            "um": "KG",
+            "unit_price": 9.00
+          },
+          {
+            "name": "MANZANA VERDE GRANNY",
+            "um": "KG",
+            "unit_price": 65.00
+          },
+          {
+            "name": "MELON",
+            "um": "KG",
+            "unit_price": 32.00
+          },
+          {
+            "name": "NARANJA",
+            "um": "KG",
+            "unit_price": 20.00
+          },
+          {
+            "name": "PAPA CAMBRAY",
+            "um": "KG",
+            "unit_price": 33.00
+          },
+          {
+            "name": "PAPA PRIMERA",
+            "um": "KG",
+            "unit_price": 25.00
+          },
+          {
+            "name": "PAPAYA EXPORTACION",
+            "um": "KG",
+            "unit_price": 24.00
+          },
+          {
+            "name": "PEPINO CRIOLLO",
+            "um": "KG",
+            "unit_price": 28.00
+          },
+          {
+            "name": "PEREJIL CHINO MAZO",
+            "um": "KG",
+            "unit_price": 28.00
+          },
+          {
+            "name": "PEREJIL LACIO MAZO",
+            "um": "KG",
+            "unit_price": 25.00
+          },
+          {
+            "name": "PIÑA MIEL",
+            "um": "KG",
+            "unit_price": 40.00
+          },
+          {
+            "name": "PLATANO PORTALIMON",
+            "um": "KG",
+            "unit_price": 16.00
+          },
+          {
+            "name": "RABANO",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "REPOLLO MORADO",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "REPOLLO MORADO",
+            "um": "KG",
+            "unit_price": 50.00
+          },
+          {
+            "name": "ROMERO",
+            "um": "KG",
+            "unit_price": 70.00
+          },
+          {
+            "name": "TOMATE BULE",
+            "um": "KG",
+            "unit_price": 27.50
+          },
+          {
+            "name": "TOMATE CHERRY",
+            "um": "KG",
+            "unit_price": 35.00
+          },
+          {
+            "name": "TOMATE PERON",
+            "um": "KG",
+            "unit_price": 36.00
+          },
+          {
+            "name": "TOMATILLO",
+            "um": "KG",
+            "unit_price": 33.50
+          },
+          {
+            "name": "TOMILLO FRESCO",
+            "um": "KG",
+            "unit_price": 60.00
+          },
+          {
+            "name": "TORONJA",
+            "um": "KG",
+            "unit_price": 35.00
+          },
+          {
+            "name": "UVA VERDE",
+            "um": "KG",
+            "unit_price": 80.00
+          },
+          {
+            "name": "VERDOLAGA EN MAZO",
+            "um": "KG",
+            "unit_price": 105.00
+          },
+          {
+            "name": "YERBABUENA",
+            "um": "KG",
+            "unit_price": 30.00
+          },
+          {
+            "name": "ZANAHORIA",
+            "um": "KG",
+            "unit_price": 12.00
+          },
+          {
+            "name": "ZARZAMORA EN CAJA",
+            "um": "KG",
+            "unit_price": 48.00
+          }
+        ]
+      },
+      {
+        "name": "Alimentos Procesados",
+        "builtin": 1,
+        "key_prefix":  "1008"
+      }
+    ]
   },
   {
-    "name": "VERDURAS",
-    "builtin":  1
+    "name": "Bebidas",
+    "color": "#A3C1E3",
+    "categories": [
+      {
+        "name": "Cerveza",
+        "builtin": 1,
+        "key_prefix":  "1009",
+        "ingredients": [
+          {
+            "name": "CERVEZA CORONA EXTRA CLARA BOTELLA DE 355 ML.",
+            "um": "PZA",
+            "unit_price": 15.50
+          },
+          {
+            "name": "CERVEZA MICHE LOB ULTRA BOTELLA 355 ML",
+            "um": "PZA",
+            "unit_price": 17.00
+          },
+          {
+            "name": "CERVEZA MODELO ESPECIAL BOTELLA 355 ML",
+            "um": "PZA",
+            "unit_price": 17.00
+          },
+          {
+            "name": "CERVEZA NEGRA MODELO BOTELLA 355 ML",
+            "um": "PZA",
+            "unit_price": 17.00
+          },
+          {
+            "name": "CERVEZA PACIFICO AMARILLA BOTELLA DE 355 ML.",
+            "um": "PZA",
+            "unit_price": 14.50
+          },
+          {
+            "name": "CERVEZA PACIFICO AMARILLA SUAVE BOTELLA 355 ML",
+            "um": "PZA",
+            "unit_price": 15.50
+          },
+          {
+            "name": "IPA TRES ISLAS",
+            "um": "LT",
+            "unit_price": 85.00
+          },
+          {
+            "name": "SCOTTISH TRES ISLAS",
+            "um": "LT",
+            "unit_price": 80.00
+          }
+        ]
+      },
+      {
+        "name": "Vinos y Licores",
+        "builtin": 1,
+        "key_prefix":  "1010",
+        "ingredients": [
+          {
+            "name": "ASTI 750 ML.",
+            "um": "PZA",
+            "unit_price": 162.65
+          },
+          {
+            "name": "GINEBRA TANQUERAY 750ML",
+            "um": "PZA",
+            "unit_price": 400.00
+          },
+          {
+            "name": "LICOR 43 1LT",
+            "um": "PZA",
+            "unit_price": 510.00
+          },
+          {
+            "name": "LICOR APEROL 700 ML.",
+            "um": "PZA",
+            "unit_price": 310.00
+          },
+          {
+            "name": "MEZCAL CASA ANALCO",
+            "um": "PZA",
+            "unit_price": 200.00
+          },
+          {
+            "name": "MEZCAL RECUERDO DE OAXACA BLANCO 750ML",
+            "um": "PZA",
+            "unit_price": 390.00
+          },
+          {
+            "name": "RON APPLETON ESTATE RESERVE 8Y 750 ML.",
+            "um": "PZA",
+            "unit_price": 440.00
+          },
+          {
+            "name": "RON BACARDI BLANCO 1.75 LT.",
+            "um": "PZA",
+            "unit_price": 360.00
+          },
+          {
+            "name": "RON BACARDI BLANCO 175ML",
+            "um": "PZA",
+            "unit_price": 360.00
+          },
+          {
+            "name": "RON BACARDI BLANCO 980 ML.",
+            "um": "PZA",
+            "unit_price": 205.00
+          },
+          {
+            "name": "RON HAVANA CLUB AÑEJO 3 AÑOS 750 ML.",
+            "um": "PZA",
+            "unit_price": 175.00
+          },
+          {
+            "name": "TEQUILA CUERVO ESPECIAL REPOSADO 990 ML.",
+            "um": "PZA",
+            "unit_price": 239.00
+          },
+          {
+            "name": "VERDI ESPUMOSO 750 ML.",
+            "um": "PZA",
+            "unit_price": 131.95
+          },
+          {
+            "name": "VINO TINTO GIACOBAZZI 6PZ DE 750ML",
+            "um": "PZA",
+            "unit_price": 387.72
+          },
+          {
+            "name": "VODKA KARAT 1.75 LT.",
+            "um": "PZA",
+            "unit_price": 210.00
+          },
+          {
+            "name": "WHISKY BULLEIT BOURBON 750ML",
+            "um": "PZA",
+            "unit_price": 620.00
+          },
+          {
+            "name": "WHISKY CHIVAS REGAL 12 AÑOS 750ML",
+            "um": "PZA",
+            "unit_price": 620.00
+          },
+          {
+            "name": "WHISKY JIM BEAN WHITE 700ML",
+            "um": "PZA",
+            "unit_price": 305.00
+          },
+          {
+            "name": "WOODBRIDGE CABERNET SAUVIGNON 750ML",
+            "um": "PZA",
+            "unit_price": 225.00
+          },
+          {
+            "name": "WOODBRIDGE MERLOT 750ML",
+            "um": "PZA",
+            "unit_price": 225.00
+          },
+          {
+            "name": "WOODBRIDGE SAUVIGNON BLANC BOTELLA DE 750 ML.",
+            "um": "PZA",
+            "unit_price": 230.00
+          },
+          {
+            "name": "WOODBRIDGE WHITE ZINFANDEL 750ML",
+            "um": "PZA",
+            "unit_price": 225.00
+          }
+        ]
+      },
+      {
+        "name": "Jugos y Mezcladores",
+        "builtin": 1,
+        "key_prefix":  "1011",
+        "ingredients": [
+          {
+            "name": "AGUA QUINA SCHWEPPES CAJA DE 12 PZA. DE 296 ML.",
+            "um": "PZA",
+            "unit_price": 114.58
+          },
+          {
+            "name": "BASE EN POLVO CHAI TIGRE DAVID RIO BOTE 1.814 KG",
+            "um": "PZA",
+            "unit_price": 700.14
+          },
+          {
+            "name": "BASE EN POLVO CRISTAL CHILLOUT BOTE DE 2.5 KG.",
+            "um": "PZA",
+            "unit_price": 411.87
+          },
+          {
+            "name": "BASE EN POLVO MATCHA LATTE MOCAFE BOLSA 1.36 KG",
+            "um": "PZA",
+            "unit_price": 536.07
+          },
+          {
+            "name": "BASE EN POLVO MAZAPAN CHILLOUT MIX BOTE 2 KG",
+            "um": "PZA",
+            "unit_price": 442.49
+          },
+          {
+            "name": "BASE EN POLVO NEUTRA CHILLOUT BOTE DE 2 KG.",
+            "um": "PZA",
+            "unit_price": 387.50
+          },
+          {
+            "name": "BASE EN POLVO NEUTRA CHILLOUT MIX BOTE 2 KG",
+            "um": "PZA",
+            "unit_price": 387.50
+          },
+          {
+            "name": "BASE EN POLVO SABOR YOGUR CHILLOUT BOTE DE 2 KG.",
+            "um": "PZA",
+            "unit_price": 415.50
+          },
+          {
+            "name": "BASE EN POLVO TARO CHILLOUT MIX BOTE 2 KG",
+            "um": "PZA",
+            "unit_price": 527.49
+          },
+          {
+            "name": "BOLSA DE HIELO DE CUBO 20 KG",
+            "um": "PZA",
+            "unit_price": 45.00
+          },
+          {
+            "name": "BOLSA DE SUAVES",
+            "um": "PZA",
+            "unit_price": 24.00
+          },
+          {
+            "name": "BOMBOMES MINI DRUMS BOLSA DE 340 GR",
+            "um": "PZA",
+            "unit_price": 34.99
+          },
+          {
+            "name": "BOMBONES",
+            "um": "PZA",
+            "unit_price": 35.00
+          },
+          {
+            "name": "CALPITOYO 1 LT",
+            "um": "PZA",
+            "unit_price": 90.30
+          },
+          {
+            "name": "CEREZAS MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 234.26
+          },
+          {
+            "name": "CHAI TIGRE DAVID RIO BOTE DE 1.814 KG.",
+            "um": "PZA",
+            "unit_price": 700.14
+          },
+          {
+            "name": "CHOCOMILK GRIKOS",
+            "um": "KG",
+            "unit_price": 95.00
+          },
+          {
+            "name": "CHOCORETAS",
+            "um": "PZA",
+            "unit_price": 20.00
+          },
+          {
+            "name": "CLAMATO 2PZ/2.54L",
+            "um": "PZA",
+            "unit_price": 153.46
+          },
+          {
+            "name": "COCO RALLADO FINO POR KILO",
+            "um": "KG",
+            "unit_price": 84.00
+          },
+          {
+            "name": "COCOA HERSHEY POR KILO",
+            "um": "KG",
+            "unit_price": 270.00
+          },
+          {
+            "name": "COCOA HERSHEY SACO 5K",
+            "um": "PZA",
+            "unit_price": 1425.00
+          },
+          {
+            "name": "COLORANTE RAFMEX LILA DE 60 GR",
+            "um": "PZA",
+            "unit_price": 45.99
+          },
+          {
+            "name": "COLORANTE RAFMEX ROSA DE 60 GR",
+            "um": "PZA",
+            "unit_price": 45.99
+          },
+          {
+            "name": "CONCENTRADO DE HORCHATA DEL SOL 2L",
+            "um": "PZA",
+            "unit_price": 77.60
+          },
+          {
+            "name": "CONCENTRADO DE HORCHATA DEL SOL 5L",
+            "um": "PZA",
+            "unit_price": 280.57
+          },
+          {
+            "name": "JARABE DE AGAVE TIA OFILIA 660 GR.",
+            "um": "PZA",
+            "unit_price": 53.00
+          },
+          {
+            "name": "JARABE TORANI SABOR ALMENDRA DE 750 ML.",
+            "um": "PZA",
+            "unit_price": 199.98
+          },
+          {
+            "name": "JARABE TORANI SABOR CREMA DE MENTA DE 750 ML.",
+            "um": "PZA",
+            "unit_price": 199.98
+          },
+          {
+            "name": "JARABE TORANI SABOR ROSAS DE 750 ML.",
+            "um": "PZA",
+            "unit_price": 199.98
+          },
+          {
+            "name": "JARABE TORANI SABOR VAINILLA FRANCESA DE 750 ML.",
+            "um": "PZA",
+            "unit_price": 199.98
+          },
+          {
+            "name": "PERLAS DE TAPIOCA BOLSA DE 2.7 KG.",
+            "um": "PZA",
+            "unit_price": 231.00
+          },
+          {
+            "name": "PILONCILLO",
+            "um": "KG",
+            "unit_price": 40.00
+          },
+          {
+            "name": "PIÑA COLADA",
+            "um": "PZA",
+            "unit_price": 299.51
+          },
+          {
+            "name": "PULPA DE MANGO BOTE 1.8 KG",
+            "um": "PZA",
+            "unit_price": 140.00
+          },
+          {
+            "name": "PULPA DE MANGO MEMBERS MARK",
+            "um": "PZA",
+            "unit_price": 142.20
+          },
+          {
+            "name": "PULPA DE MARACUYA SIN SEMILLA",
+            "um": "PZA",
+            "unit_price": 130.00
+          },
+          {
+            "name": "ROSA DE CAS HERBAMAX",
+            "um": "PZA",
+            "unit_price": 17.00
+          },
+          {
+            "name": "SPIRULINA HERBAMAX 150GR",
+            "um": "PZA",
+            "unit_price": 112.00
+          },
+          {
+            "name": "ZUCARITAS CAJA DE 1.2 KG",
+            "um": "PZA",
+            "unit_price": 111.50
+          }
+        ]
+      },
+      {
+        "name": "Refrescos y Agua Embotellada",
+        "builtin": 1,
+        "key_prefix":  "1012",
+        "ingredients": [
+          {
+            "name": "AGUA QUINA SCHWEPPES CAJA DE 12 PZA. DE 296 ML.",
+            "um": "PZA",
+            "unit_price": 113.54
+          },
+          {
+            "name": "BOTELLA AGUA CIEL CAJA CON 24 PZA DE 600 ML.",
+            "um": "PZA",
+            "unit_price": 203.00
+          },
+          {
+            "name": "COCA COLA LIGHT PAQ. DE 24 PZA. DE 355 ML.",
+            "um": "PZA",
+            "unit_price": 341.00
+          },
+          {
+            "name": "COCA COLA REGULAR PAQ. DE 24 PZA. DE 355 ML.",
+            "um": "PZA",
+            "unit_price": 341.00
+          },
+          {
+            "name": "TOPO CHICO PAQ. DE 6 PZA. DE 2.5 LT.",
+            "um": "PZA",
+            "unit_price": 132.50
+          },
+          {
+            "name": "TOPO CHICO CAJA CON 24 BOTELLAS DE 355 ML.",
+            "um": "PZA",
+            "unit_price": 317.50
+          }
+        ]
+      },
+      {
+        "name": "Café, Te y Tizana",
+        "builtin": 1,
+        "key_prefix":  "1013",
+        "ingredients": [
+          {
+            "name": "CAFÉ MEZCLA MILANO 1 KG.",
+            "um": "KG",
+            "unit_price": 300.00
+          },
+          {
+            "name": "CAFÉ OAXACA RED HONEY POR KILO",
+            "um": "KG",
+            "unit_price": 490.00
+          },
+          {
+            "name": "GARRAFON DE AGUA CIEL DE 20 LT",
+            "um": "PZA",
+            "unit_price": 40.00
+          },
+          {
+            "name": "GOJI BERRY INFUSION BOLSA DE 250 GR.",
+            "um": "PZA",
+            "unit_price": 679.00
+          },
+          {
+            "name": "LECHE DE ALMENDRAS SILK CAJA DE 6PZ DE 946ML",
+            "um": "PZA",
+            "unit_price": 223.02
+          },
+          {
+            "name": "LECHE DE COCO MEMBERS MARK CAJA DE 6 PZA. DE 946 ML.",
+            "um": "PZA",
+            "unit_price": 140.58
+          },
+          {
+            "name": "LECHE DE COCO SILK PZA. DE 946 ML.",
+            "um": "PZA",
+            "unit_price": 42.90
+          },
+          {
+            "name": "LECHE DE SOYA ADES PAQ. CON 6 PZA. DE 946 ML.",
+            "um": "PZA",
+            "unit_price": 276.21
+          },
+          {
+            "name": "LECHE DESLACTOSADA SANTA CLARA CAJA DE 6 PZA. DE 1 LT.",
+            "um": "PZA",
+            "unit_price": 153.00
+          },
+          {
+            "name": "LECHE ENTERA SANTA CLARA CAJA DE 6 PZA. DE 1 LT.",
+            "um": "PZA",
+            "unit_price": 147.50
+          },
+          {
+            "name": "MATCHA CULINARIO TE VERDE ORGANICO BOLSA DE 100 GR.",
+            "um": "PZA",
+            "unit_price": 579.00
+          },
+          {
+            "name": "VERACRUZ DESCAFEINADO",
+            "um": "KG",
+            "unit_price": 310.00
+          }
+        ]
+      }
+    ]
   },
   {
-    "name": "FRUTAS",
-    "builtin":  1
+    "name": "Panadería",
+    "color": "#C9C9C9",
+    "categories": [
+      {
+        "name": "Abarrotes Panadería",
+        "builtin": 1,
+        "key_prefix": "1014"
+      },
+      {
+        "name": "Azúcares y harinas",
+        "builtin": 1,
+        "key_prefix":  "1015"
+      },
+      {
+        "name": "Lácteos Panadería",
+        "builtin": 1,
+        "key_prefix":  "1016"
+      }
+    ]
   },
   {
-    "name": "PAN Y TORTILLAS",
-    "builtin":  1
+    "name": "Variables",
+    "color": "#9FCE63",
+    "categories": [
+      {
+        "name": "Suministros de limpieza",
+        "builtin": 1,
+        "key_prefix":  "1017",
+        "ingredients": [
+          {
+            "name": "ACIDO PARA PLANCHA",
+            "um": "PZA",
+            "unit_price": 300.00
+          },
+          {
+            "name": "AROMATIZANTE EN AEROSOL FEBREZE 3 PZA. DE 250 GR.",
+            "um": "PZA",
+            "unit_price": 162.41
+          },
+          {
+            "name": "BLANQUEADOR LIQUIDO CLORALEX GALON DE 10 LT.",
+            "um": "GALÓN",
+            "unit_price": 121.66
+          },
+          {
+            "name": "BOTE DE BASURA DE 28 LT.",
+            "um": "PZA",
+            "unit_price": 169.99
+          },
+          {
+            "name": "DESINFECTANTE DE VERDURAS GALON DE 4LT",
+            "um": "PZA",
+            "unit_price": 335.12
+          },
+          {
+            "name": "DETERGENTE PARA VERDURAS 4LT",
+            "um": "PZA",
+            "unit_price": 365.06
+          },
+          {
+            "name": "FIBRA ESPONJA GRANDE",
+            "um": "PZA",
+            "unit_price": 19.90
+          },
+          {
+            "name": "FIBRA SCOTCH BRITE 10PZ",
+            "um": "PZA",
+            "unit_price": 219.49
+          },
+          {
+            "name": "HARPIC 3PZ DE 750 ML",
+            "um": "PZA",
+            "unit_price": 92.07
+          },
+          {
+            "name": "LAVATRASTES EN POLVO AXION PAQ. DE 20 BOLSAS DE 500 GR.",
+            "um": "PZA",
+            "unit_price": 411.25
+          },
+          {
+            "name": "LAVATRASTES LIQUIDO AXION BOTELLA DE 1 LT.",
+            "um": "PZA",
+            "unit_price": 42.00
+          },
+          {
+            "name": "LAVATRASTES LIQUIDO MEMBERS MARK BOTE DE 2.9 LT.",
+            "um": "PZA",
+            "unit_price": 74.17
+          },
+          {
+            "name": "LIMPIADOR DE MADERA PLEDGE 2 PZA. DE 460 ML.",
+            "um": "PZA",
+            "unit_price": 97.20
+          },
+          {
+            "name": "LIMPIADOR LIQUIDO MEMBERS MARK PINO 10LT",
+            "um": "PZA",
+            "unit_price": 146.28
+          },
+          {
+            "name": "LIMPIADOR MULTIUSOS LAVANDA MEMBERS MARK 10L",
+            "um": "PZA",
+            "unit_price": 116.00
+          },
+          {
+            "name": "LIMPIAVIDRIOS MEMBERS MARK 5 LT.",
+            "um": "PZA",
+            "unit_price": 109.46
+          },
+          {
+            "name": "PAPEL HIGIENICO MEMBERS MARK 32PZ",
+            "um": "PZA",
+            "unit_price": 305.88
+          },
+          {
+            "name": "PASTILLA LIMPIADORA PATO PURIFIC 6PZ DE 52GR",
+            "um": "PZA",
+            "unit_price": 70.59
+          },
+          {
+            "name": "PIEDRA DE AFILAR",
+            "um": "PZA",
+            "unit_price": 25.00
+          },
+          {
+            "name": "PIEDRA PARA LIMPIEZA",
+            "um": "PZA",
+            "unit_price": 120.00
+          },
+          {
+            "name": "RAID MAX 3 PZA. DE 430 ML.",
+            "um": "PZA",
+            "unit_price": 234.26
+          },
+          {
+            "name": "TOALLA MICROFIBRA AZUL MEMBERS MARK 36PZ",
+            "um": "PZA",
+            "unit_price": 383.40
+          },
+          {
+            "name": "TRAPO DE MICROFIBRA DE 30 CM X 30 CM",
+            "um": "PZA",
+            "unit_price": 19.99
+          }
+        ]
+      },
+      {
+        "name": "Suministros de Baño",
+        "builtin": 1,
+        "key_prefix":  "1018",
+        "ingredients": [
+          {
+            "name": "JABON LIQUIDO PARA MANOS MEMBERS MARK 5.68 LT",
+            "um": "PZA",
+            "unit_price": 147.22
+          },
+          {
+            "name": "PAPEL HIGIENICO MEMBERS MARK 32PZ",
+            "um": "PZA",
+            "unit_price": 305.88
+          },
+          {
+            "name": "PASTILLA LIMPIADORA PATO PURIFIC 6PZ DE 52GR",
+            "um": "PZA",
+            "unit_price": 70.59
+          },
+          {
+            "name": "TAPETE MICROTUBOS PARA MIGITORIO",
+            "um": "PZA",
+            "unit_price": 100.69
+          },
+          {
+            "name": "TOALLA EN ROLLO BLANCA CAJA CON 6 ROLLOS DE 180 MTS.",
+            "um": "PZA",
+            "unit_price": 459.36
+          }
+        ]
+      },
+      {
+        "name": "Artículos de servicio",
+        "builtin": 1,
+        "key_prefix":  "1019",
+        "ingredients": [
+          {
+            "name": "BASE REDONDA DE ALUMINIO DE 10 PLATA",
+            "um": "PZA",
+            "unit_price": 9.48
+          },
+          {
+            "name": "BIOXIDO DE TITANIO 16% 120ML DEIMAN",
+            "um": "PZA",
+            "unit_price": 56.23
+          },
+          {
+            "name": "CAPACILLO 74 CORRUFACIL PAQ. 200 PZA",
+            "um": "PZA",
+            "unit_price": 84.00
+          },
+          {
+            "name": "GARRAFON DE AGUA MANANTIAL DE 20 LT.",
+            "um": "PZA",
+            "unit_price": 25.00
+          },
+          {
+            "name": "GARRAFON MANANTIAL 19L",
+            "um": "PZA",
+            "unit_price": 25.00
+          },
+          {
+            "name": "GARRAFON MANANTIAL 20LT",
+            "um": "PZA",
+            "unit_price": 25.00
+          },
+          {
+            "name": "GUANTE DE LATEX NEGRO PAQ. DE 100 PZA.",
+            "um": "PZA",
+            "unit_price": 554.48
+          },
+          {
+            "name": "GUANTE DE NITRILO",
+            "um": "PZA",
+            "unit_price": 285.36
+          },
+          {
+            "name": "PALILLO DECORADO CON NUDO BAMBOO",
+            "um": "PZA",
+            "unit_price": 90.02
+          },
+          {
+            "name": "PAPEL SILICONADO ESTRELLA PZ",
+            "um": "PZA",
+            "unit_price": 6.01
+          },
+          {
+            "name": "POPOTE FANTASY ESTUCHADO DE 21 CM CAJA CON 4 PAQ. DE 500 PZA.",
+            "um": "PZA",
+            "unit_price": 139.20
+          },
+          {
+            "name": "PORTAVASOS DE CARTON",
+            "um": "PZA",
+            "unit_price": 227.36
+          },
+          {
+            "name": "SERVILLETAS DELSEY CAJA CON 12 PAQ. DE 100 PZAS.",
+            "um": "PZA",
+            "unit_price": 135.02
+          },
+          {
+            "name": "SERVILLETAS PREMIUM MEMBERS MARK 4 PAQ. DE 100 PZA.",
+            "um": "PZA",
+            "unit_price": 158.56
+          },
+          {
+            "name": "VITAFILM",
+            "um": "KG",
+            "unit_price": 270.00
+          }
+        ]
+      },
+      {
+        "name": "Artículos de empaque",
+        "builtin": 1,
+        "key_prefix":  "1020",
+        "ingredients": [
+          {
+            "name": "BOLSA DE PAPEL KRAFT NO.14",
+            "um": "PZA",
+            "unit_price": 94.16
+          },
+          {
+            "name": "BOLSAS PARA BASURA MEMBERS MARK CAJA CON 90 BOLSAS",
+            "um": "PZA",
+            "unit_price": 460.33
+          },
+          {
+            "name": "CAJA MULTIUSOS",
+            "um": "PZA",
+            "unit_price": 220.00
+          },
+          {
+            "name": "CAJA PARA PIZZA BLANCA",
+            "um": "PZA",
+            "unit_price": 614.80
+          },
+          {
+            "name": "CONTENEDOR HERMETICO 1.5L",
+            "um": "PZA",
+            "unit_price": 59.00
+          },
+          {
+            "name": "CONTENEDOR HERMETICO 2.5L",
+            "um": "PZA",
+            "unit_price": 89.00
+          },
+          {
+            "name": "CONTENEDOR HERMETICO 2L",
+            "um": "PZA",
+            "unit_price": 69.00
+          },
+          {
+            "name": "CONTENEDOR HERMETICO 750ML",
+            "um": "PZA",
+            "unit_price": 49.00
+          },
+          {
+            "name": "CONTENEDOR TERMICO BLANCO CHICO PAQ. DE 20 PZA.",
+            "um": "PZA",
+            "unit_price": 644.96
+          },
+          {
+            "name": "CONTENEDOR TERMICO NEGRO GRANDE PAQ. DE 20 PZA.",
+            "um": "PZA",
+            "unit_price": 765.56
+          },
+          {
+            "name": "CUCHARA GRANDE GREEN FANTASY BOLSA DE 25 PZA.",
+            "um": "PZA",
+            "unit_price": 14.53
+          },
+          {
+            "name": "FAJILLAS IMPRESAS",
+            "um": "PZA",
+            "unit_price": 1.49
+          },
+          {
+            "name": "PAPEL DE BURBUJA",
+            "um": "PZA",
+            "unit_price": 14.50
+          },
+          {
+            "name": "ROLLO DE BOLSAS",
+            "um": "PZA",
+            "unit_price": 70.00
+          },
+          {
+            "name": "ROLLO DE BOLSAS",
+            "um": "PZA",
+            "unit_price": 70.00
+          },
+          {
+            "name": "TAPA BLANCA TRAVELER PAQ. DE 100 PZA.",
+            "um": "PZA",
+            "unit_price": 1.84
+          },
+          {
+            "name": "TAPA DOMO",
+            "um": "PZA",
+            "unit_price": 0.87
+          },
+          {
+            "name": "TAPA TRAVELER PARA VASO BLANCO",
+            "um": "PZA",
+            "unit_price": 1.84
+          },
+          {
+            "name": "TENEDOR GRANDE GREEN FANTASY BOLSA DE 25 PZA.",
+            "um": "PZA",
+            "unit_price": 18.06
+          },
+          {
+            "name": "VASO INIX BLANCO DE PAPEL DE 12 OZ. PAQ. DE 50 PZA.",
+            "um": "PZA",
+            "unit_price": 126.50
+          },
+          {
+            "name": "VASO INIX BLANCO DE PAPEL DE 16 OZ. PAQ. DE 50 PZA.",
+            "um": "PZA",
+            "unit_price": 149.64
+          }
+        ]
+      }
+    ]
   },
   {
-    "name": "PESCADOS Y MARISCOS",
-    "builtin":  1
-  },
-  {
-    "name": "CARNE DE CERDO",
-    "builtin":  1
-  },
-  {
-    "name": "CARNE DE RES",
-    "builtin":  1
-  },
-  {
-    "name": "POLLO",
-    "builtin":  1
-  },
-  {
-    "name": "EMBUTIDOS",
-    "builtin":  1
-  },
-  {
-    "name": "LÁCTEOS",
-    "builtin":  1
-  },
-  {
-    "name": "SECOS",
-    "builtin":  1
-  },
-  {
-    "name": "CONGELADOS",
-    "builtin":  1
-  },
-  {
-    "name": "BEBIDAS SIN ALCOHOL",
-    "builtin":  1
-  },
-  {
-    "name": "BEBIDAS CON ALCOHOL",
-    "builtin":  1
-  },
-  {
-    "name": "DESECHABLES",
-    "builtin":  1
-  },
-  {
-    "name": "ARTÍCULOS DE LIMPIEZA",
-    "builtin":  1
+    "name": "Otros",
+    "color": "#ffffff",
+    "categories": [
+      {
+        "name": "Artículos de empaque",
+        "builtin": 1,
+        "key_prefix":  "1021",
+        "ingredients": []
+      },
+      {
+        "name": "Artículos de salón",
+        "builtin": 1,
+        "key_prefix":  "1022",
+        "ingredients": []
+      },
+      {
+        "name": "Mantenimiento de equipo",
+        "builtin": 1,
+        "key_prefix":  "1023",
+        "ingredients": []
+      },
+      {
+        "name": "Mantenimiento de Local",
+        "builtin": 1,
+        "key_prefix":  "1024",
+        "ingredients": []
+      },
+      {
+        "name": "Fletes, Casetas, Transporte y Viáticos",
+        "builtin": 1,
+        "key_prefix":  "1025",
+        "ingredients": []
+      },
+      {
+        "name": "Papelería, Impresiones y Consumibles de Cómputo",
+        "builtin": 1,
+        "key_prefix":  "1026",
+        "ingredients": []
+      },
+      {
+        "name": "Publicidad",
+        "builtin": 1,
+        "key_prefix":  "1027",
+        "ingredients": []
+      },
+      {
+        "name": "Servicios, Agua, Luz, Teléfono y Sky",
+        "builtin": 1,
+        "key_prefix":  "1028",
+        "ingredients": []
+      },
+      {
+        "name": "Combustibles",
+        "builtin": 1,
+        "key_prefix":  "1029",
+        "ingredients": []
+      },
+      {
+        "name": "Cuotas (vigilancia, basura, etc.)",
+        "builtin": 1,
+        "key_prefix":  "1030",
+        "ingredients": []
+      },
+      {
+        "name": "Administrativos",
+        "builtin": 1,
+        "key_prefix":  "1031",
+        "ingredients": []
+      },
+      {
+        "name": "Pago de Impuestos",
+        "builtin": 1,
+        "key_prefix":  "1032",
+        "ingredients": []
+      },
+      {
+        "name": "Gastos Fijos",
+        "builtin": 1,
+        "key_prefix":  "1033",
+        "ingredients": []
+      },
+      {
+        "name": "Productos de Inversión",
+        "builtin": 1,
+        "key_prefix":  "1034",
+        "ingredients": []
+      },
+      {
+        "name": "Productos Financieros",
+        "builtin": 1,
+        "key_prefix":  "1035",
+        "ingredients": []
+      }
+    ]
   }
 ]

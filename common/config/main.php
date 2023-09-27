@@ -53,7 +53,18 @@ return [
             'hostname' => 'redis',
             'port' => 6379,
             'database' => 0,
-            'password' => 'hrLmooHxLCIa'
+            'password' => 'sOmE_sEcUrE_pAsS'
+        ],
+        'formatter' => [
+            'locale' => 'es_MX',
+            'defaultTimeZone' => 'America/Mexico_City',
+            'dateFormat' => 'dd/MM/yyyy',
+            'timeFormat' => 'HH:mm',
+            'datetimeFormat' => 'dd/MM/yyyy HH:mm',
+            'currencyCode' => 'mxn',
+            'decimalSeparator' => ',',
+            'thousandSeparator' => '.',
+            'currencyDecimalSeparator' => ','
         ],
 
     ],

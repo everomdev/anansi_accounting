@@ -1,6 +1,7 @@
 <?php
 /** @var $recipe \common\models\StandardRecipe */
 /** @var $model \common\models\RecipeStep */
+/** @var $pjaxId string */
 ?>
 
 <div class="row gap-3">
@@ -9,8 +10,13 @@
         'enableClientValidation' => true,
         'enableAjaxValidation' => true,
         'action' => \yii\helpers\Url::to(['standard-recipe/add-step', 'id' => $recipe->id]),
-        'method' => 'post'
+        'method' => 'post',
+        'options' => [
+            'enctype' => 'multipart/form-data',
+            'data-pjax' => $pjaxId
+        ]
     ]) ?>
+    <?= $form->field($model, 'type')->hiddenInput()->label(false) ?>
     <div class="col-12">
         <?= $form->field($model, 'activity')->textarea() ?>
     </div>
@@ -18,8 +24,10 @@
         <?= $form->field($model, 'time')->textInput(['type' => 'time']) ?>
     </div>
     <div class="col-12">
-
         <?= $form->field($model, 'indicator')->textInput() ?>
+    </div>
+    <div class="col-12">
+        <?= $form->field($model, '_image')->fileInput() ?>
     </div>
     <div class="col-12">
         <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Add'), [

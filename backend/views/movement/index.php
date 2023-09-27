@@ -14,11 +14,21 @@ $this->params['breadcrumbs'][] = $this->title;
 $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
     'depends' => \yii\web\YiiAsset::class
 ]);
+$businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <div class="movement-index">
 
     <p>
-        <?= Html::a(Yii::t('app', 'Create Movement'), ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a(Yii::t('app', 'Create entry'), ['create', 'type' => \common\models\Movement::TYPE_INPUT], ['class' => 'btn btn-success']) ?>
+        <?= Html::a(Yii::t('app', 'Create output'), ['create', 'type' => \common\models\Movement::TYPE_OUTPUT], ['class' => 'btn btn-info']) ?>
+        <?= Html::a(Yii::t('app', 'Create order'), ['create', 'type' => \common\models\Movement::TYPE_ORDER], ['class' => 'btn btn-warning']) ?>
+        <?= Html::a(Yii::t('app', 'Download template'), ['movement/download-template'], ['class' => 'btn btn-warning']) ?>
+        <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar movimientos', [
+            'icon' => "<i class='bx bxs-file-doc'></i>"
+        ]), '#', ['class' => 'btn btn-info', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
+        <?= Html::a(Yii::t('app', 'Export Movements'), ['movement/export-movements'], ['class' => 'btn btn-warning']) ?>
+        <?= Html::a(Yii::t('app', 'Balance'), "#", ['class' => 'btn btn-primary', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-balance']) ?>
     </p>
 
     <?php Pjax::begin(); ?>
@@ -27,6 +37,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'formatter' => $business->getFormatter(),
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
@@ -82,11 +93,11 @@ $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
                     return $data->formattedPaymentType;
                 },
                 'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                        $searchModel,
+                    $searchModel,
                     'payment_type',
                     \common\models\Movement::getFormattedPaymentTypes(),
                     [
-                            'class' => 'form-control',
+                        'class' => 'form-control',
                         'prompt' => '----'
                     ]
                 )
@@ -109,7 +120,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
 //            'tax',
 //            'retention',
 //            'unit_price',
-            'total',
+            'total:currency',
             //'observations',
             //'business_id',
             //'created_at',
@@ -123,7 +134,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
                             '<i class="bx bx-show"></i>',
                             $url,
                             [
-                                'class' => 'movement-details'
+                                'class' => 'movement-details text-warning'
                             ]
                         );
                     }
@@ -143,3 +154,48 @@ $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
 ?>
 <div id="container-modal-details-movement"></div>
 <?php \yii\bootstrap5\Modal::end(); ?>
+
+
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-upload-file',
+    'title' => Yii::t('app', "Importar movimientos de entrada")
+]);
+$url = \yii\helpers\Url::to(['movement/import-movements', 'id' => $business->id]);
+\yii\bootstrap5\ActiveForm::begin([
+    'action' => $url,
+    'method' => 'post',
+    'options' => [
+        'enctype' => 'multipart/form-data'
+    ]
+]);
+
+echo \yii\bootstrap5\Html::input('file', 'movement-file', '', [
+    'class' => 'form-control'
+]);
+echo "<br>";
+echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
+    'class' => 'btn btn-success'
+]);
+
+\yii\bootstrap5\ActiveForm::end();
+
+\yii\bootstrap5\Modal::end();
+
+// MODAL BALANCE
+\yii\bootstrap5\Modal::begin([
+    'title' => Yii::t('app', "Current balance"),
+    'id' => 'modal-balance',
+    'options' => [
+            'data' => [
+                    'url' => \yii\helpers\Url::to(['movement/balance'])
+            ]
+    ]
+]);
+
+echo "<div id='balance-container'></div>";
+
+\yii\bootstrap5\Modal::end();
+
+
+?>

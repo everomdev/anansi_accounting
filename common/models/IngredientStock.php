@@ -2,7 +2,9 @@
 
 namespace common\models;
 
+use Symfony\Component\Yaml\Yaml;
 use Yii;
+use yii\db\Query;
 
 /**
  * This is the model class for table "ingredient_stock".
@@ -29,10 +31,14 @@ use Yii;
  * @property StockPrice[] $stockPrices
  * @property float $final_quantity [float]
  * @property int $category_id [int]
+ * @property-read mixed $category
+ * @property string $key [varchar(255)]
+ * @property-read mixed $valueInMoney
  */
 class IngredientStock extends \yii\db\ActiveRecord
 {
     public $_category;
+    public $price;
 
     /**
      * {@inheritdoc}
@@ -54,10 +60,10 @@ class IngredientStock extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id'], 'required'],
+            [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key'], 'required'],
             [['business_id'], 'integer'],
-            [['quantity', 'yield', 'portions_per_unit', 'final_quantity'], 'number'],
-            [['observations', '_category'], 'string'],
+            [['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'price'], 'number'],
+            [['observations', '_category', 'key'], 'string'],
             [['ingredient', 'um', 'portion_um'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient', 'um', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'um', 'business_id'], 'message' => Yii::t('app', "You already have registered this ingredient")],
@@ -74,16 +80,19 @@ class IngredientStock extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'ingredient' => Yii::t('app', 'Ingredient'),
+            'ingredient' => Yii::t('app', 'Name'),
             'business_id' => Yii::t('app', 'Business ID'),
             'quantity' => Yii::t('app', 'Quantity'),
-            'um' => Yii::t('app', 'Um'),
+            'um' => Yii::t('app', 'Unidad de Compra'),
             'yield' => Yii::t('app', 'Yield'),
             'portions_per_unit' => Yii::t('app', 'Portions Per Unit'),
-            'portion_um' => Yii::t('app', 'Kitchen Um'),
+            'portion_um' => Yii::t('app', 'Kitchen Unit'),
             'observations' => Yii::t('app', 'Observations'),
             'final_quantity' => Yii::t('app', 'Final Quantity'),
             '_category' => Yii::t('app', "Category"),
+            'key' => Yii::t('app', "Key"),
+            'category_id' => Yii::t('app', "Category"),
+            'price' => Yii::t('app', "Initial Price"),
         ];
     }
 
@@ -111,11 +120,11 @@ class IngredientStock extends \yii\db\ActiveRecord
 
     public function beforeValidate()
     {
-        if(!parent::beforeValidate()){
+        if (!parent::beforeValidate()) {
             return false;
         }
 
-        $this->saveCategory();
+//        $this->saveCategory();
 
         return true;
     }
@@ -127,6 +136,21 @@ class IngredientStock extends \yii\db\ActiveRecord
         }
 
         return true;
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+
+        if ($insert && !empty($this->price)) {
+            $stockPrice = new StockPrice([
+                'stock_id' => $this->id,
+                'price' => $this->price,
+                'date' => date('Y-m-d'),
+                'unit_price' => $this->price
+            ]);
+            $stockPrice->save(false);
+        }
     }
 
     private function saveCategory()
@@ -213,7 +237,7 @@ class IngredientStock extends \yii\db\ActiveRecord
 
     public function getLastUnitPrice()
     {
-        $lastPrice = $this->getStockPrices()->orderBy(['date' => SORT_DESC])->one();
+        $lastPrice = $this->getStockPrices()->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])->one();
         return empty($lastPrice) ? 0.0 : round($lastPrice->unit_price, 2);
     }
 
@@ -235,12 +259,44 @@ class IngredientStock extends \yii\db\ActiveRecord
 
     public function getLabel()
     {
-        return sprintf("%s (%s)", $this->ingredient, $this->um);
+        return sprintf("%s - %s (%s)", $this->key, $this->ingredient, $this->um);
     }
 
     public function getCategory()
     {
         return $this->hasOne(Category::class, ['id' => 'category_id']);
+    }
+
+    public static function keyGenerator($categoryId, $businessId)
+    {
+        $category = Category::findOne(['id' => $categoryId]);
+        $latestKey = (new Query())
+            ->select(['key'])
+            ->from('ingredient_stock')
+            ->where(['category_id' => $category->id, 'business_id' => $businessId])
+            ->andWhere(['like', 'key', "{$category->key_prefix}"])
+            ->orderBy(['key' => SORT_DESC])
+            ->one();
+        if (empty($latestKey)) {
+            return sprintf("%s%s", $category->key_prefix, str_pad('1', '3', '0', STR_PAD_LEFT));
+        }
+
+        $ingredientKey = str_replace($category->key_prefix, '', $latestKey['key']);
+        $ingredientKey = intval($ingredientKey);
+
+        return sprintf("%s%s", $category->key_prefix, str_pad($ingredientKey + 1, '3', '0', STR_PAD_LEFT));
+
+    }
+
+    public function getValueInMoney()
+    {
+        $latestPrice = $this->lastUnitPrice;
+        return $this->quantity * $latestPrice;
+    }
+
+    public function getName()
+    {
+        return $this->ingredient;
     }
 
 }

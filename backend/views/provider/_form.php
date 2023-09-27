@@ -35,9 +35,29 @@ use yii\widgets\ActiveForm;
                 <div class="col-12">
                     <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
                 </div>
-
                 <div class="col-12">
-                    <?= $form->field($model, 'fax')->textInput(['maxlength' => true]) ?>
+                    <?= $form->field($model, 'payment_method')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'account')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'credit_days')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'rfc')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'business_name')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'advantages')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'disadvantages')->textInput() ?>
+                </div>
+                <div class="col-12">
+                    <?= $form->field($model, 'observations')->textInput() ?>
                 </div>
             </div>
 

@@ -4,9 +4,11 @@ namespace backend\controllers;
 
 use Da\User\Traits\ContainerAwareTrait;
 use Da\User\Validator\AjaxRequestModelValidator;
+use Symfony\Component\Yaml\Yaml;
 use Yii;
 use common\models\Category;
 use common\models\CategorySearch;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -28,6 +30,26 @@ class CategoryController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::className(),
+                'rules' => [
+                    [
+                        'actions' => ['login', 'error'],
+                        'allow' => true,
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+                            'delete',
+                            'index',
+                            'update',
+                            'view'
+                        ],
+                        'allow' => true,
+                        'roles' => ['ingredients_list'],
+                    ],
                 ],
             ],
         ];

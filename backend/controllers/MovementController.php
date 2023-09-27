@@ -2,7 +2,10 @@
 
 namespace backend\controllers;
 
+use backend\helpers\ExcelHelper;
 use backend\helpers\RedisKeys;
+use common\models\Balance;
+use common\models\Business;
 use Da\User\Traits\ContainerAwareTrait;
 use Da\User\Validator\AjaxRequestModelValidator;
 use Yii;
@@ -13,6 +16,7 @@ use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
 
 /**
  * MovementController implements the CRUD actions for Movement model.
@@ -37,9 +41,39 @@ class MovementController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['index', 'view', 'create'],
+                        'actions' => [
+                            'index',
+                            'view',
+                            'download-template',
+                            'export-movements',
+                            'import-movements',
+                            'balance'
+                        ],
                         'allow' => true,
-                        'roles' => ['client'],
+                        'roles' => [
+                            'movements_view',
+                            'movements_list'
+                        ],
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'movements_view',
+                            'movements_list'
+                        ],
+                    ],
+                    [
+                        'actions' => [
+                            'balance',
+                            'register-balance',
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'movements_manage_balance',
+                        ],
                     ],
                 ],
             ],
@@ -81,12 +115,13 @@ class MovementController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
      */
-    public function actionCreate()
+    public function actionCreate($type)
     {
         Url::remember(['movement/create'], 'register-movement');
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $model = new Movement([
-            'business_id' => $business['id']
+            'business_id' => $business['id'],
+            'type' => $type
         ]);
         $post = Yii::$app->request->post();
 
@@ -131,6 +166,33 @@ class MovementController extends Controller
         ]);
     }
 
+    public function actionDownloadTemplate()
+    {
+        ExcelHelper::generateMovementTemplate();
+    }
+
+    public function actionImportMovements()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = Business::findOne(['id' => $businessData['id']]);
+
+        $file = UploadedFile::getInstanceByName('movement-file');
+
+        if ($file) {
+            ExcelHelper::importMovements($business, $file->tempName);
+        }
+
+        return $this->redirect(['movement/index']);
+    }
+
+    public function actionExportMovements()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = Business::findOne(['id' => $businessData['id']]);
+
+        ExcelHelper::exportMovements($business);
+    }
+
     /**
      * Deletes an existing Movement model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
@@ -143,6 +205,42 @@ class MovementController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    public function actionBalance()
+    {
+        $business = RedisKeys::getBusinessData();
+
+        $balances = Balance::find()->where(['business_id' => $business['id']])->orderBy(['date' => SORT_ASC])->all();
+
+        return $this->renderAjax('balance', [
+            'balances' => $balances
+        ]);
+    }
+
+    public function actionRegisterBalance()
+    {
+        $business = RedisKeys::getBusinessData();
+
+        $balance = new Balance([
+            'business_id' => $business['id'],
+            'created_by' => Yii::$app->user->id,
+            'date' => date('Y-m-d')
+        ]);
+
+        $post = Yii::$app->request->post();
+
+        if (array_key_exists('ajax', $post)) {
+            $this->make(AjaxRequestModelValidator::class, [$balance])->validate();
+        }
+
+        if ($balance->load($post) && $balance->save()) {
+            return $this->asJson(['success' => true]);
+        } elseif ($balance->hasErrors()) {
+            return $this->asJson(['success' => false, 'errors' => array_values(array_values($balance->errors))]);
+        }
+
+        return $this->asJson(['success' => false, 'errors' => ["Algo falló"]]);
     }
 
     /**

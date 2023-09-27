@@ -14,12 +14,34 @@ class UpdateAccountForm extends \yii\base\Model
     public $password;
     public $businessId;
     public $userId;
+    public $currency_code;
+    public $decimal_separator;
+    public $thousands_separator;
+    public $timezone;
+    public $locale;
 
     public function rules()
     {
         return [
-            [['businessName', 'name'], 'required'],
-            [['businessName', 'name', 'password'], 'string']
+            [[
+                'businessName',
+                'name',
+                'currency_code',
+                'decimal_separator',
+                'thousands_separator',
+                'timezone',
+                'locale',
+            ], 'required'],
+            [[
+                'businessName',
+                'name',
+                'password',
+                'currency_code',
+                'decimal_separator',
+                'thousands_separator',
+                'timezone',
+                'locale',
+            ], 'string']
         ];
     }
 
@@ -39,6 +61,11 @@ class UpdateAccountForm extends \yii\base\Model
         $profile = $user->profile;
 
         $business->name = $this->businessName;
+        $business->currency_code = $this->currency_code;
+        $business->decimal_separator = $this->decimal_separator;
+        $business->thousands_separator = $this->thousands_separator;
+        $business->timezone = $this->timezone;
+        $business->locale = $this->locale;
         $profile->name = $this->name;
         if (isset($this->password)) {
             $user->password = $this->password;
@@ -58,11 +85,11 @@ class UpdateAccountForm extends \yii\base\Model
             return false;
         }
 
-        if($profile) {
+        if ($profile) {
             RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
 
         }
-        if($business){
+        if ($business) {
             RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
         }
         return true;

@@ -32,8 +32,8 @@ new Chart(ctx, {
             label: 'Price Trend',
             data: prices,
             borderWidth: 1,
-            backgroundColor: 'rgb(105, 108,255, 1)',
-            borderColor: 'rgb(105, 108,255, 1)',
+            backgroundColor: 'rgb(252, 163, 17, 1)',
+            borderColor: 'rgb(252, 163, 17, 1)',
         }]
     },
     options: {

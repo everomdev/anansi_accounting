@@ -1,8 +1,32 @@
 <?php
 /** @var $this \yii\web\View */
+/** @var $recipe \common\models\StandardRecipe */
 
 use kartik\typeahead\Typeahead;
+$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$stock = \yii\helpers\ArrayHelper::map(
+    (new \yii\db\Query())
+        ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.um, ' -> ', i.portion_um,')') as label"])
+        ->from('ingredient_stock i')
+        ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
+        ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
+        ->where(['or', ['sr.id' => null], ['<>', 'sr.id', $recipe->id]])
+        ->andWhere(['i.business_id' => $business['id']])
+        ->all(),
+    'id', 'label'
+);
 
+$subRecipes = \yii\helpers\ArrayHelper::map(
+    (new \yii\db\Query())
+        ->select(["id", "sr.title as label"])
+        ->from("standard_recipe sr")
+        ->where([
+            'sr.business_id' => $business['id'],
+            'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+        ])
+        ->all(),
+    'id', 'label'
+);
 ?>
 
     <div class="row gap-3">

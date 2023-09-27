@@ -1,0 +1,16 @@
+### Code Coverage ###
+build/reports/
+
+### Dependencies ###
+node_modules/
+
+### IDE ###
+.idea
+.vscode
+
+npm-debug\.log
+.parcel-cache/
+coverage/
+# dist/
+dist/dual-listbox.test.js
+dist/dual-listbox.test.js.map

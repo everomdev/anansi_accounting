@@ -17,7 +17,7 @@ class CategorySearch extends Category
     public function rules()
     {
         return [
-            [['id', 'builtin', 'business_id'], 'integer'],
+            [['id', 'builtin', 'business_id', 'group_id'], 'integer'],
             [['name'], 'safe'],
         ];
     }
@@ -60,14 +60,21 @@ class CategorySearch extends Category
         $query->andFilterWhere([
             'id' => $this->id,
             'builtin' => $this->builtin,
-            'business_id' => $this->business_id
+//            'business_id' => $this->business_id,
+            'group_id' => $this->group_id
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name]);
 
-        if(!empty($this->business_id)){
-            $query->orWhere(['business_id' => null]);
+        if (!empty($this->business_id)) {
+            $query->andWhere([
+                'or',
+                ['business_id' => $this->business_id],
+                ['business_id' => null],
+
+            ]);
         }
+
 
         return $dataProvider;
     }

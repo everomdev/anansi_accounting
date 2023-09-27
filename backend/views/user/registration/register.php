@@ -51,6 +51,11 @@ $this->title = "Sign-up";
                     <div class="col-12">
                         <?= $form->field($model, 'password')->passwordInput() ?>
                     </div>
+                    <div class="col-12">
+                        <?= $form->field($model, 'planId')->dropDownList(
+                            \yii\helpers\ArrayHelper::map(\common\models\Plan::find()->all(), 'id', 'label')
+                        ) ?>
+                    </div>
                 </div>
             </div>
             <div class="card-footer">

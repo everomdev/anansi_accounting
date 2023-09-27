@@ -31,7 +31,15 @@ $this->params['breadcrumbs'][] = $this->title;
             'phone',
             'second_phone',
             'email:email',
-            'fax',
+            'payment_method',
+            'account',
+            'credit_days',
+            'rfc',
+            'business_name',
+            'advantages',
+            'disadvantages',
+            'observations',
+//            'fax',
             //'business_id',
 
             [

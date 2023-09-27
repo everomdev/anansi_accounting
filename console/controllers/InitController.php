@@ -3,16 +3,18 @@
 namespace console\controllers;
 
 use common\models\Category;
+use common\models\CategoryGroup;
 use common\models\Ingredient;
 use common\models\User;
 use Symfony\Component\Yaml\Yaml;
+use yii\db\Exception;
 use yii\db\Query;
 
 class InitController extends BaseController
 {
     public function actionInitAll()
     {
-        $this->actionInitRoles();
+//        $this->actionInitRoles();
         $this->actionInitUsers();
         $this->actionInitCategories();
         $this->actionInitIngredients();
@@ -100,17 +102,53 @@ class InitController extends BaseController
     public function actionInitCategories()
     {
         $fileData = file_get_contents(\Yii::getAlias("@backend/web/data/categories.json"));
-        $categories = json_decode($fileData, true);
-        $categories = array_map(function ($category) {
-            return array_values($category);
-        }, $categories);
+        $categoryGroups = json_decode($fileData, true);
 
-        \Yii::$app->db->createCommand()
-            ->batchInsert(
-                'category',
-                ['name', 'builtin'],
-                $categories
-            )->execute();
+        $transaction = \Yii::$app->db->beginTransaction();
+        try {
+            foreach ($categoryGroups as $categoryGroupData) {
+                $categoryGroup = new CategoryGroup([
+                    'name' => $categoryGroupData['name'],
+                    'color' => $categoryGroupData['color']
+                ]);
+                if ($categoryGroup->save()) {
+                    $categories = $categoryGroupData['categories'];
+                    foreach ($categories as $categoryData) {
+                        $category = new Category([
+                            'group_id' => $categoryGroup->id,
+                            'name' => $categoryData['name'],
+                            'builtin' => 1,
+                            'key_prefix' => $categoryData['key_prefix']
+                        ]);
+                        if ($category->save(false)) {
+                            if (!isset($categoryData['ingredients'])) continue;
+                            $ingredients = $categoryData['ingredients'];
+                            foreach ($ingredients as $ingredientData) {
+                                $ingredient = new Ingredient([
+                                    'category_id' => $category->id,
+                                    'name' => $ingredientData['name'],
+                                    'um' => $ingredientData['um'],
+                                    'unit_price' => $ingredientData['unit_price']
+                                ]);
+                                if (!$ingredient->save(false)) {
+                                    throw new Exception(Yaml::dump($ingredient->errors));
+                                }
+                            }
+                        } else {
+                            throw new Exception(Yaml::dump($category->errors));
+                        }
+                    }
+                } else {
+                    throw new Exception(Yaml::dump($categoryGroup->errors));
+                }
+
+            }
+            $transaction->commit();
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            $this->error(Yaml::dump($e->getMessage()));
+            $this->error(Yaml::dump($e->getTrace()));
+        }
     }
 
 }

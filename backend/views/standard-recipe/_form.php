@@ -10,43 +10,31 @@ use yii\widgets\ActiveForm;
 
 \yii\web\YiiAsset::register($this);
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
-$stock = \yii\helpers\ArrayHelper::map(
-    (new \yii\db\Query())
-        ->select(['i.*', "CONCAT(i.ingredient, ' (', i.um, ' -> ', i.portion_um,')') as label"])
-        ->from('ingredient_stock i')
-        ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
-        ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
-        ->where(['or', ['sr.id' => null], ['<>', 'sr.id', $model->id]])
-        ->andWhere(['i.business_id' => $business['id']])
-        ->all(),
-    'id', 'label'
-);
 
-$subRecipes = \yii\helpers\ArrayHelper::map(
-    (new \yii\db\Query())
-        ->select(["id", "sr.title as label"])
-        ->from("standard_recipe sr")
-        ->where([
-            'sr.business_id' => $business['id'],
-            'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
-        ])
-        ->all(),
-    'id', 'label'
-);
 
 $ingredients = (new \yii\db\Query())
     ->select("*")
     ->from('ingredient')
     ->all();
 $autocompleteUm = array_values(array_unique(\yii\helpers\ArrayHelper::getColumn($ingredients, 'um')));
-
+$this->registerJsVar('formUrl', \yii\helpers\Url::to(['standard-recipe/form-select-ingredient', 'id' => $model->id]));
 $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/form.js"), [
     'position' => $this::POS_END,
     'depends' => [\yii\web\YiiAsset::class]
 ]);
 $this->registerCssFile(Yii::getAlias("@web/css/flowchart.css"));
 
+$recipesCategories = \common\models\RecipeCategory::find()->where(['business_id' => $business['id'], 'type' => $model->type])->all();
 
+$businessObj = \common\models\Business::findOne(['id' => $business['id']]);
+
+$recipesCategoriesMap = \yii\helpers\ArrayHelper::map($recipesCategories, 'name', 'name');
+
+$recipesCategoriesMap['add'] = Yii::t('app', "+ Agregar");
+
+$this->registerJsVar('createNewCategoryUrl', \yii\helpers\Url::to(['recipe-category/index']));
+
+$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
 ?>
 
 <div class="standard-recipe-form">
@@ -55,210 +43,142 @@ $this->registerCssFile(Yii::getAlias("@web/css/flowchart.css"));
         'id' => 'form-recipe',
         'options' => [
             'enctype' => 'multipart/form-data'
-        ]
+        ],
     ]); ?>
     <div class="card">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-borderless">
-                    <tbody>
-                    <tr>
-                        <td class="bg-primary text-white" style="font-weight: bold">
-                            <?= Yii::t('app', 'Recipe Type') ?>
-                        </td>
-                        <td class="bg-primary text-white" style="font-weight: bold">
-                            <?= Yii::t('app', 'Time of preparation') ?>
-                        </td>
-                        <td class="bg-primary text-white" style="font-weight: bold">
-                            <?= Yii::t('app', 'Yield') ?>
-                        </td>
-                        <td class="bg-primary text-white" style="font-weight: bold">
-                            <?= Yii::t('app', 'Portions') ?>
-                        </td>
-                        <td class="bg-primary text-white" style="font-weight: bold">
-                            <?= Yii::t('app', 'Lifetime') ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <?= $model->formattedType ?>
-                        </td>
-                        <td>
-                            <?= $form->field($model, 'time_of_preparation')->textInput()->label(false) ?>
-                        </td>
-                        <td>
-                            <div class="d-flex">
-                                <?= $form->field($model, 'yield')->textInput()->label(false) ?>
-                                <?= $form->field($model, 'yield_um')->widget(\kartik\typeahead\Typeahead::class, [
-                                    'scrollable' => true,
-                                    'defaultSuggestions' => $autocompleteUm,
-                                    'dataset' => [
-                                        [
-                                            'local' => $autocompleteUm,
-                                            'limit' => 10,
-
-                                        ]
-                                    ],
-                                    'options' => [
-                                        'autocomplete' => "off"
-                                    ]
-                                ])->label(false) ?>
-                            </div>
-
-                        </td>
-                        <td>
-                            <?= $form->field($model, 'portions')->textInput()->label(false) ?>
-                        </td>
-                        <td>
-                            <?= $form->field($model, 'lifetime')->textInput()->label(false) ?>
-                        </td>
-
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-borderless">
-                    <tr>
-                        <td class="bg-primary text-white text-center" style="font-weight: bold">
-                            <div class="row justify-content-center align-items-center">
-                                <div class="col-sm-12 col-md-6 col-lg-3 col-xl-4">
-                                    <?= $form->field($model, 'title')->textInput([
-                                        'style' => "background-color: transparent; border: none; color: white; font-weight: bold; text-align: center",
-                                        'placeholder' => Yii::t('app', "A good recipe")
-                                    ])->label(false) ?>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
             <div class="row">
-                <div class="col-12 mt-3">
-                    <?= $this->render('create/_ingredients_selection', [
-                        'model' => $model
-                    ]) ?>
+                <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                    <?= $form->field($model, 'type_of_recipe', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                    ])->dropDownList($recipesCategoriesMap)->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <?= $form->field($model, 'time_of_preparation', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                    ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <?php $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::getOwn()->all(), 'name', 'name'), ['class' => 'form-control'])->label(false) ?>
+                    <?= $form->field($model, 'yield', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
+                    ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
+                        <?= $form->field($model, 'convoy_id', [
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                        ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Convoy::findAll(['business_id' => $business['id']]), 'id', 'label'), ['prompt' => Yii::t('app', "No convoy")])->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <?php endif; ?>
                 </div>
-                <div class="col-12 mt-3">
-                    <?= $this->render('create/_steps', [
-                        'model' => $model
-                    ]) ?>
-                </div>
-                <div class="col-12 mt-3">
-                    <table class="table table-borderless">
-                        <tbody>
-                        <tr>
-                            <td class="bg-primary text-center text-white">
-                                <?= $model->getAttributeLabel('equipment') ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <?= $form->field($model, 'equipment')->widget(Summernote::class, [
-                                    'useKrajeePresets' => true,
-                                    'useKrajeeStyle' => false,
-                                    'pluginOptions' => [
-                                        'height' => 200
-                                    ]
-                                    // other widget settings
-                                ])->label(false) ?>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="col-12 mt-3">
-                    <table class="table table-borderless">
-                        <tbody>
-                        <tr>
-                            <td class="bg-primary text-center text-white">
-                                <?= $model->getAttributeLabel('allergies') ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <?= $form->field($model, 'allergies')->widget(Summernote::class, [
-                                    'useKrajeePresets' => true,
-                                    'useKrajeeStyle' => false,
-                                    'pluginOptions' => [
-                                        'height' => 200
-                                    ]
-                                    // other widget settings
-                                ])->label(false) ?>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-
-                </div>
-                <div class="col-12">
-                    <table class="table table-borderless">
-                        <tbody>
-                        <tr>
-                            <td class="bg-primary text-center text-white">
-                                <?= Yii::t('app', 'Flowchart') ?>
-                            </td>
-                        </tr>
-
-                        </tbody>
-                    </table>
-                    <div class="d-flex flex-wrap align-content-center">
-                        <div class="align-self-center"><span class="flowchart-circle"><?= Yii::t('app', "Start") ?></span></div>
-                        <div class="align-self-center"><i class="bx bx-right-arrow"></i></div>
-                        <?php foreach ($model->recipeSteps as $step): ?>
-                            <?= $this->render('_step', ['step' => $step]) ?>
-                            <div class="align-self-center"><i class="bx bx-right-arrow"></i></div>
-                        <?php endforeach; ?>
-                        <div class="align-self-center"><span class="flowchart-circle"><?= Yii::t('app', "End") ?></span></div>
+                <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                    <?= $form->field($model, 'portions', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
+                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                    <?= $form->field($model, 'lifetime', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
+                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                    <?= $form->field($model, 'title', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
+                    ])->textInput([
+                        'placeholder' => Yii::t('app', "A good recipe")
+                    ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                    <?= $form->field($model, 'price', [
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div></div></div>"
+                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                    <div class="row mb-3">
+                       <div class="col-sm-3 text-start">
+                           <?= Yii::t('app', "Cost") ?>
+                       </div>
+                        <div class="col-sm-9">
+                            <span class="form-control" id="cost-value"
+                                  data-value="<?= $model->lastPrice ?>"><?= $businessObj->formatter->asCurrency($model->lastPrice) ?></span>
+                        </div>
                     </div>
-                    <table class="table table-borderless">
-                        <tbody>
-                        <tr>
-                            <td class="bg-primary text-center text-white">
-                                <?= Yii::t('app', 'Pictures') ?>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                    <?= $form->field($model, 'mainImage')->widget(\kartik\file\FileInput::class, [
-                        'id' => 'mainImageInput',
-                        'options' => [
-                            'multiple' => false,
-                            'accept' => 'image/*'
-                        ],
-                        'pluginOptions' => [
-                            'initialPreview' => [$model->getMainImageUrl()],
-                            'initialPreviewConfig' => [$model->getMainImageId()],
-                            'initialPreviewAsData' => true,
-                            'overwriteInitial' => false,
-                            'maxFileSize' => 2800,
-                            'showRotate' => false,
-                            'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id])
+                    <div class="row mb-3">
+                       <div class="col-sm-3 text-start">
+                           <?= Yii::t('app', "Cost %") ?>
+                       </div>
+                        <div class="col-sm-9">
+                            <span class="form-control"
+                                  id="cost-percent"><?= Yii::$app->formatter->asPercent($model->costPercent, 0) ?></span>
+                        </div>
+                    </div>
 
-                        ],
-                    ]) ?>
-                    <br>
-                    <?= $form->field($model, 'stepsImages')->widget(\kartik\file\FileInput::class, [
-                        'id' => 'stepsImagesInput',
-                        'options' => [
-                            'multiple' => true,
-                            'accept' => 'image/*'
-                        ],
-                        'pluginOptions' => [
-                            'initialPreview' => $model->getRecipeImagesUrl(),
-                            'initialPreviewConfig' => $model->getRecipeImagesId(),
-                            'initialPreviewAsData' => true,
-                            'overwriteInitial' => false,
-                            'maxFileSize' => 2800,
-                            'showRotate' => false,
-                            'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id])
 
-                        ],
 
-                    ]) ?>
                 </div>
-
             </div>
+            <?= $this->render('create/_ingredients_selection', [
+                'model' => $model
+            ]) ?>
+            <br>
+            <?= $form->field($model, 'mainImage')->widget(\kartik\file\FileInput::class, [
+                'id' => 'mainImageInput',
+                'options' => [
+                    'multiple' => false,
+                    'accept' => 'image/*'
+                ],
+                'pluginOptions' => [
+                    'initialPreview' => empty(($url = $model->getMainImageUrl())) ? [] : [$url],
+                    'initialPreviewConfig' => empty(($id = $model->getMainImageId())) ? [] : [$id],
+                    'initialPreviewAsData' => true,
+                    'overwriteInitial' => false,
+                    'maxFileSize' => 2800,
+                    'showRotate' => false,
+                    'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id])
+                ],
+            ]) ?>
+            <br>
+            <?= $this->render('create/_steps', [
+                'model' => $model
+            ]) ?>
+
+            <br>
+            <?= $form->field($model, 'equipment')->widget(Summernote::class, [
+                'useKrajeePresets' => true,
+                'useKrajeeStyle' => false,
+                'pluginOptions' => [
+                    'height' => 200
+                ]
+                // other widget settings
+            ]) ?>
+            <?= $this->render('create/_special_steps', [
+                'model' => $model
+            ]) ?>
+            <br>
+            <?= $form->field($model, 'other_specs')->widget(Summernote::class, [
+                'useKrajeePresets' => true,
+                'useKrajeeStyle' => false,
+                'pluginOptions' => [
+                    'height' => 200
+                ]
+                // other widget settings
+            ]) ?>
+            <br>
+            <?= $form->field($model, 'allergies')->widget(Summernote::class, [
+                'useKrajeePresets' => true,
+                'useKrajeeStyle' => false,
+                'pluginOptions' => [
+                    'height' => 200
+                ]
+                // other widget settings
+            ]) ?>
+
+
+            <br>
+            <?= $form->field($model, 'stepsImages')->widget(\kartik\file\FileInput::class, [
+                'id' => 'stepsImagesInput',
+                'options' => [
+                    'multiple' => true,
+                    'accept' => 'image/*'
+                ],
+                'pluginOptions' => [
+                    'initialPreview' => $model->getRecipeImagesUrl(),
+                    'initialPreviewConfig' => $model->getRecipeImagesId(),
+                    'initialPreviewAsData' => true,
+                    'overwriteInitial' => false,
+                    'maxFileSize' => 2800,
+                    'showRotate' => false,
+                    'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id])
+
+                ],
+            ]) ?>
+
         </div>
         <div class="card-footer">
             <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', "Save"), ['class' => 'btn btn-success']) ?>
@@ -269,12 +189,14 @@ $this->registerCssFile(Yii::getAlias("@web/css/flowchart.css"));
     <?php ActiveForm::end(); ?>
 
 </div>
+
 <?php
 
-\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add ingredient'),
-    'id' => 'modal-add-ingredient',]);
 
-echo $this->render('create/_form_ingredient', ['stock' => $stock, 'recipe' => $model, 'model' => new \backend\models\StandardRecipeIngredientForm(), 'subRecipes' => $subRecipes]);
+\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add ingredient'),
+    'id' => 'modal-add-ingredient']);
+
+echo "<div id='container-form-ingredient'></div>";
 
 \yii\bootstrap5\Modal::end();
 
@@ -284,7 +206,16 @@ echo $this->render('create/_form_ingredient', ['stock' => $stock, 'recipe' => $m
 \yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add step'),
     'id' => 'modal-add-step',]);
 
-echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \common\models\RecipeStep()]);
+echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \common\models\RecipeStep(['type' => \common\models\RecipeStep::STEP_TYPE_PROCEDURE]), 'pjaxId' => '#pjax-list-steps']);
+
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add special step'),
+    'id' => 'modal-add-special-step',]);
+
+echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \common\models\RecipeStep(['type' => \common\models\RecipeStep::STEP_TYPE_SPECIAL]), 'pjaxId' => '#pjax-list-special-steps']);
 
 \yii\bootstrap5\Modal::end();
 ?>

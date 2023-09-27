@@ -12,6 +12,9 @@ use Yii;
  * @property string $name
  * @property int|null $builtin
  * @property int $business_id [int]
+ * @property int $group_id [int]
+ * @property-read mixed $group
+ * @property string $key_prefix [varchar(255)]
  */
 class Category extends \yii\db\ActiveRecord
 {
@@ -30,16 +33,19 @@ class Category extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
-            [['builtin', 'business_id'], 'integer'],
+            [['builtin', 'business_id', 'group_id'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'targetClass' => Business::class, 'targetAttribute' => ['business_id' => 'id']],
-            [['name'], 'validateName']
+            [['group_id'], 'exist', 'targetClass' => CategoryGroup::class, 'targetAttribute' => ['group_id' => 'id']],
+            [['name'], 'validateName'],
+            [['key_prefix'], 'string', 'max' => 4],
+            [['key_prefix'], 'unique'],
         ];
     }
 
     public function validateName($attribute)
     {
-        $exists = Category::find()->where(['name' => $this->name])->one();
+        $exists = Category::find()->where(['name' => $this->name, 'group_id' => $this->group_id])->one();
 
         if ($exists) {
             if ($exists->business_id == null) {
@@ -47,7 +53,7 @@ class Category extends \yii\db\ActiveRecord
                 return false;
             }
             $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
-            if($exists->business_id == $business['id']){
+            if ($exists->business_id == $business['id']) {
                 $this->addError($attribute, Yii::t('app', "{category} already exists", ['category' => $this->name]));
                 return false;
             }
@@ -66,7 +72,26 @@ class Category extends \yii\db\ActiveRecord
             'name' => Yii::t('app', 'Name'),
             'builtin' => Yii::t('app', 'Builtin'),
             'business_id' => Yii::t('app', "Business"),
+            'group_id' => Yii::t('app', "Group"),
         ];
+    }
+
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if (empty($this->business_id)) {
+            $this->builtin = 1;
+        }
+
+        return true;
+    }
+
+    public function getGroup()
+    {
+        return $this->hasOne(CategoryGroup::class, ['id' => 'group_id']);
     }
 
     public static function all()

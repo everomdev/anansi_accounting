@@ -3,11 +3,15 @@
 namespace backend\controllers;
 
 use backend\helpers\RedisKeys;
+use common\models\IngredientStock;
+use common\models\Movement;
 use Da\User\Traits\ContainerAwareTrait;
 use Da\User\Validator\AjaxRequestModelValidator;
 use Yii;
 use common\models\Provider;
 use common\models\ProviderSearch;
+use yii\data\ActiveDataProvider;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -29,6 +33,43 @@ class ProviderController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::className(),
+                'rules' => [
+                    [
+                        'actions' => [
+                            'index',
+                            'ingredients'
+                        ],
+                        'allow' => true,
+                        'roles' => ['providers_list']
+                    ],
+                    [
+                        'actions' => [
+                            'view',
+
+                        ],
+                        'allow' => true,
+                        'roles' => ['providers_view']
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+
+                        ],
+                        'allow' => true,
+                        'roles' => ['providers_create']
+                    ],
+                    [
+                        'actions' => [
+                            'update',
+
+                        ],
+                        'allow' => true,
+                        'roles' => ['providers_update']
+                    ],
                 ],
             ],
         ];
@@ -110,6 +151,30 @@ class ProviderController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    public function actionIngredients($provider = 'all')
+    {
+        $business = RedisKeys::getBusiness();
+        \Yii::$app->db->createCommand("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''));")->execute();
+        $movements = Movement::find()
+            ->where(['business_id' => $business->id])
+            ->groupBy(['ingredient_id']);
+
+        if ($provider != 'all') {
+            $movements->andWhere(['provider' => $provider]);
+        }
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $movements
+        ]);
+
+        return $this->render('ingredients', [
+            'dataProvider' => $dataProvider,
+            'providers' => Provider::findAll(['business_id' => $business->id]),
+            'provider' => $provider
+        ]);
+
     }
 
     /**

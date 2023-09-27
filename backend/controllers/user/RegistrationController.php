@@ -112,17 +112,17 @@ class RegistrationController extends Controller
         if ($form->load(Yii::$app->request->post()) && $form->validate()) {
             $this->trigger(FormEvent::EVENT_BEFORE_REGISTER, $event);
 
-            /** @var User $user */
+            /** @var \common\models\User $user */
 
             // Create a temporary $user, so we can get the attributes, then get
             // the intersection between the $form fields  and the $user fields.
-            $user = $this->make(User::class, []);
+            $user = $this->make(\common\models\User::class, []);
             $fields = array_intersect_key($form->attributes, $user->attributes);
 
             // Becomes password_hash
             $fields['password'] = $form['password'];
 
-            $user = $this->make(User::class, [], $fields);
+            $user = $this->make(\common\models\User::class, [], $fields);
 
             $user->setScenario('register');
             $mailService = MailFactory::makeWelcomeMailerService($user);
@@ -140,15 +140,26 @@ class RegistrationController extends Controller
                     Yii::$app->session->setFlash('info', Yii::t('usuario', 'Your account has been created'));
                 }
                 $this->trigger(FormEvent::EVENT_AFTER_REGISTER, $event);
-                $role = Yii::$app->authManager->getRole('client');
-                Yii::$app->authManager->assign($role, $user->id);
 
                 Yii::$app->db->createCommand()
-                    ->update(
+                    ->insert(
                         'profile',
-                        ['name' => $form->name],
-                        ['user_id' => $user->id]
+                        [
+                            'name' => $form->name,
+                            'user_id' => $user->id
+                        ],
                     )->execute();
+
+                Yii::$app->db->createCommand()
+                    ->insert(
+                        'user_plan',
+                        [
+                            'user_id' => $user->id,
+                            'plan_id' => $form->planId
+                        ]
+                    )->execute();
+
+                $user->registerInStripe($form->planId);
 
                 // create business
                 $business = new Business([
@@ -157,6 +168,16 @@ class RegistrationController extends Controller
                 ]);
 
                 $business->save();
+
+                $authManager = Yii::$app->getAuthManager();
+                $role = $authManager->getRole('owner');
+                $authManager->assign($role, $user->id);
+                $permissions = $user->plan->permissions;
+                foreach ($permissions as $permissionName) {
+                    $permission = $authManager->getPermission($permissionName);
+                    $authManager->assign($permission, $user->id);
+                }
+
 
                 return $this->redirect('/user/login');
             }
@@ -235,15 +256,15 @@ class RegistrationController extends Controller
             $this->trigger(UserEvent::EVENT_AFTER_CONFIRMATION, $event);
             RedisKeys::setValue(RedisKeys::USER_KEY, json_encode(Yii::$app->user->identity->attributes));
             $profile = Profile::findOne(['user_id' => $user->id]);
-            if($profile) {
+            if ($profile) {
                 RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
 
             }
             $business = Business::findOne(['user_id' => $user->id]);
-            if($business){
+            if ($business) {
                 RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
             }
-            return $this->redirect(['//site/index']);
+            return $this->redirect(['//site/enable-subscription']);
         } else {
             Yii::$app->session->setFlash(
                 'danger',
@@ -304,7 +325,7 @@ class RegistrationController extends Controller
                 );
             }
 
-            return $this->redirect(['user/login']);
+            return $this->redirect(['//user/security/login']);
         }
 
         return $this->render(

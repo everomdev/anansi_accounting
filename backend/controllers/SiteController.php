@@ -1,6 +1,8 @@
 <?php
+
 namespace backend\controllers;
 
+use common\models\User;
 use Yii;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
@@ -26,7 +28,7 @@ class SiteController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index'],
+                        'actions' => ['logout', 'index', 'enable-subscription'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -99,4 +101,18 @@ class SiteController extends Controller
 
         return $this->goHome();
     }
+
+    public function actionEnableSubscription()
+    {
+        $this->layout = "blank";
+        $user = User::findOne(['id' => Yii::$app->user->id]);
+        $plan = $user->plan;
+
+        return $this->render('enable_subscription', [
+            'user' => $user,
+            'plan' => $plan
+        ]);
+    }
+
+
 }

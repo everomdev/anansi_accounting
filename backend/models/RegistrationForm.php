@@ -6,7 +6,7 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
 {
     public $name;
     public $businessName;
-
+    public $planId;
     public function rules()
     {
         return array_merge(
@@ -14,6 +14,7 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
             [
                 [['name', 'businessName'], 'required'],
                 [['name', 'businessName'], 'string'],
+                [['planId'], 'integer'],
             ]
         );
     }
@@ -25,6 +26,7 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
             [
                 'name' => \Yii::t('app', "Your name"),
                 'businessName' => \Yii::t('app', "Your business name"),
+                'planId' => \Yii::t('app', "Plan"),
             ]
         );
     }

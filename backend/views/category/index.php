@@ -37,7 +37,19 @@ $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
             ['class' => 'yii\grid\SerialColumn'],
 
 //            'id',
+            [
+                'attribute' => 'group.color',
+                'format' => 'raw',
+                'value' => function ($data) {
+                    return "<div style='width: 30px; height: 30px; background-color:  {$data->group->color}; border-radius: 30px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);'></div>";
+                },
+            ],
+            [
+                'attribute' => 'group.name',
+                'filter' => \yii\bootstrap5\Html::activeDropDownList($searchModel, 'group_id', \yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name'), ['class' => 'form-control', 'prompt' => Yii::t('app', "All")])
+            ],
             'name',
+            'key_prefix',
 //            'builtin',
 
             [

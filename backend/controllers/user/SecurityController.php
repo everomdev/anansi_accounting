@@ -21,6 +21,7 @@ use yii\base\InvalidParamException;
 use yii\base\Module;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
+use yii\i18n\Formatter;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\widgets\ActiveForm;
@@ -144,11 +145,18 @@ class SecurityController extends Controller
                 $profile = Profile::findOne(['user_id' => $form->getUser()->id]);
                 if($profile) {
                     RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
-
                 }
-                $business = Business::findOne(['user_id' => $form->getUser()->id]);
+                $business = Business::find()
+                    ->innerJoin("user_business ub", "ub.business_id=business.id")
+                    ->where([
+                        'or',
+                        ['business.user_id' => $form->getUser()->id],
+                        ['ub.user_id' => $form->getUser()->id],
+                    ])->one();
+
                 if($business){
                     RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
+                    Yii::$app->setTimeZone($business->timezone);
                 }
                 return $this->goBack();
             }
@@ -247,4 +255,5 @@ class SecurityController extends Controller
 
         $this->make(SocialNetworkAccountConnectService::class, [$this, $client])->run();
     }
+
 }

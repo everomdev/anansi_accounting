@@ -23,7 +23,9 @@ $controller = $model->isNewRecord
         'action' => $controller
     ]); ?>
 
+    <?= $form->field($model, 'group_id')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name')) ?>
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'key_prefix')->textInput(['maxlength' => true]) ?>
 
     <div class="form-group mt-3">
         <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>

@@ -9,6 +9,7 @@ use Da\User\Validator\AjaxRequestModelValidator;
 use Yii;
 use common\models\StandardRecipe;
 use common\models\StandardRecipeSearch;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -30,6 +31,43 @@ class SubStandardRecipeController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::className(),
+                'rules' => [
+                    [
+                        'actions' => [
+                            'index'
+                        ],
+                        'allow' => true,
+                        'roles' => ['subrecipe_list', 'subrecipe_view']
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+                            'select-ingredients',
+                            'unselect-ingredient',
+                        ],
+                        'allow' => true,
+                        'roles' => ['subrecipe_create']
+                    ],
+                    [
+                        'actions' => [
+                            'update',
+                            'select-ingredients',
+                            'unselect-ingredient',
+                        ],
+                        'allow' => true,
+                        'roles' => ['subrecipe_update']
+                    ],
+                    [
+                        'actions' => [
+                            'delete',
+                        ],
+                        'allow' => true,
+                        'roles' => ['subrecipe_delete']
+                    ],
                 ],
             ],
         ];

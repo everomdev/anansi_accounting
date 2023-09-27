@@ -2,16 +2,21 @@
 
 namespace console\controllers;
 
+use common\models\Business;
 use common\models\User;
 use Da\User\Factory\TokenFactory;
+use Yii;
 
 class TestController extends BaseController
 {
     public function actionTest(){
-        $user = User::findOne(['id' => 2]);
-        $token = TokenFactory::makeConfirmationToken($user->id);
+        $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+        $prices = $stripe->prices->search([
+            'query' => "product: 'prod_OgqjpThAnSxBaL' AND active: 'true'"
+        ]);
 
-        var_dump(get_class($token));
-        var_dump($token->getUrl());
+        foreach ($prices->data as $price) {
+            print_r($price->active);
+        }
     }
 }

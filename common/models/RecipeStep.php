@@ -2,8 +2,10 @@
 
 namespace common\models;
 
+use rico\yii2images\behaviors\ImageBehave;
 use Yii;
 use yii\db\Query;
+use yii\web\UploadedFile;
 
 /**
  * This is the model class for table "recipe_step".
@@ -16,15 +18,30 @@ use yii\db\Query;
  * @property string|null $indicator
  *
  * @property StandardRecipe $recipe
+ * @property string $type [varchar(255)]
  */
 class RecipeStep extends \yii\db\ActiveRecord
 {
+    const STEP_TYPE_PROCEDURE = 'procedure';
+    const STEP_TYPE_SPECIAL = 'special';
+
+    public $_image = null;
+
     /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
         return 'recipe_step';
+    }
+
+    public function behaviors()
+    {
+        return [
+            'image' => [
+                'class' => ImageBehave::class,
+            ]
+        ];
     }
 
     /**
@@ -36,12 +53,14 @@ class RecipeStep extends \yii\db\ActiveRecord
             [['recipe_id', 'activity'], 'required'],
             [['recipe_id', 'number'], 'integer'],
             [['time'], 'safe'],
-            [['activity', 'indicator'], 'string', 'max' => 255],
+            [['activity', 'indicator', 'type'], 'string', 'max' => 255],
             [['recipe_id'], 'exist', 'skipOnError' => true, 'targetClass' => StandardRecipe::className(), 'targetAttribute' => ['recipe_id' => 'id']],
             [[
                 'activity',
                 'indicator'
-            ], 'filter', 'filter' => 'trim']
+            ], 'filter', 'filter' => 'trim'],
+            [['type'], 'in', 'range' => [self::STEP_TYPE_PROCEDURE, self::STEP_TYPE_SPECIAL]],
+            [['_image'], 'image']
         ];
     }
 
@@ -57,6 +76,7 @@ class RecipeStep extends \yii\db\ActiveRecord
             'activity' => Yii::t('app', 'Activity'),
             'time' => Yii::t('app', 'Time'),
             'indicator' => Yii::t('app', 'Indicator'),
+            'image' => Yii::t('app', "Image")
         ];
     }
 
@@ -69,10 +89,28 @@ class RecipeStep extends \yii\db\ActiveRecord
         return true;
     }
 
+    public function afterSave($insert, $changedAttributes)
+    {
+
+        $this->uploadImage();
+
+        parent::afterSave($insert, $changedAttributes);
+    }
+
+    private function uploadImage()
+    {
+        $file = UploadedFile::getInstance($this, '_image');
+        if($file){
+            $this->removeImages();
+            $this->attachImage($file->tempName, true);
+        }
+    }
+
     public function afterDelete()
     {
         parent::afterDelete();
         $this->fixNumbers();
+        $this->removeImages();
     }
 
     /**
@@ -88,7 +126,10 @@ class RecipeStep extends \yii\db\ActiveRecord
     public function computeNumber()
     {
         $lastStep = RecipeStep::find()
-            ->where(['recipe_id' => $this->recipe_id])
+            ->where([
+                'recipe_id' => $this->recipe_id,
+                'type' => $this->type
+            ])
             ->orderBy(['number' => SORT_DESC])
             ->one();
 
@@ -100,7 +141,10 @@ class RecipeStep extends \yii\db\ActiveRecord
         $steps = (new Query())
             ->select(["id", 'number'])
             ->from("recipe_step")
-            ->where(['recipe_step.recipe_id' => $this->recipe_id])
+            ->where([
+                'recipe_step.recipe_id' => $this->recipe_id,
+                'recipe_step.type' => $this->type
+            ])
             ->orderBy(['recipe_step.number' => SORT_ASC])
             ->all();
 

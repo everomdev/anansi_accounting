@@ -8,6 +8,7 @@ use Da\User\Validator\AjaxRequestModelValidator;
 use Yii;
 use common\models\Menu;
 use common\models\MenuSearch;
+use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -29,6 +30,50 @@ class MenuController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => AccessControl::className(),
+                'rules' => [
+                    [
+                        'actions' => [
+                            'index',
+                            'view'
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'combo_list',
+                            'combo_view'
+                        ]
+                    ],
+                    [
+                        'actions' => [
+                            'create',
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'combo_create',
+                        ]
+                    ],
+                    [
+                        'actions' => [
+                            'update',
+                            'save-sales'
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'combo_update',
+                        ]
+                    ],
+                    [
+                        'actions' => [
+                            'delete'
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'combo_delete'
+                        ]
+                    ],
                 ],
             ],
         ];
@@ -69,6 +114,11 @@ class MenuController extends Controller
      */
     public function actionCreate()
     {
+        $user = Yii::$app->user->identity;
+        if ($user->hasRestrictions('combos')) {
+            Yii::$app->session->setFlash('warning', "Haz alcanzado el límite de combos");
+            return $this->redirect(['menu/index']);
+        }
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $model = new Menu([
             'business_id' => $business['id']
@@ -107,6 +157,20 @@ class MenuController extends Controller
 
         return $this->render('update', [
             'model' => $model,
+        ]);
+    }
+
+    public function actionSaveSales($id)
+    {
+        $model = $this->findModel($id);
+
+        if ($model->load(Yii::$app->request->post()) && $model->save(false)) {
+            return $this->asJson(['success' => true]);
+        }
+
+        return $this->asJson([
+            'success' => false,
+            'errors' => array_values(array_values($model->errors))
         ]);
     }
 

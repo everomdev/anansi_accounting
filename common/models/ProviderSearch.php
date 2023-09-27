@@ -18,7 +18,7 @@ class ProviderSearch extends Provider
     {
         return [
             [['id', 'business_id'], 'integer'],
-            [['name', 'address', 'phone', 'second_phone', 'email', 'fax'], 'safe'],
+            [['name', 'address', 'phone', 'second_phone', 'email', 'payment_method', 'account', 'credit_days', 'rfc', 'business_name', 'advantages', 'disadvantages', 'observations'], 'safe'],
         ];
     }
 
@@ -67,7 +67,14 @@ class ProviderSearch extends Provider
             ->andFilterWhere(['like', 'phone', $this->phone])
             ->andFilterWhere(['like', 'second_phone', $this->second_phone])
             ->andFilterWhere(['like', 'email', $this->email])
-            ->andFilterWhere(['like', 'fax', $this->fax]);
+            ->andFilterWhere(['like', 'payment_method', $this->payment_method])
+            ->andFilterWhere(['like', 'account', $this->account])
+            ->andFilterWhere(['like', 'credit_days', $this->credit_days])
+            ->andFilterWhere(['like', 'rfc', $this->rfc])
+            ->andFilterWhere(['like', 'business_name', $this->business_name])
+            ->andFilterWhere(['like', 'advantages', $this->advantages])
+            ->andFilterWhere(['like', 'disadvantages', $this->disadvantages])
+            ->andFilterWhere(['like', 'observations', $this->observations]);
 
         return $dataProvider;
     }

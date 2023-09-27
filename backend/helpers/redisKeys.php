@@ -1,6 +1,7 @@
 <?php
 
 namespace backend\helpers;
+use common\models\Business;
 use yii\web\UrlManager;
 
 class RedisKeys
@@ -21,5 +22,15 @@ class RedisKeys
     public static function setValue($key, $data)
     {
         \Yii::$app->cache->set($key, $data);
+    }
+
+    public static function getBusinessData()
+    {
+        return self::getValue(self::BUSINESS_KEY);
+    }
+
+    public static function getBusiness()
+    {
+        return Business::findOne(['id' => self::getBusinessData()['id']]);
     }
 }
