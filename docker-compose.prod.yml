@@ -17,6 +17,7 @@ services:
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     labels:
       - "traefik.enable=true"
+
       - "traefik.http.routers.backend.rule=Host(`sistemapararestaurantes.com`)"
       - "traefik.http.routers.backend.entrypoints=http"
       - "traefik.http.routers.backend.service=backend"
