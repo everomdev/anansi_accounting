@@ -3,8 +3,6 @@ version: '3.2'
 services:
 
   backend:
-    #    depends_on:
-    #      - pgsql
     container_name: backend_costeo
     build: backend
     expose:
@@ -19,7 +17,6 @@ services:
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     labels:
       - "traefik.enable=true"
-
       - "traefik.http.routers.backend.rule=Host(`sistemapararestaurantes.com`)"
       - "traefik.http.routers.backend.entrypoints=http"
       - "traefik.http.routers.backend.service=backend"
@@ -60,7 +57,7 @@ services:
       - "traefik.http.routers.frontend.service=frontend"
       - "traefik.http.middlewares.frontend-redirectscheme.redirectscheme.scheme=https"
       - "traefik.http.middlewares.frontend-redirectscheme.redirectscheme.permanent=false"
-      - "traefik.http.routers.frontend.middlewares=backend-redirectscheme"
+      - "traefik.http.routers.frontend.middlewares=frontend-redirectscheme"
 
       - "traefik.http.routers.frontend-secure.rule=Host(`admin.sistemapararestaurantes.com`)"
       - "traefik.http.routers.frontend-secure.entrypoints=https"
