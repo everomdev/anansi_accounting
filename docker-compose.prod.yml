@@ -77,14 +77,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.frontend.rule=Host(`admincosteo.diagnosticopararestaurantes.com`)"
+      - "traefik.http.routers.frontend.rule=Host(`sistemapararestaurantes.com`)"
       - "traefik.http.routers.frontend.entrypoints=http"
       - "traefik.http.routers.frontend.service=frontend"
       - "traefik.http.middlewares.frontend-redirectscheme.redirectscheme.scheme=https"
       - "traefik.http.middlewares.frontend-redirectscheme.redirectscheme.permanent=false"
       - "traefik.http.routers.frontend.middlewares=backend-redirectscheme"
 
-      - "traefik.http.routers.frontend-secure.rule=Host(`admincosteo.diagnosticopararestaurantes.com`)"
+      - "traefik.http.routers.frontend-secure.rule=Host(`admin.sistemapararestaurantes.com`)"
       - "traefik.http.routers.frontend-secure.entrypoints=https"
       - "traefik.http.routers.frontend-secure.service=frontend"
       - "traefik.http.routers.frontend-secure.tls=true"
