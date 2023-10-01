@@ -2,12 +2,15 @@
 
 namespace backend\controllers;
 
+use common\models\Contact;
 use common\models\User;
 use Yii;
+use yii\bootstrap5\ActiveForm;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
+use yii\web\Response;
 
 /**
  * Site controller
@@ -24,7 +27,7 @@ class SiteController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['login', 'error'],
+                        'actions' => ['login', 'error', 'comming-soon'],
                         'allow' => true,
                     ],
                     [
@@ -111,6 +114,29 @@ class SiteController extends Controller
         return $this->render('enable_subscription', [
             'user' => $user,
             'plan' => $plan
+        ]);
+    }
+
+    public function actionCommingSoon()
+    {
+        $this->layout = 'blank';
+        $model = new Contact();
+
+        $post = Yii::$app->request->post();
+
+        if (Yii::$app->request->isAjax && $model->load(Yii::$app->request->post())) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            return ActiveForm::validate($model);
+        }
+
+
+        if ($model->load($post) && $model->save()) {
+            Yii::$app->session->setFlash('success', Yii::t('app', "Hemos guardado tu contacto, te avisaremos cuando esté disponible el sistema"));
+            return $this->redirect(['site/index']);
+        }
+
+        return $this->render('comming_soon', [
+            'model' => $model
         ]);
     }
 

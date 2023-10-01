@@ -116,7 +116,8 @@ return [
             'rules' => [
                 'resources' => 'ingredient-stock/index',
                 'storage' => 'ingredient-stock/storage',
-                'theoretical-yield' => 'standard-recipe/theoretical-yield'
+                'theoretical-yield' => 'standard-recipe/theoretical-yield',
+                'comming-soon' => 'site/comming-soon'
             ],
         ]
     ],
@@ -146,7 +147,7 @@ return [
                 ]
             ]
         ],
-
     ],
     'params' => $params,
+    'catchAll' => ['site/comming-soon']
 ];
