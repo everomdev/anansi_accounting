@@ -58,7 +58,7 @@ $this->registerJsVar("currentPlanId", $plan->id);
             </tr>
             </tbody>
         </table>
-        <?php if (!empty($subscription) && $subscriptionStatus == 'active'): ?>
+        <?php if (!empty($subscription) && ($subscriptionStatus == 'active' or $subscriptionStatus == 'trialing')): ?>
             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Cancel subscription"), ['//payment/cancel-subscription'], [
                 'class' => 'btn btn-danger',
                 'data' => [
@@ -66,7 +66,7 @@ $this->registerJsVar("currentPlanId", $plan->id);
                 ]
             ]) ?>
         <?php endif; ?>
-        <?php if (empty($subscription) or $subscriptionStatus != 'active'): ?>
+        <?php if (empty($subscription) or ($subscriptionStatus != 'active' and $subscriptionStatus != 'trialing')): ?>
             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Enable subscription"), ['//site/enable-subscription'], [
                 'class' => 'btn btn-success',
 

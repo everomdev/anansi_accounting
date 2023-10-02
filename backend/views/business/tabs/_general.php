@@ -35,10 +35,20 @@
 </div>
 
 
-<?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Save'), [
-    'class' => 'btn btn-success'
-]) ?>
+<p>
+    <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Save'), [
+        'class' => 'btn btn-success'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::a("Eliminar cuenta", ['//user/admin/delete'], [
+        'class' => 'btn btn-danger',
+        'data' => [
+            'method' => 'post',
+            'confirm' => "¿Seguro que quieres eliminar tu cuenta? Este paso es irreversible"
+        ]
+    ]) ?>
+</p>
 
 <?php \yii\bootstrap5\ActiveForm::end(); ?>
+
 
 

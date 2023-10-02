@@ -87,7 +87,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                             'template' => "{label}<br><div class='input-group'>{input} <span class='input-group-text'>%</span><button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular</button></div>"
                         ]
                     )
-                        ->textInput() ?>
+                        ->textInput()->label("Factor de rendimiento") ?>
                 </div>
 
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">

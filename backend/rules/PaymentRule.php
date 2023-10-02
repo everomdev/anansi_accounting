@@ -19,7 +19,7 @@ class PaymentRule extends Rule
         $hasActivePayment = UserPlan::find()
             ->where([
                 'user_id' => $business->user_id,
-                'stripe_subscription_status' => 'active'
+                'stripe_subscription_status' => ['active', 'trialing']
             ])->exists();
         return $hasActivePayment;
     }

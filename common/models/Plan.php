@@ -26,6 +26,7 @@ use yii\helpers\Url;
  * @property int $recetas [int]
  * @property int $convoy [int]
  * @property int $combos [int]
+ * @property int $trial_days [int]
  */
 class Plan extends \yii\db\ActiveRecord
 {
@@ -60,7 +61,7 @@ class Plan extends \yii\db\ActiveRecord
         return [
             [['name', 'monthly_price', 'yearly_price'], 'required'],
             [['monthly_price', 'yearly_price'], 'number'],
-            [['users', 'recetas', 'subrecetas', 'convoy', 'combos'], 'integer'],
+            [['users', 'recetas', 'subrecetas', 'convoy', 'combos', 'trial_days'], 'integer'],
             [['name', 'stripe_product_id', 'description'], 'string', 'max' => 255],
             [['permissions'], 'safe']
         ];
@@ -273,7 +274,7 @@ class Plan extends \yii\db\ActiveRecord
 
     public function getLabel()
     {
-        return sprintf("%s - %s USD/mes o %s USD/año", $this->name, $this->monthly_price, $this->yearly_price);
+        return sprintf("%s - $%s USD/mes o $%s USD/año - %s dias de prueba", $this->name, $this->monthly_price, $this->yearly_price, $this->trial_days);
     }
 
     public function generateCheckoutSession(User $user, $priceId)
@@ -299,7 +300,8 @@ class Plan extends \yii\db\ActiveRecord
                     'metadata' => [
                         "plan" => json_encode($this->getAttributes()),
                         "user" => json_encode($user->getAttributes(['id', 'email']))
-                    ]
+                    ],
+                    'trial_period_days' => $this->trial_days
                 ],
                 'automatic_tax' => [
                     'enabled' => true
@@ -335,7 +337,7 @@ class Plan extends \yii\db\ActiveRecord
             ->where(['up.plan_id' => $this->id])
             ->all();
 
-        foreach ($users as $user){
+        foreach ($users as $user) {
             $user->applyRoles();
         }
     }

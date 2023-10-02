@@ -110,7 +110,7 @@ class AdminController extends Controller
                         'roles' => ['admin'],
                     ],
                     [
-                        'actions' => ['users', 'create-user', 'update-user', 'delete-user'],
+                        'actions' => ['users', 'create-user', 'update-user', 'delete-user', 'delete'],
                         'allow' => true,
                         'roles' => ['manage_users']
                     ]
@@ -265,27 +265,28 @@ class AdminController extends Controller
         return $this->redirect(Url::previous('actions-redirect'));
     }
 
-    public function actionDelete($id)
+    public function actionDelete()
     {
-        if ((int)$id === Yii::$app->user->getId()) {
-            Yii::$app->getSession()->setFlash('danger', Yii::t('usuario', 'You cannot remove your own account'));
-        } else {
-            /** @var User $user */
-            $user = $this->userQuery->where(['id' => $id])->one();
-            /** @var UserEvent $event */
-            $event = $this->make(UserEvent::class, [$user]);
-            $this->trigger(ActiveRecord::EVENT_BEFORE_DELETE, $event);
+//        if ((int)$id === Yii::$app->user->getId()) {
+//            Yii::$app->getSession()->setFlash('danger', Yii::t('usuario', 'You cannot remove your own account'));
+//        } else {
+        $id = Yii::$app->user->identity->getId();
+        /** @var User $user */
+        $user = $this->userQuery->where(['id' => $id])->one();
+        /** @var UserEvent $event */
+        $event = $this->make(UserEvent::class, [$user]);
+        $this->trigger(ActiveRecord::EVENT_BEFORE_DELETE, $event);
 
-            if ($user->delete()) {
-                Yii::$app->getSession()->setFlash('success', Yii::t('usuario', 'User has been deleted'));
-                $this->trigger(ActiveRecord::EVENT_AFTER_DELETE, $event);
-            } else {
-                Yii::$app->getSession()->setFlash(
-                    'warning',
-                    Yii::t('usuario', 'Unable to delete user. Please, try again later.')
-                );
-            }
+        if ($user->delete()) {
+            Yii::$app->getSession()->setFlash('success', Yii::t('usuario', 'User has been deleted'));
+            $this->trigger(ActiveRecord::EVENT_AFTER_DELETE, $event);
+        } else {
+            Yii::$app->getSession()->setFlash(
+                'warning',
+                Yii::t('usuario', 'Unable to delete user. Please, try again later.')
+            );
         }
+
 
         return $this->redirect(['index']);
     }
