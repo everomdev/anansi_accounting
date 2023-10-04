@@ -18,7 +18,7 @@ use yii\bootstrap5\ActiveForm;
                     ]
                 ) ?>
                 <p>
-                    ¿te interesaría una prueba gratis de nuestro sistema de costeo? Registrate y la siguiente semana te
+                    ¿Te interesaría una prueba gratis de nuestro sistema de costeo? Regístrate y la siguiente semana te
                     lo haremos llegar
                 </p>
                 <div class="row gap-3">
