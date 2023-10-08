@@ -95,7 +95,7 @@ class RegistrationController extends Controller
     /**
      * {@inheritdoc}
      */
-    public function actionRegister()
+    public function actionRegister($plan = null)
     {
 
         if (!$this->module->enableRegistration) {
@@ -104,6 +104,7 @@ class RegistrationController extends Controller
         $this->layout = '@backend/views/layouts/blank.php';
         /** @var RegistrationForm $form */
         $form = $this->make(RegistrationForm::class);
+        $form->planId = $plan;
         /** @var FormEvent $event */
         $event = $this->make(FormEvent::class, [$form]);
 

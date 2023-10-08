@@ -80,6 +80,24 @@ services:
     environment:
       PHP_ENABLE_XDEBUG: 1
 
+  landing:
+    container_name: costeo_landing
+    depends_on:
+      - mysql
+      - redis
+    build: landing
+    ports:
+      - 23080:80
+    volumes:
+      # Re-use local composer cache via host-volume
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      # Mount source-code for development
+      - ./:/app
+      - ./docker/php/custom-config.ini:/usr/local/etc/php/conf.d/custom-config.ini
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    environment:
+      PHP_ENABLE_XDEBUG: 1
+
 volumes:
   mysql_data:
   redis_data:

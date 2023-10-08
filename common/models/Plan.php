@@ -62,8 +62,9 @@ class Plan extends \yii\db\ActiveRecord
             [['name', 'monthly_price', 'yearly_price'], 'required'],
             [['monthly_price', 'yearly_price'], 'number'],
             [['users', 'recetas', 'subrecetas', 'convoy', 'combos', 'trial_days'], 'integer'],
-            [['name', 'stripe_product_id', 'description'], 'string', 'max' => 255],
-            [['permissions'], 'safe']
+            [['name', 'stripe_product_id'], 'string', 'max' => 255],
+            [['permissions'], 'safe'],
+            [['description', 'intro'], 'string']
         ];
     }
 

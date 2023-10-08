@@ -34,7 +34,7 @@ $plans = \common\models\Plan::find()->all();
                 'enableClientValidation' => false,
             ]
         ); ?>
-        <div class="card">
+        <div class="card m-5">
             <div class="card-header">
                 <span class="card-title"><?= Html::encode($this->title) ?></span>
             </div>
@@ -88,6 +88,9 @@ $plans = \common\models\Plan::find()->all();
 </div>
 <?php
 $js = <<< JS
+$(function(){
+    $("#registrationform-planid").trigger('change');
+})
 $(document).on('change', "#registrationform-planid", function(event){
     const id = $(this).val();
     $(".plan").addClass('d-none');

@@ -18,14 +18,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.backendcosteo.rule=Host(`sistemapararestaurantes.com`)"
+      - "traefik.http.routers.backendcosteo.rule=Host(`app.sistemapararestaurantes.com`)"
       - "traefik.http.routers.backendcosteo.entrypoints=http"
       - "traefik.http.routers.backendcosteo.service=backendcosteo"
       - "traefik.http.middlewares.backendcosteo-redirectscheme.redirectscheme.scheme=https"
       - "traefik.http.middlewares.backendcosteo-redirectscheme.redirectscheme.permanent=false"
       - "traefik.http.routers.backendcosteo.middlewares=backendcosteo-redirectscheme"
 
-      - "traefik.http.routers.backendcosteo-secure.rule=Host(`sistemapararestaurantes.com`)"
+      - "traefik.http.routers.backendcosteo-secure.rule=Host(`app.sistemapararestaurantes.com`)"
       - "traefik.http.routers.backendcosteo-secure.entrypoints=https"
       - "traefik.http.routers.backendcosteo-secure.service=backendcosteo"
       - "traefik.http.routers.backendcosteo-secure.tls=true"
@@ -69,6 +69,41 @@ services:
       - "traefik.http.services.frontendcosteo.loadbalancer.server.port=80"
       - "traefik.http.services.frontendcosteo.loadbalancer.server.scheme=http"
       - "traefik.http.services.frontendcosteo.loadbalancer.passhostheader=true"
+
+  landing:
+    #    depends_on:
+    #      - pgsql
+    container_name: landing_costeo
+    build: landing
+    expose:
+      - 80
+    restart: always
+    volumes:
+      # Re-use local composer cache via host-volume
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      # Mount source-code for development
+      - ./:/app
+      - ./docker/php/custom-config.ini:/usr/local/etc/php/conf.d/custom-config.ini
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.landingcosteo.rule=Host(`sistemapararestaurantes.com`)"
+      - "traefik.http.routers.landingcosteo.entrypoints=http"
+      - "traefik.http.routers.landingcosteo.service=landingcosteo"
+      - "traefik.http.middlewares.landingcosteo-redirectscheme.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.landingcosteo-redirectscheme.redirectscheme.permanent=false"
+      - "traefik.http.routers.landingcosteo.middlewares=landingcosteo-redirectscheme"
+
+      - "traefik.http.routers.landingcosteo-secure.rule=Host(`sistemapararestaurantes.com`)"
+      - "traefik.http.routers.landingcosteo-secure.entrypoints=https"
+      - "traefik.http.routers.landingcosteo-secure.service=landingcosteo"
+      - "traefik.http.routers.landingcosteo-secure.tls=true"
+      - "traefik.http.routers.landingcosteo-secure.tls.certresolver=letsencrypt"
+
+      - "traefik.http.services.landingcosteo.loadbalancer.server.port=80"
+      - "traefik.http.services.landingcosteo.loadbalancer.server.scheme=http"
+      - "traefik.http.services.landingcosteo.loadbalancer.passhostheader=true"
 
 
   redis:

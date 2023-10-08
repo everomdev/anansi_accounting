@@ -57,6 +57,7 @@ class SneatAsset extends AssetBundle
 //        "vendors/sneat/assets/js/ui-modals.js",
         "vendors/sneat/assets/js/ui-popover.js",
         "vendors/sneat/assets/js/ui-toasts.js",
+        "https://cdn.ckeditor.com/ckeditor5/39.0.2/decoupled-document/ckeditor.js",
         [
             "https://buttons.github.io/buttons.js",
             "async",
