@@ -162,7 +162,7 @@ class Plan extends \yii\db\ActiveRecord
             $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
             $product = $stripe->products->create([
                 'name' => $this->name,
-                'description' => $this->description,
+                'description' => strip_tags($this->description),
                 'active' => true,
                 'metadata' => $this->getAttributes(),
             ]);
