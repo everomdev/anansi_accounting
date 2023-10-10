@@ -164,7 +164,7 @@ class Plan extends \yii\db\ActiveRecord
                 'name' => $this->name,
                 'description' => $this->name,
                 'active' => true,
-                'metadata' => $this->getAttributes(),
+                'metadata' => $this->getAttributes(null, ['intro', 'description']),
             ]);
             $stripe->prices->create([
                 'product' => $product->id,
