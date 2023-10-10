@@ -199,7 +199,8 @@ class Plan extends \yii\db\ActiveRecord
                 )
                 ->execute();
         } catch (\Exception $exception) {
-
+            Yii::error($exception->getMessage());
+            Yii::error(Yaml::dump($exception->getTrace()));
         }
     }
 
