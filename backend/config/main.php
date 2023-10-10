@@ -16,13 +16,15 @@ return [
     'basePath' => dirname(__DIR__),
     'controllerNamespace' => 'backend\controllers',
     'bootstrap' => ['log'],
+    'name' => $params['appName'],
     'modules' => [
         'user' => [
             'class' => Da\User\Module::class,
             'enableRegistration' => true,
             'mailParams' => [
                 'fromEmail' => $params['senderEmail'],
-                'reconfirmationMailSubject' => "Nuevo email en {$params['appName']}"
+                'reconfirmationMailSubject' => "Nuevo email en {$params['appName']}",
+
             ],
             'classMap' => [
                 'Profile' => [
