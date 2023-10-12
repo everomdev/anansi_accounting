@@ -12,7 +12,22 @@ $currentControllerId = $this->context->action->controller->id;
 $business = \backend\helpers\RedisKeys::getBusiness();
 $plan = $business->user->plan;
 $action = $this->context->action->id;
-if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yield', 'sales', 'menu-recipes', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg', 'charts', 'ingredients'])) {
+$actions = [
+    'price-trend',
+    'storage',
+    'theoretical-yield',
+    'real-yield',
+    'sales',
+    'menu-recipes',
+    'analytics',
+    'menu-improvement',
+    'profit-comparison',
+    'matrix-bcg',
+    'charts',
+    'ingredients',
+    'users'
+];
+if (in_array($action, $actions)) {
     $currentControllerId = $action;
 }
 
@@ -145,7 +160,7 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
                 </a>
             </li>
         <?php endif; ?>
-        <?php if (Yii::$app->user->can('recipe_list') or Yii::$app->user->can('combo_list')): ?>
+        <?php if (Yii::$app->user->can('sales_view')): ?>
             <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['standard-recipe/sales']) ?>" class="menu-link">
 
@@ -209,7 +224,7 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
                 </a>
             </li>
         <?php endif; ?>
-        <?php if (Yii::$app->user->can('abc_analysis_view')): ?>
+        <?php if (Yii::$app->user->can('matrix_bcg')): ?>
             <li class="menu-item <?= $currentControllerId == 'matrix-bcg' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['standard-recipe/matrix-bcg']) ?>" class="menu-link">
 
@@ -218,16 +233,16 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
             </li>
         <?php endif; ?>
         <?php if (Yii::$app->user->can('manage_users')): ?>
-            <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
+            <li class="menu-item <?= $currentControllerId == 'users' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['//user/admin/users']) ?>" class="menu-link">
                     <div><?= Yii::t('app', 'Users') ?></div>
                 </a>
             </li>
-        <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
-            <a href="<?= \yii\helpers\Url::to(['//business/my-business']) ?>" class="menu-link">
-                <div><?= Yii::t('app', 'Configuración') ?></div>
-            </a>
-        </li>
+            <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
+                <a href="<?= \yii\helpers\Url::to(['//business/my-business']) ?>" class="menu-link">
+                    <div><?= Yii::t('app', 'Settings') ?></div>
+                </a>
+            </li>
         <?php endif; ?>
 
 

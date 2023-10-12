@@ -151,5 +151,5 @@ return [
         ],
     ],
     'params' => $params,
-    'catchAll' => ['site/comming-soon']
+//    'catchAll' => ['site/comming-soon']
 ];

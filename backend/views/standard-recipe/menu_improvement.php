@@ -14,7 +14,9 @@ $sum = array_sum(\yii\helpers\ArrayHelper::getColumn($data, function ($item) {
     return $item->getCostPercent(true);
 }));
 
-$yield = round($sum / count($data), 2);
+$countData = count($data);
+
+$yield = $countData == 0 ? 0 : round($sum / $countData , 2);
 ?>
 <div class="card">
     <div class="card-header">

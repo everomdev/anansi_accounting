@@ -7,6 +7,7 @@ use common\models\Domain;
 use common\models\Plan;
 use common\models\User;
 use Stripe\Stripe;
+use Stripe\Subscription;
 use Symfony\Component\Yaml\Yaml;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -69,10 +70,10 @@ class PaymentController extends Controller
 
     public function actionStripeCallback()
     {
-        $stripe = new \Stripe\StripeClient(\Yii::$app->params['stripe_sk']);
+        $stripe = new \Stripe\StripeClient(\Yii::$app->params['stripe.secretKey']);
 
         // This is your Stripe CLI webhook secret for testing your endpoint locally.
-        $endpoint_secret = \Yii::$app->params['stripe_wh'];
+        $endpoint_secret = \Yii::$app->params['stripe.webhook'];
 
         $payload = \Yii::$app->request->rawBody;
         $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
@@ -98,6 +99,20 @@ class PaymentController extends Controller
 
 // Handle the event
         switch ($event->type) {
+            case 'customer.subscription.updated':
+            case 'customer.subscription.paused':
+            case 'customer.subscription.deleted':
+                /** @var Subscription $subscription */
+                $subscription = $event->data->object;
+                $plan = json_decode($subscription->metadata['plan'], true);
+                $user = json_decode($subscription->metadata['user'], true);
+                \Yii::$app->db->createCommand()
+                    ->update(
+                        'user_plan',
+                        ['stripe_subscription_status' => $subscription->status],
+                        ['plan_id' => $plan['id'], 'user_id' => $user['id']]
+                    )
+                    ->execute();
             default:
                 echo 'Received unknown event type ' . $event->type;
         }
@@ -108,6 +123,11 @@ class PaymentController extends Controller
         $user = User::findOne(['id' => \Yii::$app->user->id]);
 
         $session = $user->plan->generateCheckoutSession($user, $price);
+
+        if (empty($session)) {
+            \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
+            return $this->redirect(['site/enable-subscription']);
+        }
 
         return $this->redirect($session->url);
     }

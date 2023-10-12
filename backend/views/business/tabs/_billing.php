@@ -22,6 +22,7 @@ if (!empty($subscription)) {
 }
 $invoices = $user->getInvoices();
 $this->registerJsVar("currentPlanId", $plan->id);
+
 ?>
 
 <div class="row">
@@ -58,7 +59,7 @@ $this->registerJsVar("currentPlanId", $plan->id);
             </tr>
             </tbody>
         </table>
-        <?php if (!empty($subscription) && ($subscriptionStatus == 'active' or $subscriptionStatus == 'trialing')): ?>
+        <?php if (!empty($subscription) && ($subscription->status == 'active' or $subscription->status == 'trialing')): ?>
             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Cancel subscription"), ['//payment/cancel-subscription'], [
                 'class' => 'btn btn-danger',
                 'data' => [
@@ -66,7 +67,7 @@ $this->registerJsVar("currentPlanId", $plan->id);
                 ]
             ]) ?>
         <?php endif; ?>
-        <?php if (empty($subscription) or ($subscriptionStatus != 'active' and $subscriptionStatus != 'trialing')): ?>
+        <?php if (empty($subscription) or !in_array($subscription->status, ['active', 'trialing'])): ?>
             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Enable subscription"), ['//site/enable-subscription'], [
                 'class' => 'btn btn-success',
 

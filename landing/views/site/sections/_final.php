@@ -11,7 +11,7 @@
                     <p class="fs-5" style="text-align: justify;">
                         No esperes más para tomar el control de tus costos y maximizar tus ganancias. Elige el plan que
                         mejor se adapte a tu restaurante y únete a la creciente comunidad de restauranteros que confían
-                        en nuestro Sistema de Costeo para Restaurantes para impulsar sus negocios.
+                        en nuestro Sistema para Restaurantes para impulsar sus negocios.
                     </p>
                 </div>
             </div>

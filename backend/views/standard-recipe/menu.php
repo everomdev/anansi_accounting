@@ -2,6 +2,8 @@
 /** @var $this \yii\web\View */
 /** @var $dataProvider \yii\data\ActiveDataProvider */
 /** @var $searchModel \common\models\StandardRecipeSearch */
+
+$this->title = "Menú";
 ?>
 
     <p class="pb-3">

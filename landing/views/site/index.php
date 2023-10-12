@@ -8,7 +8,7 @@ $this->title = Yii::$app->name;
      style="min-height: 100%; background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(<?= Yii::getAlias("@web/media/header.jpg") ?>); background-size: cover; background-position: center; background-repeat: no-repeat;">
     <div class="container">
         <div class="animated fadeInDown">
-            <h1 class="text-primary">Sistema de costeo para restaurantes</h1>
+            <h1 class="text-primary">Sistema para restaurantes</h1>
             <h3 class="text-white">Optimiza tus Ingresos y Maximiza tu Rentabilidad</h3>
             <h3 class="text-white">Descubre la Solución Definitiva para el Control de Costos en tu Restaurante</h3>
         </div>

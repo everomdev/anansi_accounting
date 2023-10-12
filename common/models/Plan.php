@@ -297,20 +297,20 @@ class Plan extends \yii\db\ActiveRecord
                     ]
                 ],
                 'mode' => 'subscription',
-                'metadata' => $this->getAttributes(),
+                'metadata' => $this->getAttributes(null, ['intro', 'description']),
                 'subscription_data' => [
                     'metadata' => [
-                        "plan" => json_encode($this->getAttributes()),
+                        "plan" => json_encode($this->getAttributes(null, ['intro', 'description'])),
                         "user" => json_encode($user->getAttributes(['id', 'email']))
                     ],
                     'trial_period_days' => $this->trial_days
                 ],
                 'automatic_tax' => [
-                    'enabled' => true
+                    'enabled' => false // TODO: habilitar esto cuando se complete la cuenta en Stripe
                 ],
                 'billing_address_collection' => 'required',
                 'tax_id_collection' => [
-                    'enabled' => true
+                    'enabled' => false // TODO: habilitar esto cuando se complete la cuenta en Stripe
                 ],
                 'locale' => 'en',
                 'customer_update' => [
