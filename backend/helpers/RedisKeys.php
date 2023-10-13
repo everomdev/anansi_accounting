@@ -12,6 +12,9 @@ class RedisKeys
 
     public static function getValue($key)
     {
+        if($key == self::BUSINESS_KEY){
+            return self::getBusinessData();
+        }
         $value = \Yii::$app->cache->get($key);
         if($value == null || empty($value)){
             \Yii::$app->response->redirect(['user/login']);
@@ -26,11 +29,11 @@ class RedisKeys
 
     public static function getBusinessData()
     {
-        return self::getValue(self::BUSINESS_KEY);
+        return self::getBusiness()->getAttributes();
     }
 
     public static function getBusiness()
     {
-        return Business::findOne(['id' => self::getBusinessData()['id']]);
+        return \Yii::$app->user->identity->business;
     }
 }

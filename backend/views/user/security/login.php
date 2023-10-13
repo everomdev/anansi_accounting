@@ -29,6 +29,9 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="vh-100 d-flex justify-content-center align-items-center">
     <div style="max-width: 500px; min-width: 350px">
+        <div class="text-center">
+            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" width="300">
+        </div>
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title"><?= Html::encode($this->title) ?></h3>

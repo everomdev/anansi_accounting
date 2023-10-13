@@ -73,6 +73,13 @@ class StandardRecipe extends \yii\db\ActiveRecord
     public $mainImage;
     public $stepsImages;
 
+    const QUADRANTS = [
+            "ALTAALTA" => "ESTRELLA",
+            "ALTABAJA" => "VACA",
+            "BAJABAJA" => "PERRO",
+            "BAJAALTA" => "ENIGMA",
+        ];
+
     /**
      * {@inheritdoc}
      */
@@ -544,17 +551,12 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
     public function getBcg($popularityAxis, $costEffectivenessAxis, $totalSales)
     {
-        $quadrants = [
-            "ALTAALTA" => "ESTRELLA",
-            "ALTABAJA" => "VACA",
-            "BAJABAJA" => "PERRO",
-            "BAJAALTA" => "ENIGMA",
-        ];
+
 
         $popularity = $this->getPopularity($popularityAxis, $totalSales);
         $effectiveness = $this->getEffectiveness($costEffectivenessAxis, $totalSales);
 
-        return $quadrants[$popularity . $effectiveness];
+        return self::QUADRANTS[$popularity . $effectiveness];
     }
 
 }

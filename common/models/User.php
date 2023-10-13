@@ -63,13 +63,14 @@ class User extends \Da\User\Model\User
 
     public function getBusiness()
     {
-        return Business::find()
-            ->innerJoin("user_business ub", "ub.business_id=business.id")
-            ->where([
-                'or',
-                ['business.user_id' => $this->id],
-                ['ub.user_id' => $this->id],
-            ])->one();
+        if($this->getUserBusiness() != false){
+            return Business::find()
+                ->innerJoin("user_business ub", "ub.business_id=business.id")
+                ->where(['ub.user_id' => $this->id])->one();
+        }else{
+            return Business::find()->where(['business.user_id' => $this->id])->one();
+        }
+
     }
 
     public function getPlan()
@@ -306,6 +307,17 @@ class User extends \Da\User\Model\User
         }
 
         return false;
+    }
+
+    public function getUserBusiness()
+    {
+        $userBusiness = (new Query())
+            ->select("*")
+            ->from("user_business")
+            ->where(['user_id' => $this->id])
+            ->one();
+
+        return $userBusiness;
     }
 
 }

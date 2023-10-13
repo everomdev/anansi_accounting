@@ -158,3 +158,11 @@
     justify-content: center;
     align-items: center;
 }
+
+/*.layout-content-navbar .layout-page {*/
+/*    flex-basis: 100%;*/
+/*    flex-direction: column;*/
+/*    !*width: 0;*!*/
+/*    min-width: 0;*/
+/*    max-width: 100%;*/
+/*}*/

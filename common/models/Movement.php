@@ -151,7 +151,7 @@ class Movement extends \yii\db\ActiveRecord
             $nextBalance->save();
         }
 
-        $this->saveProvider();
+//        $this->saveProvider();
 
 
         parent::afterSave($insert, $changedAttributes);

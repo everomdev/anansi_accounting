@@ -81,4 +81,9 @@ class Provider extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Business::className(), ['id' => 'business_id']);
     }
+
+    public function getMovements()
+    {
+        return $this->hasMany(Movement::class, ['provider' => 'name']);
+    }
 }

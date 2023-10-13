@@ -70,6 +70,14 @@ class ProviderController extends Controller
                         'allow' => true,
                         'roles' => ['providers_update']
                     ],
+                    [
+                        'actions' => [
+                            'delete',
+
+                        ],
+                        'allow' => true,
+                        'roles' => ['providers_delete']
+                    ],
                 ],
             ],
         ];

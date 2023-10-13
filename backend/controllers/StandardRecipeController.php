@@ -202,6 +202,16 @@ class StandardRecipeController extends Controller
                             'menu_remove_item',
                         ],
                     ],
+                    [
+                        'actions' => [
+                            'matrix-bcg',
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'matrix_bcg',
+                        ],
+                    ],
+
                 ],
             ],
         ];
@@ -229,145 +239,17 @@ class StandardRecipeController extends Controller
 
     public function actionTheoreticalYield()
     {
-        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = RedisKeys::getBusiness();
 
-        $categories = RecipeCategory::find()
-            ->where([
-                'business_id' => $business['id']
-            ])->all();
-
-        $totalSales = 0;
-        $total = 0;
-        $data = [];
-        foreach ($categories as $category) {
-            $recipes = StandardRecipe::find()->where([
-                'business_id' => $business['id'],
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true,
-                'type_of_recipe' => $category->name
-            ])->all();
-
-            $combos = Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => true,
-                'category_id' => $category->id
-            ])->all();
-            if (empty($recipes) && empty($combos)) {
-                continue;
-            } else {
-                if (!empty($recipes)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
-                    $total += count($recipes);
-                }
-                if (!empty($combos)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
-                    $total += count($combos);
-                }
-
-
-                $data[] = [
-                    'category' => $category,
-                    'recipes' => $recipes,
-                    'combos' => $combos,
-                ];
-            }
-        }
-
-        $totalPcr = 0;
-        $totalCost = 0;
-        array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
-                return $recipe->getCpr($totalSales);
-            }));
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
-                return $combo->getCpr($totalSales);
-            }));
-        });
-
-        array_walk($data, function ($el) use (&$totalCost, $totalSales) {
-            $totalCost += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
-                return $recipe->costPercent;
-            }));
-            $totalCost += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
-                return $combo->costPercent;
-            }));
-        });
-
-        if ($total != 0) {
-            $totalCost = $totalCost / $total;
-        } else {
-            $totalCost = 0;
-        }
-
-        return $this->render('theoretical_yield', [
-            'data' => $data,
-            'totalSales' => $totalSales,
-            'totalPcr' => $totalPcr,
-            'totalCost' => $totalCost
-        ]);
+        return $this->render('theoretical_yield', $business->getTheoreticalYield());
     }
 
     public function actionRealYield()
     {
-        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
-
-        $categories = RecipeCategory::find()
-            ->where([
-                'business_id' => $business['id']
-            ])->all();
-
-        $totalSales = 0;
-        $data = [];
-        foreach ($categories as $category) {
-            $recipes = StandardRecipe::find()->where([
-                'business_id' => $business['id'],
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true,
-                'type_of_recipe' => $category->name
-            ])->all();
-
-            $combos = Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => true,
-                'category_id' => $category->id
-            ])->all();
-            if (empty($recipes) && empty($combos)) {
-                continue;
-            } else {
-                if (!empty($recipes)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
-                }
-                if (!empty($combos)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
-                }
+        $business = RedisKeys::getBusiness();
 
 
-                $data[] = [
-                    'category' => $category,
-                    'recipes' => $recipes,
-                    'combos' => $combos,
-                ];
-            }
-        }
-
-        $totalPcr = 0;
-        array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
-                return $recipe->getCpr($totalSales);
-            }));
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
-                return $combo->getCpr($totalSales);
-            }));
-        });
-
-
-        return $this->render('real_yield', [
-            'data' => $data,
-            'totalSales' => $totalSales,
-            'totalPcr' => $totalPcr
-        ]);
+        return $this->render('real_yield', $business->getRealYield());
     }
 
 
@@ -835,38 +717,9 @@ class StandardRecipeController extends Controller
     {
 
         $business = RedisKeys::getBusiness();
-        $recipes = StandardRecipe::find()
-            ->where([
-                'business_id' => $business->id,
-                'in_menu' => true,
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
-            ]);
-        $combos = Menu::find()
-            ->innerJoin('recipe_category', 'recipe_category.id=menu.category_id')
-            ->where([
-                'menu.business_id' => $business->id,
-                'in_menu' => true,
-            ]);
 
-        if ($type != 'all') {
-            $recipes->andWhere(['type_of_recipe' => $type]);
-            $combos->andWhere(['recipe_category.name' => $type]);
-        }
 
-        $recipes = $recipes->all();
-        $combos = $combos->all();
-
-        $data = array_merge($recipes, $combos);
-
-        $totalSales = array_sum(ArrayHelper::getColumn($data, 'sales'));
-
-        return $this->render('matrix', [
-            "data" => $data,
-            'business' => $business,
-            'totalSales' => $totalSales,
-            'type' => $type
-        ]);
+        return $this->render('matrix', $business->getBcgData($type));
     }
 
     public function actionCharts()

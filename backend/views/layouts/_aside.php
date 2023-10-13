@@ -30,17 +30,14 @@ $actions = [
 if (in_array($action, $actions)) {
     $currentControllerId = $action;
 }
-
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-    <div class="app-brand demo">
-        <a href="index.html" class="app-brand-link">
-              <span class="app-brand-logo demo">
-
-              </span>
-            <span class="app-brand-text demo menu-text fw-bolder ms-2" style="color: #800e13">
-                <?= $business['name'] ?>
-            </span>
+    <div class="app-brand demo" style="width: 200px">
+        <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="app-brand-link">
+            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" style="object-fit: contain;width: 200px;height: 64px;">
+<!--            <span class="app-brand-text demo menu-text fw-bolder ms-2" style="color: #800e13">-->
+<!--                --><?php //= $business['name'] ?>
+<!--            </span>-->
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
@@ -108,7 +105,7 @@ if (in_array($action, $actions)) {
                 </a>
             </li>
         <?php endif; ?>
-        <?php if (Yii::$app->user->can('storage')): ?>
+        <?php if (Yii::$app->user->can('storage_list')): ?>
             <li class="menu-item <?= $currentControllerId == 'storage' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['ingredient-stock/storage']) ?>" class="menu-link">
 
@@ -232,7 +229,7 @@ if (in_array($action, $actions)) {
                 </a>
             </li>
         <?php endif; ?>
-        <?php if (Yii::$app->user->can('manage_users')): ?>
+        <?php if (Yii::$app->user->can('manage_users') or $business != null && $business->user_id == Yii::$app->user->identity->getId()): ?>
             <li class="menu-item <?= $currentControllerId == 'users' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['//user/admin/users']) ?>" class="menu-link">
                     <div><?= Yii::t('app', 'Users') ?></div>

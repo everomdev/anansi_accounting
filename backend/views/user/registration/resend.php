@@ -23,6 +23,9 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="vh-100 d-flex align-items-center justify-content-center">
     <div style="min-width: 350px; max-width: 500px">
+        <div class="text-center">
+            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" width="300">
+        </div>
         <div class="card">
             <div class="card-body">
                 <?php $form = ActiveForm::begin(

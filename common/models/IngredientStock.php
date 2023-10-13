@@ -299,4 +299,12 @@ class IngredientStock extends \yii\db\ActiveRecord
         return $this->ingredient;
     }
 
+    public function getProviders()
+    {
+        return $this->hasMany(Provider::class, ['name' => 'provider'])
+            ->viaTable('movement', ['ingredient_id' => 'id'], function($query){
+                $query->andWhere(['movement.type' => Movement::TYPE_INPUT]);
+            });
+    }
+
 }

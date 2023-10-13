@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\i18n\Formatter;
 
 /**
@@ -203,5 +204,185 @@ class Business extends \yii\db\ActiveRecord
     {
         return $this->hasMany(User::class, ['id' => 'user_id'])
             ->viaTable('user_business', ['business_id' => 'id']);
+    }
+
+    public function getTheoreticalYield()
+    {
+        $categories = RecipeCategory::find()
+            ->where([
+                'business_id' => $this->id
+            ])->all();
+
+        $totalSales = 0;
+        $total = 0;
+        $data = [];
+        foreach ($categories as $category) {
+            $recipes = StandardRecipe::find()->where([
+                'business_id' => $this->id,
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true,
+                'type_of_recipe' => $category->name
+            ])->all();
+
+            $combos = Menu::find()->where([
+                'business_id' => $this->id,
+                'in_menu' => true,
+                'category_id' => $category->id
+            ])->all();
+            if (empty($recipes) && empty($combos)) {
+                continue;
+            } else {
+                if (!empty($recipes)) {
+                    $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
+                    $total += count($recipes);
+                }
+                if (!empty($combos)) {
+                    $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
+                    $total += count($combos);
+                }
+
+
+                $data[] = [
+                    'category' => $category,
+                    'recipes' => $recipes,
+                    'combos' => $combos,
+                ];
+            }
+        }
+
+        $totalPcr = 0;
+        $totalCost = 0;
+        array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
+            $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
+                return $recipe->getCpr($totalSales);
+            }));
+            $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
+                return $combo->getCpr($totalSales);
+            }));
+        });
+
+        array_walk($data, function ($el) use (&$totalCost, $totalSales) {
+            $totalCost += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
+                return $recipe->costPercent;
+            }));
+            $totalCost += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
+                return $combo->costPercent;
+            }));
+        });
+
+        if ($total != 0) {
+            $totalCost = $totalCost / $total;
+        } else {
+            $totalCost = 0;
+        }
+
+        return ['data' => $data, 'totalCost' => $totalCost];
+    }
+
+    public function getRealYield()
+    {
+        $categories = RecipeCategory::find()
+            ->where([
+                'business_id' => $this->id
+            ])->all();
+
+        $totalSales = 0;
+        $data = [];
+        foreach ($categories as $category) {
+            $recipes = StandardRecipe::find()->where([
+                'business_id' => $this->id,
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true,
+                'type_of_recipe' => $category->name
+            ])->all();
+
+            $combos = Menu::find()->where([
+                'business_id' => $this->id,
+                'in_menu' => true,
+                'category_id' => $category->id
+            ])->all();
+            if (empty($recipes) && empty($combos)) {
+                continue;
+            } else {
+                if (!empty($recipes)) {
+                    $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
+                }
+                if (!empty($combos)) {
+                    $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
+                }
+
+
+                $data[] = [
+                    'category' => $category,
+                    'recipes' => $recipes,
+                    'combos' => $combos,
+                ];
+            }
+        }
+
+        $totalPcr = 0;
+        array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
+            $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
+                return $recipe->getCpr($totalSales);
+            }));
+            $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
+                return $combo->getCpr($totalSales);
+            }));
+        });
+
+        return ['data' => $data, 'totalPcr' => $totalPcr, 'totalSales' => $totalSales];
+    }
+
+    public function getBcgData($type = 'all')
+    {
+        $recipes = StandardRecipe::find()
+            ->where([
+                'business_id' => $this->id,
+                'in_menu' => true,
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+            ]);
+        $combos = Menu::find()
+            ->innerJoin('recipe_category', 'recipe_category.id=menu.category_id')
+            ->where([
+                'menu.business_id' => $this->id,
+                'in_menu' => true,
+            ]);
+
+        if ($type != 'all') {
+            $recipes->andWhere(['type_of_recipe' => $type]);
+            $combos->andWhere(['recipe_category.name' => $type]);
+        }
+
+        $recipes = $recipes->all();
+        $combos = $combos->all();
+
+        $data = array_merge($recipes, $combos);
+
+        $totalSales = array_sum(ArrayHelper::getColumn($data, 'sales'));
+
+        return [
+            "data" => $data,
+            'business' => $this,
+            'totalSales' => $totalSales,
+            'type' => $type
+        ];
+    }
+
+    public function getMovements()
+    {
+        return $this->hasMany(Movement::class, ['business_id' => 'id']);
+    }
+
+    public function getConsumptionCenters()
+    {
+        return $this->hasMany(ConsumptionCenter::class, ['business_id' => 'id']);
+    }
+
+    public function getProviders()
+    {
+        return $this->hasMany(Provider::class, ['business_id' => 'id']);
     }
 }

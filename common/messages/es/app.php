@@ -295,7 +295,7 @@ return [
     'Supplies' => 'Insumos',
     'Tax' => 'Impuesto (IVA)',
     'The product does not exist in the warehouse?' => '¿El producto no existe en el almacén?',
-    'The real yield is: ' => 'El verdadero rendimiento es',
+    'The real yield is: ' => 'El rendimiento real es',
     'The requested page does not exist.' => 'La página requerida no existe',
     'The theoretical yield is: ' => 'El rendimiento teórico es',
     'Theoretical Menu Profitability' => 'Rentabilidad Teórica del Menú',

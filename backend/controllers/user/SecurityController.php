@@ -5,6 +5,7 @@ namespace backend\controllers\user;
 use backend\helpers\RedisKeys;
 use common\models\Business;
 use common\models\Profile;
+use common\models\User;
 use Da\User\Contracts\AuthClientInterface;
 use Da\User\Event\FormEvent;
 use Da\User\Event\UserEvent;
@@ -139,20 +140,19 @@ class SecurityController extends Controller
                     'last_login_at' => time(),
                     'last_login_ip' => Yii::$app->request->getUserIP(),
                 ]);
+                $user = User::findOne(['id' => $form->getUser()->id]);
 
                 $this->trigger(FormEvent::EVENT_AFTER_LOGIN, $event);
+
                 RedisKeys::setValue(RedisKeys::USER_KEY, json_encode(Yii::$app->user->identity->attributes));
+
                 $profile = Profile::findOne(['user_id' => $form->getUser()->id]);
+
                 if($profile) {
                     RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
                 }
-                $business = Business::find()
-                    ->innerJoin("user_business ub", "ub.business_id=business.id")
-                    ->where([
-                        'or',
-                        ['business.user_id' => $form->getUser()->id],
-                        ['ub.user_id' => $form->getUser()->id],
-                    ])->one();
+
+                $business = $user->business;
 
                 if($business){
                     RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
