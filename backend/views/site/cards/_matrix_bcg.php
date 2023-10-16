@@ -28,19 +28,23 @@ $data = [];
     $perro = 0;
     $rata = 0;
 
-    foreach ($bcgData['data'] as $item){
-        if($item instanceof \common\models\StandardRecipe){
+    foreach ($bcgData['data'] as $item) {
+        if ($item instanceof \common\models\StandardRecipe) {
             /** @var $item \common\models\StandardRecipe */
             $quadrant = $item->getBcg($popularityAxis, $costEffectivenessAxis, $bcgData['totalSales']);
-            switch($quadrant){
+            switch ($quadrant) {
                 case 'ESTRELLA':
-                    $estrella++; break;
+                    $estrella++;
+                    break;
                 case 'VACA':
-                    $vaca++; break;
+                    $vaca++;
+                    break;
                 case 'PERRO':
-                    $perro++; break;
+                    $perro++;
+                    break;
                 case 'ENIGMA':
-                    $rata++; break;
+                    $rata++;
+                    break;
             }
         }
     }
@@ -53,26 +57,28 @@ $data = [];
             <span class="card-title"><strong><?= "Matríz BCG" ?></strong></span>
         </div>
         <div class="card-body">
-            <table class="table text-white table-borderless">
-                <thead>
-                <th class="text-white">Familia</th>
-                <th class="text-white">Estrella</th>
-                <th class="text-white">Vaca</th>
-                <th class="text-white">Perro</th>
-                <th class="text-white">Rata</th>
-                </thead>
-                <tbody>
+            <div class="table-responsive">
+                <table class="table text-white table-borderless">
+                    <thead>
+                    <th class="text-white">Familia</th>
+                    <th class="text-white">Estrella</th>
+                    <th class="text-white">Vaca</th>
+                    <th class="text-white">Perro</th>
+                    <th class="text-white">Rata</th>
+                    </thead>
+                    <tbody>
                     <?php foreach ($data as $family => $bcg): ?>
-                    <tr>
-                        <td><?= $family ?></td>
-                        <td><?= $bcg[0] ?></td>
-                        <td><?= $bcg[1] ?></td>
-                        <td><?= $bcg[2] ?></td>
-                        <td><?= $bcg[3] ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                        <tr>
+                            <td><?= $family ?></td>
+                            <td><?= $bcg[0] ?></td>
+                            <td><?= $bcg[1] ?></td>
+                            <td><?= $bcg[2] ?></td>
+                            <td><?= $bcg[3] ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

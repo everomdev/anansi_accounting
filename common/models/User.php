@@ -282,7 +282,7 @@ class User extends \Da\User\Model\User
                         'business_id' => $business->id
                     ])
                     ->count();
-                return $usersCount >= $plan->users;
+                return $usersCount >= $plan->users - 1;
             default:
                 return false;
         }

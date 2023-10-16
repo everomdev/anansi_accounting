@@ -134,11 +134,13 @@ class SecurityController extends Controller
                 }
             }
 
+            $clientIP = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : null;
+
             $this->trigger(FormEvent::EVENT_BEFORE_LOGIN, $event);
             if ($form->login()) {
                 $form->getUser()->updateAttributes([
                     'last_login_at' => time(),
-                    'last_login_ip' => Yii::$app->request->getUserIP(),
+                    'last_login_ip' => empty($clientIP) ? Yii::$app->request->getUserIP() : $clientIP,
                 ]);
                 $user = User::findOne(['id' => $form->getUser()->id]);
 

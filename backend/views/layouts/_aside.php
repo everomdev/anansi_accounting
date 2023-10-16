@@ -34,10 +34,11 @@ if (in_array($action, $actions)) {
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo" style="width: 200px">
         <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="app-brand-link">
-            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" style="object-fit: contain;width: 200px;height: 64px;">
-<!--            <span class="app-brand-text demo menu-text fw-bolder ms-2" style="color: #800e13">-->
-<!--                --><?php //= $business['name'] ?>
-<!--            </span>-->
+            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt=""
+                 style="object-fit: contain;width: 200px;height: 64px;">
+            <!--            <span class="app-brand-text demo menu-text fw-bolder ms-2" style="color: #800e13">-->
+            <!--                --><?php //= $business['name'] ?>
+            <!--            </span>-->
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
@@ -229,12 +230,14 @@ if (in_array($action, $actions)) {
                 </a>
             </li>
         <?php endif; ?>
-        <?php if (Yii::$app->user->can('manage_users') or $business != null && $business->user_id == Yii::$app->user->identity->getId()): ?>
+        <?php if (Yii::$app->user->can('manage_users') and $business != null && $business->user_id == Yii::$app->user->identity->getId() and !Yii::$app->user->identity->hasRestrictions('users')): ?>
             <li class="menu-item <?= $currentControllerId == 'users' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['//user/admin/users']) ?>" class="menu-link">
                     <div><?= Yii::t('app', 'Users') ?></div>
                 </a>
             </li>
+        <?php endif; ?>
+        <?php if (Yii::$app->user->can('manage_account') and $business != null && $business->user_id == Yii::$app->user->identity->getId()): ?>
             <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['//business/my-business']) ?>" class="menu-link">
                     <div><?= Yii::t('app', 'Settings') ?></div>

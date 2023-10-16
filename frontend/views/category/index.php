@@ -11,7 +11,7 @@ use yii\widgets\Pjax;
 $this->title = Yii::t('app', 'Categories');
 $this->params['breadcrumbs'][] = $this->title;
 
-$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+
 
 $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
     'depends' => \yii\web\YiiAsset::class
@@ -56,10 +56,10 @@ $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}",
                 'visibleButtons' => [
-                    'update' => function ($model) use ($business) {
+                    'update' => function ($model) {
                         return empty($model->business_id);
                     },
-                    'delete' => function ($model) use ($business) {
+                    'delete' => function ($model) {
                         return empty($model->business_id);
                     }
                 ],

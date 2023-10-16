@@ -160,6 +160,19 @@ class RegistrationController extends Controller
                         ]
                     )->execute();
 
+                $clientIP = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : null;
+
+                if(!empty($clientIP)){
+                    Yii::$app->db->createCommand()
+                        ->update(
+                            'user',
+                            [
+                                'registration_ip' => $clientIP,
+                            ],
+                            ['id' => $user->id]
+                        )->execute();
+                }
+
                 $user->registerInStripe($form->planId);
 
                 // create business

@@ -119,7 +119,9 @@ return [
                 'resources' => 'ingredient-stock/index',
                 'storage' => 'ingredient-stock/storage',
                 'theoretical-yield' => 'standard-recipe/theoretical-yield',
-                'comming-soon' => 'site/comming-soon'
+                'comming-soon' => 'site/comming-soon',
+                'users' => 'user/admin/users',
+                'users/create' => 'user/admin/create-user'
             ],
         ]
     ],
