@@ -10,7 +10,7 @@ return [
     'senderName' => 'Sistema de Costeo',
     'user.passwordResetTokenExpire' => 3600,
     'user.passwordMinLength' => 8,
-    'appName' => 'Sistema para Restaurantes',
+    'appName' => 'Sistema de control para Restaurantes',
     'defaultLanguage' => 'es',
     'jwtSecretCode' => "as&*^d.ASdasdgfhjsdASDNVasfbnvASM&@%676A%A%s45a4d65adasdjhHJGASd",
     'backendBaseUrl' => "http://localhost:21080",

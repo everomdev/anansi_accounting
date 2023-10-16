@@ -9,7 +9,7 @@
                 <div class="about-item overflow-hidden">
                     <h3 class="mb-2 text-primary">¿Por qué contratar nuestro sistema?</h3>
                     <p class="fs-5" style="text-align: justify;">
-                        Con nuestro Sistema para Restaurantes, podrás tomar decisiones informadas, reducir gastos innecesarios y aumentar tus ganancias. Nuestra plataforma te brinda la tranquilidad de saber que estás tomando las mejores decisiones para tu negocio.
+                        Con nuestro <?= \Yii::$app->name ?>, podrás tomar decisiones informadas, reducir gastos innecesarios y aumentar tus ganancias. Nuestra plataforma te brinda la tranquilidad de saber que estás tomando las mejores decisiones para tu negocio.
                     </p>
 
                     <!--                    <button type="button" class="btn btn-primary border-0 rounded-pill px-4 py-3 mt-5">Leer mas...</button>-->

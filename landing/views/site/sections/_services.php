@@ -4,7 +4,7 @@
 <div class="container-fluid services py-5" id="servicios">
     <div class="container text-center py-5">
         <div class="text-center mb-5 wow fadeInUp" data-wow-delay=".3s">
-            <h1 class="display-5">¿Qué ofrece nuestro Sistema para Restaurantes?</h1>
+            <h1 class="display-5">¿Qué ofrece nuestro <?= \Yii::$app->name ?>?</h1>
         </div>
         <div class="row g-5">
             <div class="col-xxl-3 col-lg-6 col-md-6 col-sm-12 wow fadeInUp" data-wow-delay=".3s">

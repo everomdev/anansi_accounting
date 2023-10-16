@@ -11,8 +11,8 @@
             </div>
             <div class="col-lg-6 col-md-12 wow fadeInUp" data-wow-delay=".6s">
                 <div class="about-item overflow-hidden">
-                    <h3 class="mb-2 text-primary">Sistema para Restaurantes</h3>
-                    <p class="fs-5" style="text-align: justify;">Nuestra plataforma integral ha sido diseñada pensando en los restauranteros como tú. Con nuestro Sistema para Restaurantes, puedes tomar el control completo de tu negocio y alcanzar un nuevo nivel de eficiencia y rentabilidad.</p>
+                    <h3 class="mb-2 text-primary"><?= \Yii::$app->name ?></h3>
+                    <p class="fs-5" style="text-align: justify;">Nuestra plataforma integral ha sido diseñada pensando en los restauranteros como tú. Con nuestro <?= \Yii::$app->name ?>, puedes tomar el control completo de tu negocio y alcanzar un nuevo nivel de eficiencia y rentabilidad.</p>
 
 <!--                    <button type="button" class="btn btn-primary border-0 rounded-pill px-4 py-3 mt-5">Leer mas...</button>-->
                 </div>
