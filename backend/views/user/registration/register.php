@@ -25,7 +25,7 @@ use yii\widgets\ActiveForm;
 $this->title = "Sign-up";
 $plans = \common\models\Plan::find()->all();
 ?>
-<div class="vh-100 d-flex align-items-center justify-content-center">
+<div class="d-flex align-items-center justify-content-center">
     <div>
         <?php $form = ActiveForm::begin(
             [
