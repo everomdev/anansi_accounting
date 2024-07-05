@@ -3,10 +3,12 @@
 /** @var $dataProvider \yii\data\ActiveDataProvider */
 
 $this->title = Yii::t('app', "Sales");
+
 ?>
 <?php \yii\widgets\Pjax::begin([
     'id' => 'pjax-sales'
 ]) ?>
+
 <?= \yii\grid\GridView::widget([
     'dataProvider' => $dataProvider,
     'columns' => [
