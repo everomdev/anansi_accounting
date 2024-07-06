@@ -77,7 +77,7 @@ return [
         'session' => [
             // this is the name of the session cookie used for login on the backend
             'name' => 'advanced-backend',
-            'class' => \yii\redis\Session::class,
+            'class' => \yii\web\Session::class,
             'timeout' => (30 * 24 * 60) // 30 days
         ],
         'log' => [

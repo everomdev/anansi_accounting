@@ -14,9 +14,9 @@ return [
     ],
     'vendorPath' => dirname(dirname(__DIR__)) . '/vendor',
     'components' => [
-        'cache' => [
-            'class' => 'yii\redis\Cache',
-        ],
+       'cache' => [
+           'class' => \yii\caching\FileCache::class,
+       ],
         'authManager' => [
             'class' => 'yii\rbac\DbManager',
         ],
@@ -48,12 +48,12 @@ return [
                 ],
             ]
         ],
-        'redis' => [
-            'class' => 'yii\redis\Connection',
-            'hostname' => '85.239.241.195',
-            'port' => 6379,
-            'database' => 0,
-        ],
+//        'redis' => [
+//            'class' => 'yii\redis\Connection',
+//            'hostname' => 'localhost',
+//            'port' => 6379,
+//            'database' => 0,
+//        ],
         'formatter' => [
             'locale' => 'es_MX',
             'defaultTimeZone' => 'America/Mexico_City',
