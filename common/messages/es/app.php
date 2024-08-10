@@ -354,4 +354,5 @@ return [
     '{icon} Export inputs' => '{icon} Exportar insumos',
     '{icon} Load moves' => '{icon} Cargar movimientos',
     '{icon} Load supplies' => '{icon} Cargar insumos',
+    'Select plan' => 'Seleccionar plan'
 ];

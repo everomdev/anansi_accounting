@@ -26,7 +26,7 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
             [
                 'name' => \Yii::t('app', "Your name"),
                 'businessName' => \Yii::t('app', "Your business name"),
-                'planId' => \Yii::t('app', "Plan"),
+                'planId' => \Yii::t('app', "Select plan"),
             ]
         );
     }

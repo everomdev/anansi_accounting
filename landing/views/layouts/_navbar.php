@@ -17,6 +17,7 @@
                     <a href="#servicios" class="nav-item nav-link text-primary">¿Qué ofrecemos?</a>
                     <a href="#precios" class="nav-item nav-link text-primary">Precios</a>
                     <a href="<?= Yii::$app->params['backendBaseUrl'] . "/user/register" ?>" class="nav-item nav-link text-primary">Comenzar</a>
+                    <a href="<?= Yii::$app->params['backendBaseUrl'] . "/user/login" ?>" class="nav-item nav-link text-primary">Iniciar Sesión</a>
 
                 </div>
             </div>
