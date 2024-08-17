@@ -2,6 +2,7 @@
 
 namespace frontend\controllers;
 
+use backend\helpers\ExcelHelper;
 use Yii;
 use common\models\Ingredient;
 use common\models\IngredientSearch;
@@ -12,6 +13,7 @@ use yii\helpers\Json;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
 
 /**
  * IngredientController implements the CRUD actions for Ingredient model.
@@ -28,7 +30,7 @@ class IngredientController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['index', 'view', 'create', 'update', 'delete'],
+                        'actions' => ['index', 'view', 'create', 'update', 'delete', 'ingredients-list', 'download-template', 'import-ingredients'],
                         'allow' => true,
                         'roles' => ['admin'],
                     ],
@@ -140,6 +142,28 @@ class IngredientController extends Controller
 
         return $this->asJson($out);
 
+    }
+
+    public function actionDownloadTemplate()
+    {
+        ExcelHelper::generateAdminIngredientsTemplate();
+    }
+
+    public function actionImportIngredients()
+    {
+
+
+        $file = UploadedFile::getInstanceByName('ingredient-file');
+
+        if ($file) {
+            try {
+                ExcelHelper::importIngredientsAdmin($file->tempName);
+            }catch (\Exception $e) {
+                Yii::$app->session->setFlash('error', $e->getMessage());
+            }
+        }
+
+        return $this->redirect(['ingredient/index']);
     }
 
     /**

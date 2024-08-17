@@ -298,6 +298,61 @@ class ExcelHelper
         return;
     }
 
+    public static function importIngredientsAdmin($fileName)
+    {
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
+
+        $ingredientData = [];
+
+        $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
+
+        while (true) {
+            $cellIterator = $rowIterator->current()->getCellIterator('A', 'C');
+            if($rowIterator->current()->getRowIndex() != 1) {
+                if (empty($cellIterator->current()->getValue())) {
+                    break;
+                }
+                $data = [];
+                $data[] = $cellIterator->current()->getValue(); // A - Clave
+                $cellIterator->next();
+                $data[] = $cellIterator->current()->getValue(); // B - Unidad de Medida
+                $cellIterator->next();
+                $data[] = $cellIterator->current()->getValue(); // C - Categoría
+
+
+                /// extract category id
+                $data[2] = explode(' - ', $data[2])[0];
+                $data[2] = intval($data[2]);
+
+                /// check if category exists
+                $category = Category::find()
+                    ->where([
+                        'id' => $data[2]
+                    ])
+                    ->exists();
+
+                if(!$category){
+                    throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
+                }
+
+                $ingredientData[] = $data;
+
+            }
+
+            $rowIterator->next();
+        }
+
+        \Yii::$app->db->createCommand()
+            ->batchInsert(
+                'ingredient',
+                ['name', 'um', 'category_id'],
+                $ingredientData
+            )
+            ->execute();
+
+        return;
+    }
+
     public static function importMovements(Business $business, $fileName)
     {
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
@@ -483,6 +538,108 @@ class ExcelHelper
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Movimientos.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        $writer->save('php://output');
+        exit(200);
+    }
+
+    public static function generateAdminIngredientsTemplate()
+    {
+        /** @var Category[] $categories */
+        $categories = Category::find()->where([
+            'or',
+            ['business_id' => null],
+        ])->all();
+
+        /** @var UnitOfMeasurement[] $unitOfMeasurements */
+        $unitOfMeasurements = UnitOfMeasurement::find()
+            ->select('name')
+            ->groupBy('name')
+            ->all();
+
+        $spreadsheet = new Spreadsheet();
+        $activeWorksheet = $spreadsheet->getActiveSheet();
+
+        $activeWorksheet->setCellValue("A1", "Nombre");
+        $activeWorksheet->setCellValue("B1", "Unidad de Medida");
+        $activeWorksheet->setCellValue("C1", "Categoría");
+
+
+        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
+
+        // Create a named range for categories
+        $categorySheet = $spreadsheet->createSheet();
+        $categorySheet->setTitle('Categorias');
+        $categorySheet->setCellValue('A1', 'Categoría');
+
+        $row = 2;
+        foreach ($categories as $category) {
+            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->id, $category->name));
+            $row++;
+        }
+
+        $spreadsheet->addNamedRange(
+            new \PhpOffice\PhpSpreadsheet\NamedRange('Categorias', $categorySheet, 'A2:A' . ($row - 1))
+        );
+
+
+
+        // Apply data validation to the category column
+        $dataValidation = $spreadsheet->getActiveSheet()->getCell('C2')->getDataValidation();
+        $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $dataValidation->setAllowBlank(false);
+        $dataValidation->setShowInputMessage(true);
+        $dataValidation->setShowErrorMessage(true);
+        $dataValidation->setShowDropDown(true);
+        $dataValidation->setErrorTitle('Error de entrada');
+        $dataValidation->setError('Este valor no es admitido');
+        $dataValidation->setPromptTitle('Selecciona una categoría');
+        $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
+        $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
+
+        for ($i = 2; $i <= 100; $i++) {
+            $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
+        }
+
+        // Create a named range for unit of measuerements
+        $umSheet = $spreadsheet->createSheet();
+        $umSheet->setTitle('UMs');
+        $umSheet->setCellValue('A1', 'Unidad de medida');
+
+        $row = 2;
+        foreach ($unitOfMeasurements as $um) {
+            $umSheet->setCellValue("A$row", $um->name);
+            $row++;
+        }
+
+        $spreadsheet->addNamedRange(
+            new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $categorySheet, 'A2:A' . ($row - 1))
+        );
+
+        // Apply data validation to the um column
+        $dataValidation = $spreadsheet->getActiveSheet()->getCell('B1')->getDataValidation();
+        $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $dataValidation->setAllowBlank(false);
+        $dataValidation->setShowInputMessage(true);
+        $dataValidation->setShowErrorMessage(true);
+        $dataValidation->setShowDropDown(true);
+        $dataValidation->setErrorTitle('Error de entrada');
+        $dataValidation->setError('Este valor no es admitido');
+        $dataValidation->setPromptTitle('Selecciona una unidad de medida');
+        $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
+        $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
+
+        for ($i = 2; $i <= 100; $i++) {
+            $spreadsheet->getActiveSheet()->getCell("B$i")->setDataValidation(clone $dataValidation);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Plantilla_para_importar_ingredientes.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
         $writer->save('php://output');

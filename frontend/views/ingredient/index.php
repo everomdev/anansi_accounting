@@ -16,6 +16,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <p>
         <?= Html::a(Yii::t('app', 'Create Ingredient'), ['create'], ['class' => 'btn btn-success']) ?>
+        <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar plantilla', [
+            'icon' => ""
+        ]), ['ingredient/download-template'], ['class' => 'btn btn-warning']) ?>
+        <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar ingredientes', [
+            'icon' => ""
+        ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
     </p>
 
     <?php Pjax::begin(); ?>
@@ -40,3 +46,29 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php Pjax::end(); ?>
 
 </div>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-upload-file',
+    'title' => Yii::t('app', "Importar ingredientes")
+]);
+$url = \yii\helpers\Url::to(['ingredient/import-ingredients',]);
+\yii\bootstrap5\ActiveForm::begin([
+    'action' => $url,
+    'method' => 'post',
+    'options' => [
+        'enctype' => 'multipart/form-data'
+    ]
+]);
+
+echo \yii\bootstrap5\Html::input('file', 'ingredient-file', '', [
+    'class' => 'form-control'
+]);
+echo "<br>";
+echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
+    'class' => 'btn btn-success'
+]);
+
+\yii\bootstrap5\ActiveForm::end();
+
+\yii\bootstrap5\Modal::end();
+?>
