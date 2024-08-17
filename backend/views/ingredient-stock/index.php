@@ -14,34 +14,31 @@ $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys:
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <div class="ingredient-stock-index">
-   <div class="d-flex flex-wrap">
-       <div class="p-2"><?= Html::a(Yii::t('app', 'Add resource'), ['create'], ['class' => 'btn btn-warning']) ?></div>
-       <div class="p-2">
-           <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar referencias', [
-           'icon' => ""
-       ]), ['ingredient-stock/download-references', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
-       </div>
-       <div class="p-2">
-           <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar plantilla', [
-           'icon' => ""
-       ]), ['ingredient-stock/download-template', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
-       </div>
-       <div class="p-2">
-           <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar insumos', [
-           'icon' => ""
-       ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
-       </div>
-       <div class="p-2">
-           <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Exportar insumos', [
-           'icon' => ""
-       ]), ['ingredient-stock/export', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
-       </div>
+    <div class="d-flex flex-wrap">
+        <div class="p-2"><?= Html::a(Yii::t('app', 'Add resource'), ['create'], ['class' => 'btn btn-warning']) ?></div>
+        <div class="p-2">
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar referencias', [
+                'icon' => ""
+            ]), ['ingredient-stock/download-references', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
+        </div>
+        <div class="p-2">
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar plantilla', [
+                'icon' => ""
+            ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-download-template"]) ?>
+        </div>
+        <div class="p-2">
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar insumos', [
+                'icon' => ""
+            ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
+        </div>
+        <div class="p-2">
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Exportar insumos', [
+                'icon' => ""
+            ]), ['ingredient-stock/export', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
+        </div>
 
 
-
-
-
-   </div>
+    </div>
 
 
     <?php Pjax::begin(); ?>
@@ -86,6 +83,25 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <?php Pjax::end(); ?>
 
 </div>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-download-template',
+    'title' => Yii::t('app', "Descargar plantilla")
+]);
+?>
+<p>Vas a descargar la plantilla para la importación automática de insumos. <strong>Recuerda que debes utilizar la tabla
+        de referencias para indicar el indicador de las categorías de tus insumos correctamente</strong></p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar plantilla', [
+        'icon' => ""
+    ]), ['ingredient-stock/download-template', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar referencias', [
+        'icon' => ""
+    ]), ['ingredient-stock/download-references', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
 <?php
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-upload-file',

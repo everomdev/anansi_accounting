@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\CellIterator;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\Yaml\Yaml;
+use yii\web\HttpException;
 
 class ExcelHelper
 {
@@ -61,8 +62,20 @@ class ExcelHelper
         exit(200);
     }
 
-    public static function generateIngredientsTemplate()
+    public static function generateIngredientsTemplate($id)
     {
+        /** @var Category[] $categories */
+        $categories = Category::find()->where([
+            'or',
+            ['business_id' => $id],
+            ['business_id' => null],
+        ])->all();
+
+        /** @var UnitOfMeasurement[] $unitOfMeasurements */
+        $unitOfMeasurements = UnitOfMeasurement::find()
+            ->where(['business_id' => $id])
+            ->all();
+
         $spreadsheet = new Spreadsheet();
         $activeWorksheet = $spreadsheet->getActiveSheet();
 
@@ -75,6 +88,7 @@ class ExcelHelper
         $activeWorksheet->setCellValue("G1", "Porciones por unidad");
         $activeWorksheet->setCellValue("H1", "Observaciones");
 
+
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
@@ -83,6 +97,75 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
+
+        // Create a named range for categories
+        $categorySheet = $spreadsheet->createSheet();
+        $categorySheet->setTitle('Categorias');
+        $categorySheet->setCellValue('A1', 'Categoría');
+
+        $row = 2;
+        foreach ($categories as $category) {
+            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->id, $category->name));
+            $row++;
+        }
+
+        $spreadsheet->addNamedRange(
+            new \PhpOffice\PhpSpreadsheet\NamedRange('Categorias', $categorySheet, 'A2:A' . ($row - 1))
+        );
+
+
+
+        // Apply data validation to the category column
+        $dataValidation = $spreadsheet->getActiveSheet()->getCell('C2')->getDataValidation();
+        $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $dataValidation->setAllowBlank(false);
+        $dataValidation->setShowInputMessage(true);
+        $dataValidation->setShowErrorMessage(true);
+        $dataValidation->setShowDropDown(true);
+        $dataValidation->setErrorTitle('Error de entrada');
+        $dataValidation->setError('Este valor no es admitido');
+        $dataValidation->setPromptTitle('Selecciona una categoría');
+        $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
+        $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
+
+        for ($i = 2; $i <= 100; $i++) {
+            $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
+        }
+
+        // Create a named range for unit of measuerements
+        $umSheet = $spreadsheet->createSheet();
+        $umSheet->setTitle('UMs');
+        $umSheet->setCellValue('A1', 'Unidad de medida');
+
+        $row = 2;
+        foreach ($unitOfMeasurements as $um) {
+            $umSheet->setCellValue("A$row", $um->name);
+            $row++;
+        }
+
+        $spreadsheet->addNamedRange(
+            new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $categorySheet, 'A2:A' . ($row - 1))
+        );
+
+        // Apply data validation to the um column
+        $dataValidation = $spreadsheet->getActiveSheet()->getCell('D1')->getDataValidation();
+        $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $dataValidation->setAllowBlank(false);
+        $dataValidation->setShowInputMessage(true);
+        $dataValidation->setShowErrorMessage(true);
+        $dataValidation->setShowDropDown(true);
+        $dataValidation->setErrorTitle('Error de entrada');
+        $dataValidation->setError('Este valor no es admitido');
+        $dataValidation->setPromptTitle('Selecciona una unidad de medida');
+        $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
+        $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
+
+        for ($i = 2; $i <= 100; $i++) {
+            $spreadsheet->getActiveSheet()->getCell("D$i")->setDataValidation(clone $dataValidation);
+            $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
+        }
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Plantilla_para_importar_insumos.xlsx';
@@ -156,6 +239,7 @@ class ExcelHelper
         $ingredientData = [];
 
         $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
+
         while (true) {
             $cellIterator = $rowIterator->current()->getCellIterator('A', 'G');
             if($rowIterator->current()->getRowIndex() != 1) {
@@ -181,7 +265,23 @@ class ExcelHelper
                 $data[] = $business->id;
                 $data[] = 0;
 
+                /// extract category id
+                $data[2] = explode(' - ', $data[2])[0];
+                $data[2] = intval($data[2]);
+
+                /// check if category exists
+                $category = Category::find()
+                    ->where([
+                        'id' => $data[2]
+                    ])
+                    ->exists();
+
+                if(!$category){
+                    throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
+                }
+
                 $ingredientData[] = $data;
+
             }
 
             $rowIterator->next();

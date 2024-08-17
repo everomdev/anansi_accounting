@@ -293,9 +293,9 @@ class IngredientStockController extends Controller
         ExcelHelper::generateReferenceTemplate($business);
     }
 
-    public function actionDownloadTemplate()
+    public function actionDownloadTemplate($id)
     {
-        ExcelHelper::generateIngredientsTemplate();
+        ExcelHelper::generateIngredientsTemplate($id);
     }
 
     public function actionImportIngredients($id)
@@ -305,7 +305,11 @@ class IngredientStockController extends Controller
         $file = UploadedFile::getInstanceByName('ingredient-file');
 
         if ($file) {
-            ExcelHelper::importIngredients($business, $file->tempName);
+            try {
+                ExcelHelper::importIngredients($business, $file->tempName);
+            }catch (\Exception $e) {
+                Yii::$app->session->setFlash('error', $e->getMessage());
+            }
         }
 
         return $this->redirect(['ingredient-stock/index']);
