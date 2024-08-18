@@ -28,8 +28,7 @@ $controller = $model->isNewRecord
             <?= $form->field($model, 'group_id')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name')) ?>
             <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
             <?= $form->field($model, 'key_prefix')->textInput(['maxlength' => true]) ?>
-            <?= $form->field($model, 'group_id')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name')) ?>
-            <?= $form->field($model, 'business_id')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Business::find()->all(), 'id', 'name'), ['prompt' => 'Build-in']) ?>
+            <?= $form->field($model, 'business_id')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Business::find()->all(), 'id', 'name'), ['prompt' => 'Built-in']) ?>
         </div>
         <div class="card-footer">
             <div class="form-group mt-3">

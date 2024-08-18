@@ -105,7 +105,7 @@ class ExcelHelper
 
         $row = 2;
         foreach ($categories as $category) {
-            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->id, $category->name));
+            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->key_prefix, $category->name));
             $row++;
         }
 
@@ -267,18 +267,25 @@ class ExcelHelper
 
                 /// extract category id
                 $data[2] = explode(' - ', $data[2])[0];
-                $data[2] = intval($data[2]);
+                $data[2] = trim($data[2]);
 
                 /// check if category exists
                 $category = Category::find()
                     ->where([
-                        'id' => $data[2]
+                        'key_prefix' => $data[2],
                     ])
-                    ->exists();
+                    ->andWhere([
+                        'or',
+                        ['business_id' => $business->id],
+                        ['business_id' => null]
+                    ])
+                    ->one();
 
-                if(!$category){
+                if(empty($category)){
                     throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
                 }
+
+                $data[2] = $category->id;
 
                 $ingredientData[] = $data;
 
@@ -322,18 +329,21 @@ class ExcelHelper
 
                 /// extract category id
                 $data[2] = explode(' - ', $data[2])[0];
-                $data[2] = intval($data[2]);
+                $data[2] = trim($data[2]);
 
                 /// check if category exists
                 $category = Category::find()
                     ->where([
-                        'id' => $data[2]
+                        'key_prefix' => $data[2],
+                        'business_id' => null
                     ])
-                    ->exists();
+                    ->one();
 
-                if(!$category){
+                if(empty($category)){
                     throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
                 }
+
+                $data[2] = $category->id;
 
                 $ingredientData[] = $data;
 
@@ -577,7 +587,7 @@ class ExcelHelper
 
         $row = 2;
         foreach ($categories as $category) {
-            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->id, $category->name));
+            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->key_prefix, $category->name));
             $row++;
         }
 
