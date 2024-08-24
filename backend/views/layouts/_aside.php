@@ -7,7 +7,6 @@ use backend\components\Menu as MenuItem;
 /**
  * @var $this \yii\web\View
  */
-
 $currentControllerId = $this->context->action->controller->id;
 $business = \backend\helpers\RedisKeys::getBusiness();
 $plan = $business->user->plan;
@@ -29,6 +28,13 @@ $actions = [
 ];
 if (in_array($action, $actions)) {
     $currentControllerId = $action;
+}
+
+if($currentControllerId == 'standard-recipe'){
+    $isSubRecipe = isset($this->context->action->controller->actionParams['type']) && $this->context->action->controller->actionParams['type'] == 'sub';
+    if($isSubRecipe){
+        $currentControllerId = 'sub-standard-recipe';
+    }
 }
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">

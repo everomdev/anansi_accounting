@@ -89,8 +89,6 @@ class ExcelHelper
         $activeWorksheet->setCellValue("G1", "Porciones por unidad");
         $activeWorksheet->setCellValue("H1", "Observaciones");
         $activeWorksheet->setCellValue("I1", "Precio");
-        $activeWorksheet->setCellValue("J1", "Precio Unitario");
-        $activeWorksheet->setCellValue("K1", "Precio Unitario de Rendimiento");
 
 
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
@@ -102,9 +100,7 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getStyle('I2:K500')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+        $spreadsheet->getActiveSheet()->getStyle('I2:I500')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
 
         // Create a named range for categories
         $categorySheet = $spreadsheet->createSheet();
@@ -273,10 +269,9 @@ class ExcelHelper
                 $cellIterator->next();
                 $data['price'] = $cellIterator->current()->getValue(); // I - Precio
                 $cellIterator->next();
-                $data['unit_price'] = $cellIterator->current()->getValue(); // J - Precio unitario
-                $cellIterator->next();
-                $data['unit_price_yield'] = $cellIterator->current()->getValue(); // K - Precio unitario de rendimiento
-                
+
+                $data['unit_price'] = $data['price'] / $data['portions_per_unit'];
+                $data['adjusted_price'] = $data['unit_price'] / ($data['yield'] / 100);
 
                 $data['business_id'] = $business->id;
                 $data['quantity'] = 0;
@@ -284,6 +279,8 @@ class ExcelHelper
                 /// extract category id
                 $data['category_id'] = explode(' - ', $data['category_id'])[0];
                 $data['category_id'] = trim($data['category_id']);
+
+
 
                 /// check if category exists
                 $category = Category::find()
@@ -313,11 +310,17 @@ class ExcelHelper
         try {
             foreach ($ingredientData as $data) {
                 $ingredientStock = new IngredientStock();
+                $_price = $data['price'];
+                unset($data['price']);
                 if ($ingredientStock->load($data, '') && $ingredientStock->save()) {
-                    $price = new StockPrice();
-                    $price->stock_id = $ingredientStock->id;
-                    if (!($price->load($data, '') || $price->save()) && $price->hasErrors()) {
-                        throw new HttpException(400, "No se pudo guardar el precio del insumo");
+                    $price = new StockPrice([
+                        'price' => $_price,
+                        'stock_id' => $ingredientStock->id,
+                        'date' => date('Y-m-d')
+                        ]);
+
+                    if (!($price->load($data, '') && $price->save()) && $price->hasErrors()) {
+                        throw new HttpException(400, json_encode($price->errors));
                     }
                 }elseif ($ingredientStock->hasErrors()) {
                     throw new HttpException(400, json_encode($ingredientStock->errors));

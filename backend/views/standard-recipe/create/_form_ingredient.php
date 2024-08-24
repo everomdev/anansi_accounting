@@ -6,7 +6,7 @@ use kartik\typeahead\Typeahead;
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $stock = \yii\helpers\ArrayHelper::map(
     (new \yii\db\Query())
-        ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.um, ' -> ', i.portion_um,')') as label"])
+        ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.portion_um,')') as label"])
         ->from('ingredient_stock i')
         ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
         ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
