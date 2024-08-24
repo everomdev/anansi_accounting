@@ -220,7 +220,7 @@ return [
     'Plate sales / Month' => 'Venta de platillos / Mes',
     'Please, verify is the correct email or if it has been confirmed already.' => 'Por favor, verifica si la dirección de correo es correcta o si ya está confirmada',
     'Popularity' => 'Popularidad',
-    'Portions Per Unit' => 'Porciones por unidad',
+    'Kitchen unit equivalence' => 'Equivalencia a unidades de cocina',
     'Portions' => '@@Porciones@@',
     'Position' => 'Posición',
     'Price Trend' => 'Tendencia de precio',
@@ -354,5 +354,6 @@ return [
     '{icon} Export inputs' => '{icon} Exportar insumos',
     '{icon} Load moves' => '{icon} Cargar movimientos',
     '{icon} Load supplies' => '{icon} Cargar insumos',
-    'Select plan' => 'Seleccionar plan'
+    'Select plan' => 'Seleccionar plan',
+    "Adjusted Price" => "Precio ajustado",
 ];

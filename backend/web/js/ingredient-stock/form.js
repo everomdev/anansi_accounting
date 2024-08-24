@@ -1,14 +1,20 @@
-$(document).on('click', "#btn-compute-yield", function (event) {
+$(document).on('change', "#final-quantity, #initial-quantity", function (event) {
     event.preventDefault();
     let finalQuantity = $("#final-quantity").val();
-    let quantity = $("#ingredientstock-quantity").val();
+    let quantity = $("#initial-quantity").val();
     let yield = (Number.parseFloat(finalQuantity) / Number.parseFloat(quantity)).toFixed(2) * 100;
+    $("#yield-result").text(isNaN(yield) ? `0%` : `${yield}%`);
     $("#ingredientstock-yield").val(isNaN(yield) ? 0 : yield);
-    $("#modal-yield").modal('hide');
     $("#ingredientstock-final_quantity").val(finalQuantity);
-
+    $("#ingredientstock-quantity").val(quantity);
+    $("#ingredientstock-yield").trigger('change')
+    $("#ingredientstock-quantity").trigger('change')
     return false;
-})
+});
+
+$(document).on('click', "#btn-compute-yield", function (event) {
+    $('#modal-yield').modal('hide');
+});
 
 $(document).on('click', "#compute-yield", function (event) {
     event.preventDefault();
@@ -31,3 +37,13 @@ $(document).on('change', '#ingredientstock-category_id', function (event) {
         }
     })
 })
+
+$(document).on('change', '#ingredientstock-price, #ingredientstock-portions_per_unit, #ingredientstock-yield', function (event) {
+    let price = $("#ingredientstock-price").val();
+    let portions = $("#ingredientstock-portions_per_unit").val();
+    let yield = $("#ingredientstock-yield").val();
+    if (parseFloat(price) > 0 && parseFloat(portions) > 0 && parseFloat(yield) > 0) {
+        let adjustedPrice = (parseFloat(price) / parseFloat(portions)) / (parseFloat(yield) / 100);
+        $("#ingredientstock-adjustedprice").val(adjustedPrice.toFixed(2));
+    }
+});

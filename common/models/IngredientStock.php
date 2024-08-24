@@ -39,6 +39,7 @@ class IngredientStock extends \yii\db\ActiveRecord
 {
     public $_category;
     public $price;
+    public $adjustedPrice;
 
     /**
      * {@inheritdoc}
@@ -62,7 +63,7 @@ class IngredientStock extends \yii\db\ActiveRecord
         return [
             [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key'], 'required'],
             [['business_id'], 'integer'],
-            [['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'price'], 'number'],
+            [['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'price', 'adjustedPrice'], 'number'],
             [['observations', '_category', 'key'], 'string'],
             [['ingredient', 'um', 'portion_um'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
@@ -85,7 +86,7 @@ class IngredientStock extends \yii\db\ActiveRecord
             'quantity' => Yii::t('app', 'Quantity'),
             'um' => Yii::t('app', 'Unidad de Compra'),
             'yield' => Yii::t('app', 'Yield'),
-            'portions_per_unit' => Yii::t('app', 'Portions Per Unit'),
+            'portions_per_unit' => Yii::t('app', 'Kitchen unit equivalence'),
             'portion_um' => Yii::t('app', 'Kitchen Unit'),
             'observations' => Yii::t('app', 'Observations'),
             'final_quantity' => Yii::t('app', 'Final Quantity'),
@@ -93,6 +94,7 @@ class IngredientStock extends \yii\db\ActiveRecord
             'key' => Yii::t('app', "Key"),
             'category_id' => Yii::t('app', "Category"),
             'price' => Yii::t('app', "Initial Price"),
+            'adjustedPrice' => Yii::t('app', "Adjusted Price"),
         ];
     }
 
@@ -147,7 +149,8 @@ class IngredientStock extends \yii\db\ActiveRecord
                 'stock_id' => $this->id,
                 'price' => $this->price,
                 'date' => date('Y-m-d'),
-                'unit_price' => $this->price
+                'unit_price' => $this->price,
+                'adjusted_price' => $this->adjustedPrice,
             ]);
             $stockPrice->save(false);
         }

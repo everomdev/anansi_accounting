@@ -7,6 +7,7 @@ use common\models\Category;
 use common\models\Ingredient;
 use common\models\IngredientStock;
 use common\models\Movement;
+use common\models\StockPrice;
 use common\models\UnitOfMeasurement;
 use PhpOffice\PhpSpreadsheet\Calculation\DateTimeExcel\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -87,6 +88,9 @@ class ExcelHelper
         $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
         $activeWorksheet->setCellValue("G1", "Porciones por unidad");
         $activeWorksheet->setCellValue("H1", "Observaciones");
+        $activeWorksheet->setCellValue("I1", "Precio");
+        $activeWorksheet->setCellValue("J1", "Precio Unitario");
+        $activeWorksheet->setCellValue("K1", "Precio Unitario de Rendimiento");
 
 
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
@@ -97,6 +101,10 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getStyle('I2:K500')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
 
         // Create a named range for categories
         $categorySheet = $spreadsheet->createSheet();
@@ -247,32 +255,40 @@ class ExcelHelper
                     break;
                 }
                 $data = [];
-                $data[] = $cellIterator->current()->getValue(); // A - Clave
+                $data['key'] = $cellIterator->current()->getValue(); // A - Clave
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // B - Insumo
+                $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // C - Categoría
+                $data['category_id'] = $cellIterator->current()->getValue(); // C - Categoría
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // D - Unidad de compra
+                $data['um'] = $cellIterator->current()->getValue(); // D - Unidad de compra
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // E - Unidad de cocina
+                $data['portion_um'] = $cellIterator->current()->getValue(); // E - Unidad de cocina
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // F - Factor de Rendimiento
+                $data['yield'] = $cellIterator->current()->getValue(); // F - Factor de Rendimiento
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // G - Porciones por unidad
+                $data['portions_per_unit'] = $cellIterator->current()->getValue(); // G - Porciones por unidad
                 $cellIterator->next();
-                $data[] = $cellIterator->current()->getValue(); // H - Observaciones
-                $data[] = $business->id;
-                $data[] = 0;
+                $data['observations'] = $cellIterator->current()->getValue(); // H - Observaciones
+                $cellIterator->next();
+                $data['price'] = $cellIterator->current()->getValue(); // I - Precio
+                $cellIterator->next();
+                $data['unit_price'] = $cellIterator->current()->getValue(); // J - Precio unitario
+                $cellIterator->next();
+                $data['unit_price_yield'] = $cellIterator->current()->getValue(); // K - Precio unitario de rendimiento
+                
+
+                $data['business_id'] = $business->id;
+                $data['quantity'] = 0;
 
                 /// extract category id
-                $data[2] = explode(' - ', $data[2])[0];
-                $data[2] = trim($data[2]);
+                $data['category_id'] = explode(' - ', $data['category_id'])[0];
+                $data['category_id'] = trim($data['category_id']);
 
                 /// check if category exists
                 $category = Category::find()
                     ->where([
-                        'key_prefix' => $data[2],
+                        'key_prefix' => $data['category_id'],
                     ])
                     ->andWhere([
                         'or',
@@ -285,7 +301,7 @@ class ExcelHelper
                     throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
                 }
 
-                $data[2] = $category->id;
+                $data['category_id'] = $category->id;
 
                 $ingredientData[] = $data;
 
@@ -293,14 +309,32 @@ class ExcelHelper
 
             $rowIterator->next();
         }
-
-        \Yii::$app->db->createCommand()
-            ->batchInsert(
-                'ingredient_stock',
-                ['key', 'ingredient', 'category_id', 'um', 'portion_um', 'yield','portions_per_unit', 'observations', 'business_id', 'quantity'],
-                $ingredientData
-            )
-            ->execute();
+        $transaction = \Yii::$app->db->beginTransaction();
+        try {
+            foreach ($ingredientData as $data) {
+                $ingredientStock = new IngredientStock();
+                if ($ingredientStock->load($data, '') && $ingredientStock->save()) {
+                    $price = new StockPrice();
+                    $price->stock_id = $ingredientStock->id;
+                    if (!($price->load($data, '') || $price->save()) && $price->hasErrors()) {
+                        throw new HttpException(400, "No se pudo guardar el precio del insumo");
+                    }
+                }elseif ($ingredientStock->hasErrors()) {
+                    throw new HttpException(400, json_encode($ingredientStock->errors));
+                }
+            }
+            $transaction->commit();
+        }catch (\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+//        \Yii::$app->db->createCommand()
+//            ->batchInsert(
+//                'ingredient_stock',
+//                ['key', 'ingredient', 'category_id', 'um', 'portion_um', 'yield','portions_per_unit', 'observations', 'business_id', 'quantity'],
+//                $ingredientData
+//            )
+//            ->execute();
 
         return;
     }

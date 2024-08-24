@@ -35,7 +35,7 @@ class StockPrice extends \yii\db\ActiveRecord
         return [
             [['stock_id', 'price'], 'required'],
             [['stock_id'], 'integer'],
-            [['price', 'unit_price', 'unit_price_yield'], 'number'],
+            [['price', 'unit_price', 'unit_price_yield', 'adjusted_price'], 'number'],
             [['date'], 'safe'],
             [['stock_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['stock_id' => 'id']],
         ];

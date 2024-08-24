@@ -40,6 +40,12 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
     <div class="card">
         <div class="card-body">
             <?= $form->field($model, 'final_quantity')->hiddenInput()->label(false) ?>
+            <?= $form->field($model, 'quantity')->hiddenInput()->label(false) ?>
+            <?= $form->field(
+                $model,
+                'yield',
+            )
+                ->hiddenInput()->label(false) ?>
             <div class="row gap-2">
 
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
@@ -60,9 +66,6 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                     <?= $form->field($model, 'category_id')->dropDownList(\yii\helpers\ArrayHelper::map(Category::find()->all(), 'id', 'name'), ['prompt' => '----', 'data-url' => Url::to(['ingredient-stock/generate-key'])]) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
-                    <?= $form->field($model, 'quantity')->textInput() ?>
-                </div>
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?= $form->field($model, 'um')->dropDownList(\yii\helpers\ArrayHelper::map($ums, 'name', 'name')) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
@@ -79,16 +82,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
 
                     ]) ?>
                 </div>
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
-                    <?= $form->field(
-                        $model,
-                        'yield',
-                        [
-                            'template' => "{label}<br><div class='input-group'>{input} <span class='input-group-text'>%</span><button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular</button></div>"
-                        ]
-                    )
-                        ->textInput()->label("Factor de rendimiento") ?>
-                </div>
+
 
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?= $form->field($model, 'portion_um')->dropDownList(\yii\helpers\ArrayHelper::map($ums, 'name', 'name')) ?>
@@ -102,6 +96,19 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                             'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
                         ]
                     )->textInput() ?>
+                </div>
+                <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    <?= $form->field($model, 'adjustedPrice',
+                        [
+                            'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
+                        ]
+                    )->textInput() ?>
+                </div>
+                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 align-content-end">
+                    <button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular factor de
+                        rendimiento
+                    </button>
+
                 </div>
                 <div class="col-12">
                     <?= $form->field($model, 'observations')->textarea(['rows' => 6]) ?>
@@ -124,6 +131,13 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
     'id' => 'modal-yield',
 ]);
 
+echo \yii\bootstrap5\Html::label(Yii::t('app', 'Quantity'), 'initial-quantity');
+echo \yii\bootstrap5\Html::input(
+    'number',
+    'initial-quantity',
+    '',
+    ['class' => 'form-control', 'id' => 'initial-quantity']
+);
 echo \yii\bootstrap5\Html::label(Yii::t('app', 'Final Quantity'), 'final-quantity');
 echo \yii\bootstrap5\Html::input(
     'number',
@@ -132,7 +146,11 @@ echo \yii\bootstrap5\Html::input(
     ['class' => 'form-control', 'id' => 'final-quantity']
 );
 
-echo \yii\bootstrap5\Html::button(Yii::t('app', 'Calcular rendimiento'), [
+echo \yii\bootstrap5\Html::label(Yii::t('app', 'Factor de rendimiento'), 'yield-result');
+echo "<span class='form-control' id='yield-result'>0 %</span>";
+
+
+echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
     'class' => 'btn btn-outline-primary mt-3',
     'id' => 'btn-compute-yield'
 ]);

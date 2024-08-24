@@ -49,7 +49,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
 
             <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
             <?= $form->field($model, 'type')->hiddenInput(['value' => $model::TYPE_FAMILY])->label(false) ?>
-            <?= $form->field($model, 'um')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::find()->all(), 'name', 'name')) ?>
+<!--            --><?php //= $form->field($model, 'um')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::find()->all(), 'name', 'name')) ?>
             <?php if (!$model->isNewRecord): ?>
                 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-ingredients', 'timeout' => false]) ?>
                 <?= $form->field($model, 'plates')->textInput(['type' => 'number']) ?>
