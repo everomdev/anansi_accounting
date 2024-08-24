@@ -172,7 +172,7 @@ return [
     'Ingredients by Providers' => 'Ingredientes por proveedores',
     'Ingredients' => 'Ingredientes',
     'Initial balance' => 'Saldo inicial',
-    'Initial Price' => 'Precio inicial',
+    'Purchase Price' => 'Precio de compra',
     'Input' => 'Entrada',
     'Invoice' => 'Factura',
     'Invoices' => 'Facturas',

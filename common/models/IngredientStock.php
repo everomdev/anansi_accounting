@@ -93,7 +93,7 @@ class IngredientStock extends \yii\db\ActiveRecord
             '_category' => Yii::t('app', "Category"),
             'key' => Yii::t('app', "Key"),
             'category_id' => Yii::t('app', "Category"),
-            'price' => Yii::t('app', "Initial Price"),
+            'price' => Yii::t('app', "Purchase Price"),
             'adjustedPrice' => Yii::t('app', "Adjusted Price"),
         ];
     }
