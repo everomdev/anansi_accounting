@@ -41,11 +41,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
         <div class="card-body">
             <?= $form->field($model, 'final_quantity')->hiddenInput()->label(false) ?>
             <?= $form->field($model, 'quantity')->hiddenInput()->label(false) ?>
-            <?= $form->field(
-                $model,
-                'yield',
-            )
-                ->hiddenInput()->label(false) ?>
+
             <div class="row gap-2">
 
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
@@ -105,10 +101,14 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                     )->textInput() ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 align-content-end">
-                    <button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular factor de
-                        rendimiento
-                    </button>
-
+                    <?= $form->field(
+                        $model,
+                        'yield',
+                        [
+                            'template' => "{label}<br><div class='input-group'>{input} <span class='input-group-text'>%</span><button type='button' class='btn btn-outline-primary' id='compute-yield'>Calcular</button></div>"
+                        ]
+                    )
+                        ->textInput()->label("Factor de rendimiento") ?>
                 </div>
                 <div class="col-12">
                     <?= $form->field($model, 'observations')->textarea(['rows' => 6]) ?>

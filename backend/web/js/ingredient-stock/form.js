@@ -1,14 +1,19 @@
 $(document).on('change', "#final-quantity, #initial-quantity", function (event) {
+    $("#ingredientstock-yield").val(80);
     event.preventDefault();
     let finalQuantity = $("#final-quantity").val();
     let quantity = $("#initial-quantity").val();
-    let yield = (Number.parseFloat(finalQuantity) / Number.parseFloat(quantity)).toFixed(2) * 100;
-    $("#yield-result").text(isNaN(yield) ? `0%` : `${yield}%`);
-    $("#ingredientstock-yield").val(isNaN(yield) ? 0 : yield);
+    let yield = (Number.parseFloat(finalQuantity) / Number.parseFloat(quantity)) * 100;
+    yield = isNaN(yield) ? 0 : yield.toFixed(2);
+    $("#yield-result").text(`${yield}%`);
+    $("#ingredientstock-yield").val(yield);
+
     $("#ingredientstock-final_quantity").val(finalQuantity);
     $("#ingredientstock-quantity").val(quantity);
-    $("#ingredientstock-yield").trigger('change')
-    $("#ingredientstock-quantity").trigger('change')
+    $("#ingredientstock-final_quantity").trigger('change');
+    $("#ingredientstock-quantity").trigger('change');
+    $("#ingredientstock-yield").trigger('change');
+
     return false;
 });
 
