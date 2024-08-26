@@ -84,6 +84,7 @@ class IngredientStockController extends Controller
                     [
                         'actions' => [
                             'delete',
+                            'bulk-remove'
                         ],
                         'allow' => true,
                         'roles' => ['ingredients_delete'],
@@ -308,7 +309,10 @@ class IngredientStockController extends Controller
             try {
                 ExcelHelper::importIngredients($business, $file->tempName);
             }catch (\Exception $e) {
-                Yii::$app->session->setFlash('error', $e->getMessage());
+                $errors = json_decode($e->getMessage(), true);
+                foreach ($errors as $field => $fieldErrors) {
+                    Yii::$app->session->setFlash('error', implode("\n", $fieldErrors));
+                }
             }
         }
 
@@ -321,6 +325,18 @@ class IngredientStockController extends Controller
         $business = Business::findOne(['id' => $businessData['id']]);
 
         ExcelHelper::exportIngredients($business);
+    }
+
+    public function actionBulkRemove()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = Business::findOne(['id' => $businessData['id']]);
+        $ids = Yii::$app->request->post('keys');
+        if (!empty($ids)) {
+            IngredientStock::deleteAll(['id' => $ids, 'business_id' => $business->id]);
+        }
+
+        return $this->asJson(['success' => true]);
     }
 
     /**

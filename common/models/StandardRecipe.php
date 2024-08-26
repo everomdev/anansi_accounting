@@ -134,7 +134,8 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 'custom_price'
             ], 'number'],
             [['in_construction', 'in_menu'], 'boolean'],
-            [['mainImage', 'stepsImages'], 'safe']
+            [['mainImage', 'stepsImages'], 'safe'],
+            [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
         ];
     }
 

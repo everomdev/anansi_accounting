@@ -118,6 +118,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
         <div class="card-footer">
             <div class="form-group">
                 <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
+                <?= Html::a(Yii::t('app', "Cancel"), ['ingredient-stock/index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
     </div>
@@ -131,7 +132,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
     'id' => 'modal-yield',
 ]);
 
-echo \yii\bootstrap5\Html::label(Yii::t('app', 'Quantity'), 'initial-quantity');
+echo \yii\bootstrap5\Html::label(Yii::t('app', 'Initial Quantity'), 'initial-quantity');
 echo \yii\bootstrap5\Html::input(
     'number',
     'initial-quantity',

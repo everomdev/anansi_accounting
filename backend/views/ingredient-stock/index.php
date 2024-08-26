@@ -12,6 +12,10 @@ $this->title = Yii::t('app', 'Resources');
 $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+$this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
+    'depends' => \yii\web\YiiAsset::class,
+    'position' => $this::POS_END
+]);
 ?>
 <div class="ingredient-stock-index">
     <div class="d-flex flex-wrap">
@@ -36,19 +40,27 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'icon' => ""
             ]), ['ingredient-stock/export', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
         </div>
+        <div class="p-2">
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', [
+                'icon' => ""
+            ]), ['ingredient-stock/bulk-remove', 'id' => $business->id], ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
+        </div>
+
 
 
     </div>
 
 
-    <?php Pjax::begin(); ?>
+    <?php Pjax::begin(['id' => 'ingredient-stock-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
+            'id' => 'ingredient-stock-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
         'columns' => [
+            ['class' => \yii\grid\CheckboxColumn::class],
             ['class' => 'yii\grid\SerialColumn'],
             'key',
             'ingredient',

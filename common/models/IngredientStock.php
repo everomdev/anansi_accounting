@@ -38,8 +38,11 @@ use yii\db\Query;
 class IngredientStock extends \yii\db\ActiveRecord
 {
     public $_category;
+    public $_oldPrice;
+    public $_oldAdjustedPrice;
     public $price;
     public $adjustedPrice;
+    public $_key;
 
     /**
      * {@inheritdoc}
@@ -52,7 +55,11 @@ class IngredientStock extends \yii\db\ActiveRecord
     public static function populateRecord($record, $row)
     {
         parent::populateRecord($record, $row);
-
+        $lastStockPrice = $record->getStockPrices()->orderBy(['date' => SORT_DESC])->one();
+        $record->price = $lastStockPrice->price ?? 0.0;
+        $record->adjustedPrice = $lastStockPrice->adjusted_price ?? 0.0;
+        $record->_oldPrice = $record->price;
+        $record->_oldAdjustedPrice = $record->adjustedPrice;
         if (!empty(($category = $record->category))) {
             $record->_category = $category->name;
         }
@@ -67,12 +74,15 @@ class IngredientStock extends \yii\db\ActiveRecord
             [['observations', '_category', 'key'], 'string'],
             [['ingredient', 'um', 'portion_um'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
-            [['ingredient', 'um', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'um', 'business_id'], 'message' => Yii::t('app', "You already have registered this ingredient")],
+            [['ingredient', 'um', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'um', 'business_id'], 'message' => Yii::t('app', "You already have registered this ingredient ({value})")],
             [['category_id'], 'integer'],
             [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['ingredient', '_category', 'observations'], 'filter', 'filter' => 'trim']
+            [['ingredient', '_category', 'observations'], 'filter', 'filter' => 'trim'],
+            [['key'], 'unique', 'targetAttribute' => ['key', 'business_id'], 'message' => Yii::t('app', "You already have registered this key ({value})")],
         ];
     }
+
+
 
     /**
      * {@inheritdoc}
@@ -125,6 +135,7 @@ class IngredientStock extends \yii\db\ActiveRecord
         if (!parent::beforeValidate()) {
             return false;
         }
+        $this->_key = $this->key;
 
 //        $this->saveCategory();
 
@@ -153,6 +164,18 @@ class IngredientStock extends \yii\db\ActiveRecord
                 'adjusted_price' => $this->adjustedPrice,
             ]);
             $stockPrice->save(false);
+        }
+        if(!$insert){
+            if($this->price != $this->_oldPrice || $this->adjustedPrice != $this->_oldAdjustedPrice){
+                $stockPrice = new StockPrice([
+                    'stock_id' => $this->id,
+                    'price' => $this->price,
+                    'date' => date('Y-m-d'),
+                    'unit_price' => $this->price,
+                    'adjusted_price' => $this->adjustedPrice,
+                ]);
+                $stockPrice->save(false);
+            }
         }
     }
 

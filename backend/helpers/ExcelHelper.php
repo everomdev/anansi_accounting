@@ -100,7 +100,7 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getStyle('I2:I500')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+        $spreadsheet->getActiveSheet()->getStyle('I2:I5000')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
 
         // Create a named range for categories
         $categorySheet = $spreadsheet->createSheet();
@@ -133,7 +133,7 @@ class ExcelHelper
         $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
         $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
 
-        for ($i = 2; $i <= 100; $i++) {
+        for ($i = 2; $i <= 5000; $i++) {
             $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
         }
 
@@ -166,7 +166,7 @@ class ExcelHelper
         $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
         $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
 
-        for ($i = 2; $i <= 100; $i++) {
+        for ($i = 2; $i <= 5000; $i++) {
             $spreadsheet->getActiveSheet()->getCell("D$i")->setDataValidation(clone $dataValidation);
             $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
         }
@@ -251,7 +251,7 @@ class ExcelHelper
                     break;
                 }
                 $data = [];
-                $data['key'] = $cellIterator->current()->getValue(); // A - Clave
+                $data['key'] = strval($cellIterator->current()->getValue()); // A - Clave
                 $cellIterator->next();
                 $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
                 $cellIterator->next();
@@ -492,6 +492,7 @@ class ExcelHelper
         $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
         $activeWorksheet->setCellValue("G1", "Porciones por unidad");
         $activeWorksheet->setCellValue("H1", "Observaciones");
+        $activeWorksheet->setCellValue("I1", "Price");
 
         $ingredients = $business->getIngredientStocks()->all();
         $currentRow = 2;
@@ -505,6 +506,7 @@ class ExcelHelper
             $activeWorksheet->setCellValue("F$currentRow", "{$ingredient->yield}%");
             $activeWorksheet->setCellValue("G$currentRow", $ingredient->portions_per_unit);
             $activeWorksheet->setCellValue("H$currentRow", $ingredient->observations);
+            $activeWorksheet->setCellValue("I$currentRow", $business->getFormatter()->asCurrency($ingredient->lastPrice));
 
             $currentRow++;
         }
@@ -648,7 +650,7 @@ class ExcelHelper
         $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
         $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
 
-        for ($i = 2; $i <= 100; $i++) {
+        for ($i = 2; $i <= 5000; $i++) {
             $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
         }
 
@@ -681,7 +683,7 @@ class ExcelHelper
         $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
         $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
 
-        for ($i = 2; $i <= 100; $i++) {
+        for ($i = 2; $i <= 5000; $i++) {
             $spreadsheet->getActiveSheet()->getCell("B$i")->setDataValidation(clone $dataValidation);
         }
 

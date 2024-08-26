@@ -73,6 +73,7 @@ class Category extends \yii\db\ActiveRecord
             'builtin' => Yii::t('app', 'Builtin'),
             'business_id' => Yii::t('app', "Business"),
             'group_id' => Yii::t('app', "Group"),
+            'key_prefix' => Yii::t('app', "Key Prefix"),
         ];
     }
 

@@ -2,6 +2,7 @@
 /** @var $this \yii\web\View */
 
 /** @var $model \common\models\StandardRecipe */
+/** @var $business \common\models\Business */
 
 use yii\helpers\ArrayHelper;
 
@@ -78,7 +79,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                 <?php endforeach; ?>
                 <tr>
                     <td colspan="2" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
-                    <td><?= Yii::$app->formatter->asCurrency(
+                    <td><?= $business->getFormatter()->asCurrency(
                             array_sum(
                                 array_merge(
                                     ArrayHelper::getColumn($model->ingredientRelations, function($ingredient) {
@@ -88,7 +89,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                                         return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
                                     })
                                 )
-                            ), 'usd') ?></td>
+                            )) ?></td>
 
                 </tr>
                 </tbody>

@@ -37,7 +37,13 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'costPercent:percent',
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{update} {delete}"
+                'template' => "{update} {delete}",
+                'buttons' => [
+                    'update' => function ($url, $model, $key) {
+                        return Html::a('<i class="fa fa-edit"></i>', \yii\helpers\Url::to(['standard-recipe/update', 'id' => $model->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'text-warning']);
+                    },
+
+                ],
             ],
         ],
     ]); ?>

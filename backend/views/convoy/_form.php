@@ -32,7 +32,9 @@ $recipes = array_map(function ($recipe) {
     return $recipe;
 }, $recipes);
 
-$data = \yii\helpers\ArrayHelper::map(array_merge($ingredients, $recipes), 'id', 'name');
+$data = \yii\helpers\ArrayHelper::map(array_merge($ingredients, $recipes), 'id', function($i){
+    return sprintf("%s (%s)", $i->name, $i->portion_um);
+});
 
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']])

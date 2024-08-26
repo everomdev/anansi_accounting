@@ -71,6 +71,8 @@ class Convoy extends \yii\db\ActiveRecord
             'selectedEntity' => Yii::t('app', 'Description'),
             'type' => Yii::t('app', 'Type'),
             'name' => Yii::t('app', 'Name'),
+            'amount' => Yii::t('app', 'Amount'),
+            'plates' => Yii::t('app', 'Sold Plates'),
         ];
     }
 

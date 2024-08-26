@@ -289,7 +289,7 @@ class StandardRecipeController extends Controller
             $model = new StandardRecipe([
                 'business_id' => $business['id'],
                 'type' => $type,
-                'title' => Yii::t('app', "A good recipe"),
+                'title' => Yii::t('app', "Recipe Name"),
                 'in_construction' => true,
             ]);
         }
@@ -303,7 +303,7 @@ class StandardRecipeController extends Controller
 //        }
 
         if (Yii::$app->request->isGet) {
-            $model->save();
+            $model->save(false);
         }
 
         $post = Yii::$app->request->post();
@@ -321,8 +321,11 @@ class StandardRecipeController extends Controller
             } else {
                 return $this->redirect(['sub-standard-recipe/index']);
             }
-        } else {
-            Yii::$app->session->setFlash('error', json_encode(array_values(array_values($model->errors))));
+        } elseif($model->hasErrors()) {
+            foreach ($model->errors as $field => $error){
+                Yii::$app->session->setFlash('error', implode('\n', $error));
+            }
+
         }
 
         return $this->render('create', [
@@ -351,9 +354,9 @@ class StandardRecipeController extends Controller
         return $this->asJson(true);
     }
 
-    public function actionFormSelectIngredient($id)
+    public function actionFormSelectIngredient($id = null)
     {
-        $recipe = $this->findModel($id);
+        $recipe = StandardRecipe::findOne(['id' => $id]);
         return $this->renderAjax('create/_form_ingredient', [
             'model' => new \backend\models\StandardRecipeIngredientForm(),
             'recipe' => $recipe

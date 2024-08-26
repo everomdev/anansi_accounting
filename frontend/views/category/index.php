@@ -12,7 +12,6 @@ $this->title = Yii::t('app', 'Categories');
 $this->params['breadcrumbs'][] = $this->title;
 
 
-
 $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
     'depends' => \yii\web\YiiAsset::class
 ]);
@@ -46,12 +45,16 @@ $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
             ],
             [
                 'attribute' => 'group.name',
+                'label' => Yii::t('app', 'Group'),
                 'filter' => \yii\bootstrap5\Html::activeDropDownList($searchModel, 'group_id', \yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name'), ['class' => 'form-control', 'prompt' => Yii::t('app', "All")])
             ],
             'name',
             'key_prefix',
 //            'builtin',
-            'business.name',
+            [
+                'attribute' => 'business.name',
+                'label' => Yii::t('app', 'Restaurant'),
+            ],
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}",

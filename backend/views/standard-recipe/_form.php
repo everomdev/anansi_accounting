@@ -35,12 +35,14 @@ $recipesCategoriesMap['add'] = Yii::t('app', "+ Agregar");
 $this->registerJsVar('createNewCategoryUrl', \yii\helpers\Url::to(['recipe-category/index']));
 
 $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
+$currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
 ?>
 
 <div class="standard-recipe-form">
 
     <?php $form = ActiveForm::begin([
         'id' => 'form-recipe',
+        'enableAjaxValidation' => true,
         'options' => [
             'enctype' => 'multipart/form-data'
         ],
@@ -75,29 +77,31 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                     <?= $form->field($model, 'title', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
                     ])->textInput([
-                        'placeholder' => Yii::t('app', "A good recipe")
+                        'placeholder' => Yii::t('app', "Recipe Name")
                     ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
-                    <?= $form->field($model, 'price', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div></div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
-                    <div class="row mb-3">
-                       <div class="col-sm-3 text-start">
-                           <?= Yii::t('app', "Cost") ?>
-                       </div>
-                        <div class="col-sm-9">
+                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
+                        <?= $form->field($model, 'price', [
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div></div></div>"
+                        ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                        <div class="row mb-3">
+                            <div class="col-sm-3 text-start">
+                                <?= Yii::t('app', "Cost") ?>
+                            </div>
+                            <div class="col-sm-9">
                             <span class="form-control" id="cost-value"
                                   data-value="<?= $model->lastPrice ?>"><?= $businessObj->formatter->asCurrency($model->lastPrice) ?></span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row mb-3">
-                       <div class="col-sm-3 text-start">
-                           <?= Yii::t('app', "Cost %") ?>
-                       </div>
-                        <div class="col-sm-9">
+                        <div class="row mb-3">
+                            <div class="col-sm-3 text-start">
+                                <?= Yii::t('app', "Cost %") ?>
+                            </div>
+                            <div class="col-sm-9">
                             <span class="form-control"
                                   id="cost-percent"><?= Yii::$app->formatter->asPercent($model->costPercent, 0) ?></span>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
 
 
 
@@ -181,7 +185,10 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
 
         </div>
         <div class="card-footer">
-            <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', "Save"), ['class' => 'btn btn-success']) ?>
+            <div class="form-group">
+                <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', "Save"), ['class' => 'btn btn-success']) ?>
+                <?= \yii\bootstrap5\Html::a(Yii::t('app', "Cancel"), [Yii::$app->request->get('type') == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB ? 'sub-standard-recipe/index' : 'standard-recipe/index'], ['class' => 'btn btn-outline-secondary']) ?>
+            </div>
         </div>
     </div>
 
@@ -193,7 +200,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
 <?php
 
 
-\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add ingredient'),
+\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add ingredient or sub-recipe'),
     'id' => 'modal-add-ingredient']);
 
 echo "<div id='container-form-ingredient'></div>";

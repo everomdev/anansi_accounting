@@ -4,18 +4,31 @@
 
 use kartik\typeahead\Typeahead;
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
-$stock = \yii\helpers\ArrayHelper::map(
-    (new \yii\db\Query())
-        ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.portion_um,')') as label"])
-        ->from('ingredient_stock i')
-        ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
-        ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
-        ->where(['or', ['sr.id' => null], ['<>', 'sr.id', $recipe->id]])
-        ->andWhere(['i.business_id' => $business['id']])
-        ->all(),
-    'id', 'label'
-);
+if(empty($recipe)){
+    $stock = \yii\helpers\ArrayHelper::map(
+        (new \yii\db\Query())
+            ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.portion_um,')') as label"])
+            ->from('ingredient_stock i')
+            ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
+            ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
+            ->andWhere(['i.business_id' => $business['id']])
+            ->all(),
+        'id', 'label'
+    );
+}else {
+    $stock = \yii\helpers\ArrayHelper::map(
+        (new \yii\db\Query())
+            ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.portion_um,')') as label"])
+            ->from('ingredient_stock i')
+            ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
+            ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
+            ->where(['or', ['sr.id' => null], ['<>', 'sr.id', $recipe->id]])
+            ->andWhere(['i.business_id' => $business['id']])
+            ->all(),
+        'id', 'label'
+    );
 
+}
 $subRecipes = \yii\helpers\ArrayHelper::map(
     (new \yii\db\Query())
         ->select(["id", "sr.title as label"])
@@ -34,7 +47,7 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
             'id' => 'form_ingredient',
             'enableClientValidation' => true,
             'enableAjaxValidation' => true,
-            'action' => \yii\helpers\Url::to(['standard-recipe/select-ingredients', 'id' => $recipe->id]),
+            'action' => \yii\helpers\Url::to(['standard-recipe/select-ingredients', 'id' => $recipe == null ? null : $recipe->id]),
             'method' => 'post'
         ]) ?>
         <div class="col-12">
