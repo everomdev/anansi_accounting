@@ -80,6 +80,7 @@ $(document).on('beforeSubmit', "#form_ingredient", function (event) {
         type: method
     }).done(function (response) {
         $.pjax.reload({container: "#pjax-ingredients-selection"});
+        $("#standardrecipe-price").trigger('change');
     })
 
     return false;

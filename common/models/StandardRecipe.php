@@ -315,23 +315,35 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
     public function getSubRecipeLastPrice()
     {
-        $ingredients = $this->getIngredients()->all();
-        $lastPrices = ArrayHelper::getColumn($ingredients, 'lastUnitPrice');
+        $ingredients = $this->ingredientRelations;
+        $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
+            return $ingredient->lastUnitPrice * $ingredient->quantity;
+        });
+
         return array_sum($lastPrices);
     }
 
     public function getSubRecipeHigherPrice()
     {
-        $ingredients = $this->getIngredients()->all();
-        $higherPrices = ArrayHelper::getColumn($ingredients, 'higherUnitPrice');
-        return array_sum($higherPrices);
+        /** @var IngredientStandardRecipe[] $isr */
+        $ingredients = $this->ingredientRelations;
+        $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
+            return $ingredient->higherUnitPrice * $ingredient->quantity;
+        });
+
+        return array_sum($lastPrices);
+
     }
 
     public function getSubRecipeAvgPrice()
     {
-        $ingredients = $this->getIngredients()->all();
-        $avgPrices = ArrayHelper::getColumn($ingredients, 'avgUnitPrice');
-        return array_sum($avgPrices);
+        $ingredients = $this->ingredientRelations;
+        $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
+            return $ingredient->avgUnitPrice * $ingredient->quantity;
+        });
+
+        return array_sum($lastPrices);
+
     }
 
     public function getRecipeLastPrice()
@@ -342,7 +354,9 @@ class StandardRecipe extends \yii\db\ActiveRecord
         });
 
         $subRecipes = $this->getSubStandardRecipes()->all();
-        $lastPrices = array_merge($lastPrices, ArrayHelper::getColumn($subRecipes, 'subRecipeLastPrice'));
+        $lastPrices = array_merge($lastPrices, ArrayHelper::getColumn($subRecipes, function(StandardRecipe $subRecipe){
+            return $subRecipe->subRecipeLastPrice * $subRecipe->getQuantityLinked($this->id);
+        }));
         if (!empty($this->convoy_id)) {
             $lastPrices[] = $this->convoy->amount;
         }
@@ -558,6 +572,11 @@ class StandardRecipe extends \yii\db\ActiveRecord
         $effectiveness = $this->getEffectiveness($costEffectivenessAxis, $totalSales);
 
         return self::QUADRANTS[$popularity . $effectiveness];
+    }
+
+    public function getIngredientsStandardRecipe()
+    {
+        return $this->hasMany(IngredientStandardRecipe::class, ['standard_recipe_id' => 'id']);
     }
 
 }
