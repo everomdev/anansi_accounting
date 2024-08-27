@@ -31,7 +31,7 @@ if (in_array($action, $actions)) {
 }
 
 if($currentControllerId == 'standard-recipe'){
-    $isSubRecipe = isset($this->context->action->controller->actionParams['type']) && $this->context->action->controller->actionParams['type'] == 'sub';
+    $isSubRecipe = Yii::$app->request->get('type') == 'sub';
     if($isSubRecipe){
         $currentControllerId = 'sub-standard-recipe';
     }

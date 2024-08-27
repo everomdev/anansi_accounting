@@ -74,11 +74,11 @@ class StandardRecipe extends \yii\db\ActiveRecord
     public $stepsImages;
 
     const QUADRANTS = [
-            "ALTAALTA" => "ESTRELLA",
-            "ALTABAJA" => "VACA",
-            "BAJABAJA" => "PERRO",
-            "BAJAALTA" => "ENIGMA",
-        ];
+        "ALTAALTA" => "ESTRELLA",
+        "ALTABAJA" => "VACA",
+        "BAJABAJA" => "PERRO",
+        "BAJAALTA" => "ENIGMA",
+    ];
 
     /**
      * {@inheritdoc}
@@ -122,7 +122,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 return !$this->isNewRecord;
             }],
             [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime', 'type_of_recipe', 'other_specs'], 'string'],
-            [['type'], 'string', 'max' => 255],
+            [['type', 'um'], 'string', 'max' => 255],
             [['type'], 'in', 'range' => [self::STANDARD_RECIPE_TYPE_MAIN, self::STANDARD_RECIPE_TYPE_SUB]],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [[
@@ -162,6 +162,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             'other_specs' => Yii::t('app', 'Other specifications'),
             'sales' => Yii::t('app', 'Sales'),
             'in_menu' => Yii::t('app', 'In menu'),
+            'title' => Yii::t('app', 'Title'),
         ];
     }
 
@@ -354,7 +355,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
         });
 
         $subRecipes = $this->getSubStandardRecipes()->all();
-        $lastPrices = array_merge($lastPrices, ArrayHelper::getColumn($subRecipes, function(StandardRecipe $subRecipe){
+        $lastPrices = array_merge($lastPrices, ArrayHelper::getColumn($subRecipes, function (StandardRecipe $subRecipe) {
             return $subRecipe->subRecipeLastPrice * $subRecipe->getQuantityLinked($this->id);
         }));
         if (!empty($this->convoy_id)) {
@@ -495,6 +496,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
         return round(($this->lastPrice / $this->price), 2);
     }
+
     public function getCategory()
     {
         return $this->hasOne(RecipeCategory::class, ['name' => 'type_of_recipe']);
@@ -577,6 +579,60 @@ class StandardRecipe extends \yii\db\ActiveRecord
     public function getIngredientsStandardRecipe()
     {
         return $this->hasMany(IngredientStandardRecipe::class, ['standard_recipe_id' => 'id']);
+    }
+
+    public function duplicate()
+    {
+        $newRecipe = new StandardRecipe();
+        $newRecipe->attributes = $this->attributes;
+        $newRecipe->title = $this->title . ' (Copia)';
+        $newRecipe->save();
+
+        /// Copy ingredients
+        $ingredients = (new Query())
+            ->select(['ingredient_id', 'quantity', 'standard_recipe_id'])
+            ->from("ingredient_standard_recipe")
+            ->where(['standard_recipe_id' => $this->id])
+            ->all();
+
+        foreach ($ingredients as $ingredient) {
+            $ingredient['standard_recipe_id'] = $newRecipe->id;
+            Yii::$app->db->createCommand()
+                ->insert('ingredient_standard_recipe', $ingredient)
+                ->execute();
+        }
+
+        /// Copy sub recipes
+        $subRecipes = (new Query())
+            ->select(['sub_standard_recipe_id', 'quantity', 'standard_recipe_id'])
+            ->from("standard_recipe_sub_standard_recipe")
+            ->where(['standard_recipe_id' => $this->id])
+            ->all();
+
+        foreach ($subRecipes as $subRecipe) {
+            $subRecipe['standard_recipe_id'] = $newRecipe->id;
+            Yii::$app->db->createCommand()
+                ->insert('standard_recipe_sub_standard_recipe', $subRecipe)
+                ->execute();
+        }
+
+
+        // Copy main steps pictures
+        $mainStepsPictures = (new Query())
+            ->select(['standard_recipe_id', 'description'])
+            ->from("main_steps_pictures")
+            ->where(['standard_recipe_id' => $this->id])
+            ->all();
+
+        foreach ($mainStepsPictures as $mainStepsPicture) {
+            $mainStepsPicture['standard_recipe_id'] = $newRecipe->id;
+            Yii::$app->db->createCommand()
+                ->insert('main_steps_pictures', $mainStepsPicture)
+                ->execute();
+        }
+
+
+        return $newRecipe;
     }
 
 }

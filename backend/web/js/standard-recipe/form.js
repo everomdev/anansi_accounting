@@ -155,4 +155,41 @@ $(document).on('change', "#standardrecipe-price", (event) => {
     if (!isNaN(costPercent)) {
         $("#cost-percent").html(`${costPercent} %`);
     }
+});
+
+$(document).on('click', '.update-ingredient', function (event) {
+    event.preventDefault();
+    let url = $(this).attr('href');
+    let quantity = $(this).data('current');
+
+    $("#btn-update-ingredient").data('url', url);
+    $("#ingredient-update-quantity").val(quantity);
+
+    $("#modal-update-ingredient").modal('show');
+
+    return false;
+});
+
+$(document).on('click', '#btn-update-ingredient', function (event) {
+    event.preventDefault();
+    let url = $(this).data('url');
+    let quantity = $("#ingredient-update-quantity").val();
+
+    $.ajax({
+        url,
+        type: 'post',
+        data: {quantity}
+    }).done((response) => {
+        $.pjax.reload({container: "#pjax-ingredients-selection"});
+        $("#standardrecipe-price").trigger('change');
+        $("#modal-update-ingredient").modal('hide');
+    })
+
+
+    return false;
+})
+
+$(document).on('hidden.bs.modal', "#modal-update-ingredient", function (event) {
+    $("#ingredient-update-quantity").val('');
+    $("#btn-update-ingredient").removeAttr('data-url');
 })

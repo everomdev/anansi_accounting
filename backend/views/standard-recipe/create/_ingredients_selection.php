@@ -6,7 +6,7 @@
 
 use yii\helpers\ArrayHelper;
 
-$this->title = Yii::t('app', 'Create new recipe');
+
 $business = \backend\helpers\RedisKeys::getBusiness();
 ?>
 
@@ -44,6 +44,13 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                         </td>
 
                         <td>
+                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
+                                'class' => "btn btn-sm btn-warning update-ingredient",
+                                'data' => [
+                                    'pjax' => "#pjax-ingredients-selection",
+                                    'current' => $ingredientStandardRecipe->quantity
+                                ]
+                            ]) ?>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
                                 'class' => "btn btn-sm btn-danger delete-ingredient",
                                 'data' => [
@@ -60,13 +67,20 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                             <?= $subStandardRecipe->title ?>
                         </td>
                         <td>
-                            <?= $subStandardRecipe->getQuantityLinked($model->id) ?>
+                            <?= sprintf("%s %s", $subStandardRecipe->getQuantityLinked($model->id), $subStandardRecipe->um);  ?>
                         </td>
                         <td>
                             <?= $business->formatter->asCurrency($subStandardRecipe->subRecipeLastPrice * $subStandardRecipe->getQuantityLinked($model->id)) ?>
                         </td>
 
                         <td>
+                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
+                                'class' => "btn btn-sm btn-warning update-ingredient",
+                                'data' => [
+                                    'pjax' => "#pjax-ingredients-selection",
+                                    'current' => $subStandardRecipe->getQuantityLinked($model->id)
+                                ]
+                            ]) ?>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
                                 'class' => "btn btn-sm btn-danger delete-ingredient",
                                 'data' => [
@@ -99,5 +113,4 @@ $business = \backend\helpers\RedisKeys::getBusiness();
 </div>
 
 <?php \yii\widgets\Pjax::end(); ?>
-
 

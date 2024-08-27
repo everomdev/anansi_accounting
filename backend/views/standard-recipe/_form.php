@@ -36,6 +36,7 @@ $this->registerJsVar('createNewCategoryUrl', \yii\helpers\Url::to(['recipe-categ
 
 $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
 $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
+
 ?>
 
 <div class="standard-recipe-form">
@@ -51,6 +52,11 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
         <div class="card-body">
             <div class="row">
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                    <?php if(!$model->isNewRecord): ?>
+                        <?= $form->field($model, 'title', [
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                        ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <?php endif; ?>
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                     ])->dropDownList($recipesCategoriesMap)->label(null, ['class' => 'col-sm-4 text-start']) ?>
@@ -66,6 +72,12 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Convoy::findAll(['business_id' => $business['id']]), 'id', 'label'), ['prompt' => Yii::t('app', "No convoy")])->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
+                    <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB): ?>
+                        <?= $form->field($model, 'um', [
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                        ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]), 'name', 'name'))->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <?php endif; ?>
+
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
                     <?= $form->field($model, 'portions', [
@@ -102,7 +114,6 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             </div>
                         </div>
                     <?php endif; ?>
-
 
 
                 </div>
@@ -208,6 +219,21 @@ echo "<div id='container-form-ingredient'></div>";
 \yii\bootstrap5\Modal::end();
 
 ?>
+<?php
+
+
+\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Modify ingredient or sub-recipe'),
+    'id' => 'modal-update-ingredient']);
+
+echo Html::label(Yii::t('app', 'Quantity'), 'ingredient-update-quantity');
+echo \yii\bootstrap5\Html::input('text', 'ingredient-update-quantity', '', ['class' => 'form-control', 'placeholder' => Yii::t('app', 'Quantity'), 'id' => 'ingredient-update-quantity']);
+
+echo \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success mt-5', 'id' => 'btn-update-ingredient']);
+
+\yii\bootstrap5\Modal::end();
+
+?>
+
 
 <?php
 \yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add step'),

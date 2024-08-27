@@ -366,5 +366,7 @@ return [
     "Create new sub-recipe" => "Crear nueva sub-receta",
     "Add ingredient or sub-recipe" => "Agregar ingrediente o sub-receta",
     "Recipe Name" => "Nombre de la receta",
+    "Modify" => "Modificar",
+    "Title" => "Título",
 
 ];

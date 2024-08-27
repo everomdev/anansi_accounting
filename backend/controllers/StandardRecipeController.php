@@ -61,7 +61,8 @@ class StandardRecipeController extends Controller
                             'finish-recipe-creation',
                             'form-select-ingredient',
                             'select-ingredients',
-                            'unselect-ingredient'
+                            'unselect-ingredient',
+                            'duplicate-recipes'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -77,7 +78,8 @@ class StandardRecipeController extends Controller
                             'finish-recipe-creation',
                             'form-select-ingredient',
                             'select-ingredients',
-                            'unselect-ingredient'
+                            'unselect-ingredient',
+                            'update-selected-ingredient'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -321,8 +323,8 @@ class StandardRecipeController extends Controller
             } else {
                 return $this->redirect(['sub-standard-recipe/index']);
             }
-        } elseif($model->hasErrors()) {
-            foreach ($model->errors as $field => $error){
+        } elseif ($model->hasErrors()) {
+            foreach ($model->errors as $field => $error) {
                 Yii::$app->session->setFlash('error', implode('\n', $error));
             }
 
@@ -361,6 +363,19 @@ class StandardRecipeController extends Controller
             'model' => new \backend\models\StandardRecipeIngredientForm(),
             'recipe' => $recipe
         ]);
+    }
+
+    public function actionUpdateSelectedIngredient($id, $ingredientId, $isRecipe = false)
+    {
+        $model = $this->findModel($id);
+        $quantity = Yii::$app->request->post('quantity');
+        if ($isRecipe) {
+            $model->addUpdateSubRecipe($ingredientId, $quantity);
+        } else {
+            $model->addUpdateIngredient($ingredientId, $quantity);
+        }
+
+        return $this->asJson(true);
     }
 
     public function actionUnselectIngredient($id, $ingredientId, $isRecipe = false)
@@ -703,7 +718,7 @@ class StandardRecipeController extends Controller
         if ($total != 0) {
             $theoreticalCost = $theoreticalCost / $total;
             $desiredCost = $desiredCost / $total;
-        }else{
+        } else {
             $theoreticalCost = 0;
             $desiredCost = 0;
         }
@@ -742,6 +757,19 @@ class StandardRecipeController extends Controller
             'totalSales' => $totalSales,
             'categories' => $categories
         ]);
+    }
+
+    public function actionDuplicateRecipes()
+    {
+        $post = Yii::$app->request->post();
+
+        $recipes = StandardRecipe::find()->where(['id' => $post['recipes']])->all();
+
+        foreach($recipes as $recipe){
+            $recipe->duplicate();
+        }
+
+        return $this->redirect(['index']);
     }
 
     /**

@@ -11,21 +11,25 @@ $this->title = Yii::t('app', "Sub recipes");
 $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+$this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
 ?>
 <div class="standard-recipe-index">
 
 
     <p>
         <?= Html::a(Yii::t('app', 'New sub recipe'), \yii\helpers\Url::to(['standard-recipe/create', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success']) ?>
+        <?= Html::a(Yii::t('app', 'Duplicate'), \yii\helpers\Url::to(['sub-standard-recipe/duplicate-recipes']), ['class' => 'btn btn-success', 'id' => 'btn-duplicate-recipes']) ?>
     </p>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
+        'id' => 'sub-standard-recipes-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
         'columns' => [
+            ['class' => \yii\grid\CheckboxColumn::class],
             ['class' => 'yii\grid\SerialColumn'],
             'title',
             [
@@ -34,7 +38,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'label' => "Costo"
             ],
 
-            'costPercent:percent',
+//            'costPercent:percent',
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}",

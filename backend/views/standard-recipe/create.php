@@ -6,9 +6,9 @@ use yii\helpers\Html;
 /* @var $model common\models\StandardRecipe */
 
 
-$this->title = "adsa";//Yii::t('app',  Yii::$app->request->get('type') == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Create new recipe' : 'Create new sub-recipe');
-$this->params['breadcrumbs'][] = ['label' => 'Standard Recipes', 'url' => ['index']];
-$this->params['breadcrumbs'][] = $this->title;
+$this->title = Yii::t('app',  Yii::$app->request->get('type') == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Create new recipe' : 'Create new sub-recipe');
+//$this->params['breadcrumbs'][] = ['label' => 'Standard Recipes', 'url' => ['index']];
+//$this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="standard-recipe-create">
 

@@ -2,7 +2,7 @@
 /** @var $this \yii\web\View
  */
 
-$this->title = Yii::t('app', 'Create new recipe');
+
 
 ?>
 <div class="card shadow-none">

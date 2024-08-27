@@ -48,6 +48,7 @@ class SubStandardRecipeController extends Controller
                             'create',
                             'select-ingredients',
                             'unselect-ingredient',
+                            'duplicate-recipes',
                         ],
                         'allow' => true,
                         'roles' => ['subrecipe_create']
@@ -213,6 +214,19 @@ class SubStandardRecipeController extends Controller
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
+
+        return $this->redirect(['index']);
+    }
+
+    public function actionDuplicateRecipes()
+    {
+        $post = Yii::$app->request->post();
+
+        $recipes = StandardRecipe::find()->where(['id' => $post['recipes']])->all();
+
+        foreach($recipes as $recipe){
+            $recipe->duplicate();
+        }
 
         return $this->redirect(['index']);
     }
