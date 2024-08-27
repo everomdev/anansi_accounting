@@ -31,14 +31,16 @@ if(empty($recipe)){
 }
 $subRecipes = \yii\helpers\ArrayHelper::map(
     (new \yii\db\Query())
-        ->select(["id", "concat(sr.title, ' (', sr.um, ')') as label"])
+        ->select(["id", "sr.title as label", "um"])
         ->from("standard_recipe sr")
         ->where([
             'sr.business_id' => $business['id'],
             'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
         ])
         ->all(),
-    'id', 'label'
+    'id', function($sr){
+        return sprintf("%s (%s)", $sr['label'], $sr['um']);
+}
 );
 ?>
 
