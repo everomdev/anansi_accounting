@@ -38,7 +38,10 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
                 'label' => "Costo"
             ],
 
-            'costPercent:percent',
+            [
+                    'attribute' => 'costPercent:percent',
+                'label' => "Porcentaje de costo"
+            ],
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}"

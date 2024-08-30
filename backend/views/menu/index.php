@@ -16,7 +16,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
 
     <p>
-        <?= Html::a('Create Combo', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Nuevo combo', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -39,6 +39,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'total_price:currency',
             [
                 'attribute' => 'cost_percent_last_price',
+                'label' => "Porcentaje de costo último precio",
                 'value' => function ($data) {
                     return sprintf("%s %%", $data->cost_percent_last_price);
                 },

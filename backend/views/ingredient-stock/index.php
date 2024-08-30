@@ -47,7 +47,6 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
         </div>
 
 
-
     </div>
 
 
@@ -55,7 +54,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
-            'id' => 'ingredient-stock-grid',
+        'id' => 'ingredient-stock-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
@@ -72,9 +71,18 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             ['attribute' => 'yield', 'label' => "Factor de rendimiento", 'value' => function ($data) {
                 return sprintf('%s %%', $data->yield);
             },],
-            'lastUnitPrice:currency',
-            'avgUnitPrice:currency',
-            'higherUnitPrice:currency',
+            [
+                'attribute' => 'lastUnitPrice:currency',
+                'label' => 'Último precio'
+            ],
+            [
+                'attribute' => 'avgUnitPrice:currency',
+                'label' => 'Precio promedio'
+            ],
+            [
+                'attribute' => 'higherUnitPrice:currency',
+                'label' => 'Precio más alto'
+            ],
             //'observations:ntext',
 
             [

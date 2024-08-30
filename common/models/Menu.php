@@ -86,12 +86,13 @@ class Menu extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'name' => 'Name',
-            'total_cost' => 'Total Cost',
-            'total_price' => 'Total Price',
-            'cost_precent' => 'Cost Precent',
+            'name' => 'Nombre',
+            'total_cost' => 'Costo total',
+            'total_price' => 'Precio total',
+            'cost_precent' => 'Porcentaje de costo',
             'business_id' => 'Business ID',
             'category_id' => Yii::t('app', "Category"),
+            '_recipes' => Yii::t('app', "Recetas"),
         ];
     }
 

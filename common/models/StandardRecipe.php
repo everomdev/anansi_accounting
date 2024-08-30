@@ -150,7 +150,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             'flowchart' => Yii::t('app', 'Flowchart'),
             'equipment' => Yii::t('app', 'Equipment'),
             'steps' => Yii::t('app', 'Steps or special cares'),
-            'allergies' => Yii::t('app', 'Allergies'),
+            'allergies' => Yii::t('app', 'Allergens'),
             'type' => Yii::t('app', 'Type'),
             'mainImage' => Yii::t('app', 'Recipe Image'),
             'stepsImages' => Yii::t('app', 'Steps images'),
@@ -163,6 +163,11 @@ class StandardRecipe extends \yii\db\ActiveRecord
             'sales' => Yii::t('app', 'Sales'),
             'in_menu' => Yii::t('app', 'In menu'),
             'title' => Yii::t('app', 'Title'),
+            'time_of_preparation' => Yii::t('app', 'Time Of Preparation'),
+            'um' => Yii::t('app', 'Unit of measurement'),
+            'portions' => Yii::t('app', 'Porciones'),
+            'lifetime' => Yii::t('app', 'Duración'),
+
         ];
     }
 

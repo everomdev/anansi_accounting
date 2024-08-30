@@ -45,7 +45,7 @@ return [
     'Address' => 'Dirección',
     'Advantages' => 'Ventajas',
     'All' => 'Todos',
-    'Allergies' => 'Alergias',
+    'Allergens' => 'Alérgenos',
     'Amount' => 'Costo',
     'An error occurred' => 'Ocurrió un error',
     'Apply' => 'Aplicar',
@@ -368,5 +368,7 @@ return [
     "Recipe Name" => "Nombre de la receta",
     "Modify" => "Modificar",
     "Title" => "Título",
+    "Duplicate" => "Duplicar",
+    "Time Of Preparation" => "Tiempo de preparación",
 
 ];

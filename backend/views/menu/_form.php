@@ -47,7 +47,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
         </div>
         <div class="card-footer">
             <div class="form-group">
-                <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+                <?= Html::submitButton('Guardar', ['class' => 'btn btn-success']) ?>
             </div>
         </div>
     </div>
