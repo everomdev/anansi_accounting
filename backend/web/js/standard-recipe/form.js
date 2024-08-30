@@ -49,6 +49,12 @@ $(document).ready(function () {
         drawArrows();
     });
 
+    let cost = $("#standardrecipe-custom_cost").val();
+    $("#ingredients-selection-total-cost").data('value', cost);
+    $("#ingredients-selection-total-cost").html(Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency
+    }).format(cost));
 });
 $(document).on('change', '#standardrecipe-type_of_recipe', function (event) {
     console.log(createNewCategoryUrl);
@@ -90,7 +96,24 @@ $(document).on('pjax:complete', "#pjax-ingredients-selection", (event) => {
     $(".modal-backdrop").remove();
     $('body').removeAttr('style');
     $('body').removeAttr('class');
+    computeCost();
 })
+
+function computeCost(){
+    let totalCost = $("#ingredients-selection-total-cost").data('value');
+    let portions = $("#standardrecipe-portions").val();
+
+    if (portions > 0) {
+        let costPerPortion = totalCost / portions;
+        $("#ingredients-selection-total-cost").data('value', costPerPortion.toFixed(2));
+        $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
+        $("#ingredients-selection-total-cost").html(Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: currency
+        }).format(costPerPortion.toFixed(2)));
+
+    }
+}
 $(document).on('show.bs.modal', "#modal-add-ingredient", (event) => {
 
     $.ajax({

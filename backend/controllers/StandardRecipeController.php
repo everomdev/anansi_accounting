@@ -464,6 +464,9 @@ class StandardRecipeController extends Controller
         }
 
         if ($model->load($post) && $model->save()) {
+            if($model->type == $model::STANDARD_RECIPE_TYPE_SUB){
+                return $this->redirect(['sub-standard-recipe/index']);
+            }
             return $this->redirect(['index']);
         }
 

@@ -33,7 +33,7 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
             ['class' => 'yii\grid\SerialColumn'],
             'title',
             [
-                'attribute' => 'recipeLastPrice',
+                'attribute' => 'custom_cost',
                 'format' => 'currency',
                 'label' => "Costo"
             ],

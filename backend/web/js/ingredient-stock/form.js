@@ -23,6 +23,12 @@ $(document).on('click', "#btn-compute-yield", function (event) {
 
 $(document).on('click', "#compute-yield", function (event) {
     event.preventDefault();
+    let finalQuantity = $("#ingredientstock-final_quantity").val();
+    let quantity = $("#ingredientstock-quantity").val();
+    let yield = $("#ingredientstock-yield").val();
+    $("#final-quantity").val(finalQuantity);
+    $("#initial-quantity").val(quantity);
+    $("#yield-result").text(`${yield}%`);
     $("#modal-yield").modal('show');
     return false;
 })

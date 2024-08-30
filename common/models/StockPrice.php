@@ -14,6 +14,7 @@ use yii\db\Query;
  * @property string|null $date
  * @property float|null $unit_price
  * @property float|null $unit_price_yield
+ * @property float|null $adjusted_price
  *
  * @property IngredientStock $stock
  */

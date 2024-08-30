@@ -93,17 +93,27 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                 <?php endforeach; ?>
                 <tr>
                     <td colspan="2" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
-                    <td><?= $business->getFormatter()->asCurrency(
-                            array_sum(
-                                array_merge(
-                                    ArrayHelper::getColumn($model->ingredientRelations, function($ingredient) {
-                                        return $ingredient->lastUnitPrice * $ingredient->quantity;
-                                    }),
-                                    ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function($subrecipe)use ($model){
-                                        return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
-                                    })
-                                )
-                            )) ?></td>
+                    <td><span id="ingredients-selection-total-cost" data-value="<?=
+                         array_sum(
+                            array_merge(
+                                ArrayHelper::getColumn($model->ingredientRelations, function($ingredient) {
+                                    return $ingredient->lastUnitPrice * $ingredient->quantity;
+                                }),
+                                ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function($subrecipe)use ($model){
+                                    return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
+                                })
+                            )
+                        ) ?>"><?= $business->getFormatter()->asCurrency(
+                                array_sum(
+                                    array_merge(
+                                        ArrayHelper::getColumn($model->ingredientRelations, function($ingredient) {
+                                            return $ingredient->lastUnitPrice * $ingredient->quantity;
+                                        }),
+                                        ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function($subrecipe)use ($model){
+                                            return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
+                                        })
+                                    )
+                                )) ?></span></td>
 
                 </tr>
                 </tbody>

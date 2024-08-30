@@ -55,7 +55,7 @@ class IngredientStock extends \yii\db\ActiveRecord
     public static function populateRecord($record, $row)
     {
         parent::populateRecord($record, $row);
-        $lastStockPrice = $record->getStockPrices()->orderBy(['date' => SORT_DESC])->one();
+        $lastStockPrice = $record->getStockPrices()->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])->one();
         $record->price = $lastStockPrice->price ?? 0.0;
         $record->adjustedPrice = $lastStockPrice->adjusted_price ?? 0.0;
         $record->_oldPrice = $record->price;
@@ -263,20 +263,21 @@ class IngredientStock extends \yii\db\ActiveRecord
 
     public function getLastUnitPrice()
     {
+        /** @var StockPrice $lastPrice */
         $lastPrice = $this->getStockPrices()->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])->one();
-        return empty($lastPrice) ? 0.0 : round($lastPrice->unit_price, 2);
+        return empty($lastPrice) ? 0.0 : round($lastPrice->adjusted_price, 2);
     }
 
     public function getHigherUnitPrice()
     {
         $higherPrice = $this->getStockPrices()->orderBy(['price' => SORT_DESC])->one();
-        return empty($higherPrice) ? 0.0 : round($higherPrice->unit_price, 2);
+        return empty($higherPrice) ? 0.0 : round($higherPrice->adjusted_price, 2);
     }
 
     public function getAvgUnitPrice()
     {
         return round($this->getStockPrices()
-            ->select(["avg(unit_price) as avg_price"])
+            ->select(["avg(adjusted_price) as avg_price"])
             ->asArray(true)
             ->one()['avg_price'],
             2

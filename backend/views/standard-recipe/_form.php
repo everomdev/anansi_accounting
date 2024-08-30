@@ -11,6 +11,8 @@ use yii\widgets\ActiveForm;
 \yii\web\YiiAsset::register($this);
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 
+$this->registerJsVar('currency', $business['currency_code']);
+$this->registerJsVar('locale', str_replace('_', '-', $business['locale']));
 
 $ingredients = (new \yii\db\Query())
     ->select("*")
@@ -52,7 +54,10 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
         <div class="card-body">
             <div class="row">
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                    <?php if(!$model->isNewRecord): ?>
+                    <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB): ?>
+                        <?= $form->field($model, 'custom_cost')->hiddenInput()->label(false) ?>
+                    <?php endif; ?>
+                    <?php if (!$model->isNewRecord): ?>
                         <?= $form->field($model, 'title', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
@@ -77,7 +82,6 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]), 'name', 'name'))->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
-
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
                     <?= $form->field($model, 'portions', [
@@ -86,11 +90,11 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?= $form->field($model, 'lifetime', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
-                    <?= $form->field($model, 'title', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
-                    ])->textInput([
-                        'placeholder' => Yii::t('app', "Recipe Name")
-                    ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                    <!--                    --><?php //= $form->field($model, 'title', [
+                    //                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
+                    //                    ])->textInput([
+                    //                        'placeholder' => Yii::t('app', "Recipe Name")
+                    //                    ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
                     <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'price', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div></div></div>"
