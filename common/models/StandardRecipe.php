@@ -366,7 +366,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
         if (!empty($this->convoy_id)) {
             $lastPrices[] = $this->convoy->amount;
         }
-        return array_sum($lastPrices);
+        return array_sum($lastPrices) / $this->portions;
     }
 
     public function getRecipeHigherPrice()
