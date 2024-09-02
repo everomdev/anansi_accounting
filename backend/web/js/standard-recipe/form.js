@@ -55,6 +55,8 @@ $(document).ready(function () {
         style: 'currency',
         currency: currency
     }).format(cost));
+
+    computeCost();
 });
 $(document).on('change', '#standardrecipe-type_of_recipe', function (event) {
     console.log(createNewCategoryUrl);
@@ -103,7 +105,7 @@ function computeCost(){
     let totalCost = $("#ingredients-selection-total-cost").data('value');
     let portions = $("#standardrecipe-portions").val();
 
-    if (portions > 0) {
+    if (parseFloat(totalCost) && parseFloat(portions) && portions > 0) {
         let costPerPortion = totalCost / portions;
         $("#ingredients-selection-total-cost").data('value', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
@@ -111,7 +113,6 @@ function computeCost(){
             style: 'currency',
             currency: currency
         }).format(costPerPortion.toFixed(2)));
-
     }
 }
 $(document).on('show.bs.modal', "#modal-add-ingredient", (event) => {
