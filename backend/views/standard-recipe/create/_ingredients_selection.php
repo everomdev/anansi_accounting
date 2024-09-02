@@ -2,6 +2,7 @@
 /** @var $this \yii\web\View */
 
 /** @var $model \common\models\StandardRecipe */
+
 /** @var $business \common\models\Business */
 
 use yii\helpers\ArrayHelper;
@@ -20,9 +21,9 @@ $business = \backend\helpers\RedisKeys::getBusiness();
         <div class="table-responsive">
             <table class="table">
                 <thead>
-                <th ><?= Yii::t('app', "Ingredient") ?></th>
-                <th ><?= Yii::t('app', "Quantity") ?></th>
-                <th ><?= Yii::t('app', "Cost") ?></th>
+                <th><?= Yii::t('app', "Ingredient") ?></th>
+                <th><?= Yii::t('app', "Quantity") ?></th>
+                <th><?= Yii::t('app', "Cost") ?></th>
                 <th>
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
                             data-bs-target="#modal-add-ingredient">
@@ -67,7 +68,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                             <?= $subStandardRecipe->title ?>
                         </td>
                         <td>
-                            <?= sprintf("%s %s", $subStandardRecipe->getQuantityLinked($model->id), $subStandardRecipe->um);  ?>
+                            <?= sprintf("%s %s", $subStandardRecipe->getQuantityLinked($model->id), $subStandardRecipe->um); ?>
                         </td>
                         <td>
                             <?= $business->formatter->asCurrency($subStandardRecipe->subRecipeLastPrice * $subStandardRecipe->getQuantityLinked($model->id)) ?>
@@ -93,27 +94,22 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                 <?php endforeach; ?>
                 <tr>
                     <td colspan="2" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
-                    <td><span id="ingredients-selection-total-cost" data-value="<?=
-                         array_sum(
+                    <td>
+                        <?php
+                        $total = array_sum(
                             array_merge(
-                                ArrayHelper::getColumn($model->ingredientRelations, function($ingredient) {
+                                ArrayHelper::getColumn($model->ingredientRelations, function ($ingredient) {
                                     return $ingredient->lastUnitPrice * $ingredient->quantity;
                                 }),
-                                ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function($subrecipe)use ($model){
+                                ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function ($subrecipe) use ($model) {
                                     return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
                                 })
                             )
-                        ) ?>"><?= $business->getFormatter()->asCurrency(
-                                array_sum(
-                                    array_merge(
-                                        ArrayHelper::getColumn($model->ingredientRelations, function($ingredient) {
-                                            return $ingredient->lastUnitPrice * $ingredient->quantity;
-                                        }),
-                                        ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function($subrecipe)use ($model){
-                                            return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
-                                        })
-                                    )
-                                )) ?></span></td>
+                        );
+                        ?>
+                        <span id="ingredients-selection-total-cost"
+                              data-value="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
+                    </td>
 
                 </tr>
                 </tbody>

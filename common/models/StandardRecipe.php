@@ -326,7 +326,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->lastUnitPrice * $ingredient->quantity;
         });
 
-        return array_sum($lastPrices);
+        return array_sum($lastPrices) / $this->portions;
     }
 
     public function getSubRecipeHigherPrice()
@@ -337,7 +337,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->higherUnitPrice * $ingredient->quantity;
         });
 
-        return array_sum($lastPrices);
+        return array_sum($lastPrices) / $this->portions;
 
     }
 
@@ -348,7 +348,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->avgUnitPrice * $ingredient->quantity;
         });
 
-        return array_sum($lastPrices);
+        return array_sum($lastPrices) / $this->portions;
 
     }
 
