@@ -326,6 +326,10 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->lastUnitPrice * $ingredient->quantity;
         });
 
+        if(empty($this->portions)){
+            return array_sum($lastPrices);
+        }
+
         return array_sum($lastPrices) / $this->portions;
     }
 
@@ -337,6 +341,10 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->higherUnitPrice * $ingredient->quantity;
         });
 
+        if(empty($this->portions)){
+            return array_sum($lastPrices);
+        }
+
         return array_sum($lastPrices) / $this->portions;
 
     }
@@ -347,6 +355,10 @@ class StandardRecipe extends \yii\db\ActiveRecord
         $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
             return $ingredient->avgUnitPrice * $ingredient->quantity;
         });
+
+        if(empty($this->portions)){
+            return array_sum($lastPrices);
+        }
 
         return array_sum($lastPrices) / $this->portions;
 
@@ -365,6 +377,9 @@ class StandardRecipe extends \yii\db\ActiveRecord
         }));
         if (!empty($this->convoy_id)) {
             $lastPrices[] = $this->convoy->amount;
+        }
+        if(empty($this->portions)){
+            return array_sum($lastPrices);
         }
         return array_sum($lastPrices) / $this->portions;
     }
