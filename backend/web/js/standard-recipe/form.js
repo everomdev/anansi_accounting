@@ -111,7 +111,7 @@ function computeCost() {
     let yield = $("#standardrecipe-yield").val();
     if (parseFloat(totalCost) && parseFloat(portions) && portions > 0 && parseFloat(yield) && yield > 0) {
         let costPerPortion = totalCost / portions / yield;
-        if(costPerPortion === NaN){
+        if(isNaN(costPerPortion)){
             return;
         }
         $("#ingredients-selection-total-cost").data('value', costPerPortion.toFixed(2));
