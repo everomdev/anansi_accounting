@@ -265,6 +265,7 @@ class IngredientStock extends \yii\db\ActiveRecord
     {
         /** @var StockPrice $lastPrice */
         $lastPrice = $this->getStockPrices()->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])->one();
+
         return empty($lastPrice) ? 0.0 : round($lastPrice->adjusted_price, 2);
     }
 

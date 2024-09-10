@@ -371,17 +371,19 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->lastUnitPrice * $ingredient->quantity;
         });
 
+
         $subRecipes = $this->getSubStandardRecipes()->all();
         $lastPrices = array_merge($lastPrices, ArrayHelper::getColumn($subRecipes, function (StandardRecipe $subRecipe) {
-            return $subRecipe->subRecipeLastPrice * $subRecipe->getQuantityLinked($this->id);
+            return $subRecipe->custom_cost * $subRecipe->getQuantityLinked($this->id);
         }));
+
         if (!empty($this->convoy_id)) {
             $lastPrices[] = $this->convoy->amount;
         }
         if(empty($this->portions)){
             return array_sum($lastPrices);
         }
-        return array_sum($lastPrices) / $this->portions;
+        return array_sum($lastPrices) / $this->portions / $this->yield;
     }
 
     public function getRecipeHigherPrice()
@@ -514,7 +516,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return round(($this->custom_cost / $this->custom_price), 2);
         }
 
-        return round(($this->lastPrice / $this->price), 2);
+        return round(($this->custom_cost / $this->price), 2);
     }
 
     public function getCategory()

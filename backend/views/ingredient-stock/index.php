@@ -72,15 +72,18 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
                 return sprintf('%s %%', $data->yield);
             },],
             [
-                'attribute' => 'lastUnitPrice:currency',
+                'attribute' => 'lastUnitPrice',
+                'format' => 'currency',
                 'label' => 'Último precio'
             ],
             [
-                'attribute' => 'avgUnitPrice:currency',
+                'attribute' => 'avgUnitPrice',
+                'format' => 'currency',
                 'label' => 'Precio promedio'
             ],
             [
-                'attribute' => 'higherUnitPrice:currency',
+                'attribute' => 'higherUnitPrice',
+                'format' => 'currency',
                 'label' => 'Precio más alto'
             ],
             //'observations:ntext',

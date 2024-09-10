@@ -9,6 +9,7 @@ use yii\helpers\ArrayHelper;
 
 
 $business = \backend\helpers\RedisKeys::getBusiness();
+$total = 0.0;
 ?>
 
 <?php \yii\widgets\Pjax::begin([
@@ -33,6 +34,10 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                 </thead>
                 <tbody>
                 <?php foreach ($model->ingredientRelations as $ingredientStandardRecipe): ?>
+                <?php
+                    $cost = $ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity;
+                    $total += $cost;
+                    ?>
                     <tr>
                         <td>
                             <?= $ingredientStandardRecipe->ingredient->ingredient ?>
@@ -41,7 +46,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                             <?= sprintf("%s %s", $ingredientStandardRecipe->quantity, $ingredientStandardRecipe->ingredient->portion_um) ?>
                         </td>
                         <td>
-                            <?= $business->formatter->asCurrency($ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity) ?>
+                            <?= $business->formatter->asCurrency($cost) ?>
                         </td>
 
                         <td>
@@ -63,15 +68,20 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                     </tr>
                 <?php endforeach; ?>
                 <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): ?>
+                <?php
+                    $quantity =  $subStandardRecipe->getQuantityLinked($model->id);
+                    $cost = $subStandardRecipe->custom_cost * $quantity;
+                    $total += $cost;
+                    ?>
                     <tr>
                         <td>
                             <?= $subStandardRecipe->title ?>
                         </td>
                         <td>
-                            <?= sprintf("%s %s", $subStandardRecipe->getQuantityLinked($model->id), $subStandardRecipe->um); ?>
+                            <?= sprintf("%s %s", $quantity, $subStandardRecipe->um); ?>
                         </td>
                         <td>
-                            <?= $business->formatter->asCurrency($subStandardRecipe->subRecipeLastPrice * $subStandardRecipe->getQuantityLinked($model->id)) ?>
+                            <?= $business->formatter->asCurrency($cost) ?>
                         </td>
 
                         <td>
@@ -79,7 +89,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                                 'class' => "btn btn-sm btn-warning update-ingredient",
                                 'data' => [
                                     'pjax' => "#pjax-ingredients-selection",
-                                    'current' => $subStandardRecipe->getQuantityLinked($model->id)
+                                    'current' => $quantity
                                 ]
                             ]) ?>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
@@ -95,18 +105,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
                 <tr>
                     <td colspan="2" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
                     <td>
-                        <?php
-                        $total = array_sum(
-                            array_merge(
-                                ArrayHelper::getColumn($model->ingredientRelations, function ($ingredient) {
-                                    return $ingredient->lastUnitPrice * $ingredient->quantity;
-                                }),
-                                ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), function ($subrecipe) use ($model) {
-                                    return $subrecipe->subRecipeLastPrice * $subrecipe->getQuantityLinked($model->id);
-                                })
-                            )
-                        );
-                        ?>
+
                         <span id="ingredients-selection-total-cost"
                               data-value="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
                     </td>

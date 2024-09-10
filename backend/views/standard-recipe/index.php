@@ -39,7 +39,8 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
             ],
 
             [
-                    'attribute' => 'costPercent:percent',
+                    'attribute' => 'costPercent',
+                'format' => 'percent',
                 'label' => "Porcentaje de costo"
             ],
             [

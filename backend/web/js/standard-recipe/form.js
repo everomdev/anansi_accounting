@@ -101,20 +101,30 @@ $(document).on('pjax:complete', "#pjax-ingredients-selection", (event) => {
     computeCost();
 })
 
-function computeCost(){
+$(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', function (event) {
+    computeCost();
+})
+
+function computeCost() {
     let totalCost = $("#ingredients-selection-total-cost").data('value');
     let portions = $("#standardrecipe-portions").val();
+    let yield = $("#standardrecipe-yield").val();
+    if (parseFloat(totalCost) && parseFloat(portions) && portions > 0 && parseFloat(yield) && yield > 0) {
+        let costPerPortion = totalCost / portions / yield;
 
-    if (parseFloat(totalCost) && parseFloat(portions) && portions > 0) {
-        let costPerPortion = totalCost / portions;
         $("#ingredients-selection-total-cost").data('value', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
-        $("#ingredients-selection-total-cost").html(Intl.NumberFormat(locale, {
+        var cost = Intl.NumberFormat(locale, {
             style: 'currency',
             currency: currency
-        }).format(costPerPortion.toFixed(2)));
+        }).format(costPerPortion.toFixed(2));
+        $("#ingredients-selection-total-cost").html(cost);
+        if ($("#cost-value").length > 0) {
+            $("#cost-value").html(cost);
+        }
     }
 }
+
 $(document).on('show.bs.modal', "#modal-add-ingredient", (event) => {
 
     $.ajax({

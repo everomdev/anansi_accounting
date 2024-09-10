@@ -118,7 +118,7 @@ class IngredientStockController extends Controller
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new IngredientStockSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
+        $dataProvider->pagination->setPageSize(50);
         $dataProvider->query->andWhere([
             'business_id' => $business['id']
         ]);
