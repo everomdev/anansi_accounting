@@ -29,6 +29,10 @@ class RedisKeys
 
     public static function getBusinessData()
     {
+        $business = self::getBusiness();
+        if(empty($business)){
+            return null;
+        }
         return self::getBusiness()->getAttributes();
     }
 

@@ -52,8 +52,9 @@ class Category extends \yii\db\ActiveRecord
                 $this->addError($attribute, Yii::t('app', "{category} already exists", ['category' => $this->name]));
                 return false;
             }
+
             $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
-            if ($exists->business_id == $business['id']) {
+            if ($business != null && $exists->business_id == $business['id']) {
                 $this->addError($attribute, Yii::t('app', "{category} already exists", ['category' => $this->name]));
                 return false;
             }
