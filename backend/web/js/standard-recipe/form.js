@@ -106,15 +106,16 @@ $(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', func
 })
 
 function computeCost() {
-    let totalCost = $("#ingredients-selection-total-cost").data('value');
-    let portions = $("#standardrecipe-portions").val();
-    let yield = $("#standardrecipe-yield").val();
-    if (parseFloat(totalCost) && parseFloat(portions) && portions > 0 && parseFloat(yield) && yield > 0) {
-        let costPerPortion = totalCost / portions / yield;
+    let totalCost = parseFloat($("#ingredients-selection-total-cost").data('total'));
+    let portions = parseFloat($("#standardrecipe-portions").val());
+    let _yield = parseFloat($("#standardrecipe-yield").val());
+    if (totalCost && portions && portions > 0 && _yield && _yield > 0) {
+        let costPerPortion = totalCost / _yield / portions;
+
         if(isNaN(costPerPortion)){
             return;
         }
-        $("#ingredients-selection-total-cost").data('value', costPerPortion.toFixed(2));
+        $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
         var cost = Intl.NumberFormat(locale, {
             style: 'currency',
@@ -124,6 +125,12 @@ function computeCost() {
         if ($("#cost-value").length > 0) {
             $("#cost-value").html(cost);
         }
+    } else if(totalCost){
+        var cost = Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: currency
+        }).format(totalCost.toFixed(2));
+        $("#ingredients-selection-total-cost").html(cost);
     }
 }
 

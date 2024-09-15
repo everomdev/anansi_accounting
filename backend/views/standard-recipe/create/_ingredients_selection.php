@@ -107,7 +107,7 @@ $total = 0.0;
                     <td>
 
                         <span id="ingredients-selection-total-cost"
-                              data-value="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
+                              data-total="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
                     </td>
 
                 </tr>
