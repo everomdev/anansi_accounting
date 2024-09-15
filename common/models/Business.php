@@ -130,7 +130,7 @@ class Business extends \yii\db\ActiveRecord
             ["Pieza", $this->id],
             ["Paquete", $this->id],
             ["Rebanada", $this->id],
-            ["Ración", $this->id],
+            ["Porción", $this->id],
             ["Onza", $this->id],
             ["Libra", $this->id],
             ["Gramo", $this->id],
@@ -141,6 +141,8 @@ class Business extends \yii\db\ActiveRecord
             ["Pizca", $this->id],
             ["Botella", $this->id],
             ["Gota", $this->id],
+            ["Lata", $this->id],
+            ["Bote", $this->id],
         ];
         Yii::$app->db->createCommand()
             ->batchInsert('unit_of_measurement', ['name', 'business_id'], $data)

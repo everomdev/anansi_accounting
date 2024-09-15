@@ -85,7 +85,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
                     <?= $form->field($model, 'portions', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
                     <?= $form->field($model, 'lifetime', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
@@ -105,7 +105,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             </div>
                             <div class="col-sm-9">
                             <span class="form-control" id="cost-value"
-                                  data-value="<?= $model->lastPrice ?>"><?= $businessObj->formatter->asCurrency($model->lastPrice) ?></span>
+                                  data-price="<?= $model->lastPrice ?>"><?= $businessObj->formatter->asCurrency($model->lastPrice) ?></span>
                             </div>
                         </div>
                         <div class="row mb-3">

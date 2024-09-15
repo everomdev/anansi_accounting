@@ -190,7 +190,7 @@ $(document).on('hidden.bs.modal', "#modal-add-step, #modal-add-special-step, #mo
 })
 
 $(document).on('change', "#standardrecipe-price", (event) => {
-    let cost = $("#cost-value").data('value');
+    let cost = $("#cost-value").data('price');
 
     let price = $("#standardrecipe-price").val();
     let costPercent = Number.parseFloat((cost / price) * 100).toFixed(0);

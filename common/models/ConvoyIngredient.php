@@ -93,7 +93,11 @@ class ConvoyIngredient extends \yii\db\ActiveRecord
 
     public function getAmount()
     {
-        $lastPrice = $this->model->lastPrice;
+        if($this->model instanceof IngredientStock){
+            $lastPrice = $this->model->adjustedPrice;
+        }else {
+            $lastPrice = $this->model->custom_cost;
+        }
 
         return $this->quantity * $lastPrice;
     }

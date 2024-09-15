@@ -120,7 +120,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             [['business_id', 'convoy_id'], 'integer'],
             [['yield', 'yield_um', 'portions'], 'required', 'when' => function () {
                 return !$this->isNewRecord;
-            }],
+            }, 'message' => "{attribute} no puede estar vacío"],
             [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime', 'type_of_recipe', 'other_specs'], 'string'],
             [['type', 'um'], 'string', 'max' => 255],
             [['type'], 'in', 'range' => [self::STANDARD_RECIPE_TYPE_MAIN, self::STANDARD_RECIPE_TYPE_SUB]],
@@ -516,7 +516,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return round(($this->custom_cost / $this->custom_price), 2);
         }
 
-        return round(($this->custom_cost / $this->price), 2);
+        return round(($this->recipeLastPrice / $this->price), 2);
     }
 
     public function getCategory()
