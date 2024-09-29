@@ -329,7 +329,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->lastUnitPrice * $ingredient->quantity;
         });
 
-        if(empty($this->portions)){
+        if (empty($this->portions)) {
             return array_sum($lastPrices);
         }
 
@@ -344,7 +344,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->higherUnitPrice * $ingredient->quantity;
         });
 
-        if(empty($this->portions)){
+        if (empty($this->portions)) {
             return array_sum($lastPrices);
         }
 
@@ -359,7 +359,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->avgUnitPrice * $ingredient->quantity;
         });
 
-        if(empty($this->portions)){
+        if (empty($this->portions)) {
             return array_sum($lastPrices);
         }
 
@@ -383,7 +383,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
         if (!empty($this->convoy_id)) {
             $lastPrices[] = $this->convoy->amount;
         }
-        if(empty($this->portions)){
+        if (empty($this->portions)) {
             return array_sum($lastPrices);
         }
         return array_sum($lastPrices) / $this->portions / $this->yield;
@@ -610,7 +610,25 @@ class StandardRecipe extends \yii\db\ActiveRecord
     {
         $newRecipe = new StandardRecipe();
         $newRecipe->attributes = $this->attributes;
-        $newRecipe->title = $this->title . ' (Copia)';
+        $newRecipe->title = $this->title;
+
+        $splitText = explode(" ", $newRecipe->title);
+
+        if (is_numeric(end($splitText))) {
+            $iteration = intval(end($splitText)) + 1;
+            array_pop($splitText);
+            $newRecipe->title = implode(" ", $splitText);
+        } else {
+            $iteration = 1;
+            $newRecipe->title .= " (Copia)";
+        }
+
+        while (StandardRecipe::find()->where(['title' => $newRecipe->title . " $iteration"])->exists()) {
+            $iteration++;
+        }
+
+        $newRecipe->title .= " $iteration";
+
         $newRecipe->save();
 
         /// Copy ingredients
