@@ -43,6 +43,12 @@ $this->registerJsFile(Yii::getAlias("@web/js/recipe-category/index.js"), [
                 'filter' => \yii\bootstrap5\Html::activeDropDownList($searchModel, 'type', \common\models\RecipeCategory::getFormattedTypes(), ['class' => 'form-control', 'prompt' => Yii::t('app', "All")])
             ],
             [
+                'value' => function ($data) {
+                    return $data->getRecipes()->count();
+                },
+                'label' => "Recetas"
+            ],
+            [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}",
                 'buttons' => [
