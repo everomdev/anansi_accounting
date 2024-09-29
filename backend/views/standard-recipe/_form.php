@@ -169,14 +169,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                 // other widget settings
             ]) ?>
             <br>
-            <?= $form->field($model, 'allergies')->widget(Summernote::class, [
-                'useKrajeePresets' => true,
-                'useKrajeeStyle' => false,
-                'pluginOptions' => [
-                    'height' => 200
-                ]
-                // other widget settings
-            ]) ?>
+            <?= $this->render('create/allergies', ['model' => $model, 'form' => $form]) ?>
 
 
             <br>

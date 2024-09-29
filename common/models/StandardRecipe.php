@@ -73,6 +73,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
     public $mainImage;
     public $stepsImages;
 
+
     const QUADRANTS = [
         "ALTAALTA" => "ESTRELLA",
         "ALTABAJA" => "VACA",
@@ -99,6 +100,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
         if (empty($record->custom_cost)) {
             $record->custom_cost = $record->cost;
         }
+
     }
 
     public function behaviors()
@@ -136,6 +138,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             [['in_construction', 'in_menu'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe'],
             [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
+
         ];
     }
 

@@ -112,7 +112,7 @@ function computeCost() {
     if (totalCost && portions && portions > 0 && _yield && _yield > 0) {
         let costPerPortion = totalCost / _yield / portions;
 
-        if(isNaN(costPerPortion)){
+        if (isNaN(costPerPortion)) {
             return;
         }
         $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
@@ -125,7 +125,7 @@ function computeCost() {
         if ($("#cost-value").length > 0) {
             $("#cost-value").html(cost);
         }
-    } else if(totalCost){
+    } else if (totalCost) {
         var cost = Intl.NumberFormat(locale, {
             style: 'currency',
             currency: currency
@@ -235,4 +235,65 @@ $(document).on('click', '#btn-update-ingredient', function (event) {
 $(document).on('hidden.bs.modal', "#modal-update-ingredient", function (event) {
     $("#ingredient-update-quantity").val('');
     $("#btn-update-ingredient").removeAttr('data-url');
+});
+
+$(document).on('change', ".allergen-checkbox", function (event) {
+    let input = $(this);
+    let label = $(`label[for='${input.attr('id')}']`);
+
+    let allergen = label.text();
+    selectUnselectAllergies(allergen);
+
 })
+
+$(document).on('keyup', "#allergies-other", function (event) {
+    if(event.keyCode !== 186){
+        return;
+    }
+    let input = $(this);
+    let value = input.val();
+    if(value.indexOf(";") === value.length - 1){
+        value = value.slice(0, -1);
+        addAllergiesOption(value);
+        selectUnselectAllergies(value);
+        input.val('');
+    }
+})
+function selectUnselectAllergies(allergen) {
+    let selectedAllergies = $("#standardrecipe-allergies").val();
+    if (selectedAllergies) {
+        selectedAllergies = selectedAllergies.split(';');
+    } else {
+        selectedAllergies = [];
+    }
+
+    if (selectedAllergies.indexOf(allergen) === -1) {
+        selectedAllergies.push(allergen);
+    } else {
+        selectedAllergies = selectedAllergies.filter(a => a !== allergen);
+    }
+
+    $("#standardrecipe-allergies").val(selectedAllergies.join(';'));
+}
+
+function addAllergiesOption(option){
+    let wrapper = document.createElement('div');
+    wrapper.className = 'form-check';
+    let input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'form-check-input allergen-checkbox';
+    input.name = '_allergies[]';
+    input.checked = true;
+    input.id = `allergen-${option}`;
+
+    let label = document.createElement('label');
+    label.className = 'form-check-label';
+    label.htmlFor = `allergen-${option}`;
+    label.innerHTML = option;
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(label);
+
+    let list = document.getElementById('allergies-list');
+    list.appendChild(wrapper);
+}

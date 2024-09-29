@@ -18,5 +18,6 @@ return [
     'frontendBaseUrl' => "http://localhost:3000",
     'stripe.secretKey' => "",
     'stripe.publicKey' => "",
-    'stripe.webhook' => ""
+    'stripe.webhook' => "",
+    'allergies' => ["Gluten","Crustáceos","Huevo","Pescado","Cacahuetes","Lacteos","Mostaza","Sulfito","Sésamo","Moluscos","Soja","Apio","Apta para embarazadas","Apto para lactancia"]
 ];
