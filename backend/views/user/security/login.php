@@ -24,6 +24,7 @@ use yii\widgets\ActiveForm;
 
 $this->title = Yii::t('usuario', 'Sign in');
 $this->params['breadcrumbs'][] = $this->title;
+
 ?>
 
 
@@ -55,17 +56,16 @@ $this->params['breadcrumbs'][] = $this->title;
                             'login',
                             ['inputOptions' => ['autofocus' => 'autofocus', 'class' => 'form-control', 'tabindex' => '1']]
                         ) ?>
-
-
-
-
                     </div>
                     <div class="col-12">
                         <?= $form
                             ->field(
                                 $model,
                                 'password',
-                                ['inputOptions' => ['class' => 'form-control', 'tabindex' => '2']]
+                                [
+                                        'inputOptions' => ['class' => 'form-control', 'tabindex' => '2'],
+                                    'template' => "{label}\n <div class='input-group'>{input}<span class='input-group-text'><i class='bx bxs-show'></i></span></div> \n{error}",
+                                ],
                             )
                             ->passwordInput()
                             ->label(
@@ -115,3 +115,21 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 
 </div>
+
+
+<?php
+$js = <<< JS
+    $(document).on('click', '.input-group-text', function() {
+        var input = $(this).parent().find('input');
+        if (input.attr('type') == 'password') {
+            input.attr('type', 'text');
+            $(this).find('i').removeClass('bxs-show').addClass('bxs-hide');
+        } else {
+            input.attr('type', 'password');
+            $(this).find('i').removeClass('bxs-hide').addClass('bxs-show');
+        }
+    });
+JS;
+
+$this->registerJs($js);
+?>

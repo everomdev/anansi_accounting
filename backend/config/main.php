@@ -135,7 +135,9 @@ return [
                     'options' => ['class' => 'pagination pagination-sm m-0 float-right'],
                     'linkContainerOptions' => ['class' => 'page-item'],
                     'linkOptions' => ['class' => 'page-link', 'data-pjax-scrollto' => '1'],
-                    'disabledListItemSubTagOptions' => ['class' => 'page-link']
+                    'disabledListItemSubTagOptions' => ['class' => 'page-link'],
+                    'firstPageLabel' => "Página inicial",
+                    'lastPageLabel' => "Última página",
                 ],
                 'headerRowOptions' => [
                     'class' => 'text-warning'

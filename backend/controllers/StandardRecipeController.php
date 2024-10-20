@@ -15,6 +15,8 @@ use Yii;
 use common\models\StandardRecipe;
 use common\models\StandardRecipeSearch;
 use yii\data\ActiveDataProvider;
+use yii\data\Pagination;
+use yii\db\Query;
 use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
@@ -464,7 +466,7 @@ class StandardRecipeController extends Controller
         }
 
         if ($model->load($post) && $model->save()) {
-            if($model->type == $model::STANDARD_RECIPE_TYPE_SUB){
+            if ($model->type == $model::STANDARD_RECIPE_TYPE_SUB) {
                 return $this->redirect(['sub-standard-recipe/index']);
             }
             return $this->redirect(['index']);
@@ -550,14 +552,30 @@ class StandardRecipeController extends Controller
 
     public function actionMenuRecipes()
     {
+
+
         $business = RedisKeys::getBusinessData();
 
+        $page = (int)Yii::$app->request->get('page', 1);
+        $offset = ($page - 1) * 30;
+
+        Url::remember(['standard-recipe/menu-recipes', 'page' => $page], 'menu-recipes');
+
+        $totalRecipes = (int) StandardRecipe::find()->where([
+            'business_id' => $business['id'],
+            'in_construction' => 0,
+            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+            'in_menu' => true
+        ])->count();
         $recipes = StandardRecipe::find()->where([
             'business_id' => $business['id'],
             'in_construction' => 0,
             'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
             'in_menu' => true
-        ])->all();
+        ])
+            ->offset($offset == 0 ? null : $offset)
+            ->limit(30)
+            ->all();
 
         $availableRecipes = StandardRecipe::find()->where([
             'business_id' => $business['id'],
@@ -566,24 +584,39 @@ class StandardRecipeController extends Controller
             'in_menu' => false
         ])->all();
 
+        $totalCombos = (int) Menu::find()->where([
+            'business_id' => $business['id'],
+            'in_menu' => true
+        ])->count();
         $combos = Menu::find()->where([
             'business_id' => $business['id'],
             'in_menu' => true
-        ])->all();
+        ])->offset($offset == 0 ? null : $offset)
+            ->limit(30)
+            ->all();
 
         $availableCombos = Menu::find()->where([
             'business_id' => $business['id'],
             'in_menu' => false
         ])->all();
 
+
         $dataProvider = new ActiveDataProvider([
-            'models' => array_merge($recipes, $combos)
+            'models' => array_merge($recipes, $combos),
+//            'query' => $modelsQuery,
+        ]);
+
+        $pagination = new Pagination([
+            'page' => $page - 1,
+            'pageSize' => 30,
+            'totalCount' => $totalRecipes + $totalCombos
         ]);
 
         return $this->render('menu', [
             'dataProvider' => $dataProvider,
             'availableRecipes' => $availableRecipes,
-            'availableCombos' => $availableCombos
+            'availableCombos' => $availableCombos,
+            'pagination' => $pagination
         ]);
     }
 
@@ -768,7 +801,7 @@ class StandardRecipeController extends Controller
 
         $recipes = StandardRecipe::find()->where(['id' => $post['recipes']])->all();
 
-        foreach($recipes as $recipe){
+        foreach ($recipes as $recipe) {
             $recipe->duplicate();
         }
 

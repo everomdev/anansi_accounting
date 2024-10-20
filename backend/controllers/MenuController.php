@@ -9,6 +9,7 @@ use Yii;
 use common\models\Menu;
 use common\models\MenuSearch;
 use yii\filters\AccessControl;
+use yii\helpers\Url;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -38,12 +39,15 @@ class MenuController extends Controller
                     [
                         'actions' => [
                             'index',
-                            'view'
+                            'view',
+                            'remove-from-menu',
+                            'remove-from-menu-in-bulk',
                         ],
                         'allow' => true,
                         'roles' => [
                             'combo_list',
-                            'combo_view'
+                            'combo_view',
+
                         ]
                     ],
                     [
@@ -188,19 +192,50 @@ class MenuController extends Controller
         return $this->redirect(['index']);
     }
 
-    /**
-     * Finds the Menu model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param integer $id
-     * @return Menu the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel($id)
+    public function actionRemoveFromMenu(int $id, string $type)
     {
-        if (($model = Menu::findOne($id)) !== null) {
-            return $model;
+        $model = $type::findOne(['id' => $id]);
+        $model->in_menu = 0;
+        $model->save();
+
+        $url = Url::previous('menu-recipes');
+
+        return $this->redirect($url ?? ['/standard-recipe/menu-recipes']);
+
+    }
+
+    public function actionRemoveFromMenuInBulk()
+    {
+        $data = Yii::$app->request->post('data');
+
+        foreach ($data as $item) {
+            $model = $item['type']::findOne(['id' => $item['id']]);
+            $model->in_menu = 0;
+            $model->save();
         }
 
-        throw new NotFoundHttpException('The requested page does not exist.');
+        $url = Url::previous('menu-recipes');
+
+        return $this->redirect($url ?? ['/standard-recipe/menu-recipes']);
+
     }
-}
+
+
+
+        /**
+         * Finds the Menu model based on its primary key value.
+         * If the model is not found, a 404 HTTP exception will be thrown.
+         * @param integer $id
+         * @return Menu the loaded model
+         * @throws NotFoundHttpException if the model cannot be found
+         */
+        protected
+        function findModel($id)
+        {
+            if (($model = Menu::findOne($id)) !== null) {
+                return $model;
+            }
+
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
+    }

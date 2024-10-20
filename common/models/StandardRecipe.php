@@ -181,6 +181,19 @@ class StandardRecipe extends \yii\db\ActiveRecord
         $this->uploadImages();
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if ($insert) {
+            $this->in_menu = true;
+        }
+
+        return true;
+    }
+
     /**
      * Gets query for [[IngredientStandardRecipes]].
      *

@@ -96,6 +96,19 @@ class Menu extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if ($insert) {
+            $this->in_menu = true;
+        }
+
+        return true;
+    }
+
     public function afterSave($insert, $changedAttributes)
     {
         $this->unlinkAll('standardRecipes', true);

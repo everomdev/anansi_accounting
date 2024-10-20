@@ -4,34 +4,82 @@
 /** @var $searchModel \common\models\StandardRecipeSearch */
 
 $this->title = "Menú";
+
+$urlBulkRemove = \yii\helpers\Url::to(['menu/remove-from-menu-in-bulk']);
+$this->registerJsVar('urlBulkRemove', $urlBulkRemove);
+$this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
+    'depends' => \yii\web\YiiAsset::class,
+    'position' => $this::POS_END
+]);
 ?>
 
-    <p class="pb-3">
-        <?= \yii\bootstrap5\Html::a(Yii::t('app', "Add recipe"), '#', [
-            'class' => 'btn btn-success',
-            'data-bs-target' => '#modal-add-recipe',
-            'data-bs-toggle' => 'modal'
-        ]) ?>
-        <?= \yii\bootstrap5\Html::a(Yii::t('app', "Add combo"), '#', [
-            'class' => 'btn btn-success',
-            'data-bs-target' => '#modal-add-combo',
-            'data-bs-toggle' => 'modal'
-        ]) ?>
-    </p>
+<p class="pb-3">
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', "Add recipe"), '#', [
+        'class' => 'btn btn-success',
+        'data-bs-target' => '#modal-add-recipe',
+        'data-bs-toggle' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', "Add combo"), '#', [
+        'class' => 'btn btn-success',
+        'data-bs-target' => '#modal-add-combo',
+        'data-bs-toggle' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Quitar Seleccionados', [
+        'icon' => ""
+    ]), '', ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
+</p>
+<div class="card">
+    <div class="card-body">
+        <?= \yii\grid\GridView::widget([
+            'id' => 'menu-grid',
+            'dataProvider' => $dataProvider,
+            'layout' => "{items}",
+            'columns' => [
+                [
+                    'class' => \yii\grid\CheckboxColumn::class,
+                    'checkboxOptions' => function ($model) {
+                        return ['data-model-id' => $model->id, 'data-type' => get_class($model)];
+                    },
+                ],
+                ['class' => \yii\grid\SerialColumn::class],
 
-<?= \yii\grid\GridView::widget([
-    'dataProvider' => $dataProvider,
-    'columns' => [
-        ['class' => \yii\grid\SerialColumn::class],
-        'title',
-        [
-            'attribute' => 'cost',
-            'format' => 'currency',
-            'label' => "Costo"
-        ],
-        'costPercent:percent',
-    ]
-]) ?>
+                'title',
+                [
+                    'attribute' => 'cost',
+                    'format' => 'currency',
+                    'label' => "Costo"
+                ],
+                'costPercent:percent',
+                [
+                    'class' => \yii\grid\ActionColumn::class,
+                    'template' => '{remove-from-menu}',
+                    'buttons' => [
+                        'remove-from-menu' => function ($url, $model, $key) {
+                            return \yii\bootstrap5\Html::a('<i class="bx bx-x"></i>', ['menu/remove-from-menu', 'id' => $model->id, 'type' => get_class($model)], [
+                                'class' => '',
+                                'data' => [
+                                    'confirm' => get_class($model) == \common\models\StandardRecipe::class ? "¿Estás seguro de que deseas eliminar esta receta del menú?" : "¿Estás seguro de que deseas eliminar este combo del menú?",
+                                ]
+                            ]);
+                        }
+                    ]
+                ]
+            ],
+        ]) ?>
+    </div>
+    <div class="card-footer">
+        <?= \yii\widgets\LinkPager::widget([
+            'pagination' => $pagination,
+            'options' => ['class' => 'pagination pagination-sm m-0 float-right'],
+            'linkContainerOptions' => ['class' => 'page-item'],
+            'linkOptions' => ['class' => 'page-link', 'data-pjax-scrollto' => '1'],
+            'disabledListItemSubTagOptions' => ['class' => 'page-link'],
+            'firstPageLabel' => "Página inicial",
+            'lastPageLabel' => "Última página",
+        ]) ?>
+    </div>
+</div>
+
 
 <?php
 \yii\bootstrap5\Modal::begin([
