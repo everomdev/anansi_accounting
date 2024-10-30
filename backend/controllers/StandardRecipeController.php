@@ -600,17 +600,20 @@ class StandardRecipeController extends Controller
             'in_menu' => false
         ])->all();
 
+        $pagination = new Pagination([
+            'page' => $page - 1,
+            'pageSize' => 30,
+            'totalCount' => $totalRecipes + $totalCombos
+        ]);
 
         $dataProvider = new ActiveDataProvider([
             'models' => array_merge($recipes, $combos),
 //            'query' => $modelsQuery,
         ]);
 
-        $pagination = new Pagination([
-            'page' => $page - 1,
-            'pageSize' => 30,
-            'totalCount' => $totalRecipes + $totalCombos
-        ]);
+        $dataProvider->setPagination($pagination);
+
+
 
         return $this->render('menu', [
             'dataProvider' => $dataProvider,

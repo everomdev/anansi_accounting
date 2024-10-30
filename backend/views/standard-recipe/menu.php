@@ -2,6 +2,7 @@
 /** @var $this \yii\web\View */
 /** @var $dataProvider \yii\data\ActiveDataProvider */
 /** @var $searchModel \common\models\StandardRecipeSearch */
+/** @var $pagination \yii\data\Pagination */
 
 $this->title = "Menú";
 
@@ -41,7 +42,10 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
                         return ['data-model-id' => $model->id, 'data-type' => get_class($model)];
                     },
                 ],
-                ['class' => \yii\grid\SerialColumn::class],
+                [
+                    'class' => \yii\grid\SerialColumn::class,
+                    'header' => '#'
+                ],
 
                 'title',
                 [
