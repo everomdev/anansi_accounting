@@ -280,8 +280,6 @@ class ExcelHelper
                 $data['category_id'] = explode(' - ', $data['category_id'])[0];
                 $data['category_id'] = trim($data['category_id']);
 
-
-
                 /// check if category exists
                 $category = Category::find()
                     ->where([

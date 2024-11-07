@@ -5,6 +5,7 @@ namespace backend\controllers;
 use backend\helpers\RedisKeys;
 use backend\models\StandardRecipeIngredientForm;
 use common\models\Menu;
+use common\models\MenuBundle;
 use common\models\RecipeCategory;
 use common\models\RecipeStep;
 use Da\User\Traits\ContainerAwareTrait;
@@ -550,55 +551,109 @@ class StandardRecipeController extends Controller
         ]);
     }
 
-    public function actionMenuRecipes()
+    public function actionMenuRecipes($bundle = null)
     {
 
-
         $business = RedisKeys::getBusinessData();
+
+        $bundleModel = null;
+        if ($bundle !== null) {
+            $bundleModel = MenuBundle::findOne(['id' => $bundle, 'business_id' => $business['id']]);
+        }
 
         $page = (int)Yii::$app->request->get('page', 1);
         $offset = ($page - 1) * 30;
 
-        Url::remember(['standard-recipe/menu-recipes', 'page' => $page], 'menu-recipes');
+        Url::remember(['standard-recipe/menu-recipes', 'page' => $page, 'bundle' => $bundle], 'menu-recipes');
 
-        $totalRecipes = (int) StandardRecipe::find()->where([
-            'business_id' => $business['id'],
-            'in_construction' => 0,
-            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-            'in_menu' => true
-        ])->count();
-        $recipes = StandardRecipe::find()->where([
-            'business_id' => $business['id'],
-            'in_construction' => 0,
-            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-            'in_menu' => true
-        ])
-            ->offset($offset == 0 ? null : $offset)
-            ->limit(30)
-            ->all();
+        if ($bundleModel) {
+            $bundleRecipesIds = $bundleModel->getStandardRecipes(true);
+            $bundleCombosIds = $bundleModel->getCombos(true);
+            $totalRecipes = (int)StandardRecipe::find()->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true,
+                'id' => $bundleRecipesIds
+            ])
+                ->count();
+            $recipes = StandardRecipe::find()->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true,
+                'id' => $bundleRecipesIds
+            ])
+                ->offset($offset == 0 ? null : $offset)
+                ->limit(30)
+                ->all();
+            $availableRecipes = StandardRecipe::find()->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => false,
+                'id' => $bundleRecipesIds
+            ])->all();
 
-        $availableRecipes = StandardRecipe::find()->where([
-            'business_id' => $business['id'],
-            'in_construction' => 0,
-            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-            'in_menu' => false
-        ])->all();
+            $totalCombos = (int)Menu::find()->where([
+                'business_id' => $business['id'],
+                'in_menu' => true,
+                'id' => $bundleCombosIds
+            ])->count();
+            $combos = Menu::find()->where([
+                'business_id' => $business['id'],
+                'in_menu' => true,
+                'id' => $bundleCombosIds
+            ])->offset($offset == 0 ? null : $offset)
+                ->limit(30)
+                ->all();
 
-        $totalCombos = (int) Menu::find()->where([
-            'business_id' => $business['id'],
-            'in_menu' => true
-        ])->count();
-        $combos = Menu::find()->where([
-            'business_id' => $business['id'],
-            'in_menu' => true
-        ])->offset($offset == 0 ? null : $offset)
-            ->limit(30)
-            ->all();
+            $availableCombos = Menu::find()->where([
+                'business_id' => $business['id'],
+                'in_menu' => false,
+                'id' => $bundleCombosIds
+            ])->all();
 
-        $availableCombos = Menu::find()->where([
-            'business_id' => $business['id'],
-            'in_menu' => false
-        ])->all();
+        } else {
+            $totalRecipes = (int)StandardRecipe::find()->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true
+            ])->count();
+            $recipes = StandardRecipe::find()->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true
+            ])
+                ->offset($offset == 0 ? null : $offset)
+                ->limit(30)
+                ->all();
+            $availableRecipes = StandardRecipe::find()->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => false
+            ])->all();
+
+            $totalCombos = (int)Menu::find()->where([
+                'business_id' => $business['id'],
+                'in_menu' => true
+            ])->count();
+            $combos = Menu::find()->where([
+                'business_id' => $business['id'],
+                'in_menu' => true
+            ])->offset($offset == 0 ? null : $offset)
+                ->limit(30)
+                ->all();
+
+            $availableCombos = Menu::find()->where([
+                'business_id' => $business['id'],
+                'in_menu' => false
+            ])->all();
+        }
+
 
         $pagination = new Pagination([
             'page' => $page - 1,
@@ -614,12 +669,12 @@ class StandardRecipeController extends Controller
         $dataProvider->setPagination($pagination);
 
 
-
         return $this->render('menu', [
             'dataProvider' => $dataProvider,
             'availableRecipes' => $availableRecipes,
             'availableCombos' => $availableCombos,
-            'pagination' => $pagination
+            'pagination' => $pagination,
+            'bundle' => $bundleModel
         ]);
     }
 

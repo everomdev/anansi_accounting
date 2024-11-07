@@ -3,8 +3,11 @@
 /** @var $dataProvider \yii\data\ActiveDataProvider */
 /** @var $searchModel \common\models\StandardRecipeSearch */
 /** @var $pagination \yii\data\Pagination */
+/* @var $availableRecipes array|\common\models\StandardRecipe[]|\yii\db\ActiveRecord[] */
+/* @var $availableCombos array|\common\models\Menu[]|\yii\db\ActiveRecord[] */
+/* @var $bundle \common\models\MenuBundle|null */
 
-$this->title = "Menú";
+$this->title = empty($bundle) ? "Menú" : "Menú del " . Yii::$app->formatter->asDate($bundle->date);
 
 $urlBulkRemove = \yii\helpers\Url::to(['menu/remove-from-menu-in-bulk']);
 $this->registerJsVar('urlBulkRemove', $urlBulkRemove);
@@ -25,9 +28,17 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
         'data-bs-target' => '#modal-add-combo',
         'data-bs-toggle' => 'modal'
     ]) ?>
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Guardar este menú', [
+        'icon' => ""
+    ]), '', ['class' => 'btn btn-success', 'id' => 'save-menu']) ?>
+    <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Menús guardados', [
+        'icon' => ""
+    ]), '/menu/saved-menus', ['class' => 'btn btn-success',]) ?>
+
     <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Quitar Seleccionados', [
         'icon' => ""
     ]), '', ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
+
 </p>
 <div class="card">
     <div class="card-body">
@@ -46,7 +57,6 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
                     'class' => \yii\grid\SerialColumn::class,
                     'header' => '#'
                 ],
-
                 'title',
                 [
                     'attribute' => 'cost',
@@ -58,8 +68,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
                     'class' => \yii\grid\ActionColumn::class,
                     'template' => '{remove-from-menu}',
                     'buttons' => [
-                        'remove-from-menu' => function ($url, $model, $key) {
-                            return \yii\bootstrap5\Html::a('<i class="bx bx-x"></i>', ['menu/remove-from-menu', 'id' => $model->id, 'type' => get_class($model)], [
+                        'remove-from-menu' => function ($url, $model, $key) use ($bundle) {
+                            return \yii\bootstrap5\Html::a('<i class="bx bx-x"></i>', ['menu/remove-from-menu', 'id' => $model->id, 'type' => get_class($model), 'bundle' => $bundle == null ? null : $bundle->id], [
                                 'class' => '',
                                 'data' => [
                                     'confirm' => get_class($model) == \common\models\StandardRecipe::class ? "¿Estás seguro de que deseas eliminar esta receta del menú?" : "¿Estás seguro de que deseas eliminar este combo del menú?",
@@ -127,6 +137,27 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', "Add"), [
 ]);
 \yii\bootstrap5\Modal::end();
 
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-save-menu',
+    'title' => Yii::t('app', "Save menu")
+]);
+
+echo \kartik\date\DatePicker::widget([
+        'id' => "menu-date",
+        'name' => "menu-date",
+    'pluginOptions' => [
+        'format' => "yyyy-mm-dd",
+    ]
+]);
+
+echo \yii\bootstrap5\Html::button(Yii::t('app', "Save"), [
+    'class' => 'btn btn-success mt-3',
+    'id' => 'btn-save-menu',
+    'data-url' => \yii\helpers\Url::to(['menu/save-menu'])
+]);
+
+\yii\bootstrap5\Modal::end();
+
 $js = <<< JS
 $(document).on('hidden.bs.modal', "#modal-add-recipe, #modal-add-combo", (event) => {
     $('body').attr('style', '');
@@ -156,6 +187,29 @@ $(document).on('click', '#btn-add-combo', function(event){
     $.ajax({
         url,
         type: 'get'
+    })
+    
+    return false;
+});
+
+$(document).on('click', '#save-menu', function(event){
+    event.preventDefault();
+    $("#modal-save-menu").modal('show');
+    return false;
+});
+
+$(document).on('click', '#btn-save-menu', function(event){
+    event.preventDefault();
+    let _this = $(this);
+    let url = _this.data("url");
+    let date = $("#menu-date").val();
+    
+    $.ajax({
+        url,
+        type: 'post',
+        data: {
+            date
+        }
     })
     
     return false;
