@@ -25,7 +25,9 @@ $combos = $combos->all();
 
 $rawData = array_merge($recipes, $combos);
 
-$sortBySales = $rawData;
+$sortBySales = array_filter($rawData, function ($item) {
+    return !empty($item->category);
+});
 
 $totalSales = array_sum(\yii\helpers\ArrayHelper::getColumn($sortBySales, 'sales'));
 

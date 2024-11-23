@@ -24,8 +24,11 @@ $recipes = $recipes->all();
 $combos = $combos->all();
 
 $rawData = array_merge($recipes, $combos);
+$rawData =
 
-$sortBySales = $rawData;
+$sortBySales = array_filter($rawData, function ($item) {
+    return !empty($item->category);
+});
 
 $totalSalesAmount = array_sum(\yii\helpers\ArrayHelper::getColumn($sortBySales, 'salesAmount'));
 
