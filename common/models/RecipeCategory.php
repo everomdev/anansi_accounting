@@ -38,7 +38,8 @@ class RecipeCategory extends \yii\db\ActiveRecord
             [['business_id'], 'integer'],
             [['name', 'type'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
-            [['type'], 'in', 'range' => [self::TYPE_MAIN, self::TYPE_SUB]]
+            [['type'], 'in', 'range' => [self::TYPE_MAIN, self::TYPE_SUB]],
+            [['name', 'type'], 'unique', 'targetAttribute' => ['name', 'business_id', 'type'], 'message' => "Ya existe una categoría con este nombre"],
         ];
     }
 

@@ -10,11 +10,14 @@ use yii\widgets\ActiveForm;
 
 <div class="recipe-category-form">
 
-    <?php $form = ActiveForm::begin(); ?>
+    <?php $form = ActiveForm::begin([
+        'id' => 'recipe-category-form',
+        'enableAjaxValidation' => true,
+    ]); ?>
 
     <?= $form->field($model, 'type')->dropDownList([
-            \common\models\RecipeCategory::TYPE_MAIN => Yii::t('app', 'For recipes'),
-            \common\models\RecipeCategory::TYPE_SUB => Yii::t('app', 'For sub-recipes'),
+        \common\models\RecipeCategory::TYPE_MAIN => Yii::t('app', 'For recipes'),
+        \common\models\RecipeCategory::TYPE_SUB => Yii::t('app', 'For sub-recipes'),
     ]) ?>
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
 
