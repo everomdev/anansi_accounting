@@ -865,7 +865,7 @@ class StandardRecipeController extends Controller
             $recipe->duplicate();
         }
 
-        return $this->redirect(['index']);
+        return $this->redirect(Url::previous('index-recipe'));
     }
 
     /**
