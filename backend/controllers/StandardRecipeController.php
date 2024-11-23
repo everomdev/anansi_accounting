@@ -228,6 +228,8 @@ class StandardRecipeController extends Controller
      */
     public function actionIndex($type = StandardRecipe::STANDARD_RECIPE_TYPE_MAIN)
     {
+        $page = (int)Yii::$app->request->get('page', 1);
+        Url::remember(['standard-recipe/index', 'type' => $type, 'page' => $page], 'index-recipe');
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new StandardRecipeSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -322,6 +324,7 @@ class StandardRecipeController extends Controller
         }
 
         if ($model->load($post) && $model->save()) {
+            return $this->redirect(Url::previous('index-recipe'));
             if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN) {
                 return $this->redirect(['standard-recipe/index', 'type' => $model->type]);
             } else {
@@ -471,7 +474,8 @@ class StandardRecipeController extends Controller
             if ($model->type == $model::STANDARD_RECIPE_TYPE_SUB) {
                 return $this->redirect(['sub-standard-recipe/index']);
             }
-            return $this->redirect(['index']);
+
+            return $this->redirect(Url::previous('index-recipe'));
         }
 
         return $this->render('update', [
