@@ -22,6 +22,7 @@ use yii\helpers\ArrayHelper;
  * @property-read float|int $amount
  * @property-read mixed $totalAmount
  * @property string $name [varchar(255)]
+ * @property string $observations
  */
 class Convoy extends \yii\db\ActiveRecord
 {
@@ -52,7 +53,7 @@ class Convoy extends \yii\db\ActiveRecord
         return [
             [['business_id', 'type', 'name'], 'required'],
             [['business_id', 'plates'], 'integer'],
-            [['um', 'type', 'name'], 'string', 'max' => 255],
+            [['um', 'type', 'name', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['type'], 'in', 'range' => [self::TYPE_GENERAL, self::TYPE_FAMILY]]
         ];
@@ -73,6 +74,7 @@ class Convoy extends \yii\db\ActiveRecord
             'name' => Yii::t('app', 'Name'),
             'amount' => Yii::t('app', 'Amount'),
             'plates' => Yii::t('app', 'Sold Plates'),
+            'observations' => Yii::t('app', 'Observations'),
         ];
     }
 

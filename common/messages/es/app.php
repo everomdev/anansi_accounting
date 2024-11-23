@@ -370,5 +370,4 @@ return [
     "Title" => "Título",
     "Duplicate" => "Duplicar",
     "Time Of Preparation" => "Tiempo de preparación",
-
 ];

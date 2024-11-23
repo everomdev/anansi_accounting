@@ -33,8 +33,28 @@ $totalSales = array_sum(\yii\helpers\ArrayHelper::getColumn($dataProvider->model
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
             'name',
-            'um',
-            'amount:currency',
+            [
+                    'label' => "Platillos",
+                'value' => function ($data) {
+                    return count($data->convoyIngredients);
+                },
+            ],
+            [
+                    'attribute' => 'amount',
+                'format' => 'currency',
+                'label' => "Monto"
+            ],
+            [
+                'attribute' => 'totalAmount',
+                'format' => 'currency',
+                'label' => "Costo"
+            ],
+            [
+                    'attribute' => 'observations',
+                'value' => function ($data) {
+                    return empty($data->observations) ? "Sin observaciones" : $data->observations;
+                },
+            ],
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}"
