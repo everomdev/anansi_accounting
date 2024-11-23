@@ -67,6 +67,7 @@ class CategoryController extends Controller
             $searchModel->business_id = $business['id'];
         }
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->setSort(['defaultOrder' => ['name' => SORT_ASC]]);
 
         return $this->render('index', [
             'searchModel' => $searchModel,

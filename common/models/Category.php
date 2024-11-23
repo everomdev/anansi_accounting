@@ -106,6 +106,8 @@ class Category extends \yii\db\ActiveRecord
                 ['business_id' => $business['id']],
                 ['business_id' => null],
             ])
+            ->orderBy(['name' => SORT_ASC])
             ->all();
     }
+
 }

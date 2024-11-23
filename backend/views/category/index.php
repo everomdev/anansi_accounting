@@ -46,7 +46,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
             ],
             [
                 'attribute' => 'group.name',
-                'filter' => \yii\bootstrap5\Html::activeDropDownList($searchModel, 'group_id', \yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name'), ['class' => 'form-control', 'prompt' => Yii::t('app', "All")])
+                'filter' => \yii\bootstrap5\Html::activeDropDownList($searchModel, 'group_id', \yii\helpers\ArrayHelper::map(\common\models\CategoryGroup::find()->all(), 'id', 'name'), ['class' => 'form-control', 'prompt' => Yii::t('app', "All")]),
+                'label' => 'Grupo'
             ],
             'name',
             'key_prefix',

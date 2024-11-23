@@ -59,7 +59,7 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                     ]) ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'category_id')->dropDownList(\yii\helpers\ArrayHelper::map(Category::find()->all(), 'id', 'name'), ['prompt' => '----', 'data-url' => Url::to(['ingredient-stock/generate-key'])]) ?>
+                    <?= $form->field($model, 'category_id')->dropDownList(\yii\helpers\ArrayHelper::map(Category::all(), 'id', 'name'), ['prompt' => '----', 'data-url' => Url::to(['ingredient-stock/generate-key'])]) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?= $form->field($model, 'um')->dropDownList(\yii\helpers\ArrayHelper::map($ums, 'name', 'name')) ?>
