@@ -40,7 +40,7 @@ class CategorySearch extends Category
      */
     public function search($params)
     {
-        $query = Category::find();
+        $query = Category::find()->innerJoin('category_group', 'category.group_id = category_group.id');
 
         // add conditions that should always apply here
 
