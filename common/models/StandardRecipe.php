@@ -64,6 +64,8 @@ use yii\web\UploadedFile;
  * @property float $custom_cost [float]
  * @property-read mixed $cost
  * @property float $custom_price [float]
+ * @property string $um
+ * @property bool $is_food
  */
 class StandardRecipe extends \yii\db\ActiveRecord
 {
@@ -135,7 +137,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 'custom_cost',
                 'custom_price'
             ], 'number'],
-            [['in_construction', 'in_menu'], 'boolean'],
+            [['in_construction', 'in_menu', 'is_food'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe'],
             [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
 

@@ -82,6 +82,12 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]), 'name', 'name'))->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
+                    <?= $form->field($model, 'is_food')->widget(\kartik\switchinput\SwitchInput::class, [
+                        'pluginOptions' => [
+                            'onText' => "Alimentos",
+                            'offText' => "Bebidas"
+                        ]
+                    ])->label("Alimentos o bebidas?") ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
                     <?= $form->field($model, 'portions', [
@@ -121,6 +127,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
 
 
                 </div>
+
             </div>
             <?= $this->render('create/_ingredients_selection', [
                 'model' => $model
