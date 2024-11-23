@@ -213,7 +213,7 @@ return [
     'Period' => 'Período',
     'Phone' => 'Teléfono',
     'Pictures' => '@@Imágenes@@',
-    'Plan & Billing' => 'Planificación y facturación',
+    'Plan & Billing' => 'Plan y facturación',
     'Plan ID' => 'Identificación del plan',
     'Plan' => 'Plan',
     'Plans' => 'Planes',
