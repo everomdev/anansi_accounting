@@ -22,6 +22,7 @@ $total = 0.0;
         <div class="table-responsive">
             <table class="table">
                 <thead>
+                <th></th>
                 <th><?= Yii::t('app', "Ingredient") ?></th>
                 <th><?= Yii::t('app', "Quantity") ?></th>
                 <th><?= Yii::t('app', "Cost") ?></th>
@@ -33,12 +34,13 @@ $total = 0.0;
                 </th>
                 </thead>
                 <tbody>
-                <?php foreach ($model->ingredientRelations as $ingredientStandardRecipe): ?>
+                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): ?>
                 <?php
                     $cost = $ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity;
                     $total += $cost;
                     ?>
                     <tr>
+                        <td><?= $index+1 ?></td>
                         <td>
                             <?= $ingredientStandardRecipe->ingredient->ingredient ?>
                         </td>
