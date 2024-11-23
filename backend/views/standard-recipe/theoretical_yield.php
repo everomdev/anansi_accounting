@@ -19,9 +19,11 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <div class="standard-recipe-index">
 
-    <h4 class="alert alert-warning" id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->getFormatter()->asPercent($totalCost, 2)) ?></h4>
+    <h4 class="alert alert-warning"
+        id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->getFormatter()->asPercent($totalCost, 2)) ?></h4>
     <div class="card">
         <div class="card-body">
+            <?= \yii\bootstrap5\Html::textInput('search-box', null, ['class' => 'form-control', 'placeholder' => 'Buscar']) ?>
             <div class="table-responsive">
                 <table class="table">
                     <thead>
@@ -132,7 +134,24 @@ $(document).on('change', '#check-all', (event) => {
     
         computeCost();
     
-})
+});
+
+$(document).on('keyup', 'input[name="search-box"]', (event) => {
+    let search = event.target.value;
+    let rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        let td = row.querySelector('td');
+        if(td.hasAttribute('colspan')){
+            return;
+        }
+        let title = td.textContent;
+        if(title.toLowerCase().includes(search.toLowerCase())){
+            row.style.display = '';
+        }else{
+            row.style.display = 'none';
+        }
+    });
+});
 JS;
 $this->registerJs($js);
 ?>
