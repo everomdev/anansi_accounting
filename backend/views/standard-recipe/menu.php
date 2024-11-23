@@ -5,7 +5,10 @@
 /** @var $pagination \yii\data\Pagination */
 /* @var $availableRecipes array|\common\models\StandardRecipe[]|\yii\db\ActiveRecord[] */
 /* @var $availableCombos array|\common\models\Menu[]|\yii\db\ActiveRecord[] */
+
 /* @var $bundle \common\models\MenuBundle|null */
+
+use common\models\RecipeCategory;
 
 $this->title = empty($bundle) ? "Menú" : "Menú del " . Yii::$app->formatter->asDate($bundle->date);
 
@@ -15,6 +18,13 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
     'depends' => \yii\web\YiiAsset::class,
     'position' => $this::POS_END
 ]);
+
+$categories = RecipeCategory::find()
+    ->where([
+        'business_id' => $business['id'],
+    ])
+    ->orderBy(['name' => SORT_ASC])
+    ->all();
 ?>
 
 <p class="pb-3">
@@ -45,6 +55,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
         <?= \yii\grid\GridView::widget([
             'id' => 'menu-grid',
             'dataProvider' => $dataProvider,
+            'filterModel' => (new \yii\base\Model()),
             'layout' => "{items}",
             'columns' => [
                 [
@@ -64,6 +75,16 @@ $this->registerJsFile(Yii::getAlias("@web/js/menu/index.js"), [
                     'label' => "Costo"
                 ],
                 'costPercent:percent',
+                [
+                    'label' => "Categoría",
+                    'value' => function ($model) {
+                        return get_class($model) == \common\models\StandardRecipe::class ? $model->type_of_recipe : $model->category->name;
+                    },
+                    'filter' => \yii\bootstrap5\Html::dropDownList('categoryId', $category ? $category->id : null, \yii\helpers\ArrayHelper::map($categories, 'id', 'name'), [
+                        'prompt' => "Seleccione una categoría",
+                        'class' => 'form-control'
+                    ])
+                ],
                 [
                     'class' => \yii\grid\ActionColumn::class,
                     'template' => '{remove-from-menu}',
@@ -143,8 +164,8 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', "Add"), [
 ]);
 
 echo \kartik\date\DatePicker::widget([
-        'id' => "menu-date",
-        'name' => "menu-date",
+    'id' => "menu-date",
+    'name' => "menu-date",
     'pluginOptions' => [
         'format' => "yyyy-mm-dd",
     ]

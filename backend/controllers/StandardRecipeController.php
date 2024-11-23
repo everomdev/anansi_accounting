@@ -244,6 +244,7 @@ class StandardRecipeController extends Controller
 
     public function actionTheoreticalYield()
     {
+        /** @var $business \common\models\Business */
         $business = RedisKeys::getBusiness();
 
         return $this->render('theoretical_yield', $business->getTheoreticalYield());
@@ -553,12 +554,23 @@ class StandardRecipeController extends Controller
 
     public function actionMenuRecipes($bundle = null)
     {
+        $categoryId = Yii::$app->request->get('categoryId', null);
 
         $business = RedisKeys::getBusinessData();
 
         $bundleModel = null;
         if ($bundle !== null) {
             $bundleModel = MenuBundle::findOne(['id' => $bundle, 'business_id' => $business['id']]);
+        }
+
+        $category = null;
+        if (!empty($categoryId)) {
+            $category = RecipeCategory::find()
+                ->where([
+                    'business_id' => $business['id'],
+                    'id' => $categoryId
+                ])->one();
+
         }
 
         $page = (int)Yii::$app->request->get('page', 1);
@@ -569,89 +581,73 @@ class StandardRecipeController extends Controller
         if ($bundleModel) {
             $bundleRecipesIds = $bundleModel->getStandardRecipes(true);
             $bundleCombosIds = $bundleModel->getCombos(true);
-            $totalRecipes = (int)StandardRecipe::find()->where([
+            $recipesFilter = [
                 'business_id' => $business['id'],
                 'in_construction' => 0,
                 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
                 'in_menu' => true,
-                'id' => $bundleRecipesIds
-            ])
+                'id' => $bundleRecipesIds,
+            ];
+
+            $combosFilter = [
+                'business_id' => $business['id'],
+                'in_menu' => true,
+                'id' => $bundleCombosIds,
+            ];
+
+            if($category){
+                $recipesFilter['type_of_recipe'] = $category->name;
+                $combosFilter['category_id'] = $category->id;
+            }
+
+
+            $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)
                 ->count();
-            $recipes = StandardRecipe::find()->where([
-                'business_id' => $business['id'],
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true,
-                'id' => $bundleRecipesIds
-            ])
+            $recipes = StandardRecipe::find()->where($recipesFilter)
                 ->offset($offset == 0 ? null : $offset)
                 ->limit(30)
                 ->all();
-            $availableRecipes = StandardRecipe::find()->where([
-                'business_id' => $business['id'],
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => false,
-                'id' => $bundleRecipesIds
-            ])->all();
+            $recipesFilter['in_menu'] = false;
+            $availableRecipes = StandardRecipe::find()->where($recipesFilter)->all();
 
-            $totalCombos = (int)Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => true,
-                'id' => $bundleCombosIds
-            ])->count();
-            $combos = Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => true,
-                'id' => $bundleCombosIds
-            ])->offset($offset == 0 ? null : $offset)
+            $totalCombos = (int)Menu::find()->where($combosFilter)->count();
+            $combos = Menu::find()->where($combosFilter)->offset($offset == 0 ? null : $offset)
                 ->limit(30)
                 ->all();
-
-            $availableCombos = Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => false,
-                'id' => $bundleCombosIds
-            ])->all();
+            $combosFilter['in_menu'] = false;
+            $availableCombos = Menu::find()->where($combosFilter)->all();
 
         } else {
-            $totalRecipes = (int)StandardRecipe::find()->where([
+            $recipesFilter = [
                 'business_id' => $business['id'],
                 'in_construction' => 0,
                 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true
-            ])->count();
-            $recipes = StandardRecipe::find()->where([
+                'in_menu' => true,
+            ];
+
+            $combosFilter = [
                 'business_id' => $business['id'],
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true
-            ])
+                'in_menu' => true,
+            ];
+
+            if($category){
+                $recipesFilter['type_of_recipe'] = $category->name;
+                $combosFilter['category_id'] = $category->id;
+            }
+            $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)->count();
+            $recipes = StandardRecipe::find()->where($recipesFilter)
                 ->offset($offset == 0 ? null : $offset)
                 ->limit(30)
                 ->all();
-            $availableRecipes = StandardRecipe::find()->where([
-                'business_id' => $business['id'],
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => false
-            ])->all();
+            $recipesFilter['in_menu'] = false;
+            $availableRecipes = StandardRecipe::find()->where($recipesFilter)->all();
 
-            $totalCombos = (int)Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => true
-            ])->count();
-            $combos = Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => true
-            ])->offset($offset == 0 ? null : $offset)
+            $totalCombos = (int)Menu::find()->where($combosFilter)->count();
+            $combos = Menu::find()->where($combosFilter)->offset($offset == 0 ? null : $offset)
                 ->limit(30)
                 ->all();
-
-            $availableCombos = Menu::find()->where([
-                'business_id' => $business['id'],
-                'in_menu' => false
-            ])->all();
+            $combosFilter['in_menu'] = false;
+            $availableCombos = Menu::find()->where($combosFilter)->all();
         }
 
 
@@ -674,7 +670,9 @@ class StandardRecipeController extends Controller
             'availableRecipes' => $availableRecipes,
             'availableCombos' => $availableCombos,
             'pagination' => $pagination,
-            'bundle' => $bundleModel
+            'bundle' => $bundleModel,
+            'business' => $business,
+            'category' => $category
         ]);
     }
 
