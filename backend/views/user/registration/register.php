@@ -42,7 +42,7 @@ $plans = \common\models\Plan::find()->all();
                             ])->passwordInput(['id' => 'password-field']) ?>
                         </div>
                         <div class="col-12">
-                            <?= Html::label('Confirm Password', 'confirm-password-field') ?>
+                            <?= Html::label('Confirmar contraseña', 'confirm-password-field') ?>
                             <div class="input-group mb-3">
                                 <?= Html::passwordInput('confirmPassword', '', ['id' => 'confirm-password-field', 'class' => 'form-control']) ?>
                                 <span class="input-group-text"><i class="bx bxs-show"></i></span>
@@ -104,7 +104,8 @@ $(document).on('submit', '#{$model->formName()}', function(event) {
     let confirmPassword = $('#confirm-password-field').val();
     if (password !== confirmPassword) {
         event.preventDefault();
-        alert('Passwords do not match!');
+        alert('Las contraseñas no coinciden. Por favor, verifícalas.');
+        $('#confirm-password-field').focus();
     }
 });
 JS;
