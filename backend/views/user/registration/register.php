@@ -1,39 +1,22 @@
 <?php
 
-/*
- * This file is part of the 2amigos/yii2-usuario project.
- *
- * (c) 2amigOS! <http://2amigos.us/>
- *
- * For the full copyright and license information, please view
- * the LICENSE file that was distributed with this source code.
- */
-
-use backend\assets\AdminLtePluginAsset;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
-/**
- * @var yii\web\View $this
- * @var \Da\User\Form\RegistrationForm $model
- * @var \Da\User\Model\User $user
- * @var \Da\User\Module $module
- */
-
-\backend\assets\SneatAsset::register($this);
+/* @var $this yii\web\View */
+/* @var $model common\models\RegistrationForm */
+/* @var $form yii\widgets\ActiveForm */
 
 $this->title = "Sign-up";
 $plans = \common\models\Plan::find()->all();
 ?>
 <div class="d-flex align-items-center justify-content-center">
     <div>
-        <?php $form = ActiveForm::begin(
-            [
-                'id' => $model->formName(),
-                'enableAjaxValidation' => true,
-                'enableClientValidation' => false,
-            ]
-        ); ?>
+        <?php $form = ActiveForm::begin([
+            'id' => $model->formName(),
+            'enableAjaxValidation' => true,
+            'enableClientValidation' => false,
+        ]); ?>
         <div class="card m-5">
             <div class="card-header">
                 <div class="text-center">
@@ -54,12 +37,20 @@ $plans = \common\models\Plan::find()->all();
                             <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
                         </div>
                         <div class="col-12">
-                            <?= $form->field($model, 'password')->passwordInput() ?>
+                            <?= $form->field($model, 'password', [
+                                'template' => "{label}\n<div class='input-group'>{input}<span class='input-group-text'><i class='bx bxs-show'></i></span></div>\n{error}",
+                            ])->passwordInput(['id' => 'password-field']) ?>
+                        </div>
+                        <div class="col-12">
+                            <?= Html::label('Confirm Password', 'confirm-password-field') ?>
+                            <div class="input-group mb-3">
+                                <?= Html::passwordInput('confirmPassword', '', ['id' => 'confirm-password-field', 'class' => 'form-control']) ?>
+                                <span class="input-group-text"><i class="bx bxs-show"></i></span>
+                            </div>
                         </div>
                         <div class="col-12">
                             <?= $form->field($model, 'planId')->dropDownList(
                                 \yii\helpers\ArrayHelper::map($plans, 'id', 'label'),
-
                             ) ?>
                         </div>
                     </div>
@@ -71,7 +62,6 @@ $plans = \common\models\Plan::find()->all();
                             </div>
                         <?php endforeach; ?>
                     </div>
-
                 </div>
             </div>
             <div class="card-footer">
@@ -81,14 +71,12 @@ $plans = \common\models\Plan::find()->all();
                         <?= Html::a(Yii::t('usuario', 'Already registered? Sign in!'), ['/user/security/login']) ?>
                     </div>
                 </div>
-
             </div>
         </div>
+        <?php ActiveForm::end(); ?>
     </div>
-    <?php ActiveForm::end(); ?>
-
-
 </div>
+
 <?php
 $js = <<< JS
 $(function(){
@@ -99,6 +87,26 @@ $(document).on('change', "#registrationform-planid", function(event){
     $(".plan").addClass('d-none');
     $('#plan_' + id).removeClass('d-none');
 })
+
+$(document).on('click', '.input-group-text', function() {
+    var input = $(this).parent().find('input');
+    if (input.attr('type') == 'password') {
+        input.attr('type', 'text');
+        $(this).find('i').removeClass('bxs-show').addClass('bxs-hide');
+    } else {
+        input.attr('type', 'password');
+        $(this).find('i').removeClass('bxs-hide').addClass('bxs-show');
+    }
+});
+
+$(document).on('submit', '#{$model->formName()}', function(event) {
+    let password = $('#password-field').val();
+    let confirmPassword = $('#confirm-password-field').val();
+    if (password !== confirmPassword) {
+        event.preventDefault();
+        alert('Passwords do not match!');
+    }
+});
 JS;
 $this->registerJs($js);
 ?>
