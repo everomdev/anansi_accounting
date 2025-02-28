@@ -554,7 +554,7 @@ class ExcelHelper
             $activeWorksheet->setCellValue("F$currentRow", $ingredient->yield);
             $activeWorksheet->setCellValue("G$currentRow", $ingredient->portions_per_unit);
             $activeWorksheet->setCellValue("H$currentRow", $ingredient->observations);
-            $activeWorksheet->setCellValue("I$currentRow", $business->getFormatter()->asCurrency($ingredient->lastPrice));
+            $activeWorksheet->setCellValue("I$currentRow",$ingredient->lastPrice);
 
             $currentRow++;
         }
