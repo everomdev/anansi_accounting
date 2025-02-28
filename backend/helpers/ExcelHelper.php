@@ -64,121 +64,171 @@ class ExcelHelper
     }
 
     public static function generateIngredientsTemplate($id)
-    {
-        /** @var Category[] $categories */
-        $categories = Category::find()->where([
-            'or',
-            ['business_id' => $id],
-            ['business_id' => null],
-        ])->all();
+{
+    /** @var Category[] $categories */
+    $categories = Category::find()->where([
+        'or',
+        ['business_id' => $id],
+        ['business_id' => null],
+    ])->all();
 
-        /** @var UnitOfMeasurement[] $unitOfMeasurements */
-        $unitOfMeasurements = UnitOfMeasurement::find()
-            ->where(['business_id' => $id])
-            ->all();
+    /** @var UnitOfMeasurement[] $unitOfMeasurements */
+    $unitOfMeasurements = UnitOfMeasurement::find()
+        ->where(['business_id' => $id])
+        ->all();
 
-        $spreadsheet = new Spreadsheet();
-        $activeWorksheet = $spreadsheet->getActiveSheet();
+    $spreadsheet = new Spreadsheet();
+    $activeWorksheet = $spreadsheet->getActiveSheet();
 
-        $activeWorksheet->setCellValue("A1", "Clave");
-        $activeWorksheet->setCellValue("B1", "Insumo");
-        $activeWorksheet->setCellValue("C1", "Categoría");
-        $activeWorksheet->setCellValue("D1", "Unidad de compra");
-        $activeWorksheet->setCellValue("E1", "Unidad de cocina");
-        $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
-        $activeWorksheet->setCellValue("G1", "Porciones por unidad");
-        $activeWorksheet->setCellValue("H1", "Observaciones");
-        $activeWorksheet->setCellValue("I1", "Precio");
+    $activeWorksheet->setCellValue("A1", "Clave");
+    $activeWorksheet->setCellValue("B1", "Insumo");
+    $activeWorksheet->setCellValue("C1", "Categoría");
+    $activeWorksheet->setCellValue("D1", "Unidad de compra");
+    $activeWorksheet->setCellValue("E1", "Unidad de cocina");
+    $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
+    $activeWorksheet->setCellValue("G1", "Porciones por unidad");
+    $activeWorksheet->setCellValue("H1", "Observaciones");
+    $activeWorksheet->setCellValue("I1", "Precio");
 
+    $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getStyle('I2:I5000')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
 
-        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('D')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getStyle('I2:I5000')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+    // Create a named range for categories
+    $categorySheet = $spreadsheet->createSheet();
+    $categorySheet->setTitle('Categorias');
+    $categorySheet->setCellValue('A1', 'Categoría');
 
-        // Create a named range for categories
-        $categorySheet = $spreadsheet->createSheet();
-        $categorySheet->setTitle('Categorias');
-        $categorySheet->setCellValue('A1', 'Categoría');
-
-        $row = 2;
-        foreach ($categories as $category) {
-            $categorySheet->setCellValue("A$row", sprintf("%s - %s", $category->key_prefix, $category->name));
-            $row++;
-        }
-
-        $spreadsheet->addNamedRange(
-            new \PhpOffice\PhpSpreadsheet\NamedRange('Categorias', $categorySheet, 'A2:A' . ($row - 1))
-        );
-
-
-
-        // Apply data validation to the category column
-        $dataValidation = $spreadsheet->getActiveSheet()->getCell('C2')->getDataValidation();
-        $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-        $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-        $dataValidation->setAllowBlank(false);
-        $dataValidation->setShowInputMessage(true);
-        $dataValidation->setShowErrorMessage(true);
-        $dataValidation->setShowDropDown(true);
-        $dataValidation->setErrorTitle('Error de entrada');
-        $dataValidation->setError('Este valor no es admitido');
-        $dataValidation->setPromptTitle('Selecciona una categoría');
-        $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
-        $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
-
-        for ($i = 2; $i <= 5000; $i++) {
-            $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
-        }
-
-        // Create a named range for unit of measuerements
-        $umSheet = $spreadsheet->createSheet();
-        $umSheet->setTitle('UMs');
-        $umSheet->setCellValue('A1', 'Unidad de medida');
-
-        $row = 2;
-        foreach ($unitOfMeasurements as $um) {
-            $umSheet->setCellValue("A$row", $um->name);
-            $row++;
-        }
-
-        $spreadsheet->addNamedRange(
-            new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $categorySheet, 'A2:A' . ($row - 1))
-        );
-
-        // Apply data validation to the um column
-        $dataValidation = $spreadsheet->getActiveSheet()->getCell('D1')->getDataValidation();
-        $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-        $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-        $dataValidation->setAllowBlank(false);
-        $dataValidation->setShowInputMessage(true);
-        $dataValidation->setShowErrorMessage(true);
-        $dataValidation->setShowDropDown(true);
-        $dataValidation->setErrorTitle('Error de entrada');
-        $dataValidation->setError('Este valor no es admitido');
-        $dataValidation->setPromptTitle('Selecciona una unidad de medida');
-        $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
-        $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
-
-        for ($i = 2; $i <= 5000; $i++) {
-            $spreadsheet->getActiveSheet()->getCell("D$i")->setDataValidation(clone $dataValidation);
-            $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
-        }
-
-        $writer = new Xlsx($spreadsheet);
-        $fileName = 'Plantilla_para_importar_insumos.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
-        $writer->save('php://output');
-        exit(200);
+    $row = 2;
+    foreach ($categories as $category) {
+        $categorySheet->setCellValue("A$row", $category->name);
+        $row++;
     }
 
+    $spreadsheet->addNamedRange(
+        new \PhpOffice\PhpSpreadsheet\NamedRange('Categorias', $categorySheet, 'A2:A' . ($row - 1))
+    );
+
+    // Apply data validation to the category column
+    $dataValidation = $spreadsheet->getActiveSheet()->getCell('C2')->getDataValidation();
+    $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+    $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $dataValidation->setAllowBlank(false);
+    $dataValidation->setShowInputMessage(true);
+    $dataValidation->setShowErrorMessage(true);
+    $dataValidation->setShowDropDown(true);
+    $dataValidation->setErrorTitle('Error de entrada');
+    $dataValidation->setError('Este valor no es admitido');
+    $dataValidation->setPromptTitle('Selecciona una categoría');
+    $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
+    $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
+
+    for ($i = 2; $i <= 5000; $i++) {
+        $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
+    }
+
+    // Create a named range for unit of measurements
+    $umSheet = $spreadsheet->createSheet();
+    $umSheet->setTitle('UMs');
+    $umSheet->setCellValue('A1', 'Unidad de medida');
+
+    $row = 2;
+    foreach ($unitOfMeasurements as $um) {
+        $umSheet->setCellValue("A$row", $um->name);
+        $row++;
+    }
+
+    $spreadsheet->addNamedRange(
+        new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $umSheet, 'A2:A' . ($row - 1))
+    );
+
+    // Apply data validation to the um column
+    $dataValidation = $spreadsheet->getActiveSheet()->getCell('D1')->getDataValidation();
+    $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+    $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $dataValidation->setAllowBlank(false);
+    $dataValidation->setShowInputMessage(true);
+    $dataValidation->setShowErrorMessage(true);
+    $dataValidation->setShowDropDown(true);
+    $dataValidation->setErrorTitle('Error de entrada');
+    $dataValidation->setError('Este valor no es admitido');
+    $dataValidation->setPromptTitle('Selecciona una unidad de medida');
+    $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
+    $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
+
+    for ($i = 2; $i <= 5000; $i++) {
+        $spreadsheet->getActiveSheet()->getCell("D$i")->setDataValidation(clone $dataValidation);
+        $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
+    }
+
+    // Apply data validation to the factor de rendimiento column
+    $factorValidation = $spreadsheet->getActiveSheet()->getCell('F2')->getDataValidation();
+    $factorValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_WHOLE);
+    $factorValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $factorValidation->setAllowBlank(false);
+    $factorValidation->setShowInputMessage(true);
+    $factorValidation->setShowErrorMessage(true);
+    $factorValidation->setErrorTitle('Error de entrada');
+    $factorValidation->setError('Este valor no es admitido');
+    $factorValidation->setPromptTitle('Factor de Rendimiento');
+    $factorValidation->setPrompt('Por favor, ingresa un valor numérico sin %.');
+    $factorValidation->setFormula1(0); // Valor mínimo
+    $factorValidation->setFormula2(100); // Valor máximo
+
+    for ($i = 2; $i <= 5000; $i++) {
+        $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $factorValidation);
+    }
+
+    // Apply data validation to the price column
+    $priceValidation = $spreadsheet->getActiveSheet()->getCell('I2')->getDataValidation();
+    $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+    $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $priceValidation->setAllowBlank(false);
+    $priceValidation->setShowInputMessage(true);
+    $priceValidation->setShowErrorMessage(true);
+    $priceValidation->setErrorTitle('Error de entrada');
+    $priceValidation->setError('Este valor no es admitido');
+    $priceValidation->setPromptTitle('Precio');
+    $priceValidation->setPrompt('Por favor, ingresa un valor numérico sin $.');
+    $priceValidation->setFormula1(0); // Valor mínimo
+
+    for ($i = 2; $i <= 5000; $i++) {
+        $spreadsheet->getActiveSheet()->getCell("I$i")->setDataValidation(clone $priceValidation);
+    }
+
+    // Create a legend sheet
+    $legendSheet = $spreadsheet->createSheet();
+    $legendSheet->setTitle('Leyenda');
+    $legendSheet->setCellValue('A1', 'Columna');
+    $legendSheet->setCellValue('B1', 'Descripción');
+    $legendSheet->setCellValue('A2', 'Identificador');
+    $legendSheet->setCellValue('B2', 'Debe ser un número entero. No puede contener % ni $.');
+    $legendSheet->setCellValue('A3', 'Categoría');
+    $legendSheet->setCellValue('B3', 'Debe ser una de las categorías listadas en la hoja Categorías.');
+    $legendSheet->setCellValue('A4', 'Unidad de Medida');
+    $legendSheet->setCellValue('B4', 'Debe ser una de las unidades de medida listadas en la hoja UMs.');
+    $legendSheet->setCellValue('A5', 'Factor de Rendimiento');
+    $legendSheet->setCellValue('B5', 'Debe ser un valor numérico entre 0 y 100.');
+    $legendSheet->setCellValue('A6', 'Precio');
+    $legendSheet->setCellValue('B6', 'Debe ser un valor numérico.');
+
+    $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('A')->setAutoSize(true);
+    $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('B')->setAutoSize(true);
+
+    $writer = new Xlsx($spreadsheet);
+    $fileName = 'Plantilla_para_importar_insumos.xlsx';
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+    $writer->save('php://output');
+    exit(200);
+}
     public static function generateMovementTemplate()
     {
         $spreadsheet = new Spreadsheet();
@@ -241,6 +291,7 @@ class ExcelHelper
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
 
         $ingredientData = [];
+        $test = array();
 
         $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
 
@@ -269,21 +320,20 @@ class ExcelHelper
                 $cellIterator->next();
                 $data['price'] = $cellIterator->current()->getValue(); // I - Precio
                 $cellIterator->next();
-
-                $data['unit_price'] = $data['price'] / $data['portions_per_unit'];
-                $data['adjusted_price'] = $data['unit_price'] / ($data['yield'] / 100);
-
+                $price = preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
+                $data['unit_price'] = $price / $data['portions_per_unit'];
+                $yield = preg_replace('/[^\d.]/', '', $data['yield']); // Eliminar símbolos no numéricos
+                $data['adjusted_price'] = $data['unit_price'] / ($yield / 100);
                 $data['business_id'] = $business->id;
                 $data['quantity'] = 0;
 
                 /// extract category id
                 $data['category_id'] = explode(' - ', $data['category_id'])[0];
                 $data['category_id'] = trim($data['category_id']);
-
                 /// check if category exists
                 $category = Category::find()
                     ->where([
-                        'key_prefix' => $data['category_id'],
+                        'name' => $data['category_id'],
                     ])
                     ->andWhere([
                         'or',
@@ -291,7 +341,6 @@ class ExcelHelper
                         ['business_id' => null]
                     ])
                     ->one();
-
                 if(empty($category)){
                     throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
                 }
@@ -299,7 +348,8 @@ class ExcelHelper
                 $data['category_id'] = $category->id;
 
                 $ingredientData[] = $data;
-
+                $test[] = $data;
+                
             }
 
             $rowIterator->next();
@@ -501,7 +551,7 @@ class ExcelHelper
             $activeWorksheet->setCellValue("C$currentRow", $ingredient->category->name);
             $activeWorksheet->setCellValue("D$currentRow", $ingredient->um);
             $activeWorksheet->setCellValue("E$currentRow", $ingredient->portion_um);
-            $activeWorksheet->setCellValue("F$currentRow", "{$ingredient->yield}%");
+            $activeWorksheet->setCellValue("F$currentRow", $ingredient->yield);
             $activeWorksheet->setCellValue("G$currentRow", $ingredient->portions_per_unit);
             $activeWorksheet->setCellValue("H$currentRow", $ingredient->observations);
             $activeWorksheet->setCellValue("I$currentRow", $business->getFormatter()->asCurrency($ingredient->lastPrice));
