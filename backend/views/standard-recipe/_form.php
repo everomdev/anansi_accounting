@@ -60,7 +60,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?php if (!$model->isNewRecord): ?>
                         <?= $form->field($model, 'title', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                        ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                        ])->textInput(['id' => 'title-input'])->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
@@ -82,12 +82,14 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]), 'name', 'name'))->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
+                    <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
                     <?= $form->field($model, 'is_food')->widget(\kartik\switchinput\SwitchInput::class, [
                         'pluginOptions' => [
                             'onText' => "Alimentos",
                             'offText' => "Bebidas"
                         ]
                     ])->label("Alimentos o bebidas?") ?>
+                    <?php endif; ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
                     <?= $form->field($model, 'portions', [
@@ -104,7 +106,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'price', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div></div></div>"
-                        ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                        ])->textInput(['id' => 'price-input'])->label(null, ['class' => 'col-sm-3 text-start']) ?>
                         <div class="row mb-3">
                             <div class="col-sm-3 text-start">
                                 <?= Yii::t('app', "Cost") ?>
@@ -124,10 +126,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             </div>
                         </div>
                     <?php endif; ?>
-
-
                 </div>
-
             </div>
             <?= $this->render('create/_ingredients_selection', [
                 'model' => $model
@@ -214,7 +213,6 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
 
 <?php
 
-
 \yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Add ingredient or sub-recipe'),
     'id' => 'modal-add-ingredient']);
 
@@ -224,7 +222,6 @@ echo "<div id='container-form-ingredient'></div>";
 
 ?>
 <?php
-
 
 \yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Modify ingredient or sub-recipe'),
     'id' => 'modal-update-ingredient']);
@@ -256,3 +253,73 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
 
 \yii\bootstrap5\Modal::end();
 ?>
+
+<script>
+    document.getElementById('title-input').addEventListener('blur', function (e) {
+    const value = e.target.value;
+    const businessId = '<?= $business['id'] ?>'; // Assuming $business['id'] contains the business ID
+    const type = '<?= $model->type ?>'; // Assuming $model->type contains the recipe type
+    console.log('Business ID:'); // Log the business ID
+    if (value) {
+        console.log('Checking title...', value); // Log the title value
+
+        // Create a FormData object and append the data
+        const formData = new FormData();
+        formData.append('title', value);
+        formData.append('business_id', businessId);
+        formData.append('type', type);
+
+        fetch('<?= \yii\helpers\Url::to(['standard-recipe/check-title']) ?>', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>'
+            },
+            body: formData
+        })
+        .then(response => {
+            console.log('Response status:', response.status); // Log the response status
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data); // Log the response data
+            if (data.exists) {
+                const errorElement = document.createElement('div');
+                errorElement.className = 'invalid-feedback';
+                errorElement.innerText = 'El nombre de la receta ya está en uso. Por favor, elige otro.';
+                e.target.classList.add('is-invalid');
+                e.target.parentNode.appendChild(errorElement);
+                e.target.value = '';
+            } else {
+                e.target.classList.remove('is-invalid');
+                const errorElement = e.target.parentNode.querySelector('.invalid-feedback');
+                if (errorElement) {
+                    errorElement.remove();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error); // Log any errors
+        });
+    }
+});
+document.getElementById('price-input').addEventListener('input', function (e) {
+    const value = e.target.value;
+    const regex = /^\d+(\.\d{1,2})?$/;
+
+    if (!regex.test(value)) {
+        const errorElement = document.createElement('div');
+        errorElement.className = 'invalid-feedback';
+        errorElement.innerText = 'Por favor, ingresa un valor numérico válido (por ejemplo, 10.00).';
+        e.target.classList.add('is-invalid');
+        e.target.parentNode.appendChild(errorElement);
+    } else {
+        e.target.classList.remove('is-invalid');
+        const errorElement = e.target.parentNode.querySelector('.invalid-feedback');
+        if (errorElement) {
+            errorElement.remove();
+        }
+    }
+});
+
+
+</script>

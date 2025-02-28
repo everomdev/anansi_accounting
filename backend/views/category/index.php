@@ -8,7 +8,7 @@ use yii\widgets\Pjax;
 /* @var $searchModel common\models\CategorySearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = Yii::t('app', 'Categories');
+$this->title = Yii::t('app', 'Familias de insumo');
 $this->params['breadcrumbs'][] = $this->title;
 
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
@@ -21,7 +21,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/category/index.js"), [
 <div class="category-index">
 
     <p>
-        <?= Html::a(Yii::t('app', 'Create Category'), ['create'], [
+        <?= Html::a(Yii::t('app', 'Create Family'), ['create'], [
             'class' => 'btn btn-success',
             'id' => 'create-category'
         ]) ?>

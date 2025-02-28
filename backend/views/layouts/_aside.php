@@ -65,7 +65,7 @@ if($currentControllerId == 'standard-recipe'){
         <?php if (Yii::$app->user->can('ingredients_list')): ?>
             <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
                 <a href="<?= \yii\helpers\Url::to(['category/index']) ?>" class="menu-link">
-                    <div><?= Yii::t('app', 'Categories') ?></div>
+                    <div><?= Yii::t('app', 'Familias de insumos') ?></div>
                 </a>
             </li>
         <?php endif; ?>

@@ -65,7 +65,8 @@ class StandardRecipeController extends Controller
                             'form-select-ingredient',
                             'select-ingredients',
                             'unselect-ingredient',
-                            'duplicate-recipes'
+                            'duplicate-recipes',
+                            'ckeck-title'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -82,7 +83,8 @@ class StandardRecipeController extends Controller
                             'form-select-ingredient',
                             'select-ingredients',
                             'unselect-ingredient',
-                            'update-selected-ingredient'
+                            'update-selected-ingredient',
+                            'check-title'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -322,7 +324,6 @@ class StandardRecipeController extends Controller
         if (array_key_exists('ajax', $post)) {
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
-
         if ($model->load($post) && $model->save()) {
             return $this->redirect(Url::previous('index-recipe'));
             if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN) {
@@ -882,5 +883,17 @@ class StandardRecipeController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
+    }
+    public function actionCheckTitle()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $title = Yii::$app->request->post('title');
+        $businessId = Yii::$app->request->post('business_id');
+        $type = Yii::$app->request->post('type');
+        $exists = StandardRecipe::find()
+            ->where(['title' => $title, 'business_id' => $businessId, 'type' => $type])
+            ->exists();
+    
+        return ['exists' => $exists];
     }
 }

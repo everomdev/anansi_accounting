@@ -98,6 +98,7 @@ return [
     'Cost' => 'Costo',
     'Create Category Group' => 'Crear grupo de categorías',
     'Create Category' => 'Crear categoría',
+    'Create Family' => 'Crear familia',
     'Create Consumption Center' => 'Crear centro de consumo',
     'Create Convoy' => 'Crear convoy',
     'Create entry' => 'Crear entrada',
