@@ -279,11 +279,85 @@ class Plan extends \yii\db\ActiveRecord
         return sprintf("%s - $%s USD/mes o $%s USD/año - %s dias de prueba", $this->name, $this->monthly_price, $this->yearly_price, $this->trial_days);
     }
 
-    public function generateCheckoutSession(User $user, $priceId)
+    public function generateCheckoutSession(User $user, $priceId, $priceAmount, $coupon_id = null, $nickname = null)
     {
         try {
             /** @var UserPlan $userPlan */
             $userPlan = $user->userPlan;
+            $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+
+            // Definir los datos de la sesión de checkout
+            $sessionData = [
+                'success_url' => Url::toRoute(['payment/stripe-checkout-success', 'plan' => $this->id, 'user' => $user->id], true) . "&session_id={CHECKOUT_SESSION_ID}",
+                'cancel_url' => Url::toRoute(['payment/stripe-checkout-cancel', 'plan' => $this->id, 'user' => $user->id], true),
+                'customer' => $userPlan->stripe_customer_id,
+                'currency' => 'usd',
+                'line_items' => [],
+                'mode' => 'subscription',
+                'metadata' => $this->getAttributes(null, ['intro', 'description']),
+                'subscription_data' => [
+                    'metadata' => [
+                        "plan" => json_encode($this->getAttributes(null, ['intro', 'description'])),
+                        "user" => json_encode($user->getAttributes(['id', 'email']))
+                    ],
+                    'trial_period_days' => $this->trial_days // Días de prueba gratuita
+                ],
+                'automatic_tax' => [
+                    'enabled' => false // TODO: habilitar esto cuando se complete la cuenta en Stripe
+                ],
+                'billing_address_collection' => 'required', // Requerir dirección de facturación
+                'tax_id_collection' => [
+                    'enabled' => false // TODO: habilitar esto cuando se complete la cuenta en Stripe
+                ],
+                'locale' => 'en', // Idioma de la página de checkout
+                'customer_update' => [
+                    'name' => 'auto', // Actualizar automáticamente el nombre del cliente
+                    'address' => 'auto', // Actualizar automáticamente la dirección del cliente
+                ],
+            ];
+            // Agregar line_items según si hay un coupon_id o no
+            // die(var_dump($nickname));
+            if ($coupon_id) {
+                // die(var_dump($nickname));
+                $sessionData['line_items'][] = [
+                    'price_data' => [
+                        'currency' => 'usd', // Moneda del pago
+                        'product_data' => [
+                            'name' => 'Cupon de descuento', // Nombre del producto o servicio
+                        ],
+                        'unit_amount' => $priceAmount * 100, // Monto en centavos (por ejemplo, $50.00 = 5000) // Monto en centavos (por ejemplo, $100.00 = 10000)
+                        'recurring' => [
+                            'interval' => $nickname=='mes'?'month':'year', // Intervalo de facturación (puede ser 'day', 'week', 'month', 'year')
+                        ],
+                    ],
+                    'quantity' => 1, // Cantidad de unidades
+                ];
+            } else {
+                $sessionData['line_items'][] = [
+                    'price' => $priceId,
+                    'quantity' => 1
+                ];
+            }
+
+            // Crear la sesión de checkout en Stripe
+            $session = $stripe->checkout->sessions->create($sessionData);
+
+            return $session;
+        } catch (\Exception $e) {
+            // Registrar el error en los logs
+            Yii::error(Yaml::dump([
+                'message' => $e->getMessage(),
+                'trace' => $e->getTrace()
+            ]));
+        }
+
+        return null;
+    }
+    /*public function generateCheckoutSession(User $user, $priceId, $priceAmount)
+    {
+        try {*/
+            /** @var UserPlan $userPlan */
+            /*$userPlan = $user->userPlan;
             $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
             $sessionData = [
                 'success_url' => Url::toRoute(['payment/stripe-checkout-success', 'plan' => $this->id, 'user' => $user->id], true) . "&session_id={CHECKOUT_SESSION_ID}",
@@ -330,7 +404,98 @@ class Plan extends \yii\db\ActiveRecord
         }
 
         return null;
+    }*/
+    public function createManualSubscription(User $user, $coupon_id)
+    {
+        try {
+            $coupon = Coupon::findOne(['id' => $coupon_id]);
+            
+            if ($coupon) {
+                // Disminuir el quantity en 1
+                $newQuantity = max(0, $coupon->quantity - 1); // Asegúrate que no sea negativo
+                // Actualiza el valor en la base de datos
+                $updated = Yii::$app->db->createCommand()
+                    ->update('coupon', ['quantity' => $newQuantity], ['id' => $coupon_id])
+                    ->execute();
+            } else {
+                Yii::error('Cupón no encontrado en la base de datos con ID ' . $coupon_id);
+                return [
+                    'success' => false,
+                    'error' => 'Cupón no encontrado en la base de datos'
+                ];
+            }
+    
+            // Obtener la fecha de expiración del cupón
+            $expirationDate = $coupon->expiration;
+    
+            // Verificar si la fecha de expiración es válida
+            if (!empty($expirationDate)) {
+                $expirationTimestamp = strtotime($expirationDate); // Convertir a timestamp
+                if ($expirationTimestamp === false) {
+                    throw new \Exception("Fecha de expiración no válida.");
+                }
+            } else {
+                throw new \Exception("El cupón no tiene fecha de expiración.");
+            }
+    
+            $userPlan = $user->userPlan;
+            $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+            $freePriceId = $this->getFreePriceId($stripe);
+    
+            // Crear la suscripción gratuita con fecha de expiración
+            $subscription = $stripe->subscriptions->create([
+                'customer' => $userPlan->stripe_customer_id,
+                'items' => [['price' => $freePriceId]],
+                'metadata' => [
+                    'plan_id' => $this->id,
+                    'user_id' => $user->id
+                ],
+                'cancel_at' => $expirationTimestamp, // Establecer la fecha de expiración de la suscripción
+            ]);
+    
+            // Guardar en base de datos
+            $userPlan->stripe_subscription_id = $subscription->id;
+            $userPlan->stripe_subscription_status = $subscription->status;
+            $userPlan->save();
+    
+            return [
+                'success' => true,
+                'stripe_subscription_id' => $subscription->id,
+                'stripe_subscription_status' => $subscription->status,
+                'message' => 'Suscripción gratuita creada correctamente con fecha de expiración.'
+            ];
+        } catch (\Exception $e) {
+            Yii::error($e->getMessage());
+            return [
+                'success' => false,
+                'error' => 'Error al crear suscripción gratuita'
+            ];
+        }
     }
+    
+    private function getFreePriceId(\Stripe\StripeClient $stripe)
+{
+    try {
+        // Crear el producto
+        $product = $stripe->products->create([
+            'name' => 'Plan Gratuito',
+            'description' => 'Suscripción gratuita con 100% de descuento',
+        ]);
+    
+        // Crear el precio asociado al producto
+        $freePrice = $stripe->prices->create([
+            'currency' => 'usd',
+            'unit_amount' => 0,
+            'product' => $product->id,  // Asociamos el precio al producto creado
+            'recurring' => ['interval' => 'month']
+        ]);
+    } catch (\Stripe\Exception\ApiErrorException $e) {
+        // Capturar el error y mostrar el mensaje
+        die('Error al crear el precio: ' . $e->getMessage());
+    }
+
+    return $freePrice->id;
+}
 
     private function propagatePermissions()
     {

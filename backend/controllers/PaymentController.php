@@ -118,18 +118,44 @@ class PaymentController extends Controller
         }
     }
 
-    public function actionCreateCheckoutSession($price)
+    public function actionCreateCheckoutSession($price, $priceAmount, $coupon_id,$nickname)
     {
         $user = User::findOne(['id' => \Yii::$app->user->id]);
+        //die(var_dump($nickname));
+        if ($priceAmount > 0) {
+            $session = $user->plan->generateCheckoutSession($user, $price, $priceAmount, $coupon_id, $nickname);
+            if (empty($session)) {
+                \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
+                return $this->redirect(['site/enable-subscription']);
+            }
 
-        $session = $user->plan->generateCheckoutSession($user, $price);
+            return $this->redirect($session->url);
+        } 
+        if($priceAmount == 0 ){
+            $subscription = $user->plan->createManualSubscription($user,$coupon_id);
+            if (empty($subscription)) {
+                \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
+                return $this->redirect(['site/enable-subscription']);
+            }
 
+            // Guardar el ID de la suscripción y el estado en la base de datos
+           /* $userPlan = $user->userPlan;
+            $userPlan->stripe_subscription_id = $subscription->id;
+            $userPlan->stripe_subscription_status = $subscription->status;
+            $userPlan->save();*/
+
+            \Yii::$app->session->setFlash('success', "Subscription started");
+            return $this->redirect(['site/index']);
+        }
+
+        /* $session = $user->plan->generateCheckoutSession($user, $price, $priceAmount);
+        die(var_dump($session));
         if (empty($session)) {
             \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
             return $this->redirect(['site/enable-subscription']);
-        }
+        }*/
 
-        return $this->redirect($session->url);
+        // return $this->redirect($session->url);
     }
 
     public function actionStripeCheckoutSuccess($session_id, $plan, $user)

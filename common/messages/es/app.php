@@ -97,6 +97,8 @@ return [
     'Cost percent' => 'Porcentaje de costo',
     'Cost' => 'Costo',
     'Create Category Group' => 'Crear grupo de categorías',
+    'Create Coupons' => 'Crear códigos',
+    'Coupons' => 'Códigos',
     'Create Category' => 'Crear categoría',
     'Create Family' => 'Crear familia',
     'Create Consumption Center' => 'Crear centro de consumo',

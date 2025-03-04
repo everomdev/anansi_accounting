@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use common\models\Contact;
 use common\models\User;
+use common\models\Coupon;
 use Yii;
 use yii\bootstrap5\ActiveForm;
 use yii\web\Controller;
@@ -27,11 +28,11 @@ class SiteController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['login', 'error', 'comming-soon'],
+                        'actions' => ['login', 'error', 'comming-soon','check-coupon'],
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index', 'enable-subscription'],
+                        'actions' => ['logout', 'index', 'enable-subscription','check-coupon'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -139,5 +140,55 @@ class SiteController extends Controller
             'model' => $model
         ]);
     }
+    public function actionCheckCoupon()
+    {
+        $post = Yii::$app->request->post();
+        if (!isset($post['code']) || !isset($post['prices'])) {
+            throw new BadRequestHttpException();
+        }
+    
+        $coupon = Coupon::find()
+            ->where(['code' => $post['code']])
+            ->one();
+            //die(var_dump(!$coupon->getIsValid()));
+        if (!$coupon || !$coupon->getIsValid()) {
+            return $this->asJson([
+                'success' => false,
+                'discount' => false,
+                'error' => Yii::t('app', "Este cupón ya no esta disponible")
+            ]);
+        }
+        if (!$coupon) {
+            return $this->asJson([
+                'success' => false,
+                'discount' => false,
+                'error' => Yii::t('app', "Este cupón ya no esta disponible")
+            ]);
+        }
+    
+        $newPrices = [];
+    
+        foreach ($post['prices'] as $price) {
+            $discountedPrice = $coupon->applyDiscount($price, $coupon['type'], $coupon['discount']);
+            $newPrices[] = $discountedPrice;
+        }
+    
+        return $this->asJson([
+            'success' => true,
+            'new_price' => $newPrices,
+            'coupon_id' => $coupon['id'],
+            'error' => false,
+            'message' => Yii::t('app', "Cupón Válido!")
+        ]);
+    }
+    
+
+    /**
+     * Finds the Coupon model based on its primary key value.
+     * If the model is not found, a 404 HTTP exception will be thrown.
+     * @param integer $id
+     * @return Coupon the loaded model
+     * @throws NotFoundHttpException if the model cannot be found
+     */
 
 }
