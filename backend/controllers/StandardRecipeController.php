@@ -900,30 +900,38 @@ class StandardRecipeController extends Controller
     
         return ['exists' => $exists];
     }
-    public function actionDownloadRecipes()
+    public function actionDownloadRecipes($type)
     {
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $recipes = StandardRecipe::find()
             ->where([
                 'business_id' => $business['id'],
                 'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+                'type' => $type
             ])
             ->all();
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setCellValue('A1', 'Nombre');
-        $sheet->setCellValue('B1', 'Costo');
-        $sheet->setCellValue('C1', 'Precio de venta');
-        $sheet->setCellValue('D1', 'Porcentaje de costo');
+
+        if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $sheet->setCellValue('A1', 'Nombre');
+            $sheet->setCellValue('B1', 'Costo');
+            $sheet->setCellValue('C1', 'Precio de venta');
+            $sheet->setCellValue('D1', 'Porcentaje de costo');
+        } else {
+            $sheet->setCellValue('A1', 'Nombre');
+            $sheet->setCellValue('B1', 'Costo');
+        }
 
         $row = 2;
         foreach ($recipes as $recipe) {
             $sheet->setCellValue('A' . $row, $recipe->title);
             $sheet->setCellValue('B' . $row, number_format($recipe->recipeLastPrice, 2));
-            $sheet->setCellValue('C' . $row, $recipe->price);
-            $sheet->setCellValue('D' . $row, $recipe->costPercent/10);
+            if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+                $sheet->setCellValue('C' . $row, $recipe->price);
+                $sheet->setCellValue('D' . $row, $recipe->costPercent / 10);
+            }
             $row++;
         }
 
@@ -934,27 +942,34 @@ class StandardRecipeController extends Controller
 
         return Yii::$app->response->sendFile($tempFile, $fileName);
     }
-    public function actionDownloadRecipesPdf()
+
+    public function actionDownloadRecipesPdf($type)
     {
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $recipes = StandardRecipe::find()
             ->where([
                 'business_id' => $business['id'],
                 'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+                'type' => $type
             ])
             ->all();
 
-        $html = '<h1>Recetas</h1>';
+        $html = '<h1>' . ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Recetas' : 'Sub Recetas') . '</h1>';
         $html .= '<table border="1" cellpadding="5" cellspacing="0">';
-        $html .= '<tr><th>Nombre</th><th>Costo</th><th>Precio de venta</th><th>Porcentaje de costo</th></tr>';
+        $html .= '<tr><th>Nombre</th><th>Costo</th>';
+        if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $html .= '<th>Precio de venta</th><th>Porcentaje de costo</th>';
+        }
+        $html .= '</tr>';
 
         foreach ($recipes as $recipe) {
             $html .= '<tr>';
             $html .= '<td>' . $recipe->title . '</td>';
             $html .= '<td>' . number_format($recipe->recipeLastPrice, 2) . '</td>';
-            $html .= '<td>' . $recipe->price . '</td>';
-            $html .= '<td>' . $recipe->costPercent/10 . '</td>';
+            if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+                $html .= '<td>' . $recipe->price . '</td>';
+                $html .= '<td>' . $recipe->costPercent / 10 . '</td>';
+            }
             $html .= '</tr>';
         }
 
