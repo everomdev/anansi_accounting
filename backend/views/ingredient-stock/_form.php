@@ -1,9 +1,11 @@
 <?php
 
 use common\models\Category;
+use common\models\Provider;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
+use kartik\select2\Select2;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\IngredientStock */
@@ -29,6 +31,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $ums = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
 $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business['currency_code']));
+$providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id' => $business['id']])->all(), 'id', 'name');
 ?>
 
 <div class="ingredient-stock-form">
@@ -109,6 +112,16 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                         ]
                     )
                         ->textInput()->label("Factor de rendimiento") ?>
+                </div>
+                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 align-content-end">
+                    <?= $form->field($model, 'providers')->widget(Select2::class, [
+                        'data' => $providers,
+                        'options' => ['placeholder' => 'Selecciona proveedores...', 'multiple' => true],
+                        'pluginOptions' => [
+                            'maximumSelectionLength' => 5,
+                            'allowClear' => true
+                        ],
+                    ])->label("Proveedores") ?>
                 </div>
                 <div class="col-12">
                     <?= $form->field($model, 'observations')->textarea(['rows' => 6]) ?>

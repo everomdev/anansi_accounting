@@ -41,7 +41,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'cost_percent_last_price',
                 'label' => "Porcentaje de costo último precio",
                 'value' => function ($data) {
-                    return sprintf("%s %%", $data->cost_percent_last_price);
+                    return sprintf("%s %%", $data->cost_percent_last_price*100);
                 },
             ],
             [
