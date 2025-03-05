@@ -66,7 +66,9 @@ class StandardRecipeController extends Controller
                             'select-ingredients',
                             'unselect-ingredient',
                             'duplicate-recipes',
-                            'ckeck-title'
+                            'ckeck-title',
+                            'download-recipes',
+                            'download-recipes-pdf'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -84,7 +86,9 @@ class StandardRecipeController extends Controller
                             'select-ingredients',
                             'unselect-ingredient',
                             'update-selected-ingredient',
-                            'check-title'
+                            'check-title',
+                            'download-recipes',
+                            'download-recipes-pdf'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -895,5 +899,75 @@ class StandardRecipeController extends Controller
             ->exists();
     
         return ['exists' => $exists];
+    }
+    public function actionDownloadRecipes()
+    {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $recipes = StandardRecipe::find()
+            ->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+            ])
+            ->all();
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setCellValue('A1', 'Nombre');
+        $sheet->setCellValue('B1', 'Costo');
+        $sheet->setCellValue('C1', 'Precio de venta');
+        $sheet->setCellValue('D1', 'Porcentaje de costo');
+
+        $row = 2;
+        foreach ($recipes as $recipe) {
+            $sheet->setCellValue('A' . $row, $recipe->title);
+            $sheet->setCellValue('B' . $row, number_format($recipe->recipeLastPrice, 2));
+            $sheet->setCellValue('C' . $row, $recipe->price);
+            $sheet->setCellValue('D' . $row, $recipe->costPercent/10);
+            $row++;
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = 'recipes.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $writer->save($tempFile);
+
+        return Yii::$app->response->sendFile($tempFile, $fileName);
+    }
+    public function actionDownloadRecipesPdf()
+    {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $recipes = StandardRecipe::find()
+            ->where([
+                'business_id' => $business['id'],
+                'in_construction' => 0,
+                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+            ])
+            ->all();
+
+        $html = '<h1>Recetas</h1>';
+        $html .= '<table border="1" cellpadding="5" cellspacing="0">';
+        $html .= '<tr><th>Nombre</th><th>Costo</th><th>Precio de venta</th><th>Porcentaje de costo</th></tr>';
+
+        foreach ($recipes as $recipe) {
+            $html .= '<tr>';
+            $html .= '<td>' . $recipe->title . '</td>';
+            $html .= '<td>' . number_format($recipe->recipeLastPrice, 2) . '</td>';
+            $html .= '<td>' . $recipe->price . '</td>';
+            $html .= '<td>' . $recipe->costPercent/10 . '</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</table>';
+
+        $mpdf = new \Mpdf\Mpdf([
+            'tempDir' => Yii::getAlias('@runtime/mpdf')
+        ]);
+        $mpdf->WriteHTML($html);
+        $fileName = 'recipes.pdf';
+        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $mpdf->Output($tempFile, \Mpdf\Output\Destination::FILE);
+
+        return Yii::$app->response->sendFile($tempFile, $fileName);
     }
 }
