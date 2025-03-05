@@ -7,6 +7,8 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
     public $name;
     public $businessName;
     public $planId;
+    public $couponCode; // Añadir el atributo couponCode
+
     public function rules()
     {
         return array_merge(
@@ -15,6 +17,7 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
                 [['name', 'businessName'], 'required'],
                 [['name', 'businessName'], 'string'],
                 [['planId'], 'integer'],
+                [['couponCode'], 'string'], // Añadir la regla de validación para couponCode
             ]
         );
     }
@@ -27,6 +30,7 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
                 'name' => \Yii::t('app', "Your name"),
                 'businessName' => \Yii::t('app', "Your business name"),
                 'planId' => \Yii::t('app', "Select plan"),
+                'couponCode' => \Yii::t('app', "Enter coupon code"), // Añadir la etiqueta para couponCode
             ]
         );
     }

@@ -138,24 +138,9 @@ class PaymentController extends Controller
                 return $this->redirect(['site/enable-subscription']);
             }
 
-            // Guardar el ID de la suscripción y el estado en la base de datos
-           /* $userPlan = $user->userPlan;
-            $userPlan->stripe_subscription_id = $subscription->id;
-            $userPlan->stripe_subscription_status = $subscription->status;
-            $userPlan->save();*/
-
             \Yii::$app->session->setFlash('success', "Subscription started");
             return $this->redirect(['site/index']);
         }
-
-        /* $session = $user->plan->generateCheckoutSession($user, $price, $priceAmount);
-        die(var_dump($session));
-        if (empty($session)) {
-            \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
-            return $this->redirect(['site/enable-subscription']);
-        }*/
-
-        // return $this->redirect($session->url);
     }
 
     public function actionStripeCheckoutSuccess($session_id, $plan, $user)

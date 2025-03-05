@@ -18,9 +18,14 @@ use yii\db\Query;
  * @property float|null $portions_per_unit
  * @property string|null $portion_um
  * @property string|null $observations
+ * @property string $key [varchar(255)]
+ * @property float $final_quantity [float]
+ * @property int $category_id [int]
+ * @property string[] $providers
  *
  * @property Business $business
  * @property Purchase[] $purchases
+ * @property StockPrice[] $stockPrices
  * @property-read float $higherPrice
  * @property-read float $lastPrice
  * @property-read mixed $avgUnitPrice
@@ -28,12 +33,8 @@ use yii\db\Query;
  * @property-read mixed $label
  * @property-read mixed $avgPrice
  * @property-read float $higherUnitPrice
- * @property StockPrice[] $stockPrices
- * @property float $final_quantity [float]
- * @property int $category_id [int]
- * @property-read mixed $category
- * @property string $key [varchar(255)]
  * @property-read mixed $valueInMoney
+ * @property-read mixed $category
  */
 class IngredientStock extends \yii\db\ActiveRecord
 {
@@ -43,6 +44,7 @@ class IngredientStock extends \yii\db\ActiveRecord
     public $price;
     public $adjustedPrice;
     public $_key;
+    public $providers = [];
 
     /**
      * {@inheritdoc}
@@ -69,24 +71,19 @@ class IngredientStock extends \yii\db\ActiveRecord
     {
         return [
             [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key'], 'required'],
-            [['business_id'], 'integer'],
+            [['business_id', 'category_id'], 'integer'],
             [['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'price', 'adjustedPrice'], 'number'],
             [['observations', '_category', 'key'], 'string'],
             [['ingredient', 'um', 'portion_um'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient', 'um', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'um', 'business_id'], 'message' => Yii::t('app', "You already have registered this ingredient ({value})")],
-            [['category_id'], 'integer'],
             [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['ingredient', '_category', 'observations'], 'filter', 'filter' => 'trim'],
             [['key'], 'unique', 'targetAttribute' => ['key', 'business_id'], 'message' => Yii::t('app', "You already have registered this key ({value})")],
+            [['providers'], 'each', 'rule' => ['integer']],
         ];
     }
 
-
-
-    /**
-     * {@inheritdoc}
-     */
     public function attributeLabels()
     {
         return [
@@ -105,6 +102,7 @@ class IngredientStock extends \yii\db\ActiveRecord
             'category_id' => Yii::t('app', "Category"),
             'price' => Yii::t('app', "Purchase Price"),
             'adjustedPrice' => Yii::t('app', "Adjusted Price"),
+            'providers' => Yii::t('app', "Proveedores"),
         ];
     }
 
@@ -137,8 +135,6 @@ class IngredientStock extends \yii\db\ActiveRecord
         }
         $this->_key = $this->key;
 
-//        $this->saveCategory();
-
         return true;
     }
 
@@ -165,8 +161,8 @@ class IngredientStock extends \yii\db\ActiveRecord
             ]);
             $stockPrice->save(false);
         }
-        if(!$insert){
-            if($this->price != $this->_oldPrice || $this->adjustedPrice != $this->_oldAdjustedPrice){
+        if (!$insert) {
+            if ($this->price != $this->_oldPrice || $this->adjustedPrice != $this->_oldAdjustedPrice) {
                 $stockPrice = new StockPrice([
                     'stock_id' => $this->id,
                     'price' => $this->price,
@@ -177,65 +173,39 @@ class IngredientStock extends \yii\db\ActiveRecord
                 $stockPrice->save(false);
             }
         }
-    }
 
-    private function saveCategory()
-    {
-        $category = Category::findOne(['name' => $this->_category]);
-
-        if (empty($category)) {
-            $category = new Category([
-                'name' => $this->_category,
-                'business_id' => $this->business_id
-            ]);
-            $category->save();
+        // Save providers
+        $this->unlinkAll('providers', true);
+        foreach ($this->providers as $providerId) {
+            $provider = Provider::findOne($providerId);
+            if ($provider) {
+                $this->link('providers', $provider);
+            }
         }
-
-        $this->category_id = $category->id;
-
     }
 
-    public function addPrice(Movement $movement)
+    public function afterFind()
     {
-        $stockPrice = new StockPrice([
-            'stock_id' => $this->id,
-            'date' => date('Y-m-d', strtotime($movement->created_at)),
-            'price' => $movement->amount,
-            'unit_price' => $movement->unit_price,
-            'unit_price_yield' => round(
-                ((($movement->amount / $movement->quantity) / $this->yield) / $this->portions_per_unit),
-                2
-            )
-        ]);
-
-        $stockPrice->save();
+        parent::afterFind();
+        $this->providers = $this->getProviders()->select('id')->column();
     }
 
-    /**
-     * Gets query for [[Business]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
+    public function getProviders()
+    {
+        return $this->hasMany(Provider::class, ['id' => 'provider_id'])
+            ->viaTable('ingredient_provider', ['ingredient_id' => 'id']);
+    }
+
     public function getBusiness()
     {
         return $this->hasOne(Business::className(), ['id' => 'business_id']);
     }
 
-    /**
-     * Gets query for [[Purchases]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
     public function getPurchases()
     {
         return $this->hasMany(Purchase::className(), ['stock_id' => 'id']);
     }
 
-    /**
-     * Gets query for [[StockPrices]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
     public function getStockPrices()
     {
         return $this->hasMany(StockPrice::className(), ['stock_id' => 'id']);
@@ -326,13 +296,4 @@ class IngredientStock extends \yii\db\ActiveRecord
     {
         return $this->ingredient;
     }
-
-    public function getProviders()
-    {
-        return $this->hasMany(Provider::class, ['name' => 'provider'])
-            ->viaTable('movement', ['ingredient_id' => 'id'], function($query){
-                $query->andWhere(['movement.type' => Movement::TYPE_INPUT]);
-            });
-    }
-
 }

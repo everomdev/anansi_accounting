@@ -13,14 +13,14 @@ $this->params['breadcrumbs'][] = $this->title;
 $emptyMessage = Yii::t('app', "Select some recipe to know the theoretical yield");
 $message = Yii::t('app', "The theoretical yield is: ");
 
-
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+
 ?>
 <div class="standard-recipe-index">
 
     <h4 class="alert alert-warning"
-        id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->getFormatter()->asPercent($totalCost, 2)) ?></h4>
+        id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->getFormatter()->asPercent(0, 2)) ?></h4>
     <div class="card">
         <div class="card-body">
             <?= \yii\bootstrap5\Html::textInput('search-box', null, ['class' => 'form-control', 'placeholder' => 'Buscar']) ?>
@@ -34,9 +34,22 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     </thead>
                     <tbody>
                     <?php foreach ($data as $category): ?>
+                        <?php
+                        $totalCostPercent = 0;
+                        $totalCostCombo = 0;
+                        $recipeCount = count($category['recipes']);
+                        $recipeCount += count($category['combos']);
+                        foreach ($category['recipes'] as $recipe) {
+                            $totalCostPercent += $recipe->costPercent;
+                        }
+                        foreach ($category['combos'] as $combo) {
+                            $totalCostPercent += $combo->costPercent;
+                        }
+                        $averageCostPercent = $recipeCount > 0 ? $totalCostPercent / $recipeCount : 0;
+                        ?>
                         <tr class="bg-secondary text-white ">
                             <td colspan="5" class="text-center"
-                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->getFormatter()->asPercent($category['category']->cpr, 2)) ?></td>
+                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->getFormatter()->asPercent($averageCostPercent, 2)) ?></td>
                         </tr>
                         <?php foreach ($category['recipes'] as $recipe): ?>
                             <tr>
@@ -60,38 +73,6 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             </div>
         </div>
     </div>
-    <!--    --><?php //= GridView::widget([
-    //        'id' => 'grid-theoretical-yield',
-    //        'dataProvider' => $dataProvider,
-    //        'filterModel' => $searchModel,
-    //        'formatter' => [
-    //            'class' => \yii\i18n\Formatter::class,
-    //            'currencyCode' => 'usd',
-    //        ],
-    //        'columns' => [
-    //            ['class' => 'yii\grid\SerialColumn'],
-    //            [
-    //                'class' => \yii\grid\CheckboxColumn::class,
-    //                'checkboxOptions' => function ($model, $key, $index, $column) {
-    //                    return ['value' => $model->costPercent];
-    //                }
-    //            ],
-    //            'title',
-    //            [
-    //                'attribute' => 'recipeLastPrice',
-    //                'format' => 'currency',
-    //                'label' => Yii::t('app', 'Cost')
-    //            ],
-    //            'price:currency',
-    //            'costPercent:percent',
-    //            [
-    //                'class' => 'yii\grid\ActionColumn',
-    //                'template' => "{update} {delete}"
-    //            ],
-    //        ],
-    //    ]); ?>
-
-
 </div>
 <?php
 $js = <<< JS
@@ -117,6 +98,7 @@ function computeCost(){
     });
     
     let costPercent = (costs / total * 100).toFixed(2);
+    
     if(!isNaN(costPercent)){
         $("#theoretical-yield-message").html(`${message}` + costPercent + ' %');
     }else{
