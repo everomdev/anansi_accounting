@@ -214,6 +214,7 @@ return [
     'Payment Type' => 'Tipo de pago',
     'PDF' => 'PDF',
     'Period' => 'Período',
+    'Percentage'=> 'Porcentaje',
     'Phone' => 'Teléfono',
     'Pictures' => '@@Imágenes@@',
     'Plan & Billing' => 'Plan y facturación',

@@ -60,9 +60,9 @@ class Coupon extends \yii\db\ActiveRecord
             'id' => Yii::t('app', 'ID'),
             'name' => Yii::t('app', 'Name'),
             'code' => Yii::t('app', 'Code'),
-            'discount' => Yii::t('app', 'Discount'),
+            'discount' => Yii::t('app', 'Descuento'),
             'quantity' => Yii::t('app', 'Quantity'),
-            'expiration' => Yii::t('app', 'Expiration'),
+            'expiration' => Yii::t('app', 'Fecha de expiración'),
             'type' => Yii::t('app', 'Type'),
             'gratitude' => Yii::t('app', 'Gratitude')
         ];
