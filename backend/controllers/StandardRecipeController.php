@@ -938,10 +938,10 @@ class StandardRecipeController extends Controller
         $row = 2;
         foreach ($recipes as $recipe) {
             $sheet->setCellValue('A' . $row, $recipe->title);
-            $sheet->setCellValue('B' . $row, number_format($recipe->recipeLastPrice, 2));
+            $sheet->setCellValue('B' . $row, '$' . number_format($recipe->recipeLastPrice, 2));
             if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-                $sheet->setCellValue('C' . $row, $recipe->price);
-                $sheet->setCellValue('D' . $row, $recipe->costPercent / 10);
+                $sheet->setCellValue('C' . $row, '$' . $recipe->price);
+                $sheet->setCellValue('D' . $row, $recipe->costPercent . '%');
             }
             $row++;
         }
