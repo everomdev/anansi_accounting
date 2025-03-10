@@ -6,6 +6,7 @@ use yii\grid\GridView;
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\StandardRecipeSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $ingredientCount array */
 
 $this->title = Yii::t('app', "Sub recipes");
 $this->params['breadcrumbs'][] = $this->title;
@@ -44,6 +45,26 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
                 'attribute' => 'custom_cost',
                 'format' => 'currency',
                 'label' => "Costo"
+            ],
+            [
+                'attribute' => 'ingredientCount',
+                'label' => 'Cantidad<br>Ingredientes',
+                'value' => function ($model) use ($ingredientCount) {
+                    return $ingredientCount[$model->id]['ingredientCount'] ?? 0;
+                },
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'subRecipeCount',
+                'label' => 'Cantidad<br>Recetas',
+                'value' => function ($model) use ($ingredientCount) {
+                    return $ingredientCount[$model->id]['subRecipeCount'] ?? 0;
+                },
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
 
 //            'costPercent:percent',

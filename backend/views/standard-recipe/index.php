@@ -6,6 +6,7 @@ use yii\grid\GridView;
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\StandardRecipeSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
+/* @vae $ingredientCount array */
 
 $this->title = 'Recetas Estándar';
 $this->params['breadcrumbs'][] = $this->title;
@@ -43,12 +44,38 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
             [
                 'attribute' => 'price',
                 'format' => 'currency',
-                'label' => "Precio de venta"
+                'label' => "Precio de<br>venta",
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'attribute' => 'costPercent',
                 'format' => 'percent',
-                'label' => "Porcentaje de costo"
+                'label' => "Porcentaje<br>de costo",
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'ingredientCount',
+                'label' => 'Cantidad<br>Ingredientes',
+                'value' => function ($model) use ($ingredientCount) {
+                    return $ingredientCount[$model->id]['ingredientCount'] ?? 0;
+                },
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'subRecipeCount',
+                'label' => 'Cantidad<br>SubRecetas',
+                'value' => function ($model) use ($ingredientCount) {
+                    return $ingredientCount[$model->id]['sub_recipe'] ?? 0;
+                },
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',

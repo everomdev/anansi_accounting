@@ -211,6 +211,13 @@ class StandardRecipe extends \yii\db\ActiveRecord
     {
         return $this->hasMany(IngredientStandardRecipe::class, ['standard_recipe_id' => 'id']);
     }
+    public function getIngredientRelationsSub()
+    {
+        return $this->hasMany(IngredientStandardRecipe::class, ['standard_recipe_id' => 'id'])
+            ->innerJoinWith('standardRecipe', function ($query) {
+                $query->andWhere(['standard_recipe.type' => self::STANDARD_RECIPE_TYPE_SUB]);
+            });
+    }
 
     public function getSubStandardRecipes()
     {
@@ -218,6 +225,13 @@ class StandardRecipe extends \yii\db\ActiveRecord
             ->innerJoin('standard_recipe_sub_standard_recipe', 'standard_recipe_sub_standard_recipe.sub_standard_recipe_id=standard_recipe.id')
             ->where(['standard_recipe_sub_standard_recipe.standard_recipe_id' => $this->id])
             ->andWhere(['type' => self::STANDARD_RECIPE_TYPE_SUB]);
+    }
+
+    public function getSubRecipeCount()
+    {
+        return StandardRecipe::find()
+            ->innerJoin('standard_recipe_sub_standard_recipe', 'standard_recipe_sub_standard_recipe.standard_recipe_id=standard_recipe.id')
+            ->where(['standard_recipe_sub_standard_recipe.sub_standard_recipe_id' => $this->id]);
     }
 
     /**

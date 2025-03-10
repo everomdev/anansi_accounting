@@ -246,9 +246,18 @@ class StandardRecipeController extends Controller
             'in_construction' => 0,
             'type' => $type
         ]);
+        $ingredientCount = [];
+        $recipes = $dataProvider->getModels();
+        foreach ($recipes as $recipe) {
+            $ingredientCount[$recipe->id] = [
+                'ingredientCount' => $recipe->getIngredientRelations()->count(),
+                'sub_recipe' => $recipe->getSubStandardRecipes()->count(),
+            ];
+        }
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'ingredientCount' => $ingredientCount
         ]);
     }
 
@@ -967,10 +976,10 @@ class StandardRecipeController extends Controller
         foreach ($recipes as $recipe) {
             $html .= '<tr>';
             $html .= '<td>' . $recipe->title . '</td>';
-            $html .= '<td>' . number_format($recipe->recipeLastPrice, 2) . '</td>';
+            $html .= '<td>$' . number_format($recipe->recipeLastPrice, 2) . '</td>';
             if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-                $html .= '<td>' . $recipe->price . '</td>';
-                $html .= '<td>' . $recipe->costPercent / 10 . '</td>';
+                $html .= '<td>$' . $recipe->price . '</td>';
+                $html .= '<td>' . ($recipe->costPercent) . '%</td>';
             }
             $html .= '</tr>';
         }

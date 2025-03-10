@@ -7,7 +7,7 @@ use yii\widgets\Pjax;
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\IngredientStockSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
-/* @var $mio array */
+/* @var $count array */
 
 $this->title = Yii::t('app', 'Resources');
 $this->params['breadcrumbs'][] = $this->title;
@@ -117,8 +117,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             [
                 'attribute' => 'recipeCount',
                 'label' => Yii::t('app', 'Recetas'),
-                'value' => function ($model) use ($mio) {
-                    return $mio[$model->id]['recipes'] ?? 0;
+                'value' => function ($model) use ($count) {
+                    return $count[$model->id]['recipes'] ?? 0;
                 },
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
@@ -126,8 +126,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             [
                 'attribute' => 'subRecipeCount',
                 'label' => Yii::t('app', 'SubRecetas'),
-                'value' => function ($model) use ($mio) {
-                    return $mio[$model->id]['subRecipes'] ?? 0;
+                'value' => function ($model) use ($count) {
+                    return $count[$model->id]['subRecipes'] ?? 0;
                 },
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],

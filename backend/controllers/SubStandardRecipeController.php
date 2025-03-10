@@ -89,9 +89,18 @@ class SubStandardRecipeController extends Controller
             'in_construction' => 0,
             'type' => StandardRecipe::STANDARD_RECIPE_TYPE_SUB
         ]);
+        $ingredientCount = [];
+        $recipes = $dataProvider->getModels();
+        foreach ($recipes as $recipe) {
+            $ingredientCount[$recipe->id] = [
+                'ingredientCount' => $recipe->getIngredientRelationsSub()->count(),
+                'subRecipeCount' => $recipe->getSubRecipeCount()->count(),
+            ];
+        }
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'ingredientCount' => $ingredientCount,
         ]);
     }
 
