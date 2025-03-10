@@ -33,7 +33,13 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
             ['class' => 'yii\grid\SerialColumn'],
-            'title',
+            [
+                'attribute' => 'title',
+                'label' => Yii::t('app', 'Título'),
+                'value' => function ($model) {
+                    return $model->title . ' (' . $model->um . ')';
+                },
+            ],
             [
                 'attribute' => 'custom_cost',
                 'format' => 'currency',
