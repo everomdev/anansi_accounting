@@ -7,7 +7,7 @@ use yii\widgets\Pjax;
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\IngredientStockSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
-/* @var $mio array*/
+/* @var $mio array */
 
 $this->title = Yii::t('app', 'Resources');
 $this->params['breadcrumbs'][] = $this->title;
@@ -46,10 +46,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
                 'icon' => ""
             ]), ['ingredient-stock/bulk-remove', 'id' => $business->id], ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
         </div>
-
-
     </div>
-
 
     <?php Pjax::begin(['id' => 'ingredient-stock-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -64,8 +61,6 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             ['class' => 'yii\grid\SerialColumn'],
             'key',
             'ingredient',
-//            'quantity',
-//            'final_quantity',
             [
                 'attribute' => 'um',
                 'label' => 'Unidad<br>Compra',
@@ -73,27 +68,51 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             ],
             [
                 'attribute' => 'portions_per_unit',
-                'label' => 'EQ. U.M.<br>Cocina',
-                'encodeLabel' => false	
+                'label' => 'EQ. Uni.<br>Cocina',
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
-            'portion_um',
-            ['attribute' => 'yield', 'label' => "Factor de rendimiento", 'value' => function ($data) {
-                return sprintf('%s %%', $data->yield);
-            },],
+            [
+                'attribute' => 'portion_um',
+                'label' => 'Unidad<br>de Cocina',
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'yield',
+                'label' => "Factor de<br>rendimiento",
+                'value' => function ($data) {
+                    return sprintf('%s %%', $data->yield);
+                },
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
             [
                 'attribute' => 'lastUnitPrice',
                 'format' => 'currency',
-                'label' => 'Último precio'
+                'label' => 'Último<br>precio',
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'attribute' => 'avgUnitPrice',
                 'format' => 'currency',
-                'label' => 'Precio promedio'
+                'label' => 'Precio<br>promedio',
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'attribute' => 'higherUnitPrice',
                 'format' => 'currency',
-                'label' => 'Precio más alto'
+                'label' => 'Precio<br>más alto',
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'attribute' => 'recipeCount',
@@ -101,6 +120,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
                 'value' => function ($model) use ($mio) {
                     return $mio[$model->id]['recipes'] ?? 0;
                 },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'attribute' => 'subRecipeCount',
@@ -108,6 +129,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
                 'value' => function ($model) use ($mio) {
                     return $mio[$model->id]['subRecipes'] ?? 0;
                 },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
             ],
             //'observations:ntext',
 
