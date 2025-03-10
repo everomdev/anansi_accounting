@@ -7,6 +7,7 @@ use yii\widgets\Pjax;
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\IngredientStockSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $mio array*/
 
 $this->title = Yii::t('app', 'Resources');
 $this->params['breadcrumbs'][] = $this->title;
@@ -93,6 +94,20 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
                 'attribute' => 'higherUnitPrice',
                 'format' => 'currency',
                 'label' => 'Precio más alto'
+            ],
+            [
+                'attribute' => 'recipeCount',
+                'label' => Yii::t('app', 'Recetas'),
+                'value' => function ($model) use ($mio) {
+                    return $mio[$model->id]['recipes'] ?? 0;
+                },
+            ],
+            [
+                'attribute' => 'subRecipeCount',
+                'label' => Yii::t('app', 'SubRecetas'),
+                'value' => function ($model) use ($mio) {
+                    return $mio[$model->id]['subRecipes'] ?? 0;
+                },
             ],
             //'observations:ntext',
 

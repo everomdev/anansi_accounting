@@ -122,10 +122,18 @@ class IngredientStockController extends Controller
         $dataProvider->query->andWhere([
             'business_id' => $business['id']
         ]);
-
+        $mio = [];
+        $ingredients = $dataProvider->getModels();
+        foreach ($ingredients as $ingredient) {
+            $mio[$ingredient->id] = [
+                'recipes' => $ingredient->getRecipes()->count(),
+                'subRecipes' => $ingredient->getSubRecipes()->count(),
+            ];
+        }
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'mio' => $mio
         ]);
     }
 

@@ -296,4 +296,16 @@ class IngredientStock extends \yii\db\ActiveRecord
     {
         return $this->ingredient;
     }
+
+    public function getRecipes()
+    {
+        return $this->hasMany(IngredientStandardRecipe::class, ['ingredient_id' => 'id']);
+    }
+
+    public function getSubRecipes()
+    {
+        return $this->hasMany(IngredientStandardRecipe::class, ['ingredient_id' => 'id'])
+            ->innerJoinWith('standardRecipe')
+            ->andWhere(['standard_recipe.type' => 'sub']);
+    }
 }
