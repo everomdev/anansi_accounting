@@ -65,8 +65,16 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             'ingredient',
 //            'quantity',
 //            'final_quantity',
-            'um',
-            'portions_per_unit',
+            [
+                'attribute' => 'um',
+                'label' => 'Unidad<br>Compra',
+                'encodeLabel' => false
+            ],
+            [
+                'attribute' => 'portions_per_unit',
+                'label' => 'EQ. U.M.<br>Cocina',
+                'encodeLabel' => false	
+            ],
             'portion_um',
             ['attribute' => 'yield', 'label' => "Factor de rendimiento", 'value' => function ($data) {
                 return sprintf('%s %%', $data->yield);
