@@ -913,7 +913,19 @@ class StandardRecipeController extends Controller
     }
     public function actionDownloadRecipes($type)
     {
+        $id = Yii::$app->request->get();
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        if (count($id) > 1) {
+            $recipe_id = explode(',' ,$id['id']);
+            $recipes = StandardRecipe::find()
+                ->where([
+                    'business_id' => $business['id'],
+                    'in_construction' => 0,
+                    'type' => $type,
+                    'id' => $recipe_id
+                ])
+                ->all();
+        } else {
         $recipes = StandardRecipe::find()
             ->where([
                 'business_id' => $business['id'],
@@ -921,6 +933,7 @@ class StandardRecipeController extends Controller
                 'type' => $type
             ])
             ->all();
+        }
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -965,7 +978,19 @@ class StandardRecipeController extends Controller
 
     public function actionDownloadRecipesPdf($type)
     {
+        $id = Yii::$app->request->get();
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        if (count($id) > 1) {
+            $recipe_id = explode(',' ,$id['id']);
+            $recipes = StandardRecipe::find()
+                ->where([
+                    'business_id' => $business['id'],
+                    'in_construction' => 0,
+                    'type' => $type,
+                    'id' => $recipe_id
+                ])
+                ->all();
+        } else {
         $recipes = StandardRecipe::find()
             ->where([
                 'business_id' => $business['id'],
@@ -973,7 +998,8 @@ class StandardRecipeController extends Controller
                 'type' => $type
             ])
             ->all();
-
+        }
+        // die(var_dump($recipes));
         $html = '<h1>' . ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Recetas' : 'Sub Recetas') . '</h1>';
         $html .= '<table border="1" cellpadding="5" cellspacing="0">';
         $html .= '<tr><th>Nombre</th><th>Costo</th>';
@@ -998,6 +1024,7 @@ class StandardRecipeController extends Controller
         }
 
         $html .= '</table>';
+       // die(var_dump($post));
 
         $mpdf = new \Mpdf\Mpdf([
             'tempDir' => Yii::getAlias('@runtime/mpdf')
@@ -1010,207 +1037,216 @@ class StandardRecipeController extends Controller
         return Yii::$app->response->sendFile($tempFile, $fileName);
     }
     public function actionDownloadCompleteRecipePdf()
-    {
-        $get = Yii::$app->request->get();
-        $selectedRecipes = isset($get['id']) ? explode(',', $get['id']) : []; // Obtener los IDs de las recetas seleccionadas
-        $business = \backend\helpers\RedisKeys::getBusiness();
-        // Buscar todas las recetas seleccionadas
-        $recipes = StandardRecipe::find()->where(['id' => $selectedRecipes])->all();
-        if (empty($recipes)) {
-            throw new \yii\web\NotFoundHttpException('No se encontraron recetas seleccionadas.');
+{
+    $get = Yii::$app->request->get();
+    $selectedRecipes = isset($get['id']) ? explode(',', $get['id']) : []; // Obtener los IDs de las recetas seleccionadas
+    $business = \backend\helpers\RedisKeys::getBusiness();
+    // Buscar todas las recetas seleccionadas
+    $recipes = StandardRecipe::find()->where(['id' => $selectedRecipes])->all();
+    if (empty($recipes)) {
+        throw new \yii\web\NotFoundHttpException('No se encontraron recetas seleccionadas.');
+    }
+
+    $html = '';
+
+    foreach ($recipes as $recipe) {
+        // Título de la receta
+        $html .= '<h1>' . htmlspecialchars($recipe->title) . '</h1>';
+
+        // Contenedor de tabla para la imagen y los datos de la receta
+        $html .= '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">';
+        $html .= '<tr>';
+
+        // Columna izquierda: Datos de la receta (70% del ancho)
+        $html .= '<td width="40%" style="vertical-align: top; padding-right: 10px;">';
+        $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+        $html .= '<h3><strong>Tipo de receta:</strong> ' . htmlspecialchars($recipe->type_of_recipe ?? '') . '</h2>';
+        $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+        $html .= '<h3 style="margin-bottom: 15px"><strong>Tiempo de preparación:</strong> ' . htmlspecialchars($recipe->time_of_preparation ?? '') . '</h2>';
+        $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+        $html .= '<h3 style="margin-bottom: 15px"><strong>Rendimiento:</strong> ' . htmlspecialchars($recipe->yield ?? '') . ' ' . htmlspecialchars($recipe->yield_um ?? '') . '</h2>';
+        $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+        $html .= '<h3 style="margin-bottom: 15px"><strong>Porciones:</strong> ' . htmlspecialchars($recipe->portions ?? '') . '</h2>';
+        $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+        $html .= '<h3 style="margin-bottom: 15px"><strong>Duración:</strong> ' . htmlspecialchars($recipe->lifetime ?? '') . '</h2>';
+
+        // Si es receta principal, mostrar precios y costos
+        if ($recipe->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+            $html .= '<h3><strong>Precio:</strong> '.'$' . htmlspecialchars($recipe->price ?? '') . '</h2>';
+            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+            $html .= '<h3><strong>Costo:</strong> '.'$' . number_format((float)($recipe->lastPrice ?? 0), 2) . '</h2>';
+            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+            $html .= '<h3><strong>Costo %:</strong> ' . number_format((float)($recipe->costPercent ?? 0), 2) . '</h2>';
+            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
         }
+        $html .= '</td>'; // Cierre de la columna izquierda
 
-        $html = '';
-
-        foreach ($recipes as $recipe) {
-            // Título de la receta
-            $html .= '<h1>' . htmlspecialchars($recipe->title) . '</h1>';
-
-            // Contenedor de tabla para la imagen y los datos de la receta
-            $html .= '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">';
-            $html .= '<tr>';
-
-            // Columna izquierda: Datos de la receta (30% del ancho)
-            $html .= '<td width="70%" style="vertical-align: top; padding-right: 10px;">';
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-            $html .= '<h2><strong>Tipo de receta:</strong> ' . htmlspecialchars($recipe->type_of_recipe ?? '') . '</h2>';
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-            $html .= '<h2 style="margin-bottom: 15px"><strong>Tiempo de preparación:</strong> ' . htmlspecialchars($recipe->time_of_preparation ?? '') . '</h2>';
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-            $html .= '<h2 style="margin-bottom: 15px"><strong>Rendimiento:</strong> ' . htmlspecialchars($recipe->yield ?? '') . ' ' . htmlspecialchars($recipe->yield_um ?? '') . '</h2>';
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-            $html .= '<h2 style="margin-bottom: 15px"><strong>Porciones:</strong> ' . htmlspecialchars($recipe->portions ?? '') . '</h2>';
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-            $html .= '<h2 style="margin-bottom: 15px"><strong>Duración:</strong> ' . htmlspecialchars($recipe->lifetime ?? '') . '</h2>';
-
-            // Si es receta principal, mostrar precios y costos
-            if ($recipe->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-                $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-                $html .= '<h2><strong>Precio:</strong> '.'$' . htmlspecialchars($recipe->price ?? '') . '</h2>';
-                $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-                $html .= '<h2><strong>Costo:</strong> '.'$' . number_format((float)($recipe->lastPrice ?? 0), 2) . '</h2>';
-                $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-                $html .= '<h2><strong>Costo %:</strong> ' . number_format((float)($recipe->costPercent ?? 0), 2) . '</h2>';
-                $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-            }
-            $html .= '</td>'; // Cierre de la columna izquierda
-
-            // Columna derecha: Imagen principal (70% del ancho)
-            $html .= '<td width="30%" style="vertical-align: top; padding-left: 10px;">';
-            $images = $recipe->getImages();
-            if (!empty($images)) {
-                foreach ($images as $image) {
-                    if ($image['isMain'] == 1 && $image['filePath'] !== 'placeholder.svg') {
-                        $imagePath = Yii::getAlias('@web') . $image->getPath(); // Ruta relativa
-                        $imagePath1 = '/app/backend/web/' . $imagePath; // Ruta absoluta
-
-                        if (file_exists($imagePath1)) {
-                            // Obtener la extensión real de la imagen
-                            $imageExtension = pathinfo($imagePath1, PATHINFO_EXTENSION);
-                            $imageData = base64_encode(file_get_contents($imagePath1));
-                            $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
-
-                            // Agregar la imagen principal (a la derecha)
-                            $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; height: auto;" />';
-                            break; // Solo necesitamos la imagen principal
-                        }
-                    }
-                }
-            }
-            $html .= '</td>'; // Cierre de la columna derecha
-
-            $html .= '</tr>';
-            $html .= '</table>'; // Cierre de la tabla
-
-            // Agregar los ingredientes
-            $html .= '<h2>Ingredientes</h2>';
-            $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-            $html .= '<tr><th>INGREDIENTE</th><th>CANTIDAD</th><th>COSTO</th></tr>';
-            foreach ($recipe->ingredientRelations as $index => $ingredientStandardRecipe) {
-                $cost = $ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity;
-                $html .= '<tr>';
-                $html .= '<td>' . htmlspecialchars($ingredientStandardRecipe->ingredient->ingredient) . '</td>';
-                $html .= '<td>' . htmlspecialchars($ingredientStandardRecipe->quantity . ' ' . $ingredientStandardRecipe->ingredient->portion_um) . '</td>';
-                $html .= '<td>' . htmlspecialchars($business->formatter->asCurrency($cost)) . '</td>';
-                $html .= '</tr>';
-            }
-            $html .= '</table>';
-
-            // Separar los pasos en procedimientos y cuidados especiales
-            $steps = RecipeStep::find()->where(['recipe_id' => $recipe->id])->all();
-            $procedureSteps = [];
-            $specialSteps = [];
-            foreach ($steps as $step) {
-                if ($step->type === 'procedure') {
-                    $procedureSteps[] = $step;
-                } elseif ($step->type === 'special') {
-                    $specialSteps[] = $step;
-                }
-            }
-
-            // Procedimiento
-            $html .= '<h2>Procedimiento</h2>';
-            $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-            $html .= '<tr><th>#</th><th>ACTIVIDAD</th><th>TIEMPO</th><th>INDICADOR</th></tr>';
-            foreach ($procedureSteps as $step) {
-                $html .= '<tr>';
-                $html .= '<td>' . htmlspecialchars($step->number) . '</td>';
-                $html .= '<td>' . htmlspecialchars($step->activity) . '</td>';
-                $html .= '<td>' . htmlspecialchars($step->time ?? '') . '</td>';
-                $html .= '<td>' . htmlspecialchars($step->indicator ?? '') . '</td>';
-                $html .= '</tr>';
-            }
-                $html .= '</table>';
-            // Otras imágenes (no principales)
+        // Columna derecha: Imagen principal (30% del ancho)
+        $html .= '<td width="60%" style="vertical-align: top; padding-left: 10px;">';
+        $images = $recipe->getImages();
+        $mainImageFound = false;
+        if (!empty($images)) {
             foreach ($images as $image) {
-                if ($image['isMain'] != 1 && $image['filePath'] !== 'placeholder.svg') {
+                if ($image['isMain'] == 1 && $image['filePath'] !== 'placeholder.svg') {
                     $imagePath = Yii::getAlias('@web') . $image->getPath(); // Ruta relativa
                     $imagePath1 = '/app/backend/web/' . $imagePath; // Ruta absoluta
 
                     if (file_exists($imagePath1)) {
+                        // Obtener la extensión real de la imagen
                         $imageExtension = pathinfo($imagePath1, PATHINFO_EXTENSION);
                         $imageData = base64_encode(file_get_contents($imagePath1));
                         $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
 
-                        $html .= '<div style="text-align: center; margin-bottom: 20px;">';
-                        $html .= '<h3>Foto del procedimiento</h3>';
+                        // Agregar la imagen principal (a la derecha)
                         $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; height: auto;" />';
-                        $html .= '</div>';
+                        $mainImageFound = true;
+                        break; // Solo necesitamos la imagen principal
                     }
                 }
             }
-            // Cuidados y medidas especiales
-            $html .= '<h2>Cuidados y medidas especiales</h2>';
-            $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
-            $html .= '<tr><th>#</th><th>ACTIVIDAD</th><th>TIEMPO</th><th>INDICADOR</th></tr>';
-            foreach ($specialSteps as $step) {
-                $html .= '<tr>';
-                $html .= '<td>' . htmlspecialchars($step->number) . '</td>';
-                $html .= '<td>' . htmlspecialchars($step->activity) . '</td>';
-                $html .= '<td>' . htmlspecialchars($step->time ?? '') . '</td>';
-                $html .= '<td>' . htmlspecialchars($step->indicator ?? '') . '</td>';
-                $html .= '</tr>';
+        }
+        if (!$mainImageFound) {
+            // Agregar un contenedor vacío para la imagen principal
+            $html .= '<div style="width: 100%; height: 200px; border: 1px solid #ccc;"></div>';
+        }
+        $html .= '</td>'; // Cierre de la columna derecha
+
+        $html .= '</tr>';
+        $html .= '</table>'; // Cierre de la tabla
+        //die(var_dump($html));
+
+        // Agregar los ingredientes
+        $html .= '<h2>Ingredientes</h2>';
+        $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
+        $html .= '<tr><th>INGREDIENTE</th><th>CANTIDAD</th><th>COSTO</th></tr>';
+        foreach ($recipe->ingredientRelations as $index => $ingredientStandardRecipe) {
+            $cost = $ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity;
+            $html .= '<tr>';
+            $html .= '<td>' . htmlspecialchars($ingredientStandardRecipe->ingredient->ingredient) . '</td>';
+            $html .= '<td>' . htmlspecialchars($ingredientStandardRecipe->quantity . ' ' . $ingredientStandardRecipe->ingredient->portion_um) . '</td>';
+            $html .= '<td>' . htmlspecialchars($business->formatter->asCurrency($cost)) . '</td>';
+            $html .= '</tr>';
+        }
+        $html .= '</table>';
+
+        // Separar los pasos en procedimientos y cuidados especiales
+        $steps = RecipeStep::find()->where(['recipe_id' => $recipe->id])->all();
+        $procedureSteps = [];
+        $specialSteps = [];
+        foreach ($steps as $step) {
+            if ($step->type === 'procedure') {
+                $procedureSteps[] = $step;
+            } elseif ($step->type === 'special') {
+                $specialSteps[] = $step;
             }
-            $html .= '</table>';
-            // Alergies
-            $allergies = Yii::$app->params['allergies'];
-            $selectedAllergies = [];
-            $html .= '<h2>Alérgenos</h2>';
+        }
 
-            if (!empty($recipe->allergies)) {
-                $selectedAllergies = array_values(explode(";", trim($recipe->allergies)));
-                $allergies = array_unique(array_values(array_merge($allergies, $selectedAllergies)));
-            }
-            $html .= '<table style="width: 100%; border-collapse: collapse;">';
-            $html .= '<tr>'; // Fila de la tabla
+        // Procedimiento
+        $html .= '<h2>Procedimiento</h2>';
+        $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
+        $html .= '<tr><th>#</th><th>ACTIVIDAD</th><th>TIEMPO</th><th>INDICADOR</th></tr>';
+        foreach ($procedureSteps as $step) {
+            $html .= '<tr>';
+            $html .= '<td>' . htmlspecialchars($step->number) . '</td>';
+            $html .= '<td>' . htmlspecialchars($step->activity) . '</td>';
+            $html .= '<td>' . htmlspecialchars($step->time ?? '') . '</td>';
+            $html .= '<td>' . htmlspecialchars($step->indicator ?? '') . '</td>';
+            $html .= '</tr>';
+        }
+        $html .= '</table>';
 
-            foreach ($allergies as $index => $allergy) {
-                // Verificar si el alérgeno está seleccionado
-                $isChecked = in_array($allergy, $selectedAllergies);
+        // Otras imágenes (no principales)
+        foreach ($images as $image) {
+            if ($image['isMain'] != 1 && $image['filePath'] !== 'placeholder.svg') {
+                $imagePath = Yii::getAlias('@web') . $image->getPath(); // Ruta relativa
+                $imagePath1 = '/app/backend/web/' . $imagePath; // Ruta absoluta
 
-                // Usar un símbolo de checkbox marcado o desmarcado
-                $checkbox = $isChecked ? '☑' : '☐'; // ☑ = Marcado, ☐ = Desmarcado
+                if (file_exists($imagePath1)) {
+                    $imageExtension = pathinfo($imagePath1, PATHINFO_EXTENSION);
+                    $imageData = base64_encode(file_get_contents($imagePath1));
+                    $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
 
-                // Mostrar el alérgeno con el checkbox en una celda de la tabla
-                $html .= '<td style="padding: 5px; border: 1px solid #ccc;">' . $checkbox . ' ' . htmlspecialchars($allergy) . '</td>';
-
-                // Si hay 4 alérgenos en una fila, cerrar la fila y abrir una nueva
-                if (($index + 1) % 4 === 0) {
-                    $html .= '</tr><tr>'; // Cerrar fila y abrir una nueva
+                    $html .= '<div style="text-align: center; margin-bottom: 20px;">';
+                    $html .= '<h3>Foto del procedimiento</h3>';
+                    $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; height: auto;" />';
+                    $html .= '</div>';
                 }
             }
-            if (count($allergies) % 5 !== 0) {
-                $html .= '</tr>';
+        }
+
+        // Cuidados y medidas especiales
+        $html .= '<h2>Cuidados y medidas especiales</h2>';
+        $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
+        $html .= '<tr><th>#</th><th>ACTIVIDAD</th><th>TIEMPO</th><th>INDICADOR</th></tr>';
+        foreach ($specialSteps as $step) {
+            $html .= '<tr>';
+            $html .= '<td>' . htmlspecialchars($step->number) . '</td>';
+            $html .= '<td>' . htmlspecialchars($step->activity) . '</td>';
+            $html .= '<td>' . htmlspecialchars($step->time ?? '') . '</td>';
+            $html .= '<td>' . htmlspecialchars($step->indicator ?? '') . '</td>';
+            $html .= '</tr>';
+        }
+        $html .= '</table>';
+
+        // Alergies
+        $allergies = Yii::$app->params['allergies'];
+        $selectedAllergies = [];
+        $html .= '<h2>Alérgenos</h2>';
+
+        if (!empty($recipe->allergies)) {
+            $selectedAllergies = array_values(explode(";", trim($recipe->allergies)));
+            $allergies = array_unique(array_values(array_merge($allergies, $selectedAllergies)));
+        }
+        $html .= '<table style="width: 100%; border-collapse: collapse;">';
+        $html .= '<tr>'; // Fila de la tabla
+
+        foreach ($allergies as $index => $allergy) {
+            // Verificar si el alérgeno está seleccionado
+            $isChecked = in_array($allergy, $selectedAllergies);
+
+            // Usar un símbolo de checkbox marcado o desmarcado
+            $checkbox = $isChecked ? '☑' : '☐'; // ☑ = Marcado, ☐ = Desmarcado
+
+            // Mostrar el alérgeno con el checkbox en una celda de la tabla
+            $html .= '<td style="padding: 5px; border: 1px solid #ccc;">' . $checkbox . ' ' . htmlspecialchars($allergy) . '</td>';
+
+            // Si hay 4 alérgenos en una fila, cerrar la fila y abrir una nueva
+            if (($index + 1) % 4 === 0) {
+                $html .= '</tr><tr>'; // Cerrar fila y abrir una nueva
             }
-
-            $html .= '</table>'; // Cierre de la tabla
-            $html .= '<h2>Equipo</h2>';
-            $html .=  $recipe->equipment;
-
-
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+        }
+        if (count($allergies) % 5 !== 0) {
+            $html .= '</tr>';
         }
 
-        // Generar PDF
-        $mpdf = new \Mpdf\Mpdf([
-            'tempDir' => Yii::getAlias('@runtime/mpdf'),
-            'default_font' => 'dejavusans', // Usar una fuente compatible con UTF-8
-        ]);
+        $html .= '</table>'; // Cierre de la tabla
+        $html .= '<h2>Equipo</h2>';
+        $html .=  $recipe->equipment;
 
-        // Añadir CSS personalizado para asegurar que el diseño se mantenga
-        $stylesheet = '
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    ';
-        $mpdf->WriteHTML($stylesheet, \Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($html);
-
-        $fileName = 'Complete_Recipes.pdf';
-        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
-        $mpdf->Output($tempFile, \Mpdf\Output\Destination::FILE);
-
-        return Yii::$app->response->sendFile($tempFile, $fileName);
+        $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
     }
+
+    // Generar PDF
+    $mpdf = new \Mpdf\Mpdf([
+        'tempDir' => Yii::getAlias('@runtime/mpdf'),
+        'default_font' => 'dejavusans', // Usar una fuente compatible con UTF-8
+    ]);
+
+    // Añadir CSS personalizado para asegurar que el diseño se mantenga
+    $stylesheet = '
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+';
+    $mpdf->WriteHTML($stylesheet, \Mpdf\HTMLParserMode::HEADER_CSS);
+    $mpdf->WriteHTML($html);
+
+    $fileName = 'Complete_Recipes.pdf';
+    $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+    $mpdf->Output($tempFile, \Mpdf\Output\Destination::FILE);
+
+    return Yii::$app->response->sendFile($tempFile, $fileName);
+}
 }

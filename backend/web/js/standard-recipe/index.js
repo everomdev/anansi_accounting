@@ -17,12 +17,13 @@ $(document).on('click', '#btn-download-recipes', function(event) {
     var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
     console.log('Recetas seleccionadas:', selectedRecipes); // Depuración: Verificar los IDs seleccionados
 
-    // Verificar si hay recetas seleccionadas
+    // Verificar si hay recetas seleccionadassad
     if (selectedRecipes.length > 0) {
         var baseUrl = $(this).attr('href');
-
+        console.log(baseUrl);
+        
         // Construir la URL con los IDs de las recetas seleccionadas
-        var url = baseUrl + '?id=' + selectedRecipes.join(',');
+        var url = baseUrl + '&id=' + selectedRecipes.join(',');
         console.log('URL generada:', url); // Depuración: Verificar la URL generada
 
 
