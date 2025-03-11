@@ -930,9 +930,13 @@ class StandardRecipeController extends Controller
             $sheet->setCellValue('B1', 'Costo');
             $sheet->setCellValue('C1', 'Precio de venta');
             $sheet->setCellValue('D1', 'Porcentaje de costo');
+            $sheet->setCellValue('E1', 'Cantidad de ingredientes');
+            $sheet->setCellValue('F1', 'Cantidad de Sub-recetas');
         } else {
             $sheet->setCellValue('A1', 'Nombre');
             $sheet->setCellValue('B1', 'Costo');
+            $sheet->setCellValue('C1', 'Cantidad de ingredientes');
+            $sheet->setCellValue('D1', 'Cantidad de Recetas');
         }
 
         $row = 2;
@@ -941,7 +945,12 @@ class StandardRecipeController extends Controller
             $sheet->setCellValue('B' . $row, '$' . number_format($recipe->recipeLastPrice, 2));
             if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
                 $sheet->setCellValue('C' . $row, '$' . $recipe->price);
-                $sheet->setCellValue('D' . $row, $recipe->costPercent . '%');
+                $sheet->setCellValue('D' . $row, $recipe->costPercent*100 . '%');
+                $sheet->setCellValue('E' . $row, $recipe->getIngredientRelations()->count());
+                $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()->count());
+            } else {
+                $sheet->setCellValue('C' . $row, $recipe->getIngredientRelations()->count());
+                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()->count());
             }
             $row++;
         }
@@ -971,16 +980,20 @@ class StandardRecipeController extends Controller
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
             $html .= '<th>Precio de venta</th><th>Porcentaje de costo</th>';
         }
+        $html .= '<th>Cantidad de ingredientes</th>';
+        $type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? $html .= '<th>Cantidad de Sub-recetas</th>' : $html .= '<th>Cantidad de Recetas</th>';
         $html .= '</tr>';
 
         foreach ($recipes as $recipe) {
             $html .= '<tr>';
             $html .= '<td>' . $recipe->title . '</td>';
-            $html .= '<td>$' . number_format($recipe->recipeLastPrice, 2) . '</td>';
+            $html .= '<td style="text-align: center;">$' . number_format($recipe->recipeLastPrice, 2) . '</td>';
             if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-                $html .= '<td>$' . $recipe->price . '</td>';
-                $html .= '<td>' . ($recipe->costPercent) . '%</td>';
+            $html .= '<td style="text-align: center;">$' . $recipe->price . '</td>';
+            $html .= '<td style="text-align: center;">' . ($recipe->costPercent)*100 . '%</td>';
             }
+            $html .= '<td style="text-align: center;">' . $recipe->getIngredientRelations()->count() . '</td>';
+            $type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? $html .= '<td style="text-align: center;">' . $recipe->getSubStandardRecipes()->count() . '</td>': $html .= '<td style="text-align: center;">' . $recipe->getSubRecipeCount()->count() . '</td>';
             $html .= '</tr>';
         }
 
