@@ -28,11 +28,11 @@ class SiteController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['login', 'error', 'comming-soon','check-coupon'],
+                        'actions' => ['login', 'error', 'comming-soon','check-coupon','captcha'],
                         'allow' => true,
                     ],
                     [
-                        'actions' => ['logout', 'index', 'enable-subscription','check-coupon'],
+                        'actions' => ['logout', 'index', 'enable-subscription','check-coupon','captcha'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -55,6 +55,13 @@ class SiteController extends Controller
         return [
             'error' => [
                 'class' => 'yii\web\ErrorAction',
+            ],
+            'captcha' => [
+                'class' => 'yii\captcha\CaptchaAction',
+                'fixedVerifyCode' => null, // Solo para pruebas
+                'minLength' => 4, // Longitud mínima del código CAPTCHA
+                'maxLength' => 5, // Longitud máxima del código CAPTCHA
+                'testLimit' => 3,
             ],
         ];
     }

@@ -8,16 +8,18 @@ class RegistrationForm extends \Da\User\Form\RegistrationForm
     public $businessName;
     public $planId;
     public $couponCode; // Añadir el atributo couponCode
+    public $captcha;
 
     public function rules()
     {
         return array_merge(
             parent::rules(),
             [
-                [['name', 'businessName'], 'required'],
+                [['name', 'businessName','captcha'], 'required'],
                 [['name', 'businessName'], 'string'],
                 [['planId'], 'integer'],
                 [['couponCode'], 'string'], // Añadir la regla de validación para couponCode
+                ['captcha', 'captcha', 'captchaAction' => '/site/captcha'], // Añadir la regla de validación para captcha
             ]
         );
     }
