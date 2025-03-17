@@ -65,3 +65,34 @@ $(document).ready(function() {
         }
     });
 });
+$(document).ready(function() {
+    // Hide the button initially
+    $('#btn-download-recipes-complete-excel').hide();
+
+    // Show/hide the button based on checkbox selection
+    $('#standard-recipes-grid').on('change', 'input[type="checkbox"]', function() {
+        var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+        if (selectedRecipes.length > 0) {
+            $('#btn-download-recipes-complete-excel').show();
+        } else {
+            $('#btn-download-recipes-complete-excel').hide();
+        }
+    });
+
+    // Handle the download button click
+    $(document).on('click', '#btn-download-recipes-complete-excel', function(event) {
+        event.preventDefault(); // Prevent the default link behavior
+        var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+
+        // Check if any recipes are selected
+        if (selectedRecipes.length > 0) {
+            // If recipes are selected, proceed with the download
+            var baseUrl = $(this).attr('href');
+            var url = baseUrl + '?id=' + selectedRecipes.join(',');
+            window.location.href = url;
+        } else {
+            // If no recipes are selected, show an alert
+            alert('No se ha seleccionado ninguna receta');
+        }
+    });
+});

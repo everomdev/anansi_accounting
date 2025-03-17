@@ -5,10 +5,14 @@ namespace backend\helpers;
 use common\models\Business;
 use common\models\Category;
 use common\models\Ingredient;
+use common\models\Convoy;
 use common\models\IngredientStock;
+use common\models\IngredientStandardRecipe;
+use common\models\StandardRecipe;
 use common\models\Movement;
 use common\models\StockPrice;
 use common\models\UnitOfMeasurement;
+use Yii;
 use PhpOffice\PhpSpreadsheet\Calculation\DateTimeExcel\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
@@ -296,7 +300,8 @@ class ExcelHelper
         $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
 
         while (true) {
-            $cellIterator = $rowIterator->current()->getCellIterator('A', 'G');
+            $cellIterator = $rowIterator->current()->getCellIterator('A', 'I');
+            //var_dump($cellIterator->current()->getValue());
             if($rowIterator->current()->getRowIndex() != 1) {
                 if (empty($cellIterator->current()->getValue())) {
                     break;
@@ -328,8 +333,10 @@ class ExcelHelper
                 $data['quantity'] = 0;
 
                 /// extract category id
+                //var_dump($data['category_id']);
                 $data['category_id'] = explode(' - ', $data['category_id'])[0];
                 $data['category_id'] = trim($data['category_id']);
+                //var_dump($data['category_id']);
                 /// check if category exists
                 $category = Category::find()
                     ->where([
@@ -741,5 +748,145 @@ class ExcelHelper
         header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
         $writer->save('php://output');
         exit(200);
+    }
+    
+    public static function importRecipe(Business $business, $fileName)
+    {
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
+    
+            $recipeData = [];
+            $ingredientData = [];
+    
+            $recipesSheet = $spreadsheet->getSheetByName('Plantilla para importar recetas');
+            $ingredientsSheet = $spreadsheet->getSheetByName('Ingredients');
+    
+            if ($recipesSheet === null) {
+                throw new HttpException(400, 'La hoja "Recipes" no se encontró en el archivo Excel.');
+            }
+    
+            if ($ingredientsSheet === null) {
+                throw new HttpException(400, 'La hoja "Ingredients" no se encontró en el archivo Excel.');
+            }
+    
+            // Importar recetas
+            $rowIterator = $recipesSheet->getRowIterator();
+            while (true) {
+                $cellIterator = $rowIterator->current()->getCellIterator('A', 'M');
+                if ($rowIterator->current()->getRowIndex() != 1) {
+                    if (empty($cellIterator->current()->getValue())) {
+                        break;
+                    }
+                    $data = [];
+                    $data['title'] = $cellIterator->current()->getValue(); // A - Nombre
+                    $cellIterator->next();
+                    $data['type_of_recipe'] = $cellIterator->current()->getValue(); // B - Tipo de Receta
+                    $cellIterator->next();
+                    $data['time_of_preparation'] = $cellIterator->current()->getValue(); // C - Tiempo de preparación
+                    $cellIterator->next();
+                    $data['yield'] = $cellIterator->current()->getValue(); // D - Rendimiento
+                    $cellIterator->next();
+                    $data['yield_um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
+                    $cellIterator->next();
+                    $data['portions'] = $cellIterator->current()->getValue(); // F - Porciones
+                    $cellIterator->next();
+                    $data['lifetime'] = $cellIterator->current()->getValue(); // G - Duración
+                    $cellIterator->next();
+                    $data['price'] = $cellIterator->current()->getValue(); // H - Precio
+                    $cellIterator->next();
+                    $data['is_food'] = $cellIterator->current()->getValue() === 'Alimento'; // K - Alimento o Bebida
+                    $cellIterator->next();
+                    $convoyName = $cellIterator->current()->getValue(); // L - Convoy
+                    $convoy = Convoy::find()->where(['name' => $convoyName, 'business_id' => $business->id])->one();
+                    if (!$convoy) {
+                        throw new HttpException(400, "No se encontró el convoy \"{$convoyName}\" en el negocio.");
+                    }
+                    $data['convoy_id'] = $convoy->id;
+                    $cellIterator->next();
+                    
+                    $data['business_id'] = $business->id;
+    
+                    $recipeData[] = $data;
+                }
+                $rowIterator->next();
+            }
+    
+            // Importar ingredientes agrupados por receta
+            $rowIterator = $ingredientsSheet->getRowIterator();
+            while (true) {
+                $cellIterator = $rowIterator->current()->getCellIterator('A', 'E');
+                if ($rowIterator->current()->getRowIndex() != 1) {
+                    if (empty($cellIterator->current()->getValue())) {
+                        break;
+                    }
+                    $data = [];
+                    $data['recipe'] = $cellIterator->current()->getValue(); // A - Receta
+                    $cellIterator->next();
+                    $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
+                    $cellIterator->next();
+                    $data['quantity'] = $cellIterator->current()->getValue(); // C - Cantidad
+                    $cellIterator->next();
+                    $data['portion_um'] = $cellIterator->current()->getValue(); // D - UM
+                    $cellIterator->next();
+                    $data['lastPrice'] = $cellIterator->current()->getValue(); // E - Costo
+                    $cellIterator->next();
+    
+                    $data['business_id'] = $business->id;
+    
+                    if (!isset($ingredientData[$data['recipe']])) {
+                        $ingredientData[$data['recipe']] = [];
+                    }
+                    $ingredientData[$data['recipe']][] = $data;
+                }
+                $rowIterator->next();
+            }
+
+            
+            $transaction = \Yii::$app->db->beginTransaction();
+            try {
+                foreach ($recipeData as $data) {
+                    $recipe = new StandardRecipe();
+                    $recipe['type'] = \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN;
+                    //die(var_dump($recipe->load($data, '')));
+                    $recipe->load($data, '');
+                    if (!$recipe->save()){
+                        var_dump($recipe->errors);
+                        throw new HttpException(400, "Error al guardar receta: " . json_encode($recipe->errors));
+                    }
+                    if ($recipe->load($data, '') && $recipe->validate() && $recipe->save()) {
+                        //die(var_dump(isset($ingredientData[$data['title']])));
+                        if (isset($ingredientData[$data['title']])) {
+                            foreach ($ingredientData[$data['title']] as $ingredient) {
+                                $ingredientStock = IngredientStock::find()
+                                    ->where(['ingredient' => $ingredient['ingredient'], 'business_id' => $business->id])
+                                    ->one();
+    
+                                if (!$ingredientStock) {
+                                    throw new HttpException(400, "No se encontró el ingrediente \"{$ingredient['ingredient']}\" en el negocio.");
+                                }
+    
+                                $ingredientRelation = new IngredientStandardRecipe();
+                                $ingredientRelation->ingredient_id = $ingredientStock->id;
+                                $ingredientRelation->standard_recipe_id = $recipe->id;
+                                $ingredientRelation->quantity = $ingredient['quantity'];
+                                $ingredientRelation->save();
+                            }
+                        }
+                    } else {
+                        Yii::error("Error al guardar receta: " . json_encode($recipe->errors));
+                    }
+                }
+                $transaction->commit();
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                throw $e;
+            }
+    
+            return;
+        } catch (\Exception $e) {
+            Yii::error("Error al importar recetas: " . $e->getMessage());
+            Yii::error($e->getTraceAsString());
+            throw new HttpException(500, "Error al importar recetas: " . $e->getMessage());
+        }
     }
 }
