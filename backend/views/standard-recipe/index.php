@@ -29,16 +29,16 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
                 ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
             </div>
         </div>
-        <div class="row" style="margin-top: 10px;">
+        <div class="row" style="margin-top: 10px; margin-bottom: 10px;">
             <div class="col-md-12">
-                <?= Html::a('Descargar Recetas Completas', ['standard-recipe/download-complete-recipe-pdf'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete']) ?>
-                <?= Html::a('Exportar Recetas Completas', ['standard-recipe/export-recipes-to-excel'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete-excel']) ?>
+            <?= Html::a('Descargar Recetas Completas', ['standard-recipe/download-complete-recipe-pdf'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete']) ?>
+            <?= Html::a('Exportar Recetas Completas', ['standard-recipe/export-recipes-to-excel'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete-excel']) ?>
             </div>
         </div>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
-
+    <div class="row"></div>
     <?= GridView::widget([
         'id' => 'standard-recipes-grid',
         'dataProvider' => $dataProvider,
