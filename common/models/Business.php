@@ -252,7 +252,33 @@ class Business extends \yii\db\ActiveRecord
                 ];
             }
         }
-
+        $totalCostPercent = 0;
+        $categoryCount = 0;
+        $totalCostCombo = 0;
+        $recipeCount = 0;
+        $averageCostPercent = 0;
+        foreach ($data as $category) {
+            $totalCostPercentRecipe = 0;
+            $totalCostPercent = 0;
+            $recipeCountt = count($category['recipes']);
+            $recipeCountt += count($category['combos']);
+            $recipeCount = 0;
+            foreach ($category['recipes'] as $recipe) {
+                $totalCostPercentRecipe += $recipe->costPercent;
+                $recipeCount++;
+                
+            }
+            foreach ($category['combos'] as $combo) {
+                $totalCostPercent += $combo->costPercent;
+                $recipeCount++;
+            }
+            $averageCostPercent += ($totalCostPercentRecipe+$totalCostPercent) / $recipeCount;
+            $categoryCount++;
+           
+            
+        }
+        $theoricalYield = $this->getFormatter()->asPercent($averageCostPercent/$categoryCount, 2);
+        
         $totalPcr = 0;
         $totalCost = 0;
         array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
@@ -279,7 +305,7 @@ class Business extends \yii\db\ActiveRecord
             $totalCost = 0;
         }
 
-        return ['data' => $data, 'totalCost' => $totalCost];
+        return ['data' => $data, 'totalCost' => $totalCost, 'tehoricalTotal' => $theoricalYield];
     }
 
     public function getRealYield()
