@@ -60,7 +60,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?php if (!$model->isNewRecord): ?>
                         <?= $form->field($model, 'title', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                        ])->textInput(['id' => 'title-input'])->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                        ])->textInput(['id' => 'title-input', 'value' => ''])->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
@@ -304,7 +304,7 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
 });
 document.getElementById('price-input').addEventListener('input', function (e) {
     const value = e.target.value;
-    const regex = /^\d+(\.\d{1,2})?$/;
+    const regex = /^[0-9]+([.,][0-9]{1,2})?$/;
 
     if (!regex.test(value)) {
         const errorElement = document.createElement('div');
