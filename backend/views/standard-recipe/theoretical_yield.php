@@ -19,8 +19,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <div class="standard-recipe-index">
 
-    <h4 class="alert alert-warning"
-        id="theoretical-yield-message"><?= sprintf("%s %s", $message, $tehoricalTotal) ?></h4>
+    <?php if ($tehoricalTotal !== null): ?>
+        <h4 class="alert alert-warning"
+            id="theoretical-yield-message"><?= sprintf("%s %s", $message, $tehoricalTotal) ?></h4>
+    <?php endif; ?>
     <div class="card">
         <div class="card-body">
             <?= \yii\bootstrap5\Html::textInput('search-box', null, ['class' => 'form-control', 'placeholder' => 'Buscar']) ?>
