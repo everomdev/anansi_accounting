@@ -272,12 +272,15 @@ class Business extends \yii\db\ActiveRecord
                 $totalCostPercent += $combo->costPercent;
                 $recipeCount++;
             }
-            $averageCostPercent += ($totalCostPercentRecipe+$totalCostPercent) / $recipeCount;
-            $categoryCount++;
-           
-            
+            if ($recipeCount > 0) {
+                $averageCostPercent += ($totalCostPercentRecipe+$totalCostPercent) / $recipeCount;
+                $categoryCount++;
+            }   
         }
-        $theoricalYield = $this->getFormatter()->asPercent($averageCostPercent/$categoryCount, 2);
+        if ($categoryCount > 0) {
+            $theoricalYield = $this->getFormatter()->asPercent($averageCostPercent/$categoryCount, 2);
+        }
+       
         
         $totalPcr = 0;
         $totalCost = 0;
