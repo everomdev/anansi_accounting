@@ -308,7 +308,7 @@ class Business extends \yii\db\ActiveRecord
             $totalCost = 0;
         }
 
-        return ['data' => $data, 'totalCost' => $totalCost, 'tehoricalTotal' => $theoricalYield];
+        return ['data' => $data, 'totalCost' => $totalCost, 'tehoricalTotal' => isset($theoricalYield) ? $theoricalYield : null];
     }
 
     public function getRealYield()
