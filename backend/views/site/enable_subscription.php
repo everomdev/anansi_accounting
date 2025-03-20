@@ -15,7 +15,7 @@ $this->title = "Habilitar suscripción";
     <div style="min-width: 350px; max-width: 1024px">
         <div class="card m-5">
             <div class="card-body">
-                <h4><?= Yii::t('app', "Enable subscription to continue") ?></h4>
+                <h4><?= Yii::t('app', "Habilitar suscripción para continuar") ?></h4>
                 <div class="row">
                     <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6" style="max-height: 500px; overflow: auto">
                         <h5><?= "Plan {$plan->name}" ?></h5>
