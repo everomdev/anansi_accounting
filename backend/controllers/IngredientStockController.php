@@ -340,9 +340,12 @@ class IngredientStockController extends Controller
         $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $business = Business::findOne(['id' => $businessData['id']]);
         $ids = Yii::$app->request->post('keys');
-        if (!empty($ids)) {
+        if (!empty($ids) && $ids != 'all') {
             IngredientStock::deleteAll(['id' => $ids, 'business_id' => $business->id]);
+        } elseif ($ids == 'all') {
+            IngredientStock::deleteAll(['business_id' => $business->id]);
         }
+
 
         return $this->asJson(['success' => true]);
     }

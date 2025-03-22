@@ -44,7 +44,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
         <div class="p-2">
             <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', [
                 'icon' => ""
-            ]), ['ingredient-stock/bulk-remove', 'id' => $business->id], ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
+            ]), ['ingredient-stock/bulk-remove', 'id' => $business->id], ['class' => 'btn btn-danger', 'id' => 'bulk-remove','data-bs-toggle' => 'modal',
+        'data-bs-target' => '#modal-bulk-remove']) ?>
         </div>
     </div>
 
@@ -195,5 +196,29 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 
 \yii\bootstrap5\ActiveForm::end();
 
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-bulk-remove',
+    'title' => Yii::t('app', "Eliminar insumos seleccionados"),
+]);
+?>
+<p>¿Deseas eliminar todos los insumos seleccionados o solo los de la página actual?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar solo los seleccionados'), [
+        'class' => 'btn btn-danger',
+        'id' => 'delete-current-page'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar todos'), [
+        'class' => 'btn btn-danger',
+        'id' => 'delete-all'
+    ]) ?>
+</div>
+<?php
 \yii\bootstrap5\Modal::end();
 ?>
