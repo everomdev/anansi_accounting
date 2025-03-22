@@ -96,3 +96,83 @@ $(document).ready(function() {
         }
     });
 });
+$(document).ready(function() {
+    // Hide the button initially
+    $('#btn-delete-recipes').hide();
+
+    // Show/hide the button based on checkbox selection
+    $('#standard-recipes-grid').on('change', 'input[type="checkbox"]', function() {
+        var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+        if (selectedRecipes.length > 0) {
+            $('#btn-delete-recipes').show();
+        } else {
+            $('#btn-delete-recipes').hide();
+        }
+    });
+
+    $(document).on('click', '#btn-delete-recipes', function(event) {
+        event.preventDefault();
+        var keys = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    
+        if(confirm(`Vas a eliminar ${keys.length} recetas. ¿Estás seguro?`)) {
+            $.ajax({
+                url: '/standard-recipe/delete',
+                type: 'POST',
+                data: {id: keys}, // Changed 'keys' to 'id' to match the required parameter
+                success: function(data) {
+                    $.pjax.reload({container: '#standard-recipe-pjax'});
+                },
+            });
+        }
+    
+    
+        return false;
+    });
+    
+});
+$(document).ready(function () {
+    // Código para cargar datos en el modal
+    $(document).on('click', '.edit-step', function () {
+        var stepId = $(this).data('id');
+        var activity = $(this).data('activity');
+        var time = $(this).data('time');
+        var indicator = $(this).data('indicator');
+
+        $('#edit-step-id').val(stepId);
+        $('#edit-step-activity').val(activity);
+        $('#edit-step-time').val(time);
+        $('#edit-step-indicator').val(indicator);
+    });
+    // Código para guardar los cambios
+    $('#save-edit-step').on('click', function () {
+        var stepId = $('#edit-step-id').val();
+        var activity = $('#edit-step-activity').val();
+        var time = $('#edit-step-time').val();
+        var indicator = $('#edit-step-indicator').val();
+    
+        // Crear un objeto FormData
+        var formData = new FormData();
+
+        // Agregar los valores al FormData
+        formData.append('id', stepId);
+        formData.append('activity', activity);
+        formData.append('time', time);
+        formData.append('indicator', indicator);
+
+        $.ajax({
+            url: '/standard-recipe/edit-step',
+            type: 'POST',
+            data: formData,
+            processData: false, // Evitar que jQuery procese los datos
+            contentType: false, // Evitar que jQuery establezca el contentType
+            success: function (response) {
+                $('#modal-edit-step').modal('hide');
+                $.pjax.reload({container: '#pjax-list-steps'});
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al guardar los cambios:', error);
+                alert('Error al guardar los cambios.');
+            }
+        });
+    });
+});

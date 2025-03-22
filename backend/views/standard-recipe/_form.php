@@ -143,9 +143,12 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     'initialPreviewConfig' => empty(($id = $model->getMainImageId())) ? [] : [$id],
                     'initialPreviewAsData' => true,
                     'overwriteInitial' => false,
-                    'maxFileSize' => 2800,
+                    'maxFileSize' => 3072,
                     'showRotate' => false,
-                    'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id])
+                    'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id]),
+                    'msgSizeTooLarge' => Yii::t('app', 'El archivo seleccionado es demasiado grande. El tamaño máximo permitido es de 3MB.'),
+                    'showUpload' => false, // Disable upload button
+                    'browseLabel' => Yii::t('app', 'Seleccionar imagen (máx. 3MB)'), // Custom label for the browse button
                 ],
             ]) ?>
             <br>

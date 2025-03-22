@@ -79,7 +79,10 @@ class StandardRecipeController extends Controller
                             'download-complete-recipe-pdf',
                             'export-recipes-to-excel',
                             'export-recipes-plantilla',
-                            'import-recipes'
+                            'import-recipes',
+                            'edit-step',
+                            'move-step'
+                            
 
 
                         ],
@@ -105,7 +108,9 @@ class StandardRecipeController extends Controller
                             'download-complete-recipe-pdf',
                             'export-recipes-to-excel',
                             'export-recipes-plantilla',
-                            'import-recipes'
+                            'import-recipes',
+                            'move-step',
+                            'edit-step'
 
                         ],
                         'allow' => true,
@@ -542,11 +547,21 @@ class StandardRecipeController extends Controller
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id)
+    public function actionDelete()
     {
-        $this->findModel($id)->delete();
-
-        return $this->redirect(['index']);
+        if (Yii::$app->request->isPost) {
+            $ids = Yii::$app->request->post('id'); // Recibir los IDs enviados desde el frontend
+    
+            if (!empty($ids)) {
+                foreach ($ids as $id) {
+                    $model = $this->findModel($id);
+                    if ($model) {
+                        $model->delete();
+                    }
+                }
+                return $this->redirect(['index']);
+            }
+        }
     }
 
     public function actionDeleteImage($id)
@@ -1894,4 +1909,20 @@ class StandardRecipeController extends Controller
      $writer->save('php://output');
      exit;
  }
+ public function actionEditStep()
+{
+    $id = Yii::$app->request->post('id');
+    $step = RecipeStep::findOne($id);
+
+    if ($step) {
+        $step->activity = Yii::$app->request->post('activity');
+        $step->time = Yii::$app->request->post('time');
+        $step->indicator = Yii::$app->request->post('indicator');
+        if ($step->save()) {
+            return $this->asJson(['success' => true]);
+        }
+    }
+
+    return $this->asJson(['success' => false]);
+}
 }

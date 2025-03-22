@@ -33,6 +33,9 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
             <div class="col-md-12">
             <?= Html::a('Descargar Recetas Completas', ['standard-recipe/download-complete-recipe-pdf'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete']) ?>
             <?= Html::a('Exportar Recetas Completas', ['standard-recipe/export-recipes-to-excel'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete-excel']) ?>
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', [
+                'icon' => ""
+            ]), ['standard-recipe/delete', 'id' => $business], ['class' => 'btn btn-danger', 'id' => 'btn-delete-recipes']) ?>
             </div>
         </div>
 
