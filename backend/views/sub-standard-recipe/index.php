@@ -66,6 +66,12 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],
+            [
+                'attribute' => 'type_of_recipe',
+                'label' => 'Familia',
+                'format' => 'text',
+                'enableSorting' => true, // Enable sorting for this column
+            ],
 
 //            'costPercent:percent',
             [

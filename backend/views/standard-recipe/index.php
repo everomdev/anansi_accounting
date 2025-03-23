@@ -93,6 +93,16 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
+                'attribute' => 'type_of_recipe',
+                'label' => 'Familia',
+                /*'value' => function ($model) {
+                    return $model->type_of_recipe;
+                },*/
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}"
             ],
