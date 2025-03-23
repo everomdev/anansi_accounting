@@ -60,7 +60,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?php if (!$model->isNewRecord): ?>
                         <?= $form->field($model, 'title', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                        ])->textInput(['id' => 'title-input', 'value' => ''])->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                        ])->textInput(['id' => 'title-input', 'value' => $model->title])->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"

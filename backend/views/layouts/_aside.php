@@ -1,6 +1,4 @@
 <?php
-
-
 use backend\widgets\Menu;
 use backend\components\Menu as MenuItem;
 
@@ -36,6 +34,15 @@ if($currentControllerId == 'standard-recipe'){
         $currentControllerId = 'sub-standard-recipe';
     }
 }
+
+// Verificar si algún elemento dentro de cada menú está activo
+$configBaseActive = in_array($currentControllerId, ['category', 'recipe-category', 'unit-of-measurement']);
+$gestionInsumosActive = in_array($currentControllerId, ['ingredient-stock', 'provider', 'ingredients']);
+$costeoActive = in_array($currentControllerId, ['sub-standard-recipe', 'standard-recipe', 'convoy', 'menu']);
+$almacenMovimientosActive = in_array($currentControllerId, ['consumption-center', 'storage', 'movement', 'price-trend']);
+$menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes']);
+$rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
+$administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo" style="width: 200px">
@@ -59,11 +66,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Configuración Base -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#configuracionBase" role="button" aria-expanded="false" aria-controls="configuracionBase">
+        <li class="menu-item <?= $configBaseActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#configuracionBase" role="button" 
+               aria-expanded="<?= $configBaseActive ? 'true' : 'false' ?>" 
+               aria-controls="configuracionBase">
                 <div><?= Yii::t('app', 'Configuración Base') ?></div>
             </a>
-            <div class="collapse" id="configuracionBase">
+            <div class="collapse <?= $configBaseActive ? 'show' : '' ?>" id="configuracionBase">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
@@ -91,11 +100,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Gestión de Insumos y Proveedores -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#gestionInsumos" role="button" aria-expanded="false" aria-controls="gestionInsumos">
+        <li class="menu-item <?= $gestionInsumosActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#gestionInsumos" role="button" 
+               aria-expanded="<?= $gestionInsumosActive ? 'true' : 'false' ?>" 
+               aria-controls="gestionInsumos">
                 <div><?= Yii::t('app', 'Gestión de Insumos y Proveedores') ?></div>
             </a>
-            <div class="collapse" id="gestionInsumos">
+            <div class="collapse <?= $gestionInsumosActive ? 'show' : '' ?>" id="gestionInsumos">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'ingredient-stock' ? 'active' : '' ?>">
@@ -121,11 +132,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Costeo -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#costeo" role="button" aria-expanded="false" aria-controls="costeo">
+        <li class="menu-item <?= $costeoActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#costeo" role="button" 
+               aria-expanded="<?= $costeoActive ? 'true' : 'false' ?>" 
+               aria-controls="costeo">
                 <div><?= Yii::t('app', 'Costeo') ?></div>
             </a>
-            <div class="collapse" id="costeo">
+            <div class="collapse <?= $costeoActive ? 'show' : '' ?>" id="costeo">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('subrecipe_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sub-standard-recipe' ? 'active' : '' ?>">
@@ -160,11 +173,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Almacén y Movimientos -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" aria-expanded="false" aria-controls="almacenMovimientos">
+        <li class="menu-item <?= $almacenMovimientosActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" 
+               aria-expanded="<?= $almacenMovimientosActive ? 'true' : 'false' ?>" 
+               aria-controls="almacenMovimientos">
                 <div><?= Yii::t('app', 'Almacén y Movimientos') ?></div>
             </a>
-            <div class="collapse" id="almacenMovimientos">
+            <div class="collapse <?= $almacenMovimientosActive ? 'show' : '' ?>" id="almacenMovimientos">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->identity->canMultiple(['movements_list'])): ?>
                         <li class="menu-item <?= $currentControllerId == 'consumption-center' ? 'active' : '' ?>">
@@ -199,11 +214,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Menú y Ventas -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#menuVentas" role="button" aria-expanded="false" aria-controls="menuVentas">
+        <li class="menu-item <?= $menuVentasActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#menuVentas" role="button" 
+               aria-expanded="<?= $menuVentasActive ? 'true' : 'false' ?>" 
+               aria-controls="menuVentas">
                 <div><?= Yii::t('app', 'Menú y Ventas') ?></div>
             </a>
-            <div class="collapse" id="menuVentas">
+            <div class="collapse <?= $menuVentasActive ? 'show' : '' ?>" id="menuVentas">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('sales_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
@@ -224,11 +241,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Rentabilidad y Análisis -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#rentabilidadAnalisis" role="button" aria-expanded="false" aria-controls="rentabilidadAnalisis">
+        <li class="menu-item <?= $rentabilidadAnalisisActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#rentabilidadAnalisis" role="button" 
+               aria-expanded="<?= $rentabilidadAnalisisActive ? 'true' : 'false' ?>" 
+               aria-controls="rentabilidadAnalisis">
                 <div><?= Yii::t('app', 'Rentabilidad y Análisis') ?></div>
             </a>
-            <div class="collapse" id="rentabilidadAnalisis">
+            <div class="collapse <?= $rentabilidadAnalisisActive ? 'show' : '' ?>" id="rentabilidadAnalisis">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('theoretical_profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'theoretical-yield' ? 'active' : '' ?>">
@@ -284,11 +303,13 @@ if($currentControllerId == 'standard-recipe'){
         </li>
 
         <!-- Administración y Configuración -->
-        <li class="menu-item">
-            <a class="menu-link" data-bs-toggle="collapse" href="#administracionConfiguracion" role="button" aria-expanded="false" aria-controls="administracionConfiguracion">
+        <li class="menu-item <?= $administracionConfiguracionActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#administracionConfiguracion" role="button" 
+               aria-expanded="<?= $administracionConfiguracionActive ? 'true' : 'false' ?>" 
+               aria-controls="administracionConfiguracion">
                 <div><?= Yii::t('app', 'Administración y Configuración') ?></div>
             </a>
-            <div class="collapse" id="administracionConfiguracion">
+            <div class="collapse <?= $administracionConfiguracionActive ? 'show' : '' ?>" id="administracionConfiguracion">
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('manage_users') and $business != null && $business->user_id == Yii::$app->user->identity->getId() and !Yii::$app->user->identity->hasRestrictions('users')): ?>
                         <li class="menu-item <?= $currentControllerId == 'users' ? 'active' : '' ?>">
@@ -309,3 +330,31 @@ if($currentControllerId == 'standard-recipe'){
         </li>
     </ul>
 </aside>
+
+<?php
+// Agregar JavaScript para controlar el comportamiento de los menús desplegables
+$js = <<<JS
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar los clics en los encabezados de menú
+    document.querySelectorAll('.menu-link[data-bs-toggle="collapse"]').forEach(function(menuLink) {
+        menuLink.addEventListener('click', function(e) {
+            var menuItem = this.closest('.menu-item');
+            
+            // Si el elemento ya está abierto y no tiene submenu activo, permitir que se cierre
+            if (this.getAttribute('aria-expanded') === 'true' && !menuItem.classList.contains('active')) {
+                // Bootstrap se encargará de cerrarlo
+            } 
+            // Si estamos abriendo y no es activo, cerrar los otros que no sean activos
+            else if (this.getAttribute('aria-expanded') === 'false' && !menuItem.classList.contains('active')) {
+                document.querySelectorAll('.menu-item:not(.active) .menu-link[data-bs-toggle="collapse"][aria-expanded="true"]').forEach(function(openMenu) {
+                    new bootstrap.Collapse(document.querySelector(openMenu.getAttribute('href'))).hide();
+                    openMenu.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+    });
+});
+JS;
+
+$this->registerJs($js, \yii\web\View::POS_END);
+?>
