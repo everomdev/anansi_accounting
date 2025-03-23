@@ -68,13 +68,20 @@ $categories = RecipeCategory::find()
                     'class' => \yii\grid\SerialColumn::class,
                     'header' => '#'
                 ],
-                'title',
+                [
+                    'attribute' => 'title',
+                    'label' => 'Título',
+                ],
                 [
                     'attribute' => 'cost',
                     'format' => 'currency',
                     'label' => "Costo"
                 ],
-                'costPercent:percent',
+                [
+                    'attribute' => 'costPercent',
+                    'format' => 'percent',
+                    'label' => 'Porcentaje de costo',
+                ],
                 [
                     'label' => "Categoría",
                     'value' => function ($model) {
