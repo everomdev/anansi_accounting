@@ -71,16 +71,23 @@ $categories = RecipeCategory::find()
                 [
                     'attribute' => 'title',
                     'label' => 'Título',
+                    'enableSorting' => true,
+                    'filter' => \yii\bootstrap5\Html::textInput('title', Yii::$app->request->get('title'), [
+                        'class' => 'form-control',
+                        'placeholder' => 'Buscar por título...'
+                    ])
                 ],
                 [
                     'attribute' => 'cost',
                     'format' => 'currency',
-                    'label' => "Costo"
+                    'label' => "Costo",
+                    'enableSorting' => true,
                 ],
                 [
                     'attribute' => 'costPercent',
                     'format' => 'percent',
                     'label' => 'Porcentaje de costo',
+                    'enableSorting' => true,
                 ],
                 [
                     'label' => "Categoría",

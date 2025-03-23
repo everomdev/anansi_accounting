@@ -643,6 +643,7 @@ class StandardRecipeController extends Controller
                 ])->one();
 
         }
+        $title = Yii::$app->request->get('title');
 
         $page = (int)Yii::$app->request->get('page', 1);
         $offset = ($page - 1) * 30;
@@ -671,6 +672,10 @@ class StandardRecipeController extends Controller
                 $combosFilter['category_id'] = $category->id;
             }
 
+            if (!empty($title)) {
+                $recipesFilter = ['like', 'title', "%$title%", false];
+                $combosFilter = ['like', 'name', "%$title%", false];
+            }
 
             $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)
                 ->count();
@@ -704,6 +709,10 @@ class StandardRecipeController extends Controller
             if($category){
                 $recipesFilter['type_of_recipe'] = $category->name;
                 $combosFilter['category_id'] = $category->id;
+            }
+            if (!empty($title)) {
+                $recipesFilter = ['like', 'title', "%$title%", false];
+                $combosFilter = ['like', 'name', "%$title%", false];
             }
             $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)->count();
             $recipes = StandardRecipe::find()->where($recipesFilter)

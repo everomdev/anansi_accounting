@@ -95,9 +95,7 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
             [
                 'attribute' => 'type_of_recipe',
                 'label' => 'Familia',
-                /*'value' => function ($model) {
-                    return $model->type_of_recipe;
-                },*/
+                'enableSorting' => true,
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
