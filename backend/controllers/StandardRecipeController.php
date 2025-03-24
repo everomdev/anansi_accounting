@@ -335,7 +335,7 @@ class StandardRecipeController extends Controller
             $model = new StandardRecipe([
                 'business_id' => $business['id'],
                 'type' => $type,
-                'title' => Yii::t('app', "Recipe Name"),
+                'title' => '',
                 'in_construction' => true,
             ]);
         }

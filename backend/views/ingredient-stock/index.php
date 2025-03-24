@@ -210,7 +210,7 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
         'class' => 'btn btn-secondary',
         'data-bs-dismiss' => 'modal'
     ]) ?>
-    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar solo los seleccionados'), [
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar los seleccionados'), [
         'class' => 'btn btn-danger',
         'id' => 'delete-current-page'
     ]) ?>

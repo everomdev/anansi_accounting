@@ -98,11 +98,6 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?= $form->field($model, 'lifetime', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
-                    <!--                    --><?php //= $form->field($model, 'title', [
-                    //                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
-                    //                    ])->textInput([
-                    //                        'placeholder' => Yii::t('app', "Recipe Name")
-                    //                    ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
                     <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'price', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div></div></div>"

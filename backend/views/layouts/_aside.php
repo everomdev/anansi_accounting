@@ -143,7 +143,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <?php if (Yii::$app->user->can('subrecipe_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sub-standard-recipe' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['sub-standard-recipe/index']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Sub recipes') ?></div>
+                                <div><?= Yii::t('app', 'Subrecetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
