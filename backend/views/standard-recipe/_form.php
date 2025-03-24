@@ -257,9 +257,7 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
     const value = e.target.value;
     const businessId = '<?= $business['id'] ?>'; // Assuming $business['id'] contains the business ID
     const type = '<?= $model->type ?>'; // Assuming $model->type contains the recipe type
-    console.log('Business ID:'); // Log the business ID
     if (value) {
-        console.log('Checking title...', value); // Log the title value
 
         // Create a FormData object and append the data
         const formData = new FormData();
@@ -275,15 +273,13 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             body: formData
         })
         .then(response => {
-            console.log('Response status:', response.status); // Log the response status
             return response.json();
         })
         .then(data => {
-            console.log('Response data:', data); // Log the response data
             if (data.exists) {
                 const errorElement = document.createElement('div');
                 errorElement.className = 'invalid-feedback';
-                errorElement.innerText = 'El nombre de la receta ya está en uso. Por favor, elige otro.';
+                errorElement.innerText = 'El nombre está en uso. Por favor, elige otro.';
                 e.target.classList.add('is-invalid');
                 e.target.parentNode.appendChild(errorElement);
                 e.target.value = '';
