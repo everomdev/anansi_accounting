@@ -6,7 +6,7 @@ use yii\helpers\Html;
 /* @var $model common\models\StandardRecipe */
 
 
-$this->title = Yii::t('app',  Yii::$app->request->get('type') == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Create new recipe' : 'Create nueva subreceta');
+$this->title = Yii::t('app',  Yii::$app->request->get('type') == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Create new recipe' : 'Crear nueva subreceta');
 //$this->params['breadcrumbs'][] = ['label' => 'Standard Recipes', 'url' => ['index']];
 //$this->params['breadcrumbs'][] = $this->title;
 ?>
