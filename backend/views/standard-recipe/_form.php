@@ -62,7 +62,6 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->textInput([
                             'id' => 'title-input', 
-                            'value' => $model->title, 
                             'placeholder' => $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN 
                                 ? Yii::t('app', 'Ingrese el nombre de la receta') 
                                 : Yii::t('app', 'Ingrese el nombre de la subreceta')
