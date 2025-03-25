@@ -338,6 +338,8 @@ class StandardRecipeController extends Controller
                 'title' => '',
                 'in_construction' => true,
             ]);
+        } elseif($model->in_construction){
+            $model->title = ''; 
         }
 //        elseif($model->in_construction){
 //            Yii::$app->db->createCommand()
@@ -373,7 +375,6 @@ class StandardRecipeController extends Controller
             }
 
         }
-
         return $this->render('create', [
             'model' => $model,
         ]);
