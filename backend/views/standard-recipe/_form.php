@@ -78,7 +78,7 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?= $form->field($model, 'time_of_preparation', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
-                    <?php $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::getOwn()->all(), 'name', 'name'), ['class' => 'form-control'])->label(false) ?>
+                    <?php $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::getOwn()->all(), 'name', 'name'), ['class' => 'form-control','id' => 'standardrecipe-yield_um'])->label(false) ?>
                     <?= $form->field($model, 'yield', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
@@ -102,9 +102,11 @@ $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
                     <?php endif; ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                <div id="portions-container">
                     <?= $form->field($model, 'portions', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                </div>
                     <?= $form->field($model, 'lifetime', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>

@@ -334,3 +334,27 @@ function addAllergiesOption(option){
     let list = document.getElementById('allergies-list');
     list.appendChild(wrapper);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const yieldUmField = document.getElementById('standardrecipe-yield_um');
+    const portionsContainer = document.getElementById('portions-container');
+    const portionsField = document.getElementById('standardrecipe-portions');
+    console.log(yieldUmField);
+    
+    function checkYieldUnit() {
+        if (yieldUmField.value === 'Porción') {
+            portionsContainer.style.display = 'none';
+            portionsField.value = '1';
+        } else {
+            portionsContainer.style.display = '';
+        }
+        // Llamar al método computeCost cuando cambie la unidad de medida
+        computeCost();
+    }
+    
+    // Verificar inicial
+    checkYieldUnit();
+    
+    // Verificar en cambios
+    yieldUmField.addEventListener('change', checkYieldUnit);
+});
