@@ -106,33 +106,70 @@ $(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', func
 })
 
 function computeCost() {
-    let totalCost = parseFloat($("#ingredients-selection-total-cost").data('total'));
-    let portions = parseFloat($("#standardrecipe-portions").val());
-    let _yield = parseFloat($("#standardrecipe-yield").val());
-    if (totalCost && portions && portions > 0 && _yield && _yield > 0) {
-        let costPerPortion = totalCost / _yield / portions;
+    let totalCost = 0;
+    console.log("--- INICIO CÁLCULO DE COSTOS ---");
 
-        if (isNaN(costPerPortion)) {
-            return;
+    $('table tbody tr').each(function(index) {
+        if ($(this).find('.exclude-checkbox').length > 0) {
+            let ingredientName = $(this).find('td:nth-child(2)').text().trim();
+            let costText = $(this).find('td:nth-child(4)').text().trim();
+            let cost = parseFloat(costText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+            let isExcluded = $(this).find('.exclude-checkbox').is(':checked');
+            let discountPercentage = parseInt($(this).find('.cost-percentage').val(), 10);
+            
+            console.log(`Ingrediente #${index + 1}: ${ingredientName}`);
+            console.log(`- Costo base: ${cost}`);
+            console.log(`- Excluido: ${isExcluded}`);
+            console.log(`- Porcentaje de descuento: ${discountPercentage}%`);
+
+            if (isExcluded) {
+                if (discountPercentage > 0) {
+                    // Si está excluido Y tiene descuento: aplicar descuento y sumar ese valor
+                    let discountedCost = cost * (discountPercentage / 100);
+                    totalCost += discountedCost;
+                    console.log(`- INGREDIENTE EXCLUIDO: Aplicado ${discountPercentage}% → ${discountedCost} añadido`);
+                } else {
+                    // Si está excluido SIN descuento: no se suma nada
+                    console.log(`- INGREDIENTE EXCLUIDO SIN DESCUENTO (no se suma)`);
+                }
+            } else {
+                // Si NO está excluido: sumar costo completo
+                totalCost += cost;
+                console.log(`- Costo incluido (completo): ${cost}`);
+            }
         }
+    });
+
+    console.log(`Costo total antes de porciones: ${totalCost}`);
+
+    // Resto del cálculo (porciones, yield, formato)
+    let portions = parseFloat($("#standardrecipe-portions").val()) || 1;
+    let _yield = parseFloat($("#standardrecipe-yield").val()) || 1;
+    
+    if (!isNaN(totalCost)) {
+        let costPerPortion = portions > 0 && _yield > 0 ? totalCost / _yield / portions : totalCost;
+        
+        // Actualizar la interfaz
         $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
-        var cost = Intl.NumberFormat(locale, {
+        
+        let formattedCost = Intl.NumberFormat(locale, {
             style: 'currency',
             currency: currency
         }).format(costPerPortion.toFixed(2));
-        $("#ingredients-selection-total-cost").html(cost);
+        
+        $("#ingredients-selection-total-cost").html(formattedCost);
+        
         if ($("#cost-value").length > 0) {
-            $("#cost-value").html(cost);
+            $("#cost-value").html(formattedCost);
         }
-    } else if (totalCost) {
-        var cost = Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency: currency
-        }).format(totalCost.toFixed(2));
-        $("#ingredients-selection-total-cost").html(cost);
     }
+
+    console.log("--- FIN CÁLCULO DE COSTOS ---");
 }
+
+// Event listeners para actualización automática
+$(document).on('change', '.exclude-checkbox, .discount-percentage, .cost-percentage', computeCost);
 
 $(document).on('show.bs.modal', "#modal-add-ingredient", (event) => {
 

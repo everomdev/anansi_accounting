@@ -363,6 +363,43 @@ class StandardRecipeController extends Controller
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
         if ($model->load($post) && $model->save()) {
+                // Procesar excludeFromCost y costPercentage
+            $excludeFromCost = Yii::$app->request->post('excludeFromCost', []);
+            $costPercentage = Yii::$app->request->post('costPercentage', []);
+            
+            // Actualizar relaciones de ingredientes
+            foreach ($model->ingredientRelations as $relation) {
+                $ingredientId = $relation->ingredient_id;
+                
+                // Actualizar exclude_from_cost
+                $relation->exclude_from_cost = isset($excludeFromCost[$ingredientId]);
+                
+                // Actualizar cost_percentage
+                if (isset($costPercentage[$ingredientId])) {
+                    $relation->cost_percentage = intval($costPercentage[$ingredientId]);
+                } else {
+                    $relation->cost_percentage = 0; // Valor por defecto
+                }
+                
+                $relation->save(false); // Guardar sin validación
+            }
+            
+            // También procesar subrecetas si es necesario
+            /*foreach ($model->getSubStandardRecipesRelation()->all() as $relation) {
+                $subRecipeId = $relation->sub_recipe_id;
+                
+                // Actualizar exclude_from_cost
+                $relation->exclude_from_cost = isset($excludeFromCost[$subRecipeId]);
+                
+                // Actualizar cost_percentage
+                if (isset($costPercentage[$subRecipeId])) {
+                    $relation->cost_percentage = intval($costPercentage[$subRecipeId]);
+                } else {
+                    $relation->cost_percentage = 100;
+                }
+                
+                $relation->save(false);
+            }*/
             return $this->redirect(Url::previous('index-recipe'));
             if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN) {
                 return $this->redirect(['standard-recipe/index', 'type' => $model->type]);
@@ -529,6 +566,26 @@ class StandardRecipeController extends Controller
         }
 
         if ($model->load($post) && $model->save()) {
+                // Procesar excludeFromCost y costPercentage
+                $excludeFromCost = Yii::$app->request->post('excludeFromCost', []);
+                $costPercentage = Yii::$app->request->post('costPercentage', []);
+                
+                // Actualizar relaciones de ingredientes
+                foreach ($model->ingredientRelations as $relation) {
+                    $ingredientId = $relation->ingredient_id;
+                    
+                    // Actualizar exclude_from_cost
+                    $relation->exclude_from_cost = isset($excludeFromCost[$ingredientId]);
+                    
+                    // Actualizar cost_percentage
+                    if (isset($costPercentage[$ingredientId])) {
+                        $relation->cost_percentage = intval($costPercentage[$ingredientId]);
+                    } else {
+                        $relation->cost_percentage = 0; // Valor por defecto
+                    }
+                    
+                    $relation->save(false); // Guardar sin validación
+                }
             if ($model->type == $model::STANDARD_RECIPE_TYPE_SUB) {
                 return $this->redirect(['sub-standard-recipe/index']);
             }
