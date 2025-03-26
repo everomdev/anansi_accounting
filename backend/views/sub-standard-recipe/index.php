@@ -36,7 +36,7 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
             ['class' => 'yii\grid\SerialColumn'],
             [
                 'attribute' => 'title',
-                'label' => Yii::t('app', 'Título'),
+                'label' => Yii::t('app', 'Nombre de la Subreceta'),
                 'value' => function ($model) {
                     return $model->title . ' (' . $model->um . ')';
                 },

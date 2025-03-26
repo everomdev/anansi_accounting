@@ -70,7 +70,7 @@ $categories = RecipeCategory::find()
                 ],
                 [
                     'attribute' => 'title',
-                    'label' => 'Título',
+                    'label' => 'Nombre',
                     'enableSorting' => true,
                     'filter' => \yii\bootstrap5\Html::textInput('title', Yii::$app->request->get('title'), [
                         'class' => 'form-control',

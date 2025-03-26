@@ -50,7 +50,10 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
             ['class' => 'yii\grid\SerialColumn'],
-            'title',
+            [
+                'attribute' => 'title',
+                'label' => 'Nombre de la receta',
+            ],
             [
                 'attribute' => 'recipeLastPrice',
                 'format' => 'currency',
