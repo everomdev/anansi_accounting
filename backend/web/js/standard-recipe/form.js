@@ -339,15 +339,67 @@ document.addEventListener('DOMContentLoaded', function() {
     const yieldUmField = document.getElementById('standardrecipe-yield_um');
     const portionsContainer = document.getElementById('portions-container');
     const portionsField = document.getElementById('standardrecipe-portions');
-    console.log(yieldUmField);
+    const yieldField = document.getElementById('standardrecipe-yield');
+    
+    // Lista de unidades discretas que requieren números enteros ≥ 1
+    const discreteUnits = ['porción', 'porcion', 'porciones', 'rebanada', 'rebanadas', 'pieza', 'piezas', 'trozo', 'trozos', 'unidad', 'unidades'];
+    
+    // Función para verificar si la unidad seleccionada es discreta
+    function isDiscreteUnit(unit) {
+        return discreteUnits.some(discrete => unit.toLowerCase().includes(discrete.toLowerCase()));
+    }
+    
+    // Función para validar el valor en caso de unidades discretas
+    function validateYieldValue() {
+        if (isDiscreteUnit(yieldUmField.value)) {
+            const value = parseFloat(yieldField.value);
+            
+            // Buscar o crear el contenedor de mensajes de error
+            let errorContainer = document.getElementById('yield-error-container');
+            if (!errorContainer) {
+                errorContainer = document.createElement('div');
+                errorContainer.id = 'yield-error-container';
+                errorContainer.className = 'invalid-feedback';
+                yieldField.parentNode.appendChild(errorContainer);
+            }
+            
+            // Verificar si el valor es un número entero y mayor o igual a 1
+            if (isNaN(value) || value % 1 !== 0 || value < 1) {
+                // Aplicar estilo de error
+                yieldField.classList.add('is-invalid');
+                errorContainer.textContent = `Por favor asegúrese que el número es correcto para la unidad de medida ${yieldUmField.value}. Debe ser un número entero mayor o igual a 1.`;
+                errorContainer.style.display = 'block';
+                
+                // Opcional: aplicar un fondo rosa pastel para destacar el error
+                yieldField.style.backgroundColor = '#ffebee';
+            } else {
+                // Quitar estilo de error
+                yieldField.classList.remove('is-invalid');
+                errorContainer.style.display = 'none';
+                yieldField.style.backgroundColor = '';
+            }
+        } else {
+            // Para unidades no discretas, eliminar cualquier mensaje de error
+            yieldField.classList.remove('is-invalid');
+            const errorContainer = document.getElementById('yield-error-container');
+            if (errorContainer) {
+                errorContainer.style.display = 'none';
+            }
+            yieldField.style.backgroundColor = '';
+        }
+    }
     
     function checkYieldUnit() {
-        if (yieldUmField.value === 'Porción') {
+        if (isDiscreteUnit(yieldUmField.value)) {
             portionsContainer.style.display = 'none';
             portionsField.value = '1';
         } else {
             portionsContainer.style.display = '';
         }
+        
+        // Validar el valor de yield según la unidad seleccionada
+        validateYieldValue();
+        
         // Llamar al método computeCost cuando cambie la unidad de medida
         computeCost();
     }
@@ -355,6 +407,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Verificar inicial
     checkYieldUnit();
     
-    // Verificar en cambios
+    // Verificar en cambios de unidad
     yieldUmField.addEventListener('change', checkYieldUnit);
+    
+    // Verificar también cuando cambie el valor de yield
+    yieldField.addEventListener('input', validateYieldValue);
+    
+    // Validar antes de enviar el formulario
+    document.getElementById('form-recipe').addEventListener('submit', function(event) {
+        validateYieldValue();
+        
+        // Opcional: evitar envío si hay error
+        // Si quieres bloquear el envío del formulario cuando hay errores, descomenta estas líneas:
+        /*
+        if (yieldField.classList.contains('is-invalid')) {
+            event.preventDefault();
+            // Desplazarse al campo con error para que el usuario lo vea
+            yieldField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        */
+    });
 });
