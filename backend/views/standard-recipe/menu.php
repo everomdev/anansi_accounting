@@ -5,10 +5,34 @@
 /** @var $pagination \yii\data\Pagination */
 /* @var $availableRecipes array|\common\models\StandardRecipe[]|\yii\db\ActiveRecord[] */
 /* @var $availableCombos array|\common\models\Menu[]|\yii\db\ActiveRecord[] */
+/* @var $currentSort string */
+/* @var $currentOrder string */
 
 /* @var $bundle \common\models\MenuBundle|null */
-
 use common\models\RecipeCategory;
+use yii\helpers\Html;
+use yii\helpers\Url;
+// Obtener los parámetros de ordenación actuales
+$sort = Yii::$app->request->get('sort', '');
+$order = Yii::$app->request->get('order', 'desc');
+
+// Función para crear encabezados de columna ordenables
+function getSortableHeader($label, $attribute, $currentSort, $currentOrder) {
+    $icon = '';
+    $nextOrder = 'desc'; // Orden predeterminado al hacer clic
+    
+    if ($currentSort === $attribute) {
+        // Si ya está ordenado por esta columna, mostrar un icono y configurar el siguiente orden
+        $icon = $currentOrder === 'asc' ? ' ↑' : ' ↓';
+        $nextOrder = $currentOrder === 'asc' ? 'desc' : 'asc';
+    }
+    
+    return Html::a($label . $icon, Url::current(['sort' => $attribute, 'order' => $nextOrder]), [
+        'class' => 'sort-link ' . ($currentSort === $attribute ? 'active' : '')
+    ]);
+}
+
+
 
 $this->title = empty($bundle) ? "Menú" : "Menú del " . Yii::$app->formatter->asDate($bundle->date);
 
@@ -70,24 +94,28 @@ $categories = RecipeCategory::find()
                 ],
                 [
                     'attribute' => 'title',
-                    'label' => 'Nombre',
-                    'enableSorting' => true,
-                    'filter' => \yii\bootstrap5\Html::textInput('title', Yii::$app->request->get('title'), [
-                        'class' => 'form-control',
-                        'placeholder' => 'Buscar por título...'
-                    ])
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        return get_class($model) == \common\models\StandardRecipe::class ? $model->title : $model->name;
+                    },
+                    'header' => getSortableHeader('Nombre de la receta', 'title', $sort, $order),
                 ],
                 [
                     'attribute' => 'cost',
                     'format' => 'currency',
-                    'label' => "Costo",
-                    'enableSorting' => true,
+                    'value' => function ($model) {
+                        return get_class($model) == \common\models\StandardRecipe::class ? $model->lastPrice : $model->cost;
+                    },
+                    'header' => getSortableHeader('Costo', 'cost', $sort, $order),
+                    'contentOptions' => ['style' => 'text-align: center;'],
+                    'headerOptions' => ['style' => 'text-align: center;'],
                 ],
                 [
                     'attribute' => 'costPercent',
                     'format' => 'percent',
-                    'label' => 'Porcentaje de costo',
-                    'enableSorting' => true,
+                    'header' => getSortableHeader('Porcentaje de costo', 'costPercent', $sort, $order),
+                    'contentOptions' => ['style' => 'text-align: center;'],
+                    'headerOptions' => ['style' => 'text-align: center;'],
                 ],
                 [
                     'label' => "Categoría",
@@ -113,6 +141,13 @@ $categories = RecipeCategory::find()
                         }
                     ]
                 ]
+            ],
+            'sorter' => [
+                'attributes' => [
+                    'title',
+                    'cost',
+                    'costPercent',
+                ],
             ],
         ]) ?>
     </div>
@@ -252,3 +287,20 @@ $(document).on('click', '#btn-save-menu', function(event){
 JS;
 $this->registerJs($js);
 ?>
+
+<style>
+.sort-link {
+    display: block;
+    color: #333;
+    text-decoration: none;
+}
+
+.sort-link:hover {
+    text-decoration: none;
+    color: #23527c;
+}
+
+.sort-link.active {
+    font-weight: bold;
+}
+</style>

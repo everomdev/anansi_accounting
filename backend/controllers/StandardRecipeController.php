@@ -684,14 +684,16 @@ class StandardRecipeController extends Controller
     public function actionMenuRecipes($bundle = null)
     {
         $categoryId = Yii::$app->request->get('categoryId', null);
-
+        $sort = Yii::$app->request->get('sort', null);
+        $order = Yii::$app->request->get('order', 'desc');
+    
         $business = RedisKeys::getBusinessData();
-
+    
         $bundleModel = null;
         if ($bundle !== null) {
             $bundleModel = MenuBundle::findOne(['id' => $bundle, 'business_id' => $business['id']]);
         }
-
+    
         $category = null;
         if (!empty($categoryId)) {
             $category = RecipeCategory::find()
@@ -699,15 +701,15 @@ class StandardRecipeController extends Controller
                     'business_id' => $business['id'],
                     'id' => $categoryId
                 ])->one();
-
         }
+        
         $title = Yii::$app->request->get('title');
-
+    
         $page = (int)Yii::$app->request->get('page', 1);
         $offset = ($page - 1) * 30;
-
+    
         Url::remember(['standard-recipe/menu-recipes', 'page' => $page, 'bundle' => $bundle], 'menu-recipes');
-
+    
         if ($bundleModel) {
             $bundleRecipesIds = $bundleModel->getStandardRecipes(true);
             $bundleCombosIds = $bundleModel->getCombos(true);
@@ -718,39 +720,12 @@ class StandardRecipeController extends Controller
                 'in_menu' => true,
                 'id' => $bundleRecipesIds,
             ];
-
+    
             $combosFilter = [
                 'business_id' => $business['id'],
                 'in_menu' => true,
                 'id' => $bundleCombosIds,
             ];
-
-            if($category){
-                $recipesFilter['type_of_recipe'] = $category->name;
-                $combosFilter['category_id'] = $category->id;
-            }
-
-            if (!empty($title)) {
-                $recipesFilter = ['like', 'title', "%$title%", false];
-                $combosFilter = ['like', 'name', "%$title%", false];
-            }
-
-            $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)
-                ->count();
-            $recipes = StandardRecipe::find()->where($recipesFilter)
-                ->offset($offset == 0 ? null : $offset)
-                ->limit(30)
-                ->all();
-            $recipesFilter['in_menu'] = false;
-            $availableRecipes = StandardRecipe::find()->where($recipesFilter)->all();
-
-            $totalCombos = (int)Menu::find()->where($combosFilter)->count();
-            $combos = Menu::find()->where($combosFilter)->offset($offset == 0 ? null : $offset)
-                ->limit(30)
-                ->all();
-            $combosFilter['in_menu'] = false;
-            $availableCombos = Menu::find()->where($combosFilter)->all();
-
         } else {
             $recipesFilter = [
                 'business_id' => $business['id'],
@@ -758,51 +733,92 @@ class StandardRecipeController extends Controller
                 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
                 'in_menu' => true,
             ];
-
+    
             $combosFilter = [
                 'business_id' => $business['id'],
                 'in_menu' => true,
             ];
-
-            if($category){
-                $recipesFilter['type_of_recipe'] = $category->name;
-                $combosFilter['category_id'] = $category->id;
-            }
-            if (!empty($title)) {
-                $recipesFilter = ['like', 'title', "%$title%", false];
-                $combosFilter = ['like', 'name', "%$title%", false];
-            }
-            $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)->count();
-            $recipes = StandardRecipe::find()->where($recipesFilter)
-                ->offset($offset == 0 ? null : $offset)
-                ->limit(30)
-                ->all();
-            $recipesFilter['in_menu'] = false;
-            $availableRecipes = StandardRecipe::find()->where($recipesFilter)->all();
-
-            $totalCombos = (int)Menu::find()->where($combosFilter)->count();
-            $combos = Menu::find()->where($combosFilter)->offset($offset == 0 ? null : $offset)
-                ->limit(30)
-                ->all();
-            $combosFilter['in_menu'] = false;
-            $availableCombos = Menu::find()->where($combosFilter)->all();
         }
-
-
+    
+        if($category){
+            $recipesFilter['type_of_recipe'] = $category->name;
+            $combosFilter['category_id'] = $category->id;
+        }
+        if (!empty($title)) {
+            $recipesFilter = ['like', 'title', "%$title%", false];
+            $combosFilter = ['like', 'name', "%$title%", false];
+        }
+        
+        // Obtener datos sin aplicar ordenación en la consulta
+        $totalRecipes = (int)StandardRecipe::find()->where($recipesFilter)->count();
+        $recipes = StandardRecipe::find()->where($recipesFilter)->all();
+        
+        $totalCombos = (int)Menu::find()->where($combosFilter)->count();
+        $combos = Menu::find()->where($combosFilter)->all();
+        
+        // Obtener los modelos para la lista de disponibles
+        $recipesFilter['in_menu'] = false;
+        $availableRecipes = StandardRecipe::find()->where($recipesFilter)->all();
+        
+        $combosFilter['in_menu'] = false;
+        $availableCombos = Menu::find()->where($combosFilter)->all();
+    
+        // Combinar las recetas y los combos
+        $models = array_merge($recipes, $combos);
+        
+        // Aplicar ordenación si es necesario
+        if (!empty($sort)) {
+            if ($sort == 'title') {
+                usort($models, function($a, $b) use ($order) {
+                    $aTitle = strtolower($a instanceof StandardRecipe ? $a->title : $a->name);
+                    $bTitle = strtolower($b instanceof StandardRecipe ? $b->title : $b->name);
+                    
+                    if ($order == 'asc') {
+                        return strcmp($aTitle, $bTitle);
+                    } else {
+                        return strcmp($bTitle, $aTitle);
+                    }
+                });
+            } elseif ($sort == 'cost') {
+                usort($models, function($a, $b) use ($order) {
+                    $aCost = $a instanceof StandardRecipe ? $a->lastPrice : $a->cost;
+                    $bCost = $b instanceof StandardRecipe ? $b->lastPrice : $b->cost;
+                    
+                    if ($order == 'asc') {
+                        return $aCost <=> $bCost;
+                    } else {
+                        return $bCost <=> $aCost;
+                    }
+                });
+            } elseif ($sort == 'costPercent') {
+                usort($models, function($a, $b) use ($order) {
+                    $aPercent = $a->getCostPercent();
+                    $bPercent = $b->getCostPercent();
+                    
+                    if ($order == 'asc') {
+                        return $aPercent <=> $bPercent;
+                    } else {
+                        return $bPercent <=> $aPercent;
+                    }
+                });
+            }
+        }
+        
+        // Paginación manual
         $pagination = new Pagination([
             'page' => $page - 1,
             'pageSize' => 30,
-            'totalCount' => $totalRecipes + $totalCombos
+            'totalCount' => count($models)
         ]);
-
+        
+        // Obtener solo los modelos para la página actual
+        $paginatedModels = array_slice($models, $pagination->offset, $pagination->limit);
+        
         $dataProvider = new ActiveDataProvider([
-            'models' => array_merge($recipes, $combos),
-//            'query' => $modelsQuery,
+            'models' => $paginatedModels,
+            'pagination' => false // La paginación se maneja manualmente
         ]);
-
-        $dataProvider->setPagination($pagination);
-
-
+        
         return $this->render('menu', [
             'dataProvider' => $dataProvider,
             'availableRecipes' => $availableRecipes,
@@ -810,7 +826,9 @@ class StandardRecipeController extends Controller
             'pagination' => $pagination,
             'bundle' => $bundleModel,
             'business' => $business,
-            'category' => $category
+            'category' => $category,
+            'sort' => $sort,          // Pasar el parámetro de ordenación a la vista
+            'order' => $order         // Pasar el orden actual a la vista
         ]);
     }
 
