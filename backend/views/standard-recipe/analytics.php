@@ -34,27 +34,52 @@ $this->title = Yii::t('app', "Menu Analysis")
                 </thead>
                 <tbody>
                 <?php foreach ($data as $item): ?>
-                    <?php
-                    $costPercentPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortByCostPercent) + 1;
-                    $popularityPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortByPopularity) + 1;
-                    $salesPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortBySales) + 1;
-                    $colorCostPercent = "rgb(" . min([255, ($costPercentPosition * (255 / $total))]) . ", 180, 0)";
-                    $colorPopularity = "rgb(" . min([255, ($popularityPosition * (255 / $total))]) . ", 180, 0)";
-                    $colorSales = "rgb(" . min([255, ($salesPosition * (255 / $total))]) . ", 180, 0)";
-                    ?>
-                    <tr>
-                        <td><?= $item->name ?></td>
-                        <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
-                        <td style="background-color: <?= $colorCostPercent ?>"><strong
-                                    class="text-white"><?= $costPercentPosition ?></strong></td>
-                        <td><?= $item->sales ?></td>
-                        <td style="background-color: <?= $colorPopularity ?>"><strong
-                                    class="text-white"><?= $popularityPosition ?></strong></td>
-                        <td><?= $business->getFormatter()->asCurrency($item->price * $item->sales) ?></td>
-                        <td style="background-color: <?= $colorSales ?>"><strong
-                                    class="text-white"><?= $salesPosition ?></strong></td>
-                    </tr>
-                <?php endforeach; ?>
+    <?php
+    $costPercentPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortByCostPercent) + 1;
+    $popularityPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortByPopularity) + 1;
+    $salesPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortBySales) + 1;
+    
+    // Calcular los percentiles para cada métrica
+    $costPercentPercentile = $costPercentPosition / $total;
+    $popularityPercentile = $popularityPosition / $total;
+    $salesPercentile = $salesPosition / $total;
+    
+    // Asignar colores según la clasificación ABC/Pareto
+    // Verde (0-80%), Amarillo (>80%-95%), Rojo (>95%-100%)
+    if ($costPercentPercentile <= 0.8) {
+        $colorCostPercent = "#28a745"; // Verde
+    } elseif ($costPercentPercentile <= 0.95) {
+        $colorCostPercent = "#ffc107"; // Amarillo
+    } else {
+        $colorCostPercent = "#dc3545"; // Rojo
+    }
+    
+    if ($popularityPercentile <= 0.8) {
+        $colorPopularity = "#28a745"; // Verde
+    } elseif ($popularityPercentile <= 0.95) {
+        $colorPopularity = "#ffc107"; // Amarillo
+    } else {
+        $colorPopularity = "#dc3545"; // Rojo
+    }
+    
+    if ($salesPercentile <= 0.8) {
+        $colorSales = "#28a745"; // Verde
+    } elseif ($salesPercentile <= 0.95) {
+        $colorSales = "#ffc107"; // Amarillo
+    } else {
+        $colorSales = "#dc3545"; // Rojo
+    }
+    ?>
+    <tr>
+        <td><?= $item->name ?></td>
+        <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
+        <td style="background-color: <?= $colorCostPercent ?>"><strong class="text-white"><?= $costPercentPosition ?></strong></td>
+        <td><?= $item->sales ?></td>
+        <td style="background-color: <?= $colorPopularity ?>"><strong class="text-white"><?= $popularityPosition ?></strong></td>
+        <td><?= $business->getFormatter()->asCurrency($item->price * $item->sales) ?></td>
+        <td style="background-color: <?= $colorSales ?>"><strong class="text-white"><?= $salesPosition ?></strong></td>
+    </tr>
+<?php endforeach; ?>
                 </tbody>
             </table>
         </div>

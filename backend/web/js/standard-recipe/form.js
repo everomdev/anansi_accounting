@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isNaN(value) || value % 1 !== 0 || value < 1) {
                 // Aplicar estilo de error
                 yieldField.classList.add('is-invalid');
-                errorContainer.textContent = `Por favor asegúrese que el número es correcto para la unidad de medida ${yieldUmField.value}. Debe ser un número entero mayor o igual a 1.`;
+                errorContainer.textContent = `Por favor asegúrese que el número es correcto para la unidad de medida ${yieldUmField.value}`;
                 errorContainer.style.display = 'block';
                 
                 // Opcional: aplicar un fondo rosa pastel para destacar el error
