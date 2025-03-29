@@ -99,6 +99,10 @@ $categories = RecipeCategory::find()
                         return get_class($model) == \common\models\StandardRecipe::class ? $model->title : $model->name;
                     },
                     'header' => getSortableHeader('Nombre de la receta', 'title', $sort, $order),
+                    'filter' => \yii\bootstrap5\Html::textInput('title', Yii::$app->request->get('title'), [
+                        'class' => 'form-control',
+                        'placeholder' => 'Buscar por título...'
+                    ])
                 ],
                 [
                     'attribute' => 'cost',
