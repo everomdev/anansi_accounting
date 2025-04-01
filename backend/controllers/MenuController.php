@@ -6,6 +6,7 @@ use backend\helpers\RedisKeys;
 use common\models\Business;
 use common\models\MenuBundle;
 use common\models\MenuBundleProduct;
+use common\models\RecipeCategory;
 use common\models\StandardRecipe;
 use Da\User\Traits\ContainerAwareTrait;
 use Da\User\Validator\AjaxRequestModelValidator;
@@ -240,61 +241,182 @@ class MenuController extends Controller
     }
 
     public function actionSaveMenu()
-    {
-        $post = Yii::$app->request->post();
-        $business = Business::findOne(['user_id' => Yii::$app->user->identity->id]);
+{
+    $post = Yii::$app->request->post();
 
-        $bundle = new MenuBundle([
-            'business_id' => $business->id,
-            'date' => $post['date'],
-        ]);
+    $business = Business::findOne(['user_id' => Yii::$app->user->identity->id]);
 
-        $recipes = StandardRecipe::find()->where([
-            'business_id' => $business['id'],
-            'in_construction' => 0,
-            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-            'in_menu' => true
-        ])->all();
+    // Crear nuevo MenuBundle
+    $bundle = new MenuBundle([
+        'business_id' => $business->id,
+        'date' => $post['date'],
+    ]);
 
-        $combos = Menu::find()->where([
-            'business_id' => $business['id'],
-            'in_menu' => true
-        ])->all();
+    // Obtener recetas en menú
+    $recipes = StandardRecipe::find()->where([
+        'business_id' => $business['id'],
+        'in_construction' => 0,
+        'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+        'in_menu' => true
+    ])->all();
 
-        $models = array_merge($recipes, $combos);
+    // Obtener combos en menú
+    $combos = Menu::find()->where([
+        'business_id' => $business['id'],
+        'in_menu' => true
+    ])->all();
 
-        if ($bundle->save()) {
-            foreach ($models as $model) {
-                $link = new MenuBundleProduct([
-                    'entity_id' => $model->id,
-                    'entity_type' => get_class($model),
-                    'bundle_id' => $bundle->id
-                ]);
+    $categoryProfitability = [];
+    $categoryProfitabilityCombo = [];
+    $recipesByCategory = [];
+    $combosByCategory = [];
+    $r_recipe = [];
+    $r_combo = [];
+    
 
-                $link->save();
-            }
-        } else if ($bundle->hasErrors()) {
-            Yii::$app->session->setFlash('danger', json_encode($bundle->errors));
+    foreach ($recipes as $recipe) {
+        $categoryKey = (string)$recipe->type_of_recipe;
+        if (!isset($recipesByCategory[$categoryKey])) {
+            $recipesByCategory[$categoryKey] = [];
         }
+        $recipesByCategory[$categoryKey][] = $recipe;
+    }
+    foreach ($combos as $combo) {
+        $categoryKey = RecipeCategory::findOne($combo->category_id)->name;
+        if (!isset($combosByCategory[$categoryKey])) {
+            $combosByCategory[$categoryKey] = [];
+        }
+        $combosByCategory[$categoryKey][] = $combo;
+    }
+    foreach ($combosByCategory as $category => $categoryCombos) {
+        $totalCostPercentage = 0;
+        $totalSales = 0;
+        $totalSalesSuma = 0;
+        $recipeCount = count($categoryCombos);
 
-        return $this->redirect(['standard-recipe/menu-recipes']);
+        foreach ($categoryCombos as $combo) {
+            $totalSales += $combo->sales;
+        }
+        
+        foreach ($categoryCombos as $combo) {
+            $totalCostPercentage += $combo->costPercent;
+            $totalSalesSuma += ($combo->sales / $totalSales) * $combo->costPercent;
+        }
+        
+        $categoryProfitabilityCombo[$category] = ($totalCostPercentage / $recipeCount) * 100;
+        $r_combo[$category] = $totalSalesSuma * 100;
     }
 
-    public function actionSavedMenus()
-    {
-        $business = Business::findOne(['user_id' => Yii::$app->user->identity->id]);
-        $bundles = MenuBundle::find()
-            ->where(['business_id' => $business->id]);
+    // Calcular rentabilidad teórica por categoría
+    foreach ($recipesByCategory as $category => $categoryRecipes) {
+        $totalCostPercentage = 0;
+        $totalSales = 0;
+        $totalSalesSuma = 0;
+        $recipeCount = count($categoryRecipes);
+        foreach ($categoryRecipes as $recipe) {
+            $totalSales += $recipe->sales;
+        }
+        
+        foreach ($categoryRecipes as $recipe) {
+            $totalCostPercentage += $recipe->costPercent;
+            $totalSalesSuma += ($recipe->sales / $totalSales) * $recipe->costPercent;
+        }
+        $categoryProfitability[$category] = ($totalCostPercentage / $recipeCount) * 100;
+        $r_recipe[$category] = $totalSalesSuma * 100;
+    }
+    $models = array_merge($recipes, $combos);
 
-        $dataProvider = new ActiveDataProvider([
-            'query' => $bundles,
-        ]);
+    if ($bundle->save()) {
+        foreach ($models as $model) {
+            // Determinar la rentabilidad teórica basada en el tipo de modelo
+            $rentabilidadTeorica = 0;
+            $rentabilidadReal = 0;
+            
+            if ($model instanceof StandardRecipe) {
+                // Para recetas estándar, usar la rentabilidad por categoría
+                $categoryKey = (string)$model->type_of_recipe;
+                
+                if (isset($categoryProfitability[$categoryKey])) {
+                    $rentabilidadTeorica = $categoryProfitability[$categoryKey];
+                    $rentabilidadReal = $r_recipe[$categoryKey];
 
-        return $this->render('saved_menus', [
-            'dataProvider' => $dataProvider
-        ]);
+                }
+            } elseif ($model instanceof Menu) {
+                $categoryKey = (string)RecipeCategory::findOne($model->category_id)->name;
+                
+                if (isset($categoryProfitabilityCombo[$categoryKey])) {
+                    $rentabilidadTeorica = $categoryProfitabilityCombo[$categoryKey];
+                    $rentabilidadReal = $r_combo[$categoryKey];
+                }
+            }
+            $link = new MenuBundleProduct([
+                'entity_id' => $model->id,
+                'entity_type' => get_class($model),
+                'bundle_id' => $bundle->id,
+                'rentabilidad_teorica' => $rentabilidadTeorica,
+                'categoria' => $categoryKey,  // Añadir la rentabilidad teórica
+                'rentabilidad_real' => $rentabilidadReal, // Añadir la rentabilidad real
+
+            ]);
+
+            if (!$link->save()) {
+                Yii::$app->session->setFlash('warning', 'Error al guardar producto: ' . json_encode($link->errors));
+            }
+        }
+        
+        Yii::$app->session->setFlash('success', 'Menú guardado correctamente con datos de rentabilidad');
+    } else if ($bundle->hasErrors()) {
+        Yii::$app->session->setFlash('danger', json_encode($bundle->errors));
     }
 
+    return $this->redirect(['standard-recipe/menu-recipes']);
+}
+
+public function actionSavedMenus()
+{
+    $business = Business::findOne(['user_id' => Yii::$app->user->identity->id]);
+    $menuBundleProducts = MenuBundleProduct::find()
+        ->all();
+    $bundles = MenuBundle::find()
+        ->where(['business_id' => $business->id]);
+
+    $dataProvider = new ActiveDataProvider([
+        'query' => $bundles,
+    ]);
+    
+    $typeOfRecipe = []; // Para recetas estándar agrupadas por categoría
+    $comboProfitability = []; // Para combos
+    
+    foreach ($menuBundleProducts as $mbp) {
+        if ($mbp->entity_type === StandardRecipe::class) {
+            $recipe = StandardRecipe::findOne($mbp->entity_id);
+            if ($recipe) {
+                // Agrupar por categoría para recetas estándar
+                if (!isset($typeOfRecipe[$mbp->bundle_id])) {
+                    $typeOfRecipe[$mbp->bundle_id] = [];
+                }
+                $typeOfRecipe[$mbp->bundle_id][$mbp->categoria] = $mbp->rentabilidad_teorica;
+                $typeOfRecipeReal[$mbp->bundle_id][$mbp->categoria] = $mbp->rentabilidad_real;
+            }
+        } elseif ($mbp->entity_type === Menu::class) {
+            $combo = Menu::findOne($mbp->entity_id);
+            if ($combo) {
+                // Almacenar rentabilidad para combos
+                if (!isset($typeOfRecipe[$mbp->bundle_id])) {
+                    $typeOfRecipe[$mbp->bundle_id] = [];
+                }
+                $typeOfRecipe[$mbp->bundle_id][$mbp->categoria] = $mbp->rentabilidad_teorica;
+                $typeOfRecipeReal[$mbp->bundle_id][$mbp->categoria] = $mbp->rentabilidad_real;
+            }
+        }
+    }
+    
+    return $this->render('saved_menus', [
+        'dataProvider' => $dataProvider,
+        'menuBundleProducts' => $typeOfRecipe,
+        'rentabilidadReal' => $typeOfRecipeReal,
+    ]);
+}
 
     /**
      * Finds the Menu model based on its primary key value.
