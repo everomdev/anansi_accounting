@@ -852,7 +852,7 @@ class StandardRecipeController extends Controller
         return $this->redirect(['standard-recipe/menu-recipes']);
     }
 
-    public function actionAnalytics($family = 'all')
+    /*public function actionAnalytics($family = 'all')
     {
         $business = RedisKeys::getBusiness();
 
@@ -888,6 +888,7 @@ class StandardRecipeController extends Controller
         usort($sortByPopularity, function ($itemA, $itemB) {
             return $itemB->sales - $itemA->sales;
         });
+        die(var_dump($sortByPopularity));
         usort($sortBySales, function ($itemA, $itemB) {
             return ($itemB->sales * $itemB->price) - ($itemA->sales * $itemA->price);
         });
@@ -910,8 +911,111 @@ class StandardRecipeController extends Controller
             'family' => $family
         ]);
 
+    }*/
+    public function actionAnalytics($family = 'all')
+{
+    $business = RedisKeys::getBusiness();
+
+    // Obtener recetas y combos como antes
+    $recipes = StandardRecipe::find()
+        ->where([
+            'business_id' => $business->id,
+            'in_menu' => true,
+            'in_construction' => 0,
+            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+        ]);
+    $combos = Menu::find()
+        ->innerJoin('recipe_category', 'recipe_category.id=menu.category_id')
+        ->where([
+            'menu.business_id' => $business->id,
+            'in_menu' => true,
+        ]);
+
+    // Filtrar por familia si se especifica
+    if ($family != 'all') {
+        $recipes->andWhere(['type_of_recipe' => $family]);
+        $combos->andWhere(['recipe_category.name' => $family]);
     }
 
+    $recipes = $recipes->all();
+    $combos = $combos->all();
+
+    // Combinar recetas y combos
+    $data = array_merge($recipes, $combos);
+    
+    // Ordenar por costo porcentual (menor a mayor)
+    $sortByCostPercent = $data;
+    usort($sortByCostPercent, function ($itemA, $itemB) {
+        return ($itemA->costPercent * 100) - ($itemB->costPercent * 100);
+    });
+    
+    // Ordenar por popularidad (ventas de mayor a menor)
+    $sortByPopularity = $data;
+    usort($sortByPopularity, function ($itemA, $itemB) {
+        return $itemB->sales - $itemA->sales;
+    });
+    
+    // Calcular ventas totales por valor (precio * ventas)
+    $sortBySales = $data;
+    usort($sortBySales, function ($itemA, $itemB) {
+        return ($itemB->sales * $itemB->price) - ($itemA->sales * $itemA->price);
+    });
+    
+    // NUEVO: Calcular la distribución según regla 80-20 de Pareto
+    $totalSales = 0;
+    foreach ($data as $item) {
+        $totalSales += $item->sales;
+    }
+    
+    // Ordenar los elementos por ventas (de mayor a menor)
+    $paretoItems = $data;
+    usort($paretoItems, function ($itemA, $itemB) {
+        return $itemB->sales - $itemA->sales;
+    });
+    
+    // Calcular el porcentaje acumulado de ventas
+    $accumulatedPercentage = 0;
+    $paretoCategories = []; // Para clasificar cada elemento
+    
+    foreach ($paretoItems as $item) {
+        if ($totalSales > 0) {
+            $itemPercentage = ($item->sales / $totalSales) * 100;
+            $accumulatedPercentage += $itemPercentage;
+            
+            // Clasificar según el acumulado
+            if ($accumulatedPercentage <= 80) {
+                $paretoCategories[get_class($item) . '_' . $item->id] = 'verde'; // Alto impacto (A)
+            } elseif ($accumulatedPercentage <= 95) {
+                $paretoCategories[get_class($item) . '_' . $item->id] = 'amarillo'; // Medio impacto (B)
+            } else {
+                $paretoCategories[get_class($item) . '_' . $item->id] = 'rojo'; // Bajo impacto (C)
+            }
+        } else {
+            $paretoCategories[get_class($item) . '_' . $item->id] = 'gris'; // Sin datos
+        }
+    }
+    
+    // Convertir a strings para la vista
+    $sortByCostPercent = ArrayHelper::getColumn($sortByCostPercent, function ($item) {
+        return sprintf("%s_%s", get_class($item), $item->id);
+    });
+    $sortByPopularity = ArrayHelper::getColumn($sortByPopularity, function ($item) {
+        return sprintf("%s_%s", get_class($item), $item->id);
+    });
+    $sortBySales = ArrayHelper::getColumn($sortBySales, function ($item) {
+        return sprintf("%s_%s", get_class($item), $item->id);
+    });
+
+    return $this->render('analytics', [
+        'data' => $data,
+        'sortByCostPercent' => $sortByCostPercent,
+        'sortByPopularity' => $sortByPopularity,
+        'sortBySales' => $sortBySales,
+        'family' => $family,
+        'paretoCategories' => $paretoCategories, // Añadir categorías de Pareto
+        'totalSales' => $totalSales
+    ]);
+}
     public function actionMenuImprovement()
     {
         $business = RedisKeys::getBusiness();

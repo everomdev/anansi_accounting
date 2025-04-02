@@ -1,6 +1,13 @@
 <?php
 /** @var $this \yii\web\View */
 /** @var $business \common\models\Business */
+/** @var $data array */
+/** @var $sortByCostPercent array */
+/** @var $sortByPopularity array */
+/** @var $sortBySales array */
+/** @var $family string */
+/** @var $paretoCategories array */
+/** @var $totalSales float */
 
 $business = \backend\helpers\RedisKeys::getBusiness();
 $total = count($data);
@@ -33,53 +40,49 @@ $this->title = Yii::t('app', "Menu Analysis")
                 <th><?= Yii::t('app', "Position") ?></th>
                 </thead>
                 <tbody>
-                <?php foreach ($data as $item): ?>
-    <?php
-    $costPercentPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortByCostPercent) + 1;
-    $popularityPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortByPopularity) + 1;
-    $salesPosition = array_search(sprintf("%s_%s", get_class($item), $item->id), $sortBySales) + 1;
-    
-    // Calcular los percentiles para cada métrica
-    $costPercentPercentile = $costPercentPosition / $total;
-    $popularityPercentile = $popularityPosition / $total;
-    $salesPercentile = $salesPosition / $total;
-    
-    // Asignar colores según la clasificación ABC/Pareto
-    // Verde (0-80%), Amarillo (>80%-95%), Rojo (>95%-100%)
-    if ($costPercentPercentile <= 0.8) {
-        $colorCostPercent = "#28a745"; // Verde
-    } elseif ($costPercentPercentile <= 0.95) {
-        $colorCostPercent = "#ffc107"; // Amarillo
-    } else {
-        $colorCostPercent = "#dc3545"; // Rojo
-    }
-    
-    if ($popularityPercentile <= 0.8) {
-        $colorPopularity = "#28a745"; // Verde
-    } elseif ($popularityPercentile <= 0.95) {
-        $colorPopularity = "#ffc107"; // Amarillo
-    } else {
-        $colorPopularity = "#dc3545"; // Rojo
-    }
-    
-    if ($salesPercentile <= 0.8) {
-        $colorSales = "#28a745"; // Verde
-    } elseif ($salesPercentile <= 0.95) {
-        $colorSales = "#ffc107"; // Amarillo
-    } else {
-        $colorSales = "#dc3545"; // Rojo
-    }
-    ?>
-    <tr>
-        <td><?= $item->name ?></td>
-        <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
-        <td style="background-color: <?= $colorCostPercent ?>"><strong class="text-white"><?= $costPercentPosition ?></strong></td>
-        <td><?= $item->sales ?></td>
-        <td style="background-color: <?= $colorPopularity ?>"><strong class="text-white"><?= $popularityPosition ?></strong></td>
-        <td><?= $business->getFormatter()->asCurrency($item->price * $item->sales) ?></td>
-        <td style="background-color: <?= $colorSales ?>"><strong class="text-white"><?= $salesPosition ?></strong></td>
-    </tr>
-<?php endforeach; ?>
+                <?php foreach ($data as $item): 
+                    $itemKey = sprintf("%s_%s", get_class($item), $item->id);
+                    $costPercentPosition = array_search($itemKey, $sortByCostPercent) + 1;
+                    $popularityPosition = array_search($itemKey, $sortByPopularity) + 1;
+                    $salesPosition = array_search($itemKey, $sortBySales) + 1;
+                    
+                    // Asignar colores según la clasificación de Pareto que viene del controlador
+                    $colorPareto = "#28a745"; // Verde por defecto
+                    
+                    if (isset($paretoCategories[$itemKey])) {
+                        if ($paretoCategories[$itemKey] === 'amarillo') {
+                            $colorPareto = "#ffc107";
+                        } elseif ($paretoCategories[$itemKey] === 'rojo') {
+                            $colorPareto = "#dc3545";
+                        } elseif ($paretoCategories[$itemKey] === 'gris') {
+                            $colorPareto = "#6c757d";
+                        }
+                    }
+                    
+                    // Calcular percentiles para colorear otras columnas
+                    $costPercentPercentile = $costPercentPosition / $total;
+                    $colorCostPercent = $costPercentPercentile <= 0.2 ? "#28a745" : ($costPercentPercentile <= 0.5 ? "#ffc107" : "#dc3545");
+                    
+                    // Para popularidad y ventas, usar ranking directo (mejor = verde)
+                    $colorPopularity = $popularityPosition <= ceil($total * 0.2) ? "#28a745" : 
+                                      ($popularityPosition <= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
+                    
+                    $colorSales = $salesPosition <= ceil($total * 0.2) ? "#28a745" : 
+                                 ($salesPosition <= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
+                ?>
+                <tr>
+                    <td><?= $item->name ?></td>
+                    <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
+                    <td style="background-color: <?= $colorCostPercent ?>"><strong class="text-white"><?= $costPercentPosition ?></strong></td>
+                    <td><?= $item->sales ?> 
+                        
+                    </td>
+                    <td style="background-color: <?= $colorPopularity ?>"><strong class="text-white"><?= $popularityPosition ?></strong></td>
+                    <td><?= $business->getFormatter()->asCurrency($item->price * $item->sales) ?></td>
+                    <td style="background-color: <?= $colorSales ?>"><strong class="text-white"><?= $salesPosition ?></strong></td>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
