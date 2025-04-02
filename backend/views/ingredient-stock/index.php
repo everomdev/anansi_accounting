@@ -42,10 +42,8 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
             ]), ['ingredient-stock/export', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
         </div>
         <div class="p-2">
-            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', [
-                'icon' => ""
-            ]), ['ingredient-stock/bulk-remove', 'id' => $business->id], ['class' => 'btn btn-danger', 'id' => 'bulk-remove','data-bs-toggle' => 'modal',
-        'data-bs-target' => '#modal-bulk-remove']) ?>
+        <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
+            ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
         </div>
     </div>
 
@@ -217,6 +215,44 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar todos'), [
         'class' => 'btn btn-danger',
         'id' => 'delete-all'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+// Modal para mostrar error cuando no hay elementos seleccionados
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-no-selection',
+    'title' => Yii::t('app', "Selección vacía"),
+]);
+?>
+<p>No has seleccionado ningún insumo para eliminar. Por favor, selecciona al menos un insumo.</p>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+// Modal para confirmar la eliminación de elementos específicos
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-confirm-selected-remove',
+    'title' => Yii::t('app', "Confirmar eliminación"),
+]);
+?>
+<p>¿Estás seguro de que deseas eliminar <span id="selected-count-message"></span> insumos?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
+        'class' => 'btn btn-danger',
+        'id' => 'confirm-delete-selected'
     ]) ?>
 </div>
 <?php

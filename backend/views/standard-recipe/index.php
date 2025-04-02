@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
+use yii\widgets\Pjax;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\StandardRecipeSearch */
@@ -33,12 +34,11 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
             <div class="col-md-12">
             <?= Html::a('Descargar Recetas Completas', ['standard-recipe/download-complete-recipe-pdf'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete']) ?>
             <?= Html::a('Exportar Recetas Completas', ['standard-recipe/export-recipes-to-excel'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete-excel']) ?>
-            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', [
-                'icon' => ""
-            ]), ['standard-recipe/delete', 'id' => $business], ['class' => 'btn btn-danger', 'id' => 'btn-delete-recipes']) ?>
+            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
+                ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'btn-delete-recipes']) ?>
             </div>
         </div>
-
+    <?php Pjax::begin(['id' => 'standard-recipes-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <div class="row"></div>
@@ -110,7 +110,7 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
         ],
     ]); ?>
 
-
+<?php Pjax::end(); ?>
 </div>
 
 <?php
@@ -137,5 +137,67 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 
 \yii\bootstrap5\ActiveForm::end();
 
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-bulk-remove',
+    'title' => Yii::t('app', "Eliminar recetas seleccionadas"),
+]);
+?>
+<p>¿Deseas eliminar todas las recetas seleccionadas o solo las de la página actual?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar las seleccionadas'), [
+        'class' => 'btn btn-danger',
+        'id' => 'delete-current-page'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar todas'), [
+        'class' => 'btn btn-danger',
+        'id' => 'delete-all'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+// Modal para mostrar error cuando no hay elementos seleccionados
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-no-selection',
+    'title' => Yii::t('app', "Selección vacía"),
+]);
+?>
+<p>No has seleccionado ninguna receta para eliminar. Por favor, selecciona al menos una receta.</p>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+// Modal para confirmar la eliminación de elementos específicos
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-confirm-selected-remove',
+    'title' => Yii::t('app', "Confirmar eliminación"),
+]);
+?>
+<p>¿Estás seguro de que deseas eliminar <span id="selected-count-message"></span> recetas?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
+        'class' => 'btn btn-danger',
+        'id' => 'confirm-delete-selected'
+    ]) ?>
+</div>
+<?php
 \yii\bootstrap5\Modal::end();
 ?>

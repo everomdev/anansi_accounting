@@ -96,39 +96,86 @@ $(document).ready(function() {
         }
     });
 });
-$(document).ready(function() {
-    // Hide the button initially
-    $('#btn-delete-recipes').hide();
-
-    // Show/hide the button based on checkbox selection
-    $('#standard-recipes-grid').on('change', 'input[type="checkbox"]', function() {
-        var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
-        if (selectedRecipes.length > 0) {
-            $('#btn-delete-recipes').show();
-        } else {
-            $('#btn-delete-recipes').hide();
-        }
-    });
-
-    $(document).on('click', '#btn-delete-recipes', function(event) {
-        event.preventDefault();
-        var keys = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+// Manejar el clic en el botón de eliminar recetas seleccionadas
+$(document).on('click', '#btn-delete-recipes', function(event) {
+    event.preventDefault();
+    var keys = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    console.log('Recetas seleccionadas:', keys.length);
     
-        if(confirm(`Vas a eliminar ${keys.length} recetas. ¿Estás seguro?`)) {
-            $.ajax({
-                url: '/standard-recipe/delete',
-                type: 'POST',
-                data: {id: keys}, // Changed 'keys' to 'id' to match the required parameter
-                success: function(data) {
-                    $.pjax.reload({container: '#standard-recipe-pjax'});
-                },
-            });
-        }
-    
-    
+    // Si no hay elementos seleccionados, mostrar modal de error
+    if (keys.length === 0) {
+        $('#modal-no-selection').modal('show');
         return false;
-    });
+    }
     
+    // Si hay elementos seleccionados
+    // Actualizar el mensaje con el número de elementos seleccionados
+    $('#selected-count-message').text(keys.length);
+    
+    // Determinar qué modal mostrar
+    if (keys.length === $('.grid-view tbody tr').length) {
+        // Si seleccionaste todos los de la página actual
+        $('#modal-bulk-remove').modal('show');
+    } else {
+        // Si seleccionaste solo algunos
+        $('#modal-confirm-selected-remove').modal('show');
+    }
+    
+    return false;
+});
+
+// Capturar el clic en "Eliminar las seleccionadas" (modal para todos)
+$(document).on('click', '#delete-current-page', function() {
+    var keys = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    $('#modal-bulk-remove').modal('hide'); // Ocultar el modal
+    
+    $.ajax({
+        url: '/standard-recipe/delete',
+        type: 'POST',
+        data: { keys: keys }, // Enviar solo los IDs de la página actual
+        success: function(data) {
+            $.pjax.reload({ container: '#standard-recipes-pjax' });
+        },
+        error: function() {
+            alert('Hubo un error al eliminar las recetas.');
+        }
+    });
+});
+
+// Capturar el clic en "Eliminar todas" (modal para todos)
+$(document).on('click', '#delete-all', function() {
+    var keys = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    $('#modal-bulk-remove').modal('hide'); // Ocultar el modal
+    
+    $.ajax({
+        url: '/standard-recipe/delete',
+        type: 'POST',
+        data: { keys: 'all' }, // Enviar todos los IDs seleccionados
+        success: function(data) {
+            $.pjax.reload({ container: '#standard-recipes-pjax' });
+        },
+        error: function() {
+            alert('Hubo un error al eliminar las recetas.');
+        }
+    });
+});
+
+// Capturar el clic en "Eliminar" (modal para selección parcial)
+$(document).on('click', '#confirm-delete-selected', function() {
+    var keys = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    $('#modal-confirm-selected-remove').modal('hide'); // Ocultar el modal
+    
+    $.ajax({
+        url: '/standard-recipe/delete',
+        type: 'POST',
+        data: { keys: keys }, // Enviar los IDs seleccionados
+        success: function(data) {
+            $.pjax.reload({ container: '#standard-recipes-pjax' });
+        },
+        error: function() {
+            alert('Hubo un error al eliminar las recetas seleccionadas.');
+        }
+    });
 });
 $(document).ready(function () {
     // Código para cargar datos en el modal

@@ -608,16 +608,23 @@ class StandardRecipeController extends Controller
     public function actionDelete()
     {
         if (Yii::$app->request->isPost) {
-            $ids = Yii::$app->request->post('id'); // Recibir los IDs enviados desde el frontend
+            $ids = Yii::$app->request->post('keys'); // Recibir los IDs enviados desde el frontend
     
-            if (!empty($ids)) {
+            if ($ids === 'all') {
+                // Delete all recipes
+                $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+                $business = Business::findOne(['id' => $businessData['id']]);
+                StandardRecipe::deleteAll(['business_id' => $business->id]);
+                return $this->asJson(['success' => true]);
+            } else if (!empty($ids)) {
+                // Delete selected recipes
                 foreach ($ids as $id) {
                     $model = $this->findModel($id);
                     if ($model) {
-                        $model->delete();
+                        $model->delete(); 
                     }
                 }
-                return $this->redirect(['index']);
+                return $this->asJson(['success' => true]);
             }
         }
     }
