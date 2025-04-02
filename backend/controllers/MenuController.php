@@ -300,7 +300,7 @@ class MenuController extends Controller
         
         foreach ($categoryCombos as $combo) {
             $totalCostPercentage += $combo->costPercent;
-            $totalSalesSuma += ($combo->sales / $totalSales) * $combo->costPercent;
+            $totalSalesSuma += ($totalSales > 0 && $combo->sales > 0) ? ($combo->sales / $totalSales) * $combo->costPercent : 0;
         }
         
         $categoryProfitabilityCombo[$category] = ($totalCostPercentage / $recipeCount) * 100;
@@ -319,7 +319,7 @@ class MenuController extends Controller
         
         foreach ($categoryRecipes as $recipe) {
             $totalCostPercentage += $recipe->costPercent;
-            $totalSalesSuma += ($recipe->sales / $totalSales) * $recipe->costPercent;
+            $totalSalesSuma += ($totalSales > 0 && $recipe->sales > 0) ?($recipe->sales / $totalSales) * $recipe->costPercent : 0;
         }
         $categoryProfitability[$category] = ($totalCostPercentage / $recipeCount) * 100;
         $r_recipe[$category] = $totalSalesSuma * 100;
