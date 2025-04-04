@@ -50,6 +50,7 @@ class MenuController extends Controller
                             'remove-from-menu-in-bulk',
                             'save-menu',
                             'saved-menus',
+                            'compare-menus'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -361,15 +362,17 @@ class MenuController extends Controller
 
             if (!$link->save()) {
                 Yii::$app->session->setFlash('warning', 'Error al guardar producto: ' . json_encode($link->errors));
+                return $this->asJson(['success' => false]);
             }
         }
         
         Yii::$app->session->setFlash('success', 'Menú guardado correctamente con datos de rentabilidad');
     } else if ($bundle->hasErrors()) {
         Yii::$app->session->setFlash('danger', json_encode($bundle->errors));
+        return $this->asJson(['success' => false]);
     }
 
-    return $this->redirect(['standard-recipe/menu-recipes']);
+    return $this->asJson(['success' => true]);
 }
 
 public function actionSavedMenus()
@@ -385,7 +388,7 @@ public function actionSavedMenus()
     ]);
     
     $typeOfRecipe = []; // Para recetas estándar agrupadas por categoría
-    $comboProfitability = []; // Para combos
+    $typeOfRecipeReal = []; // Para rentabilidad real (importante inicializarla)
     
     foreach ($menuBundleProducts as $mbp) {
         if ($mbp->entity_type === StandardRecipe::class) {
@@ -411,6 +414,59 @@ public function actionSavedMenus()
         }
     }
     
+    // Verificar si es una solicitud AJAX para comparación de menús
+    if (Yii::$app->request->isAjax && Yii::$app->request->isPost) {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $menuIds = Yii::$app->request->post('menuIds', []);
+        
+        if (empty($menuIds) || count($menuIds) > 2) {
+            return [
+                'success' => false,
+                'message' => 'Se requieren 1 o 2 menús para comparar'
+            ];
+        }
+        
+        // Obtener los menús seleccionados
+        $selectedMenus = MenuBundle::find()
+            ->where(['id' => $menuIds, 'business_id' => $business->id])
+            ->all();
+        
+        if (count($selectedMenus) !== count($menuIds)) {
+            return [
+                'success' => false,
+                'message' => 'No se encontraron todos los menús solicitados'
+            ];
+        }
+        
+        // Filtrar los datos de rentabilidad solo para los menús seleccionados
+        $selectedMenuData = [];
+        $selectedMenuDataReal = [];
+        
+        foreach ($menuIds as $menuId) {
+            if (isset($typeOfRecipe[$menuId])) {
+                $selectedMenuData[$menuId] = $typeOfRecipe[$menuId];
+            }
+            
+            if (isset($typeOfRecipeReal[$menuId])) {
+                $selectedMenuDataReal[$menuId] = $typeOfRecipeReal[$menuId];
+            }
+        }
+        
+        // Renderizar vista parcial de comparación
+        $html = $this->renderPartial('_compare_menus', [
+            'menus' => $selectedMenus,
+            'menuBundleProducts' => $selectedMenuData,
+            'rentabilidadReal' => $selectedMenuDataReal
+        ]);
+        
+        return [
+            'success' => true,
+            'html' => $html
+        ];
+    }
+    
+    // Renderizado normal de la lista de menús
     return $this->render('saved_menus', [
         'dataProvider' => $dataProvider,
         'menuBundleProducts' => $typeOfRecipe,

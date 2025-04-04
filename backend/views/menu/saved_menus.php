@@ -2,47 +2,51 @@
 /** @var $this \yii\web\View */
 /** @var $dataProvider \yii\data\ActiveDataProvider */
 /** @var $menuBundleProducts array */
+/** @var $rentabilidadReal array */
 
-use yii\helpers\Html;
 use yii\grid\GridView;
-use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 
-$this->title = "Menús guardados";
+$this->title = Yii::t('app', 'Menús Guardados');
 ?>
-<?php //die(var_dump($rentabilidadReal)); ?>
+
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h4><?= Html::encode($this->title) ?></h4>
+        <?= Html::button('<i class="bi bi-bar-chart-fill"></i> Comparar seleccionados', [
+            'class' => 'btn btn-primary',
+            'id' => 'btn-compare-menus',
+            'disabled' => true
+        ]) ?>
     </div>
     <div class="card-body">
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
             'columns' => [
-                ['class' => \yii\grid\SerialColumn::class],
+                [
+                    'class' => \yii\grid\CheckboxColumn::class,
+                    'checkboxOptions' => function ($model, $key, $index, $column) {
+                        return [
+                            'class' => 'menu-checkbox',
+                            'data-menu-id' => $model->id,
+                            'data-menu-date' => Yii::$app->formatter->asDate($model->date)
+                        ];
+                    }
+                ],
                 'date:date',
                 [
-                    'label' => 'Rentabilidad Teórica',
+                    'label' => 'Rentabilidad Teórica por Categoría',
                     'format' => 'raw',
                     'value' => function ($model) use ($menuBundleProducts) {
                         if (isset($menuBundleProducts[$model->id])) {
                             $html = '<div class="rentabilidad-wrapper">';
-                            
                             foreach ($menuBundleProducts[$model->id] as $category => $value) {
-                                // Mostrar la categoría y el valor con formato de porcentaje
-                                $colorClass = '';
                                 $formattedValue = floatval($value);
+                                $colorClass = $formattedValue <= 25 ? 'text-success' : 
+                                             ($formattedValue <= 40 ? 'text-warning' : 'text-danger');
                                 
-                                // Determinar el color según el valor de rentabilidad
-                                if ($formattedValue <= 25) {
-                                    $colorClass = 'text-success'; // Verde - Excelente
-                                } elseif ($formattedValue <= 40) {
-                                    $colorClass = 'text-warning'; // Amarillo - Aceptable
-                                } else {
-                                    $colorClass = 'text-danger'; // Rojo - Preocupante
-                                }
-                                
-                                $html .= '<div class="rentabilidad-item mb-1">';
-                                $html .= '<span class="badge bg-secondary me-2">' . Html::encode($category) . '</span>';
+                                $html .= '<div class="rentabilidad-item">';
+                                $html .= '<span class="badge bg-secondary me-1">' . Html::encode($category) . '</span> ';
                                 $html .= '<span class="' . $colorClass . ' fw-bold">' . 
                                          Html::encode(number_format($formattedValue, 2)) . '%</span>';
                                 $html .= '</div>';
@@ -85,41 +89,6 @@ $this->title = "Menús guardados";
                     'label' => 'Rentabilidad Real',
                     'format' => 'raw',
                     'value' => function ($model) use ($rentabilidadReal) {
-                        if (isset($rentabilidadReal[$model->id])) {
-                            $html = '<div class="rentabilidad-wrapper">';
-                            
-                            foreach ($rentabilidadReal[$model->id] as $category => $value) {
-                                // Mostrar la categoría y el valor con formato de porcentaje
-                                $colorClass = '';
-                                $formattedValue = floatval($value);
-                                
-                                // Determinar el color según el valor de rentabilidad
-                                if ($formattedValue <= 25) {
-                                    $colorClass = 'text-success'; // Verde - Excelente
-                                } elseif ($formattedValue <= 40) {
-                                    $colorClass = 'text-warning'; // Amarillo - Aceptable
-                                } else {
-                                    $colorClass = 'text-danger'; // Rojo - Preocupante
-                                }
-                                
-                                $html .= '<div class="rentabilidad-item mb-1">';
-                                $html .= '<span class="badge bg-secondary me-2">' . Html::encode($category) . '</span>';
-                                $html .= '<span class="' . $colorClass . ' fw-bold">' . 
-                                         Html::encode(number_format($formattedValue, 2)) . '%</span>';
-                                $html .= '</div>';
-                            }
-                            
-                            $html .= '</div>';
-                            return $html;
-                        }
-                        
-                        return '<span class="text-muted">No disponible</span>';
-                    }
-                ],
-                [
-                    'label' => 'Rentabilidad Real del Menú',
-                    'format' => 'raw',
-                    'value' => function ($model) use ($rentabilidadReal) {
                         if (isset($rentabilidadReal[$model->id]) && !empty($rentabilidadReal[$model->id])) {
                             // Calcular el promedio de todas las categorías
                             $values = array_values($rentabilidadReal[$model->id]);
@@ -142,17 +111,6 @@ $this->title = "Menús guardados";
                         return '<span class="text-muted">N/A</span>';
                     }
                 ],
-                [
-                    'class' => \yii\grid\ActionColumn::class,
-                    'template' => '{view}',
-                    'buttons' => [
-                        'view' => function ($url, $model, $key) {
-                            return Html::a('<i class="bi bi-eye"></i> Ver', 
-                                ['/standard-recipe/menu-recipes', 'bundle' => $model->id], 
-                                ['class' => 'btn btn-primary btn-sm']);
-                        }
-                    ]
-                ]
             ],
             'options' => [
                 'id' => 'menu-grid'
@@ -163,6 +121,166 @@ $this->title = "Menús guardados";
     </div>
 </div>
 
+<?php
+// Modal para confirmar la comparación
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-confirm-compare',
+    'title' => Yii::t('app', "Comparar menús"),
+    'size' => \yii\bootstrap5\Modal::SIZE_SMALL,
+]);
+?>
+<p>¿Deseas comparar los <span id="selected-menus-count">0</span> menús seleccionados?</p>
+<div id="selected-menus-list" class="mb-3 alert alert-info">
+    <!-- La lista de menús seleccionados se mostrará aquí dinámicamente -->
+</div>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Comparar'), [
+        'class' => 'btn btn-primary',
+        'id' => 'confirm-compare-button'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal grande para mostrar la comparación de menús
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-menu-comparison',
+    'title' => Yii::t('app', "Comparación de menús"),
+    'size' => \yii\bootstrap5\Modal::SIZE_EXTRA_LARGE,
+    'bodyOptions' => ['id' => 'menu-comparison-content', 'style' => 'max-height: 80vh; overflow-y: auto;'],
+]);
+?>
+<div id="comparison-loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando comparación...</p>
+</div>
+<div id="comparison-content" class="d-none">
+    <!-- El contenido de la comparación se cargará aquí -->
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+$js = <<<JS
+$(document).ready(function() {
+    // Variable para almacenar los menús seleccionados
+    let selectedMenus = [];
+    
+    // Función para actualizar el estado del botón de comparación
+    function updateCompareButton() {
+        selectedMenus = [];
+        
+        // Recopilar información de los menús seleccionados
+        $('.menu-checkbox:checked').each(function() {
+            selectedMenus.push({
+                id: $(this).data('menu-id'),
+                date: $(this).data('menu-date')
+            });
+        });
+        
+        // Habilitar el botón solo si hay 1 o 2 menús seleccionados
+        if (selectedMenus.length >= 1 && selectedMenus.length <= 2) {
+            $('#btn-compare-menus').prop('disabled', false);
+        } else {
+            $('#btn-compare-menus').prop('disabled', true);
+        }
+    }
+    
+    // Escuchar cambios en los checkboxes
+    $(document).on('change', '.menu-checkbox', function() {
+        // Limitar a seleccionar máximo 2 menús
+        if ($('.menu-checkbox:checked').length > 2) {
+            $(this).prop('checked', false);
+            alert('Solo puedes seleccionar hasta 2 menús para comparar');
+        }
+        
+        updateCompareButton();
+    });
+    
+    // Al hacer clic en el botón de comparar
+    $('#btn-compare-menus').on('click', function() {
+        // Actualizar el modal de confirmación
+        $('#selected-menus-count').text(selectedMenus.length);
+        
+        // Construir la lista de menús seleccionados
+        let menuList = '';
+        selectedMenus.forEach(function(menu) {
+            menuList += '<div><i class="bi bi-calendar-event me-2"></i>' + menu.date + '</div>';
+        });
+        $('#selected-menus-list').html(menuList);
+        
+        // Mostrar el modal de confirmación
+        $('#modal-confirm-compare').modal('show');
+    });
+    
+    // Al confirmar la comparación
+    $('#confirm-compare-button').on('click', function() {
+        // Deshabilitar el botón para evitar múltiples clics
+        $(this).prop('disabled', true)
+               .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...');
+        
+        // Cerrar el modal de confirmación
+        $('#modal-confirm-compare').modal('hide');
+        
+        // Mostrar el modal de comparación con el spinner de carga
+        $('#modal-menu-comparison').modal('show');
+        $('#comparison-loading').removeClass('d-none');
+        $('#comparison-content').addClass('d-none');
+        
+        // Preparar los IDs para la solicitud AJAX
+        const menuIds = selectedMenus.map(menu => menu.id);
+        
+        // Realizar la solicitud AJAX para obtener la comparación
+        $.ajax({
+            url: '/menu/saved-menus',
+            type: 'POST',
+            data: { menuIds: menuIds },
+            dataType: 'json',
+            success: function(response) {
+                // Ocultar el spinner de carga
+                $('#comparison-loading').addClass('d-none');
+                
+                if (response.success) {
+                    // Mostrar los datos comparativos
+                    $('#comparison-content').removeClass('d-none').html(response.html);
+                } else {
+                    // Mostrar mensaje de error
+                    $('#comparison-content').removeClass('d-none')
+                        .html('<div class="alert alert-danger">' + (response.message || 'Error al cargar la comparación.') + '</div>');
+                }
+                
+                // Restaurar el botón
+                $('#confirm-compare-button').prop('disabled', false)
+                                            .html('Comparar');
+            },
+            error: function() {
+                // Ocultar el spinner de carga
+                $('#comparison-loading').addClass('d-none');
+                
+                // Mostrar mensaje de error
+                $('#comparison-content').removeClass('d-none')
+                    .html('<div class="alert alert-danger">Error al cargar la comparación. Inténtalo de nuevo.</div>');
+                
+                // Restaurar el botón
+                $('#confirm-compare-button').prop('disabled', false)
+                                            .html('Comparar');
+            }
+        });
+    });
+});
+JS;
+
+$this->registerJs($js);
+?>
 <?php
 // Recopilar datos para el gráfico
 $chartData = [

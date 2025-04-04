@@ -16,6 +16,7 @@ $actions = [
     'real-yield',
     'sales',
     'menu-recipes',
+    'saved-menus',
     'analytics',
     'menu-improvement',
     'profit-comparison',
@@ -40,7 +41,7 @@ $configBaseActive = in_array($currentControllerId, ['category', 'recipe-category
 $gestionInsumosActive = in_array($currentControllerId, ['ingredient-stock', 'provider', 'ingredients']);
 $costeoActive = in_array($currentControllerId, ['sub-standard-recipe', 'standard-recipe', 'convoy', 'menu']);
 $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center', 'storage', 'movement', 'price-trend']);
-$menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes']);
+$menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
 $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
@@ -233,6 +234,13 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         <li class="menu-item <?= $currentControllerId == 'menu-recipes' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['standard-recipe/menu-recipes']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menú') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <?php if (Yii::$app->user->can('menu_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'saved-menus' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['menu/saved-menus']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Menú histórico') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>

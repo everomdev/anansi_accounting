@@ -219,8 +219,16 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', "Add"), [
 echo \kartik\date\DatePicker::widget([
     'id' => "menu-date",
     'name' => "menu-date",
+    'options' => ['placeholder' => 'Seleccionar fecha...'],
     'pluginOptions' => [
-        'format' => "yyyy-mm-dd",
+        'format' => 'yyyy-mm-dd',
+        'autoclose' => true,  // Cierra automáticamente al seleccionar fecha
+        'todayHighlight' => true,  // Resalta la fecha actual
+        'clearBtn' => true,  // Muestra botón para limpiar
+    ],
+    'pluginEvents' => [
+        // Opcional: cerrar también al presionar Enter
+        'keyup' => "function(e) { if (e.keyCode === 13) { $(this).datepicker('hide'); } }"
     ]
 ]);
 
@@ -272,19 +280,48 @@ $(document).on('click', '#save-menu', function(event){
     return false;
 });
 
-$(document).on('click', '#btn-save-menu', function(event){
+$(document).on('click', '#btn-save-menu', function(event) {
     event.preventDefault();
-    let _this = $(this);
-    let url = _this.data("url");
+    
+    // Referencia al botón
+    var button = $(this);
+    
+    // Deshabilitar y mostrar estado de procesamiento
+    button.prop('disabled', true)
+           .html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+    
+    // Obtener datos del formulario
+    let url = button.data("url");
     let date = $("#menu-date").val();
     
+    // Realizar petición AJAX
     $.ajax({
-        url,
-        type: 'post',
-        data: {
-            date
+        url: url,
+        type: 'POST',
+        data: { date: date },
+        success: function(response) {
+            console.log(response);
+            // Manejar respuesta exitosa
+            if(response.success) {
+                button.prop('disabled', false)
+                   .html('Guardar este menú');
+                   $("#modal-save-menu").modal('hide');
+                // Recargar o actualizar la vista si es necesario
+                //$.pjax.reload({ container: '#tu-contenedor-pjax' });
+            } else {
+                toastr.error(response.message || 'Error al guardar el menú');
+            }
+        },
+        error: function(xhr) {
+            // Manejar error
+            toastr.error(xhr.responseJSON?.message || 'Error en el servidor');
+        },
+        complete: function() {
+            // Restaurar el botón siempre al finalizar
+            button.prop('disabled', false)
+                   .html('Guardar este menú');
         }
-    })
+    });
     
     return false;
 });
