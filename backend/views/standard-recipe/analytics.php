@@ -8,11 +8,13 @@
 /** @var $family string */
 /** @var $paretoCategories array */
 /** @var $totalSales float */
+/** @var $currentSort string */
+/** @var $currentDirection string */
 
 $business = \backend\helpers\RedisKeys::getBusiness();
 $total = count($data);
 
-$this->title = Yii::t('app', "Menu Analysis")
+$this->title = Yii::t('app', "Menu Analysis");
 ?>
 <div class="card">
     <div class="card-header">
@@ -31,13 +33,67 @@ $this->title = Yii::t('app', "Menu Analysis")
         <div class="table-responsive">
             <table class="table">
                 <thead>
-                <th><?= Yii::t('app', "Recipes") ?></th>
-                <th><?= Yii::t('app', "Cost percent") ?></th>
-                <th><?= Yii::t('app', "Position") ?></th>
-                <th><?= Yii::t('app', "Popularity") ?></th>
-                <th><?= Yii::t('app', "Position") ?></th>
-                <th><?= Yii::t('app', "Sales") ?></th>
-                <th><?= Yii::t('app', "Position") ?></th>
+                <tr>
+                    <th>
+                        <?= Yii::t('app', "Recipes") ?>
+                        <span class="float-end">
+                            <?= \yii\bootstrap5\Html::a(
+                                ($currentSort === 'name' ? '<i class="fas fa-sort-' . ($currentDirection === 'asc' ? 'up' : 'down') . '"></i>' : '<i class="fas fa-sort"></i>'),
+                                ['standard-recipe/analytics', 
+                                    'family' => $family, 
+                                    'sort' => 'name', 
+                                    'direction' => ($currentSort === 'name' && $currentDirection === 'asc' ? 'desc' : 'asc')
+                                ],
+                                ['class' => 'text-decoration-none']
+                            ) ?>
+                        </span>
+                    </th>
+                    <th>
+                        <?= Yii::t('app', "Cost percent") ?>
+                        <span class="float-end">
+                            <?= \yii\bootstrap5\Html::a(
+                                ($currentSort === 'cost-percent' ? '<i class="fas fa-sort-' . ($currentDirection === 'asc' ? 'up' : 'down') . '"></i>' : '<i class="fas fa-sort"></i>'),
+                                ['standard-recipe/analytics', 
+                                    'family' => $family, 
+                                    'sort' => 'cost-percent', 
+                                    'direction' => ($currentSort === 'cost-percent' && $currentDirection === 'asc' ? 'desc' : 'asc')
+                                ],
+                                ['class' => 'text-decoration-none']
+                            ) ?>
+                        </span>
+                    </th>
+                    <th><?= Yii::t('app', "Position") ?></th>
+                    <th>
+                        <?= Yii::t('app', "Popularity") ?>
+                        <span class="float-end">
+                            <?= \yii\bootstrap5\Html::a(
+                                ($currentSort === 'popularity' ? '<i class="fas fa-sort-' . ($currentDirection === 'asc' ? 'up' : 'down') . '"></i>' : '<i class="fas fa-sort"></i>'),
+                                ['standard-recipe/analytics', 
+                                    'family' => $family, 
+                                    'sort' => 'popularity', 
+                                    'direction' => ($currentSort === 'popularity' && $currentDirection === 'asc' ? 'desc' : 'asc')
+                                ],
+                                ['class' => 'text-decoration-none']
+                            ) ?>
+                        </span>
+                    </th>
+                    <th><?= Yii::t('app', "Position") ?></th>
+                    <th>
+                        <?= Yii::t('app', "Sales") ?>
+                        <span class="float-end">
+                            <?= \yii\bootstrap5\Html::a(
+                                ($currentSort === 'sales' ? '<i class="fas fa-sort-' . ($currentDirection === 'asc' ? 'up' : 'down') . '"></i>' : '<i class="fas fa-sort"></i>'),
+                                ['standard-recipe/analytics', 
+                                    'family' => $family, 
+                                    'sort' => 'sales', 
+                                    'direction' => ($currentSort === 'sales' && $currentDirection === 'asc' ? 'desc' : 'asc')
+                                ],
+                                ['class' => 'text-decoration-none']
+                            ) ?>
+                        </span>
+                    </th>
+                    <th><?= Yii::t('app', "Position") ?></th>
+                </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($data as $item): 
@@ -74,13 +130,10 @@ $this->title = Yii::t('app', "Menu Analysis")
                     <td><?= $item->name ?></td>
                     <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
                     <td style="background-color: <?= $colorCostPercent ?>"><strong class="text-white"><?= $costPercentPosition ?></strong></td>
-                    <td><?= $item->sales ?> 
-                        
-                    </td>
+                    <td><?= $item->sales ?></td>
                     <td style="background-color: <?= $colorPopularity ?>"><strong class="text-white"><?= $popularityPosition ?></strong></td>
                     <td><?= $business->getFormatter()->asCurrency($item->price * $item->sales) ?></td>
                     <td style="background-color: <?= $colorSales ?>"><strong class="text-white"><?= $salesPosition ?></strong></td>
-                    </td>
                 </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -90,6 +143,19 @@ $this->title = Yii::t('app', "Menu Analysis")
 </div>
 
 <?php
+$css = <<< CSS
+th a {
+    color: inherit;
+}
+th a:hover {
+    color: #0d6efd;
+}
+.fa-sort {
+    opacity: 0.5;
+}
+CSS;
+$this->registerCss($css);
+
 $js = <<< JS
 $(document).on('change', "#family-selector", function(event){
     event.preventDefault();
@@ -98,11 +164,18 @@ $(document).on('change', "#family-selector", function(event){
     if(val.length === 0){
         val = 'all';
     }
+    // Mantener los parámetros de ordenamiento al cambiar familia
     url += '?family=' + val;
+    const searchParams = new URLSearchParams(window.location.search);
+    if(searchParams.has('sort')) {
+        url += '&sort=' + searchParams.get('sort');
+    }
+    if(searchParams.has('direction')) {
+        url += '&direction=' + searchParams.get('direction');
+    }
     window.location.href = url;
     return false;
-})
+});
 JS;
-
 $this->registerJs($js);
 ?>

@@ -919,11 +919,11 @@ class StandardRecipeController extends Controller
         ]);
 
     }*/
-    public function actionAnalytics($family = 'all')
+    public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc')
 {
     $business = RedisKeys::getBusiness();
 
-    // Obtener recetas y combos como antes
+    // Obtener recetas y combos
     $recipes = StandardRecipe::find()
         ->where([
             'business_id' => $business->id,
@@ -931,6 +931,7 @@ class StandardRecipeController extends Controller
             'in_construction' => 0,
             'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
         ]);
+    
     $combos = Menu::find()
         ->innerJoin('recipe_category', 'recipe_category.id=menu.category_id')
         ->where([
@@ -950,68 +951,95 @@ class StandardRecipeController extends Controller
     // Combinar recetas y combos
     $data = array_merge($recipes, $combos);
     
-    // Ordenar por costo porcentual (menor a mayor)
-    $sortByCostPercent = $data;
-    usort($sortByCostPercent, function ($itemA, $itemB) {
-        return ($itemA->costPercent * 100) - ($itemB->costPercent * 100);
-    });
-    
-    // Ordenar por popularidad (ventas de mayor a menor)
-    $sortByPopularity = $data;
-    usort($sortByPopularity, function ($itemA, $itemB) {
-        return $itemB->sales - $itemA->sales;
-    });
-    
-    // Calcular ventas totales por valor (precio * ventas)
-    $sortBySales = $data;
-    usort($sortBySales, function ($itemA, $itemB) {
-        return ($itemB->sales * $itemB->price) - ($itemA->sales * $itemA->price);
-    });
-    
-    // NUEVO: Calcular la distribución según regla 80-20 de Pareto
-    $totalSales = 0;
-    foreach ($data as $item) {
-        $totalSales += $item->sales;
-    }
-    
-    // Ordenar los elementos por ventas (de mayor a menor)
-    $paretoItems = $data;
-    usort($paretoItems, function ($itemA, $itemB) {
-        return $itemB->sales - $itemA->sales;
-    });
-    
-    // Calcular el porcentaje acumulado de ventas
-    $accumulatedPercentage = 0;
-    $paretoCategories = []; // Para clasificar cada elemento
-    
-    foreach ($paretoItems as $item) {
-        if ($totalSales > 0) {
-            $itemPercentage = ($item->sales / $totalSales) * 100;
-            $accumulatedPercentage += $itemPercentage;
+    // Aplicar ordenamiento según parámetros
+    if ($sort) {
+        usort($data, function ($a, $b) use ($sort, $direction) {
+            $compare = 0;
             
-            // Clasificar según el acumulado
-            if ($accumulatedPercentage <= 80) {
-                $paretoCategories[get_class($item) . '_' . $item->id] = 'verde'; // Alto impacto (A)
-            } elseif ($accumulatedPercentage <= 95) {
-                $paretoCategories[get_class($item) . '_' . $item->id] = 'amarillo'; // Medio impacto (B)
-            } else {
-                $paretoCategories[get_class($item) . '_' . $item->id] = 'rojo'; // Bajo impacto (C)
+            switch ($sort) {
+                case 'name':
+                    $compare = strcasecmp($a->name, $b->name);
+                    break;
+                    
+                case 'cost-percent':
+                    $compare = ($a->costPercent <=> $b->costPercent);
+                    break;
+                    
+                case 'popularity':
+                    $compare = ($a->sales <=> $b->sales);
+                    break;
+                    
+                case 'sales':
+                    $salesA = $a->price * $a->sales;
+                    $salesB = $b->price * $b->sales;
+                    $compare = ($salesA <=> $salesB);
+                    break;
             }
-        } else {
-            $paretoCategories[get_class($item) . '_' . $item->id] = 'gris'; // Sin datos
-        }
+            
+            return ($direction === 'desc') ? -$compare : $compare;
+        });
     }
+    
+    // Calcular posiciones para cada tipo de ordenamiento
+    $sortByCostPercent = $data;
+    usort($sortByCostPercent, function ($a, $b) {
+        return ($a->costPercent <=> $b->costPercent);
+    });
+    
+    $sortByPopularity = $data;
+    usort($sortByPopularity, function ($a, $b) {
+        return ($b->sales <=> $a->sales);
+    });
+    
+    $sortBySales = $data;
+    usort($sortBySales, function ($a, $b) {
+        return (($b->price * $b->sales) <=> ($a->price * $a->sales));
+    });
     
     // Convertir a strings para la vista
     $sortByCostPercent = ArrayHelper::getColumn($sortByCostPercent, function ($item) {
         return sprintf("%s_%s", get_class($item), $item->id);
     });
+    
     $sortByPopularity = ArrayHelper::getColumn($sortByPopularity, function ($item) {
         return sprintf("%s_%s", get_class($item), $item->id);
     });
+    
     $sortBySales = ArrayHelper::getColumn($sortBySales, function ($item) {
         return sprintf("%s_%s", get_class($item), $item->id);
     });
+
+    // Calcular Pareto (como en tu versión original)
+    $totalSales = array_sum(array_map(function($item) { 
+        return $item->sales; 
+    }, $data));
+    
+    $paretoItems = $data;
+    usort($paretoItems, function ($a, $b) {
+        return ($b->sales <=> $a->sales);
+    });
+    
+    $accumulatedPercentage = 0;
+    $paretoCategories = [];
+    
+    foreach ($paretoItems as $item) {
+        $itemKey = sprintf("%s_%s", get_class($item), $item->id);
+        
+        if ($totalSales > 0) {
+            $itemPercentage = ($item->sales / $totalSales) * 100;
+            $accumulatedPercentage += $itemPercentage;
+            
+            if ($accumulatedPercentage <= 80) {
+                $paretoCategories[$itemKey] = 'verde';
+            } elseif ($accumulatedPercentage <= 95) {
+                $paretoCategories[$itemKey] = 'amarillo';
+            } else {
+                $paretoCategories[$itemKey] = 'rojo';
+            }
+        } else {
+            $paretoCategories[$itemKey] = 'gris';
+        }
+    }
 
     return $this->render('analytics', [
         'data' => $data,
@@ -1019,8 +1047,10 @@ class StandardRecipeController extends Controller
         'sortByPopularity' => $sortByPopularity,
         'sortBySales' => $sortBySales,
         'family' => $family,
-        'paretoCategories' => $paretoCategories, // Añadir categorías de Pareto
-        'totalSales' => $totalSales
+        'paretoCategories' => $paretoCategories,
+        'totalSales' => $totalSales,
+        'currentSort' => $sort,       // Para mostrar el orden actual
+        'currentDirection' => $direction // Para mostrar la dirección
     ]);
 }
     public function actionMenuImprovement()
