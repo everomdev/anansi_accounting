@@ -213,7 +213,7 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', "Add"), [
 
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-save-menu',
-    'title' => Yii::t('app', "Save menu")
+    'title' => Yii::t('app', "Guardar menú")
 ]);
 
 echo \kartik\date\DatePicker::widget([
