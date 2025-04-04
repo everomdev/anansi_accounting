@@ -3,6 +3,7 @@
 namespace backend\controllers;
 
 use backend\helpers\RedisKeys;
+use common\models\Business;
 use backend\models\StandardRecipeIngredientForm;
 use Da\User\Traits\ContainerAwareTrait;
 use Da\User\Validator\AjaxRequestModelValidator;
@@ -65,6 +66,7 @@ class SubStandardRecipeController extends Controller
                     [
                         'actions' => [
                             'delete',
+                            'delete-sub-recipe'
                         ],
                         'allow' => true,
                         'roles' => ['subrecipe_delete']
@@ -225,6 +227,29 @@ class SubStandardRecipeController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+    public function actionDeleteSubRecipe()
+    {
+        if (Yii::$app->request->isPost) {
+            $ids = Yii::$app->request->post('keys'); // Recibir los IDs enviados desde el frontend
+    
+            if ($ids === 'all') {
+                // Delete all recipes
+                $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+                $business = Business::findOne(['id' => $businessData['id']]);
+                StandardRecipe::deleteAll(['business_id' => $business->id, 'type'=> StandardRecipe::STANDARD_RECIPE_TYPE_SUB]);
+                return $this->asJson(['success' => true]);
+            } else if (!empty($ids)) {
+                // Delete selected recipes
+                foreach ($ids as $id) {
+                    $model = $this->findModel($id);
+                    if ($model) {
+                        $model->delete(); 
+                    }
+                }
+                return $this->asJson(['success' => true]);
+            }
+        }
     }
 
     public function actionDuplicateRecipes()
