@@ -81,7 +81,9 @@ class StandardRecipeController extends Controller
                             'export-recipes-plantilla',
                             'import-recipes',
                             'edit-step',
-                            'move-step'
+                            'move-step',
+                            'get-available-ingredients',
+                            'get-sub-standard-recipes'
                             
 
 
@@ -110,7 +112,9 @@ class StandardRecipeController extends Controller
                             'export-recipes-plantilla',
                             'import-recipes',
                             'move-step',
-                            'edit-step'
+                            'edit-step',
+                            'get-available-ingredients',
+                            'get-sub-standard-recipes'
 
                         ],
                         'allow' => true,
@@ -468,17 +472,67 @@ class StandardRecipeController extends Controller
     }
 
     public function actionUpdateSelectedIngredient($id, $ingredientId, $isRecipe = false)
-    {
-        $model = $this->findModel($id);
-        $quantity = Yii::$app->request->post('quantity');
+{
+    $model = $this->findModel($id);
+    $quantity = Yii::$app->request->post('quantity');
+    $newItemId = Yii::$app->request->post('newItemId', $ingredientId);
+    
+    // Si el ingrediente/subreceta ha cambiado
+    if ($newItemId != $ingredientId) {
+        // Eliminar el ingrediente/subreceta actual
+        if ($isRecipe) {
+            $model->removeSubRecipe($ingredientId);
+            // Agregar el nuevo con la cantidad proporcionada
+            $model->addUpdateSubRecipe($newItemId, $quantity);
+        } else {
+            $model->removeIngredient($ingredientId);
+            // Agregar el nuevo con la cantidad proporcionada
+            $model->addUpdateIngredient($newItemId, $quantity);
+        }
+    } else {
+        // Actualizar solo la cantidad
         if ($isRecipe) {
             $model->addUpdateSubRecipe($ingredientId, $quantity);
         } else {
             $model->addUpdateIngredient($ingredientId, $quantity);
         }
-
-        return $this->asJson(true);
     }
+
+    return $this->asJson(['success' => true]);
+}
+    public function actionGetAvailableIngredients()
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    $business = RedisKeys::getBusiness();
+    
+    $ingredients = IngredientStock::find()
+        ->select(['id', 'ingredient as name', 'portion_um as um'])
+        ->where(['business_id' => $business->id])
+        ->asArray()
+        ->all();
+    
+    return [
+        'success' => true,
+        'ingredients' => $ingredients
+    ];
+}
+public function actionGetSubStandardRecipes()
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+    $business = Business::findOne(['id' => $businessData['id']]);
+    $subrecipes = StandardRecipe::find()
+        ->where([
+            'business_id' => $business->id, 
+            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+        ])
+        ->select(['id', 'title', 'um'])
+        ->asArray()
+        ->all();
+    
+    return $subrecipes;
+    
+}
 
     public function actionUnselectIngredient($id, $ingredientId, $isRecipe = false)
     {

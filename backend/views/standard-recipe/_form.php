@@ -232,18 +232,44 @@ echo "<div id='container-form-ingredient'></div>";
 
 ?>
 <?php
-
-\yii\bootstrap5\Modal::begin(['title' => Yii::t('app', 'Modify ingredient or sub-recipe'),
-    'id' => 'modal-update-ingredient']);
-
-echo Html::label(Yii::t('app', 'Quantity'), 'ingredient-update-quantity');
-echo \yii\bootstrap5\Html::input('text', 'ingredient-update-quantity', '', ['class' => 'form-control', 'placeholder' => Yii::t('app', 'Quantity'), 'id' => 'ingredient-update-quantity']);
-
-echo \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success mt-5', 'id' => 'btn-update-ingredient']);
-
-\yii\bootstrap5\Modal::end();
-
+\yii\bootstrap5\Modal::begin([
+    'title' => Yii::t('app', 'Modificar ingrediente o subreceta'),
+    'id' => 'modal-update-ingredient'
+]);
 ?>
+<div class="modal-body">
+    <div class="form-group mb-3">
+        <?= Html::label(Yii::t('app', 'Ingrediente o Subreceta'), 'ingredient-select', ['class' => 'form-label']) ?>
+        <select class="form-select" id="ingredient-select"></select>
+        <div id="ingredient-select-container" class="mb-3">
+            <!-- Los ingredientes o subrecetas se cargarán aquí -->
+        </div>
+    </div>
+
+    <div class="form-group mb-3">
+        <?= Html::label(Yii::t('app', 'Cantidad'), 'ingredient-update-quantity', ['class' => 'form-label']) ?>
+        <?= Html::textInput('ingredient-update-quantity', '', [
+            'class' => 'form-control',
+            'placeholder' => Yii::t('app', 'Ingrese la cantidad'),
+            'id' => 'ingredient-update-quantity',
+            'type' => 'number',
+            'step' => 'any'
+        ]) ?>
+        <div id="quantity-update-warning" class="text-danger small mt-1" style="display: none;"></div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <?= Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= Html::submitButton(Yii::t('app', 'Guardar'), [
+        'class' => 'btn btn-success',
+        'id' => 'btn-update-ingredient'
+    ]) ?>
+</div>
+<?php \yii\bootstrap5\Modal::end(); ?>
 
 
 <?php

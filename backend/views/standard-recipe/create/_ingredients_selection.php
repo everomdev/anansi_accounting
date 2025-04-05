@@ -7,6 +7,7 @@ use yii\helpers\ArrayHelper;
 
 $business = \backend\helpers\RedisKeys::getBusiness();
 $total = 0.0;
+$counter = 0; // Inicializamos el contador en 0
 ?>
 
 <?php \yii\widgets\Pjax::begin([
@@ -33,13 +34,13 @@ $total = 0.0;
                 </th>
                 </thead>
                 <tbody>
-                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): ?>
-                <?php
+                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): 
+                    $counter++; // Incrementamos el contador
                     $cost = $ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity;
                     $total += $cost;
                     ?>
                     <tr>
-                        <td><?= $index + 1 ?></td>
+                        <td><?= $counter ?></td>
                         <td>
                             <?= $ingredientStandardRecipe->ingredient->ingredient ?>
                         </td>
@@ -69,13 +70,16 @@ $total = 0.0;
                                    value="<?= $ingredientStandardRecipe->cost_percentage ?? 0 ?>">
                         </td>
                         <td>
-                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
-                                'class' => "btn btn-sm btn-warning update-ingredient",
-                                'data' => [
-                                    'pjax' => "#pjax-ingredients-selection",
-                                    'current' => $ingredientStandardRecipe->quantity
-                                ]
-                            ]) ?>
+<?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
+    'class' => "btn btn-sm btn-warning update-ingredient",
+    'data' => [
+        'pjax' => "#pjax-ingredients-selection",
+        'current' => $ingredientStandardRecipe->quantity,
+        'id' => $ingredientStandardRecipe->ingredient_id,
+        'is-recipe' => false,
+        'name' => $ingredientStandardRecipe->ingredient->ingredient
+    ]
+]) ?>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
                                 'class' => "btn btn-sm btn-danger delete-ingredient",
                                 'data' => [
@@ -86,13 +90,14 @@ $total = 0.0;
                         </td>
                     </tr>
                 <?php endforeach; ?>
-                <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): ?>
-                <?php
+                <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): 
+                    $counter++; // Incrementamos el contador para las subrecetas
                     $quantity = $subStandardRecipe->getQuantityLinked($model->id);
                     $cost = $subStandardRecipe->custom_cost * $quantity;
                     $total += $cost;
                     ?>
                     <tr>
+                        <td><?= $counter ?></td>
                         <td>
                             <?= $subStandardRecipe->title ?>
                         </td>
@@ -108,14 +113,17 @@ $total = 0.0;
                         </td>
                         <td>
                             <!-- Input para el porcentaje de costo -->
-                            <input type="number" name="costPercentage[<?= $subStandardRecipe->id ?>]" min="0" max="100" step="1" class="form-control form-control-sm cost-percentage" style="width: 80px;" value="100">
+                            <input type="number" name="costPercentage[<?= $subStandardRecipe->id ?>]" min="0" max="100" step="1" class="form-control form-control-sm cost-percentage" style="width: 80px;" value="0">
                         </td>
                         <td>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
                                 'class' => "btn btn-sm btn-warning update-ingredient",
                                 'data' => [
                                     'pjax' => "#pjax-ingredients-selection",
-                                    'current' => $quantity
+                                    'current' => $quantity,
+                                    'id' => $subStandardRecipe->id,
+                                    'is-recipe' => 1,
+                                    'name' => $subStandardRecipe->title
                                 ]
                             ]) ?>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
@@ -129,11 +137,12 @@ $total = 0.0;
                     </tr>
                 <?php endforeach; ?>
                 <tr>
-                    <td colspan="4" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
+                    <td colspan="3" class="text-end" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
                     <td>
                         <span id="ingredients-selection-total-cost"
-                              data-total="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
+                              data-value="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
                     </td>
+                    <td colspan="3"></td>
                 </tr>
                 </tbody>
             </table>
@@ -142,4 +151,3 @@ $total = 0.0;
 </div>
 
 <?php \yii\widgets\Pjax::end(); ?>
-
