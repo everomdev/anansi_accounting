@@ -107,7 +107,6 @@ $(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', func
 
 function computeCost() {
     let totalCost = 0;
-    console.log("--- INICIO CÁLCULO DE COSTOS ---");
 
     $('table tbody tr').each(function(index) {
         if ($(this).find('.exclude-checkbox').length > 0) {
@@ -117,17 +116,13 @@ function computeCost() {
             let isExcluded = $(this).find('.exclude-checkbox').is(':checked');
             let discountPercentage = parseInt($(this).find('.cost-percentage').val(), 10);
             
-            console.log(`Ingrediente #${index + 1}: ${ingredientName}`);
-            console.log(`- Costo base: ${cost}`);
-            console.log(`- Excluido: ${isExcluded}`);
-            console.log(`- Porcentaje de descuento: ${discountPercentage}%`);
 
             if (isExcluded) {
                 if (discountPercentage > 0) {
                     // Si está excluido Y tiene descuento: aplicar descuento y sumar ese valor
                     let discountedCost = cost * (discountPercentage / 100);
                     totalCost += discountedCost;
-                    console.log(`- INGREDIENTE EXCLUIDO: Aplicado ${discountPercentage}% → ${discountedCost} añadido`);
+                  
                 } else {
                     // Si está excluido SIN descuento: no se suma nada
                     console.log(`- INGREDIENTE EXCLUIDO SIN DESCUENTO (no se suma)`);
@@ -153,19 +148,56 @@ function computeCost() {
         $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
         
-        let formattedCost = Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency: currency
-        }).format(costPerPortion.toFixed(2));
+        // Formatear el costo usando el mismo formato que para el precio
+        let formattedCost = formatNumberWithUserPreferences(costPerPortion);
         
         $("#ingredients-selection-total-cost").html(formattedCost);
         
         if ($("#cost-value").length > 0) {
             $("#cost-value").html(formattedCost);
+            $("#cost-value").data('price', costPerPortion.toFixed(2));
+            
+            // Actualizar el porcentaje de costo si hay un precio establecido
+            updateCostPercent();
         }
     }
-
-    console.log("--- FIN CÁLCULO DE COSTOS ---");
+}
+// Función para formatear números según las preferencias del usuario
+function formatNumberWithUserPreferences(value) {
+    // Obtener información de formato del backend (se debe pasar desde PHP)
+    let decimalSeparator = ','; // Por defecto
+    let thousandSeparator = '.'; // Por defecto
+    let decimalPlaces = 2;
+    let currencySymbol = '$';
+    let currencyPosition = 'before';
+    
+    // Si hay configuración disponible en la página, usarla
+    if (typeof userFormatConfig !== 'undefined') {
+        decimalSeparator = userFormatConfig.decimalSeparator || decimalSeparator;
+        thousandSeparator = userFormatConfig.thousandSeparator || thousandSeparator;
+        decimalPlaces = userFormatConfig.decimalPlaces || decimalPlaces;
+        currencySymbol = userFormatConfig.currencySymbol || currencySymbol;
+        currencyPosition = userFormatConfig.currencyPosition || currencyPosition;
+    }
+    
+    // Formatear el número
+    let fixedValue = parseFloat(value).toFixed(decimalPlaces);
+    let parts = fixedValue.split('.');
+    
+    // Formatear parte entera con separadores de miles
+    if (thousandSeparator) {
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+    }
+    
+    // Unir con el separador decimal
+    let formattedNumber = parts.join(decimalSeparator);
+    
+    // Añadir símbolo de moneda según la posición
+    if (currencyPosition === 'before') {
+        return currencySymbol + ' ' + formattedNumber;
+    } else {
+        return formattedNumber + ' ' + currencySymbol;
+    }
 }
 
 // Event listeners para actualización automática
