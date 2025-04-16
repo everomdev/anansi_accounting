@@ -81,6 +81,9 @@ class CouponController extends Controller
             if (isset($model->date)) {
                 $model->date = date('Y-m-d H:i:s', strtotime($model->date));
             }
+            if (isset($model->expiration_date)) {
+                $model->expiration_date = strtotime($model->expiration_date);
+            }
             if ($model->save()) {
                 return $this->redirect(['index']);
             }

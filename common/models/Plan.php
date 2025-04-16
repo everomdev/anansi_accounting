@@ -426,17 +426,7 @@ class Plan extends \yii\db\ActiveRecord
             }
     
             // Obtener la fecha de expiración del cupón
-            $expirationDate = $coupon->expiration;
-    
-            // Verificar si la fecha de expiración es válida
-            if (!empty($expirationDate)) {
-                $expirationTimestamp = strtotime($expirationDate); // Convertir a timestamp
-                if ($expirationTimestamp === false) {
-                    throw new \Exception("Fecha de expiración no válida.");
-                }
-            } else {
-                throw new \Exception("El cupón no tiene fecha de expiración.");
-            }
+            $expirationDate = $coupon->expiration_date;
     
             $userPlan = $user->userPlan;
             $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
@@ -450,14 +440,14 @@ class Plan extends \yii\db\ActiveRecord
                     'plan_id' => $this->id,
                     'user_id' => $user->id
                 ],
-                'cancel_at' => $expirationTimestamp, // Establecer la fecha de expiración de la suscripción
+                'cancel_at' => $expirationDate, // Establecer la fecha de expiración de la suscripción
             ]);
-    
+
+            
             // Guardar en base de datos
             $userPlan->stripe_subscription_id = $subscription->id;
             $userPlan->stripe_subscription_status = $subscription->status;
             $userPlan->save();
-    
             return [
                 'success' => true,
                 'stripe_subscription_id' => $subscription->id,

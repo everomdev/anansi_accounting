@@ -9,6 +9,7 @@ use Yii;
  * This is the model class for table "coupon".
  *
  * @property int $id
+ * @property int $expiration_date
  * @property string $name
  * @property string|null $code
  * @property float|null $discount
@@ -44,7 +45,7 @@ class Coupon extends \yii\db\ActiveRecord
             [['quantity'], 'default', 'value' => null],
             [['quantity'], 'integer'],
             // [['gratitude'], 'string'],
-            [['expiration'], 'safe'],
+            [['expiration','expiration_date'], 'safe'],
             [['name', 'code', 'type'], 'string', 'max' => 255],
             [['code'], 'unique'],
             [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())]
@@ -64,7 +65,8 @@ class Coupon extends \yii\db\ActiveRecord
             'quantity' => Yii::t('app', 'Quantity'),
             'expiration' => Yii::t('app', 'Fecha de expiración'),
             'type' => Yii::t('app', 'Type'),
-            'gratitude' => Yii::t('app', 'Gratitude')
+            'gratitude' => Yii::t('app', 'Gratitude'),
+            'expiration_date' => Yii::t('app', 'Fecha de vigencia')
         ];
     }
 

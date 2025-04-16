@@ -44,6 +44,9 @@ BootstrapAsset::register($this);
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                     <?= $form->field($model, 'expiration')->input('date') ?>
                 </div>
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
+                    <?= $form->field($model, 'expiration_date')->input('date') ?>
+                </div>
             </div>
         </div>
         <div class="card-footer">
