@@ -76,7 +76,7 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
         <li class="menu-item <?= $currentControllerId == 'coupon' ? 'active' : '' ?>">
             <a href="<?= \yii\helpers\Url::to(['//coupon/index']) ?>" class="menu-link">
 
-                <div><?= Yii::t('app', 'Codigos') ?></div>
+                <div><?= Yii::t('app', 'Códigos') ?></div>
             </a>
         </li>
 
