@@ -326,13 +326,11 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('manage_account') and $business != null && $business->user_id == Yii::$app->user->identity->getId()): ?>
                         <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['//business/my-business']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Settings') ?></div>
                             </a>
                         </li>
-                    <?php endif; ?>
                 </ul>
             </div>
         </li>

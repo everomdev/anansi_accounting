@@ -12,6 +12,7 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
 use yii\web\Response;
+use backend\components\SubscriptionTrait; // Añade esta línea
 
 /**
  * Site controller
@@ -21,6 +22,8 @@ class SiteController extends Controller
     /**
      * {@inheritdoc}
      */
+    use SubscriptionTrait;
+
     public function behaviors()
     {
         return [
@@ -28,7 +31,7 @@ class SiteController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['login', 'error', 'comming-soon','check-coupon','captcha'],
+                        'actions' => ['login', 'error', 'comming-soon','enable-subscription','check-coupon','captcha'],
                         'allow' => true,
                     ],
                     [

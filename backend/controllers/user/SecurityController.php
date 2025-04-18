@@ -6,6 +6,7 @@ use backend\helpers\RedisKeys;
 use common\models\Business;
 use common\models\Profile;
 use common\models\User;
+use common\models\UserPlan;
 use Da\User\Contracts\AuthClientInterface;
 use Da\User\Event\FormEvent;
 use Da\User\Event\UserEvent;
@@ -143,6 +144,7 @@ class SecurityController extends Controller
                     'last_login_ip' => empty($clientIP) ? Yii::$app->request->getUserIP() : $clientIP,
                 ]);
                 $user = User::findOne(['id' => $form->getUser()->id]);
+                $userPlan = UserPlan::findOne(['user_id' => $form->getUser()->id]);
 
                 $this->trigger(FormEvent::EVENT_AFTER_LOGIN, $event);
 
@@ -159,6 +161,14 @@ class SecurityController extends Controller
                 if($business){
                     RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
                     Yii::$app->setTimeZone($business->timezone);
+                    // Verificar el estado de la suscripción
+                    if ($userPlan->stripe_subscription_status === 'canceled') {
+                        // Guardar un mensaje flash para informar al usuario
+                        Yii::$app->session->setFlash('warning', Yii::t('app', 'Your subscription has expired. Please renew to continue using all features.'));
+
+                        // Redireccionar a la página de pago
+                        return $this->redirect(['/site/enable-subscription']);
+                    }
                 }
                 return $this->goBack();
             }

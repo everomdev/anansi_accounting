@@ -104,13 +104,14 @@ class PaymentController extends Controller
             case 'customer.subscription.deleted':
                 /** @var Subscription $subscription */
                 $subscription = $event->data->object;
-                $plan = json_decode($subscription->metadata['plan'], true);
-                $user = json_decode($subscription->metadata['user'], true);
+                $plan = json_decode($subscription->metadata['plan_id'], true);
+                $user = json_decode($subscription->metadata['user_id'], true);
+            \Yii::info("DECODED EVENT: " . print_r($subscription, true));
                 \Yii::$app->db->createCommand()
                     ->update(
                         'user_plan',
                         ['stripe_subscription_status' => $subscription->status],
-                        ['plan_id' => $plan['id'], 'user_id' => $user['id']]
+                        ['plan_id' => $plan, 'user_id' => $user]
                     )
                     ->execute();
             default:
