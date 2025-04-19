@@ -136,7 +136,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 'custom_cost',
                 'custom_price'
             ], 'number'],
-            [['price'], 'number', 'min' => 0, 'max' => 999999.99, 'numberPattern' => '/^\s*[-+]?[0-9]{1,3}(,[0-9]{3})*(\.[0-9]+)?\s*$/'],
+            [['price'], 'number', 'min' => 0, 'max' => 999999.99, 'numberPattern' => '/^\s*[0-9]{1,3}(([,.][0-9]{3})*)?([,.][0-9]+)?\s*$/'],
             [['in_construction', 'in_menu', 'is_food'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe'],
             [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
