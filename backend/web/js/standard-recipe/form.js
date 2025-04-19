@@ -165,25 +165,28 @@ function computeCost() {
 // Función para formatear números según las preferencias del usuario
 function formatNumberWithUserPreferences(value) {
     // Obtener información de formato del backend (se debe pasar desde PHP)
-    let decimalSeparator = ','; // Por defecto
-    let thousandSeparator = '.'; // Por defecto
+    let decimalSeparator = '.'; // Por defecto
+    let thousandSeparator = ','; // Por defecto
     let decimalPlaces = 2;
     let currencySymbol = '$';
     let currencyPosition = 'before';
     
     // Si hay configuración disponible en la página, usarla
     if (typeof userFormatConfig !== 'undefined') {
-        decimalSeparator = userFormatConfig.decimalSeparator || decimalSeparator;
-        thousandSeparator = userFormatConfig.thousandSeparator || thousandSeparator;
-        decimalPlaces = userFormatConfig.decimalPlaces || decimalPlaces;
+        decimalSeparator = userFormatConfig.decimalSeparator;
+        thousandSeparator = userFormatConfig.thousandSeparator;
         currencySymbol = userFormatConfig.currencySymbol || currencySymbol;
-        currencyPosition = userFormatConfig.currencyPosition || currencyPosition;
+        console.log(`Separador decimal: ${userFormatConfig.decimalSeparator}`);
+
+        
     }
+    // console.log(`Separador decimal: ${decimalSeparator}, Separador de miles: ${thousandSeparator}, Símbolo de moneda: ${currencySymbol}`);
     
     // Formatear el número
     let fixedValue = parseFloat(value).toFixed(decimalPlaces);
     let parts = fixedValue.split('.');
-    
+    console.log(`Valor fijo: ${fixedValue}`);
+    console.log(`Partes: ${parts}`);
     // Formatear parte entera con separadores de miles
     if (thousandSeparator) {
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);

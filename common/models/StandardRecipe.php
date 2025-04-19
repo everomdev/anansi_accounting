@@ -132,11 +132,11 @@ class StandardRecipe extends \yii\db\ActiveRecord
             [[
                 'yield',
                 'portions',
-                'price',
                 'sales',
                 'custom_cost',
                 'custom_price'
-            ], 'number', 'numberPattern' => '/^-?[0-9]*[.,]?[0-9]+$/' ],
+            ], 'number'],
+            [['price'], 'number', 'min' => 0, 'max' => 999999.99, 'numberPattern' => '/^\s*[-+]?[0-9]{1,3}(,[0-9]{3})*(\.[0-9]+)?\s*$/'],
             [['in_construction', 'in_menu', 'is_food'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe'],
             [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
@@ -191,6 +191,30 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
         if ($insert) {
             $this->in_menu = true;
+        }
+        
+        // Convert comma to dot in decimal values and remove thousands separators
+        if (is_string($this->price)) {
+            // First handle numeric values with thousands separators like 10,000,000.90 or 10.000.000,90
+            if (preg_match('/^\s*[0-9]{1,3}([,.][0-9]{3})+([,.][0-9]+)?\s*$/', $this->price)) {
+            // Determine the decimal separator (last comma or period)
+            $lastComma = strrpos($this->price, ',');
+            $lastPeriod = strrpos($this->price, '.');
+            
+            // The decimal separator is the last occurrence of comma or period
+            $decimalSeparator = ($lastComma > $lastPeriod) ? ',' : '.';
+            $thousandSeparator = ($decimalSeparator == ',') ? '.' : ',';
+            
+            // Remove thousand separators and convert decimal separator to dot
+            $this->price = str_replace($thousandSeparator, '', $this->price);
+            if ($decimalSeparator == ',') {
+                $this->price = str_replace(',', '.', $this->price);
+            }
+            } 
+            // Simple comma to dot conversion for values like 1234,56
+            else if (strpos($this->price, ',') !== false) {
+            $this->price = str_replace(',', '.', $this->price);
+            }
         }
 
         return true;

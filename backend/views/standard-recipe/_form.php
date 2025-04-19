@@ -40,8 +40,8 @@ $this->registerJsVar('createNewCategoryUrl', \yii\helpers\Url::to(['recipe-categ
 $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
 $currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
 $formatConfig = [
-    'decimalSeparator' => $businessObj->decimal_separator ?: ',',
-    'thousandSeparator' => $businessObj->thousands_separator ?: '.',
+    'decimalSeparator' => $businessObj->decimal_separator,
+    'thousandSeparator' => $businessObj->thousands_separator,
     'currencySymbol' => $currencySymbol,
 ];
 $this->registerJsVar('userFormatConfig', $formatConfig);
@@ -121,9 +121,8 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div>{error}</div></div>"
                         ])->textInput([
                             'onkeyup' => 'this.value = this.value.replace(/[^0-9.,]/g, "")',
-                            'onchange' => 'formatPrice(this)',
                             'id' => 'price-input',
-                            'value' => $businessObj->formatter->asCurrency($model->price), // Usar tu método personalizado
+                            'value' => $model->price !== null && $model->price !== '' ? $businessObj->formatter->asCurrency($model->price) : '',
                             'class' => 'form-control number-input',
                             'data-raw-value' => $model->price
                         ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
@@ -356,78 +355,4 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
         });
     }
 });
-/*document.getElementById('price-input').addEventListener('input', function (e) {
-    const value = e.target.value;
-    const regex = /^[0-9]+([.,][0-9]{1,2})?$/;
-
-    if (!regex.test(value)) {
-        const errorElement = document.createElement('div');
-        errorElement.className = 'invalid-feedback';
-        errorElement.innerText = 'Por favor, ingresa un valor numérico válido (por ejemplo, 10.00).';
-        e.target.classList.add('is-invalid');
-        e.target.parentNode.appendChild(errorElement);
-    } else {
-        e.target.classList.remove('is-invalid');
-        const errorElement = e.target.parentNode.querySelector('.invalid-feedback');
-        if (errorElement) {
-            errorElement.remove();
-        }
-    }
-});*/
-function formatPrice(input) {
-    // Obtener el valor y eliminar cualquier carácter no numérico excepto punto y coma
-    let value = input.value.replace(/[^\d.,]/g, '');
-    
-    // Reemplazar coma por punto para el procesamiento interno
-    value = value.replace(',', '.');
-    
-    // Asegurarse de que sea un número válido
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) {
-        input.value = '';
-        input.setAttribute('data-raw-value', '');
-        return;
-    }
-    
-    // Guardar el valor numérico para el procesamiento del formulario
-    input.setAttribute('data-raw-value', numValue);
-    
-    // Obtener configuración de formato
-    let decimalSeparator = ',';
-    if (typeof userFormatConfig !== 'undefined' && userFormatConfig.decimalSeparator) {
-        decimalSeparator = userFormatConfig.decimalSeparator;
-    }
-    
-    // Formatear para mostrar (solo el número, sin símbolo de moneda)
-    input.value = numValue.toString().replace('.', decimalSeparator);
-    
-}
-
-// Asegurar que el formulario use el valor raw antes de enviar
-document.getElementById('form-recipe').addEventListener('submit', function(e) {
-    const priceInput = document.getElementById('price-input');
-    const rawValue = priceInput.getAttribute('data-raw-value');
-    
-    // Crear un campo oculto para enviar el valor real
-    if (rawValue) {
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'StandardRecipe[price]';
-        hiddenInput.value = rawValue;
-        this.appendChild(hiddenInput);
-        
-        // Opcional: deshabilitar el campo visible para evitar que se envíe
-        priceInput.disabled = true;
-    }
-});
-
-// Inicializar la función de formato cuando se carga la página
-/*document.addEventListener('DOMContentLoaded', function() {
-    const priceInput = document.getElementById('price-input');
-    if (priceInput && priceInput.value) {
-        formatPrice(priceInput);
-    }
-});*/
-
-
 </script>
