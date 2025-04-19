@@ -355,4 +355,125 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
         });
     }
 });
+// Función para validar y formatear el precio según la configuración del usuario
+function validateAndFormatPrice(input) {
+    const decimalSeparator = userFormatConfig.decimalSeparator;
+    const thousandSeparator = userFormatConfig.thousandSeparator;
+
+    // Obtener el valor actual sin el símbolo de moneda
+    let value = input.value.replace(userFormatConfig.currencySymbol, '').trim();
+
+    // Si los separadores son diferentes, crear un regex que permita solo números y los separadores correctos
+    const validChars = new RegExp(`[^0-9${decimalSeparator}${thousandSeparator}]`, 'g');
+    value = value.replace(validChars, '');
+
+    // Contar cuántos separadores decimales hay
+    const decimalCount = (value.match(new RegExp('\\' + decimalSeparator, 'g')) || []).length;
+    
+    // Si hay más de un separador decimal, eliminar los extras
+    if (decimalCount > 1) {
+        const parts = value.split(decimalSeparator);
+        value = parts[0] + decimalSeparator + parts.slice(1).join('');
+    }
+
+    // Manejar el caso especial cuando el usuario escribe el separador decimal pero aún no los decimales
+    if (value.endsWith(decimalSeparator)) {
+        input.value = value;
+        input.setAttribute('data-raw-value', value.replace(decimalSeparator, '.'));
+        return;
+    }
+
+    // Separar en parte entera y decimal
+    let parts = value.split(decimalSeparator);
+    let wholePart = parts[0] || '';
+    let decimalPart = parts.length > 1 ? parts[1] : '';
+
+    // Limitar la parte decimal a 2 dígitos
+    if (decimalPart.length > 2) {
+        decimalPart = decimalPart.substring(0, 2);
+    }
+
+    // Eliminar cualquier separador de miles existente para reformatearlo
+    wholePart = wholePart.replace(new RegExp('\\' + thousandSeparator, 'g'), '');
+    
+    // Agregar separadores de miles
+    if (wholePart.length > 3) {
+        wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+    }
+
+    // Reconstruir el valor formateado
+    let formattedValue = wholePart;
+    if (decimalPart !== '') {
+        formattedValue += decimalSeparator + decimalPart;
+    }
+
+    // Actualizar el campo visible
+    input.value = formattedValue;
+    
+    // Almacenar el valor normalizado (con punto como separador decimal) para el formulario
+    let normalizedValue = formattedValue;
+    if (decimalSeparator !== '.') {
+        normalizedValue = normalizedValue.replace(new RegExp('\\' + thousandSeparator, 'g'), '')
+                                        .replace(decimalSeparator, '.');
+    } else if (thousandSeparator !== ',') {
+        normalizedValue = normalizedValue.replace(new RegExp('\\' + thousandSeparator, 'g'), '');
+    }
+    
+    input.setAttribute('data-raw-value', normalizedValue);
+    
+}
+
+// Aplicar validación y formato al campo de precio
+document.addEventListener('DOMContentLoaded', function() {
+    const priceInput = document.getElementById('price-input');
+    
+    // Limpiar el formato al obtener el foco
+    priceInput.addEventListener('focus', function() {
+        // Si tiene un valor crudo almacenado, mostrar ese valor sin separadores de miles
+        const rawValue = this.getAttribute('data-raw-value');
+        if (rawValue && !isNaN(parseFloat(rawValue))) {
+            // Mostrar con el separador decimal del usuario pero sin separadores de miles
+            let parts = parseFloat(rawValue).toFixed(2).split('.');
+            this.value = parts[0] + userFormatConfig.decimalSeparator + parts[1];
+        }
+    });
+    
+    // Validar y formatear al salir del campo
+    priceInput.addEventListener('blur', function() {
+        validateAndFormatPrice(this);
+    });
+    
+    // Reemplazar el evento onkeyup existente con uno más específico
+    priceInput.removeAttribute('onkeyup');
+    priceInput.addEventListener('keyup', function(e) {
+        // Permitir solo números, el separador decimal y el separador de miles
+        const decimalSeparator = userFormatConfig.decimalSeparator || '.';
+        const thousandSeparator = userFormatConfig.thousandSeparator || ',';
+        
+        // Teclas especiales que siempre se permiten
+        const specialKeys = [
+            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 
+            'Home', 'End', 'Enter'
+        ];
+        
+        if (specialKeys.includes(e.key)) {
+            return;
+        }
+        
+        // Validar que solo se ingresen caracteres permitidos
+        if (!/^[0-9]$/.test(e.key) && 
+            e.key !== decimalSeparator && 
+            e.key !== thousandSeparator) {
+            e.preventDefault();
+        }
+        
+        // Aplicar formato en tiempo real
+        validateAndFormatPrice(this);
+    });
+});
+
+// Actualizar la configuración con valores por defecto si no están presentes
+if (!userFormatConfig.decimalPlaces) {
+    userFormatConfig.decimalPlaces = 2;
+}
 </script>
