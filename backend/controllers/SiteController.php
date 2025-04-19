@@ -161,7 +161,7 @@ class SiteController extends Controller
             ->where(['code' => $post['code']])
             ->one();
             //die(var_dump(!$coupon->getIsValid()));
-        if (!$coupon || !$coupon->getIsValid()) {
+        if (!$coupon || !$coupon->getIsValid($post['plan_id'])) {
             return $this->asJson([
                 'success' => false,
                 'discount' => false,

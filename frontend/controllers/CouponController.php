@@ -104,20 +104,62 @@ class CouponController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
-
-        $post = Yii::$app->request->post();
-        if (array_key_exists('ajax', $post)) {
-            $this->make(AjaxRequestModelValidator::class, [$model])->validate();
+    
+    // Convertir fechas al formato requerido por el input date HTML5
+    if ($model->expiration) {
+        if (is_numeric($model->expiration)) {
+            // Si es un timestamp
+            $formatted_expiration = date('Y-m-d', $model->expiration);
+        } else {
+            // Si es una cadena en formato datetime
+            $expiration_time = strtotime($model->expiration);
+            $formatted_expiration = date('Y-m-d', $expiration_time);
         }
+        $model->expiration_formatted = $formatted_expiration;
+    }
+    
+    if ($model->expiration_date) {
+        if (is_numeric($model->expiration_date)) {
+            // Si es un timestamp
+            $formatted_expiration_date = date('Y-m-d', $model->expiration_date);
+        } else {
+            // Si es una cadena en formato datetime
+            $expiration_date_time = strtotime($model->expiration_date);
+            $formatted_expiration_date = date('Y-m-d', $expiration_date_time);
+        }
+        $model->expiration_date_formatted = $formatted_expiration_date;
+    }
 
-        if ($model->load($post) && $model->save()) {
+    $post = Yii::$app->request->post();
+    if (array_key_exists('ajax', $post)) {
+        $this->make(AjaxRequestModelValidator::class, [$model])->validate();
+    }
+    
+    // Eliminar la línea de depuración
+    // die(var_dump($model->expiration));
+
+    if ($model->load($post)) {
+        // Procesar las fechas antes de guardar
+        if (isset($model->expiration)) {
+            // Asegurarse de guardar en el formato correcto (timestamp o datetime string)
+            // Dependiendo de cómo está configurada tu base de datos
+            $model->expiration = date('Y-m-d H:i:s', strtotime($model->expiration));
+        }
+        
+        if (isset($model->expiration_date)) {
+            // Convertir a timestamp como en actionCreate
+            $model->expiration_date = strtotime($model->expiration_date);
+        }
+        
+        if ($model->save()) {
             return $this->redirect(['index']);
         }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
     }
+
+    return $this->render('update', [
+        'model' => $model,
+    ]);
+}
 
     /**
      * Deletes an existing Coupon model.

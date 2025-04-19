@@ -3,6 +3,8 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use yii\bootstrap5\BootstrapAsset;
+use yii\helpers\ArrayHelper;
+use common\models\Plan; // Asegúrate de importar el modelo Plan
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Coupon */
@@ -12,6 +14,12 @@ $this->registerJsFile(Yii::getAlias("@web/js/coupon/form.js"), [
     'depends' => [\yii\web\YiiAsset::class],
     'position' => $this::POS_END
 ]);
+
+// Obtener la lista de planes disponibles
+$plans = Plan::find()->all();
+$plansArray = ArrayHelper::map($plans, 'id', 'name');
+// Añadir opción para "Todos los planes"
+$plansArray = ['' => Yii::t('app', 'All plans')] + $plansArray;
 
 BootstrapAsset::register($this);
 ?>
@@ -42,10 +50,20 @@ BootstrapAsset::register($this);
                     <?= $form->field($model, 'type')->dropDownList(\common\models\Coupon::getFormattedTypes(), ['class' => "form-control"]) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'expiration')->input('date') ?>
+                    <?= $form->field($model, 'plan_id')->dropDownList($plansArray, [
+                        'class' => "form-control",
+                        'prompt' => Yii::t('app', 'Selecciona el plan')
+                    ]) ?>
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'expiration_date')->input('date') ?>
+                    <?= $form->field($model, 'expiration')->input('date', [
+                        'value' => isset($model->expiration_formatted) ? $model->expiration_formatted : null
+                    ]) ?>
+                </div>
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
+                    <?= $form->field($model, 'expiration_date')->input('date', [
+                        'value' => isset($model->expiration_date_formatted) ? $model->expiration_date_formatted : null
+                    ]) ?>
                 </div>
             </div>
         </div>

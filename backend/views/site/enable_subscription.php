@@ -8,7 +8,6 @@ use yii\bootstrap5\Html;
 use yii\bootstrap5\ActiveForm;
 
 $this->title = "Habilitar suscripción";
-//die(var_dump($plan->getPrices()));
 ?>
 
 <div class="vh-100 d-flex justify-content-center align-items-center">
@@ -74,7 +73,7 @@ $(document).on('click', '#apply-coupon', function() {
     $.ajax({
         url: 'check-coupon',
         type: 'POST',
-        data: {code: couponCode, prices: prices},
+        data: {code: couponCode, prices: prices, plan_id: $plan->id},
         success: function(response) {
             if (response.success) {
                 $('#coupon-message').text(response.message).removeClass('text-danger').addClass('text-success');

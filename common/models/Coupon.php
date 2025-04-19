@@ -25,6 +25,8 @@ class Coupon extends \yii\db\ActiveRecord
 {
     const TYPE_AMOUNT = 'amount';
     const TYPE_PERCENT = 'per_cent';
+    public $expiration_formatted;
+    public $expiration_date_formatted;
 
     /**
      * {@inheritdoc}
@@ -48,6 +50,8 @@ class Coupon extends \yii\db\ActiveRecord
             [['expiration','expiration_date'], 'safe'],
             [['name', 'code', 'type'], 'string', 'max' => 255],
             [['code'], 'unique'],
+            [['plan_id'], 'integer'],
+            [['plan_id'], 'exist', 'skipOnError' => true, 'targetClass' => Plan::class, 'targetAttribute' => ['plan_id' => 'id']],
             [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())]
         ];
     }
@@ -66,7 +70,8 @@ class Coupon extends \yii\db\ActiveRecord
             'expiration' => Yii::t('app', 'Fecha de expiración'),
             'type' => Yii::t('app', 'Type'),
             'gratitude' => Yii::t('app', 'Gratitude'),
-            'expiration_date' => Yii::t('app', 'Fecha de vigencia')
+            'expiration_date' => Yii::t('app', 'Fecha de vigencia'),
+            'plan_id' => Yii::t('app', 'Plan'),
         ];
     }
 
@@ -101,13 +106,14 @@ class Coupon extends \yii\db\ActiveRecord
         return self::getFormattedTypes()[$this->type];
     }
 
-    public function getIsValid()
+    public function getIsValid($plan_id)
     {
         // check expiration date and time
-        if (empty($this->expiration) || $this->expiration <= date('Y-m-d H:i:s')) {
+        if (empty($this->expiration) || $this->expiration <= date('Y-m-d H:i:s') || 
+            empty($this->expiration_date) || $this->expiration_date < time() || 
+            (int)$this->plan_id !== (int)$plan_id) {
             return false;
         }
-        //die(var_dump(empty($this->expiration) || $this->expiration <= date('Y-m-d H:i:s')));
         // check availability
         if (empty($this->quantity) || $this->quantity <= 0) {
             return false;
@@ -127,4 +133,8 @@ class Coupon extends \yii\db\ActiveRecord
                 return null;
         }
     }
+    public function getPlan()
+{
+    return $this->hasOne(Plan::class, ['id' => 'plan_id']);
+}
 }
