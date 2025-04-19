@@ -9,7 +9,7 @@ class m250419_153523_update_column_price extends Migration
      */
     public function safeUp()
     {
-        $this->alterColumn('standard_recipe', 'price', $this->decimal(10, 2)->notNull()->defaultValue(0));
+        $this->alterColumn('standard_recipe', 'price', $this->decimal(10, 2)->null());
 
     }
 
