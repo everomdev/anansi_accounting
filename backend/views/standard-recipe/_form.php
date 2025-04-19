@@ -81,9 +81,40 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                     ])->dropDownList($recipesCategoriesMap)->label(null, ['class' => 'col-sm-4 text-start']) ?>
-                    <?= $form->field($model, 'time_of_preparation', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    <div class="row mb-3">
+                        <label class="col-sm-4 text-start"><?= $model->getAttributeLabel('time_of_preparation') ?></label>
+                        <div class="col-sm-8">
+                            <div class="input-group">
+                                <?= Html::textInput('time_value', 
+                                    $model->time_of_preparation ? preg_replace('/[^0-9]/', '', $model->time_of_preparation) : '', 
+                                    [
+                                        'id' => 'time-value-input',
+                                        'class' => 'form-control',
+                                        'placeholder' => Yii::t('app', 'Tiempo'),
+                                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
+                                        'style' => 'max-width: 100px;'
+                                    ]) 
+                                ?>
+                                <?= Html::dropDownList('time_unit', 
+                                    $model->time_of_preparation ? 
+                                        (strpos($model->time_of_preparation, 'día') !== false ? 'días' :
+                                            (strpos($model->time_of_preparation, 'hora') !== false ? 'horas' : 'minutos')) : 
+                                        'minutos',
+                                    [
+                                        'minutos' => Yii::t('app', 'minutos'),
+                                        'horas' => Yii::t('app', 'horas'),
+                                        'días' => Yii::t('app', 'días')
+                                    ],
+                                    [
+                                        'id' => 'time-unit-select',
+                                        'class' => 'form-select',
+                                        'style' => 'max-width: 150px;'
+                                    ]) 
+                                ?>
+                                <?= $form->field($model, 'time_of_preparation', ['template' => '{input}{error}'])->hiddenInput(['id' => 'time-of-preparation-hidden'])->label(false) ?>
+                            </div>
+                        </div>
+                    </div>
                     <?php $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::getOwn()->all(), 'name', 'name'), ['class' => 'form-control','id' => 'standardrecipe-yield_um'])->label(false) ?>
                     <?= $form->field($model, 'yield', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
@@ -356,124 +387,156 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
     }
 });
 // Función para validar y formatear el precio según la configuración del usuario
-function validateAndFormatPrice(input) {
+function validateAndFormatPrice(input, forceFormat = false) {
     const decimalSeparator = userFormatConfig.decimalSeparator;
     const thousandSeparator = userFormatConfig.thousandSeparator;
 
-    // Obtener el valor actual sin el símbolo de moneda
-    let value = input.value.replace(userFormatConfig.currencySymbol, '').trim();
+    // Guardar posición del cursor
+    const cursorPosition = input.selectionStart;
 
-    // Si los separadores son diferentes, crear un regex que permita solo números y los separadores correctos
-    const validChars = new RegExp(`[^0-9${decimalSeparator}${thousandSeparator}]`, 'g');
+    // Obtener valor sin símbolo de moneda
+    let value = input.value.replace(userFormatConfig.currencySymbol, '').trim();
+    
+    // Eliminar caracteres no válidos (excepto el separador decimal configurado)
+    const validChars = new RegExp(`[^0-9\\${decimalSeparator}]`, 'g');
     value = value.replace(validChars, '');
 
-    // Contar cuántos separadores decimales hay
-    const decimalCount = (value.match(new RegExp('\\' + decimalSeparator, 'g')) || []).length;
-    
-    // Si hay más de un separador decimal, eliminar los extras
+    // Reemplazar múltiples separadores decimales por uno solo
+    const decimalCount = (value.match(new RegExp(`\\${decimalSeparator}`, 'g')) || []).length;
     if (decimalCount > 1) {
         const parts = value.split(decimalSeparator);
         value = parts[0] + decimalSeparator + parts.slice(1).join('');
     }
 
-    // Manejar el caso especial cuando el usuario escribe el separador decimal pero aún no los decimales
-    if (value.endsWith(decimalSeparator)) {
+    // Si está escribiendo, no formatear aún (excepto para limitar decimales)
+    if (!forceFormat && document.activeElement === input) {
+        // Limitar a 2 decimales si ya hay separador
+        const parts = value.split(decimalSeparator);
+        if (parts.length > 1) {
+            parts[1] = parts[1].slice(0, 2);
+            value = parts.join(decimalSeparator);
+        }
         input.value = value;
         input.setAttribute('data-raw-value', value.replace(decimalSeparator, '.'));
+        
+        // Restaurar posición del cursor
+        setTimeout(() => {
+            input.setSelectionRange(cursorPosition, cursorPosition);
+        }, 0);
         return;
     }
 
-    // Separar en parte entera y decimal
+    // Formato completo al perder el foco
     let parts = value.split(decimalSeparator);
-    let wholePart = parts[0] || '';
-    let decimalPart = parts.length > 1 ? parts[1] : '';
+    let wholePart = parts[0].replace(/\D/g, '') || '0'; // Solo dígitos
+    let decimalPart = parts.length > 1 ? parts[1].replace(/\D/g, '').slice(0, 2) : '00';
 
-    // Limitar la parte decimal a 2 dígitos
-    if (decimalPart.length > 2) {
-        decimalPart = decimalPart.substring(0, 2);
-    }
-
-    // Eliminar cualquier separador de miles existente para reformatearlo
-    wholePart = wholePart.replace(new RegExp('\\' + thousandSeparator, 'g'), '');
-    
-    // Agregar separadores de miles
+    // Agregar separadores de miles solo al final
     if (wholePart.length > 3) {
         wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
     }
 
-    // Reconstruir el valor formateado
+    // Construir valor formateado
     let formattedValue = wholePart;
-    if (decimalPart !== '') {
+    if (decimalPart.length > 0) {
         formattedValue += decimalSeparator + decimalPart;
+    } else if (forceFormat) {
+        formattedValue += decimalSeparator + '00';
     }
 
-    // Actualizar el campo visible
+    // Actualizar campo
     input.value = formattedValue;
-    
-    // Almacenar el valor normalizado (con punto como separador decimal) para el formulario
-    let normalizedValue = formattedValue;
-    if (decimalSeparator !== '.') {
-        normalizedValue = normalizedValue.replace(new RegExp('\\' + thousandSeparator, 'g'), '')
-                                        .replace(decimalSeparator, '.');
-    } else if (thousandSeparator !== ',') {
-        normalizedValue = normalizedValue.replace(new RegExp('\\' + thousandSeparator, 'g'), '');
-    }
-    
-    input.setAttribute('data-raw-value', normalizedValue);
-    
+    input.setAttribute('data-raw-value', 
+        formattedValue.replace(new RegExp(`\\${thousandSeparator}`, 'g'), '')
+                     .replace(decimalSeparator, '.')
+    );
 }
 
-// Aplicar validación y formato al campo de precio
+// Configuración de eventos (igual que antes)
 document.addEventListener('DOMContentLoaded', function() {
     const priceInput = document.getElementById('price-input');
     
-    // Limpiar el formato al obtener el foco
     priceInput.addEventListener('focus', function() {
-        // Si tiene un valor crudo almacenado, mostrar ese valor sin separadores de miles
-        const rawValue = this.getAttribute('data-raw-value');
-        if (rawValue && !isNaN(parseFloat(rawValue))) {
-            // Mostrar con el separador decimal del usuario pero sin separadores de miles
-            let parts = parseFloat(rawValue).toFixed(2).split('.');
-            this.value = parts[0] + userFormatConfig.decimalSeparator + parts[1];
-        }
+        const rawValue = this.getAttribute('data-raw-value') || '';
+        this.value = rawValue.replace('.', userFormatConfig.decimalSeparator);
     });
     
-    // Validar y formatear al salir del campo
     priceInput.addEventListener('blur', function() {
-        validateAndFormatPrice(this);
+        validateAndFormatPrice(this, true);
     });
     
-    // Reemplazar el evento onkeyup existente con uno más específico
-    priceInput.removeAttribute('onkeyup');
-    priceInput.addEventListener('keyup', function(e) {
-        // Permitir solo números, el separador decimal y el separador de miles
-        const decimalSeparator = userFormatConfig.decimalSeparator || '.';
-        const thousandSeparator = userFormatConfig.thousandSeparator || ',';
+    priceInput.addEventListener('keydown', function(e) {
+        const decimalSeparator = userFormatConfig.decimalSeparator;
+        const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
         
-        // Teclas especiales que siempre se permiten
-        const specialKeys = [
-            'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 
-            'Home', 'End', 'Enter'
-        ];
+        if (allowedKeys.includes(e.key)) return;
         
-        if (specialKeys.includes(e.key)) {
-            return;
-        }
-        
-        // Validar que solo se ingresen caracteres permitidos
-        if (!/^[0-9]$/.test(e.key) && 
-            e.key !== decimalSeparator && 
-            e.key !== thousandSeparator) {
+        if (!/^[0-9]$/.test(e.key) && e.key !== decimalSeparator) {
             e.preventDefault();
         }
-        
-        // Aplicar formato en tiempo real
-        validateAndFormatPrice(this);
+    });
+    
+    priceInput.addEventListener('input', function() {
+        validateAndFormatPrice(this, false);
     });
 });
 
-// Actualizar la configuración con valores por defecto si no están presentes
-if (!userFormatConfig.decimalPlaces) {
-    userFormatConfig.decimalPlaces = 2;
-}
+// Configuración por defecto
+window.userFormatConfig = window.userFormatConfig || {
+    decimalSeparator: '.',
+    thousandSeparator: ',',
+    currencySymbol: '$',
+    decimalPlaces: 2
+};
+
+// Manejo del tiempo de preparación
+document.addEventListener('DOMContentLoaded', function() {
+    const timeValueInput = document.getElementById('time-value-input');
+    const timeUnitSelect = document.getElementById('time-unit-select');
+    const timeOfPreparationHidden = document.getElementById('time-of-preparation-hidden');
+    
+    // Actualizar el campo oculto cuando cambie alguno de los campos visibles
+    function updateTimeOfPreparation() {
+        const value = timeValueInput.value.trim();
+        const unit = timeUnitSelect.value;
+        
+        if (value) {
+            timeOfPreparationHidden.value = value + ' ' + unit;
+        } else {
+            timeOfPreparationHidden.value = '';
+        }
+    }
+    
+    // Eventos para actualizar el campo oculto
+    timeValueInput.addEventListener('input', updateTimeOfPreparation);
+    timeValueInput.addEventListener('change', updateTimeOfPreparation);
+    timeUnitSelect.addEventListener('change', updateTimeOfPreparation);
+    
+    // Inicializar el campo oculto con los valores actuales
+    updateTimeOfPreparation();
+    
+    // Solo permitir números en el campo de valor
+    timeValueInput.addEventListener('keypress', function(e) {
+        if (e.charCode < 48 || e.charCode > 57) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Buscar el campo select para permitir entrada de texto
+    const unitSelect = document.getElementById('time-unit-select');
+    if (unitSelect) {
+        // Opcionalmente, puedes usar un plugin como Select2 para permitir búsqueda
+        // Si ya tienes Select2 en tu proyecto:
+        // $(unitSelect).select2({
+        //     minimumResultsForSearch: -1, // No mostrar búsqueda para pocas opciones
+        //     width: '100%'
+        // });
+    }
+    
+    // Asegurar que el formulario envíe el valor combinado
+    document.getElementById('form-recipe').addEventListener('submit', function() {
+        updateTimeOfPreparation();
+    });
+});
 </script>
