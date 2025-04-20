@@ -144,9 +144,40 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
                 </div>
-                    <?= $form->field($model, 'lifetime', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}</div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                <div class="row mb-3">
+                    <label class="col-sm-3 text-start"><?= $model->getAttributeLabel('lifetime') ?></label>
+                    <div class="col-sm-9">
+                        <div class="input-group">
+                            <?= Html::textInput('lifetime_value', 
+                                $model->lifetime ? preg_replace('/[^0-9]/', '', $model->lifetime) : '', 
+                                [
+                                    'id' => 'lifetime-value-input',
+                                    'class' => 'form-control',
+                                    'placeholder' => Yii::t('app', 'Duración'),
+                                    'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
+                                    'style' => 'max-width: 100px;'
+                                ]) 
+                            ?>
+                            <?= Html::dropDownList('lifetime_unit', 
+                                $model->lifetime ? 
+                                    (strpos($model->lifetime, 'día') !== false ? 'días' :
+                                        (strpos($model->lifetime, 'hora') !== false ? 'horas' : 'minutos')) : 
+                                    'días',
+                                [
+                                    'minutos' => Yii::t('app', 'minutos'),
+                                    'horas' => Yii::t('app', 'horas'),
+                                    'días' => Yii::t('app', 'días')
+                                ],
+                                [
+                                    'id' => 'lifetime-unit-select',
+                                    'class' => 'form-select',
+                                    'style' => 'max-width: 150px;'
+                                ]) 
+                            ?>
+                            <?= $form->field($model, 'lifetime', ['template' => '{input}{error}'])->hiddenInput(['id' => 'lifetime-hidden'])->label(false) ?>
+                        </div>
+                    </div>
+                </div>
                     <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'price', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div>{error}</div></div>"
@@ -537,6 +568,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Asegurar que el formulario envíe el valor combinado
     document.getElementById('form-recipe').addEventListener('submit', function() {
         updateTimeOfPreparation();
+    });
+});
+// Manejo de la duración (lifetime)
+document.addEventListener('DOMContentLoaded', function() {
+    const lifetimeValueInput = document.getElementById('lifetime-value-input');
+    const lifetimeUnitSelect = document.getElementById('lifetime-unit-select');
+    const lifetimeHidden = document.getElementById('lifetime-hidden');
+    
+    // Actualizar el campo oculto cuando cambie alguno de los campos visibles
+    function updateLifetime() {
+        const value = lifetimeValueInput.value.trim();
+        const unit = lifetimeUnitSelect.value;
+        
+        if (value) {
+            lifetimeHidden.value = value + ' ' + unit;
+        } else {
+            lifetimeHidden.value = '';
+        }
+    }
+    
+    // Eventos para actualizar el campo oculto
+    lifetimeValueInput.addEventListener('input', updateLifetime);
+    lifetimeValueInput.addEventListener('change', updateLifetime);
+    lifetimeUnitSelect.addEventListener('change', updateLifetime);
+    
+    // Inicializar el campo oculto con los valores actuales
+    updateLifetime();
+    
+    // Solo permitir números en el campo de valor
+    lifetimeValueInput.addEventListener('keypress', function(e) {
+        if (e.charCode < 48 || e.charCode > 57) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Asegurar que el formulario envíe el valor combinado
+    document.getElementById('form-recipe').addEventListener('submit', function() {
+        updateLifetime();
     });
 });
 </script>
