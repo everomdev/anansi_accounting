@@ -164,10 +164,12 @@ class SecurityController extends Controller
                     // Verificar el estado de la suscripción
                     if ($userPlan->stripe_subscription_status === 'canceled') {
                         // Guardar un mensaje flash para informar al usuario
-                        Yii::$app->session->setFlash('warning', Yii::t('app', 'Your subscription has expired. Please renew to continue using all features.'));
+                        Yii::$app->session->setFlash('warning', Yii::t('app', 'Tu suscripción ha expirado. Por favor renuévala para seguir usando todas las funcionalidades.'));
 
                         // Redireccionar a la página de pago
-                        return $this->redirect(['/site/enable-subscription']);
+                        Yii::$app->session->setFlash('promotion', '15% de descuento por renovación de suscripción.');
+                        // Redirect with query parameter to identify the origin
+                        return $this->redirect(['/site/enable-subscription', 'source' => 'expired_subscription', 'promo' => '15']);
                     }
                 }
                 return $this->goBack();
