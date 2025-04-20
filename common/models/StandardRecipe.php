@@ -126,7 +126,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 return !$this->isNewRecord;
             }, 'message' => "{attribute} no puede estar vacío"],
             [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime', 'type_of_recipe', 'other_specs'], 'string'],
-            [['type', 'um'], 'string', 'max' => 255],
+            [['type', 'um', 'observation'], 'string', 'max' => 255],
             [['type'], 'in', 'range' => [self::STANDARD_RECIPE_TYPE_MAIN, self::STANDARD_RECIPE_TYPE_SUB]],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [[
@@ -172,6 +172,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             'um' => Yii::t('app', 'Unit of measurement'),
             'portions' => Yii::t('app', 'Porciones'),
             'lifetime' => Yii::t('app', 'Duración'),
+            'observation' => Yii::t('app', 'Observaciones'),
 
         ];
     }

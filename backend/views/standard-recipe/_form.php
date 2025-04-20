@@ -215,7 +215,21 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                                 </small>
                             </div>
                         </div>
+                        
                     <?php endif; ?>
+                    <?= $form->field($model, 'observation')->widget(Summernote::class, [
+                        'useKrajeePresets' => true,
+                        'useKrajeeStyle' => false,
+                        'pluginOptions' => [
+                            'height' => 100,
+                            'toolbar' => [
+                                ['style', ['bold', 'italic', 'underline', 'clear']],
+                                ['font', ['strikethrough']],
+                                ['para', ['ul', 'ol']],
+                                ['insert', ['link']]
+                            ]
+                        ]
+                    ]) ?>
                 </div>
             </div>
             <?= $this->render('create/_ingredients_selection', [
