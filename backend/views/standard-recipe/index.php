@@ -15,6 +15,23 @@ $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys:
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
 $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
+$this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
+$this->registerCss("
+    .sortable-column {
+        position: relative;
+        cursor: pointer;
+    }
+    .sortable-column:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+    .sort-indicator {
+        margin-left: 5px;
+        font-weight: bold;
+    }
+    .sorted-asc, .sorted-desc {
+        background-color: rgba(0,0,0,0.1);
+    }
+");
 ?>
 <div class="standard-recipe-index">
     <p>
@@ -57,7 +74,13 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
             [
                 'attribute' => 'recipeLastPrice',
                 'format' => 'currency',
-                'label' => "Costo"
+                'label' => "Costo",
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; cursor: pointer; font-weight: bold;',
+                    'class' => 'sortable-column', 
+                    'data-sort-by' => 'recipeLastPrice'
+                ],
             ],
             [
                 'attribute' => 'price',
@@ -73,7 +96,11 @@ $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depen
                 'label' => "Porcentaje<br>de costo",
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'costPercent'
+                ],
             ],
             [
                 'attribute' => 'ingredientCount',

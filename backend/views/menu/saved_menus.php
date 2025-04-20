@@ -13,11 +13,17 @@ $this->title = Yii::t('app', 'Menús Guardados');
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4><?= Html::encode($this->title) ?></h4>
+        <div class="d-flex gap-2">
+        <?= Html::button('<i class="bi bi-graph-up"></i> Ver gráfico', [
+            'class' => 'btn btn-success',
+            'id' => 'btn-view-chart'
+        ]) ?>
         <?= Html::button('<i class="bi bi-bar-chart-fill"></i> Comparar seleccionados', [
             'class' => 'btn btn-primary',
             'id' => 'btn-compare-menus',
             'disabled' => true
         ]) ?>
+    </div>
     </div>
     <div class="card-body">
         <?= GridView::widget([
@@ -358,7 +364,7 @@ foreach ($models as $model) {
 if (!empty($chartData['labels'])) {
 ?>
 
-<div class="card mt-4">
+<div class="card mt-4" id="chart-section">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4>Evolución de Rentabilidad</h4>
     </div>
@@ -508,6 +514,26 @@ const generalChart = new Chart(ctxGeneral, {
                 }
             }
         }
+    }
+});
+// Manejar clic en el botón "Ver gráfico"
+$('#btn-view-chart').on('click', function() {
+    const chartSection = document.getElementById('chart-section');
+    if (chartSection) {
+        // Desplazamiento suave hacia la sección del gráfico
+        chartSection.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+        
+        // Agregar y luego quitar una clase de resaltado
+        $(chartSection).addClass('highlight-section');
+        setTimeout(function() {
+            $(chartSection).removeClass('highlight-section');
+        }, 2000);
+    } else {
+        // Si no hay gráfico, mostrar un mensaje
+        alert('No hay datos de gráfico disponibles en este momento.');
     }
 });
 
