@@ -8,6 +8,9 @@ use yii\grid\GridView;
 use yii\helpers\Html;
 
 $this->title = Yii::t('app', 'Menús Guardados');
+
+// Asegurar que Bootstrap Icons esté disponible
+$this->registerCssFile("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css");
 ?>
 
 <div class="card">
@@ -126,6 +129,11 @@ $this->title = Yii::t('app', 'Menús Guardados');
         ]) ?>
     </div>
 </div>
+
+<!-- Botón flotante para ir arriba -->
+<button id="btn-back-to-top" class="btn-back-to-top" title="Volver arriba">
+    <i class="bi bi-arrow-up"></i>
+</button>
 
 <?php
 // Modal para confirmar la comparación
@@ -282,6 +290,32 @@ $(document).ready(function() {
             }
         });
     });
+    
+    // Control del botón flotante para volver arriba
+    const backToTopBtn = $('#btn-back-to-top');
+    
+    // Mostrar/ocultar el botón según la posición del scroll
+    $(window).on('scroll', function() {
+        if ($(window).scrollTop() > 300) {
+            backToTopBtn.addClass('show');
+        } else {
+            backToTopBtn.removeClass('show');
+        }
+    });
+    
+    // Funcionalidad del botón - volver arriba con animación suave
+    backToTopBtn.on('click', function() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'instant'
+        });
+        return false;
+    });
+    
+    // Verificar posición inicial del scroll
+    if ($(window).scrollTop() > 300) {
+        backToTopBtn.addClass('show');
+    }
 });
 JS;
 
@@ -528,15 +562,13 @@ $('#btn-view-chart').on('click', function() {
         
         // Agregar y luego quitar una clase de resaltado
         $(chartSection).addClass('highlight-section');
-        setTimeout(function() {
-            $(chartSection).removeClass('highlight-section');
-        }, 2000);
+        $(chartSection).removeClass('highlight-section');
+        
     } else {
         // Si no hay gráfico, mostrar un mensaje
         alert('No hay datos de gráfico disponibles en este momento.');
     }
 });
-
 JS;
 
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js');
@@ -558,6 +590,51 @@ $css = <<<CSS
     }
     .form-select {
         max-width: 300px;
+    }
+    
+    /* Estilos para el botón flotante */
+    .btn-back-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+    }
+    
+    .btn-back-to-top.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .btn-back-to-top:hover {
+        background-color: #218838;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Estilos para resaltar la sección del gráfico */
+    .highlight-section {
+        animation: highlightAnimation 2s ease-in-out;
+    }
+    
+    @keyframes highlightAnimation {
+        0% { box-shadow: 0 0 0 0 rgba(0,123,255,.5); }
+        50% { box-shadow: 0 0 20px 10px rgba(0,123,255,.5); }
+        100% { box-shadow: 0 0 0 0 rgba(0,123,255,.5); }
     }
 CSS;
 $this->registerCss($css);
