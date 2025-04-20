@@ -37,6 +37,12 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
         <li class="menu-item <?= $currentControllerId == 'user' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['//site/index']) ?>" class="menu-link">
+
+                <div><?= Yii::t('app', 'Dashboard') ?></div>
+            </a>
+        </li>
+        <li class="menu-item <?= $currentControllerId == 'user' ? 'active' : '' ?>">
             <a href="<?= \yii\helpers\Url::to(['//user/admin/index']) ?>" class="menu-link">
 
                 <div><?= Yii::t('app', 'Users') ?></div>
