@@ -84,8 +84,20 @@ class CouponController extends Controller
             if (isset($model->expiration_date)) {
                 $model->expiration_date = strtotime($model->expiration_date);
             }
-            if ($model->save()) {
-                return $this->redirect(['index']);
+            // Crear el cupón en Stripe antes de guardar en la base de datos local
+            $stripeId = $this->createStripePromoCode($model);
+            
+            if ($stripeId) {
+                // Guardar el ID de Stripe en el modelo
+                $model->stripe_coupon_id = $stripeId;
+                
+                if ($model->save()) {
+                    Yii::$app->session->setFlash('success', 'Cupón creado correctamente y sincronizado con Stripe.');
+                    return $this->redirect(['index']);
+                }
+            } else {
+                // Si falló la creación en Stripe, mostrar error
+                Yii::$app->session->setFlash('error', 'Error al crear el cupón en Stripe. El cupón no se ha guardado.');
             }
         }
 
@@ -93,6 +105,7 @@ class CouponController extends Controller
             'model' => $model,
         ]);
     }
+
 
     /**
      * Updates an existing Coupon model.
@@ -170,8 +183,16 @@ class CouponController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+        
+        // Si existe un ID de cupón en Stripe, intentar eliminarlo primero
+        if (!empty($model->stripe_coupon_id)) {
+            $this->deleteStripePromoCode($model->stripe_coupon_id);
+        }
+        
+        $model->delete();
 
+        Yii::$app->session->setFlash('success', 'Cupón eliminado correctamente.');
         return $this->redirect(['index']);
     }
 
@@ -189,5 +210,82 @@ class CouponController extends Controller
         }
 
         throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+    }
+    /**
+     * Crea un código promocional en Stripe
+     * @param Coupon $model El modelo de cupón
+     * @return string|null El ID del cupón creado en Stripe o null si hubo un error
+     */
+    protected function createStripePromoCode($model)
+    {
+        try {
+            // Configurar la API de Stripe
+            $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+            
+            $duration = 'once'; // Por defecto, el cupón se aplica una sola vez
+            
+            // Calcular duración y redondear al valor entero en días
+            $durationInDays = null;
+            if (isset($model->expiration_date) && $model->expiration_date > time()) {
+                $durationInDays = ceil(($model->expiration_date - time()) / 86400); // 86400 segundos en un día
+                
+                // Si es mayor a 365 días, limitar a un año
+                if ($durationInDays > 365) {
+                    $durationInDays = 365;
+                }
+                
+                // Si es muy corto, establecer mínimo 1 día
+                if ($durationInDays < 1) {
+                    $durationInDays = 1;
+                }
+            }
+            
+            // Crear el cupón en Stripe
+            $stripeCoupon = $stripe->coupons->create([
+                'id' => $model->code, // Usar el código como ID
+                'name' => $model->name ?: $model->code,
+                'percent_off' => (float)$model->discount,
+                'duration' => $duration,
+                'redeem_by' => $model->expiration_date, // Fecha de expiración como timestamp
+                'max_redemptions' => $model->quantity ?: null,
+                'metadata' => [
+                    'created_by' => Yii::$app->user->id,
+                    'description' => 'Cupon creado desde el sistema',
+                    'plan_id' => $model->plan_id ?: ''
+                ]
+            ]);
+            
+            // Devolver el ID del cupón creado
+            return $stripeCoupon->id;
+            
+        } catch (ApiErrorException $e) {
+            // Registrar el error
+            Yii::error('Error al crear cupón en Stripe: ' . $e->getMessage(), 'stripe');
+            
+            // Mostrar mensaje de error
+            Yii::$app->session->setFlash('error', 'Error de Stripe: ' . $e->getMessage());
+            
+            return null;
+        }
+    }
+    protected function deleteStripePromoCode($stripeId)
+    {
+        try {
+            // Configurar la API de Stripe
+            $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+
+            
+            // Eliminar el cupón
+            $deleted = $stripe->coupons->delete($stripeId);
+            
+            return $deleted->deleted;
+            
+        } catch (ApiErrorException $e) {
+            // Registrar el error
+            Yii::error('Error al eliminar cupón en Stripe: ' . $e->getMessage(), 'stripe');
+            
+            // No mostrar error al usuario, solo registrarlo
+            return false;
+        }
     }
 }

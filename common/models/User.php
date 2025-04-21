@@ -153,7 +153,7 @@ class User extends \Da\User\Model\User
             // comprobar si ya el usuario tiene una suscripción
             $userPlan = $this->userPlan;
             $subscription = $stripe->subscriptions->retrieve($userPlan->stripe_subscription_id);
-
+            //die(var_dump($subscription->status));
             return $subscription;
 
         } catch (\Exception $exception) {

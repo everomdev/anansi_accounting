@@ -14,6 +14,8 @@ $subscriptionStatus = '-';
 if (!empty($subscription)) {
     if ($subscription->status == 'active') {
         $subscriptionStatus = Yii::t('app', "Active");
+    } elseif($subscription->status == 'trialing') {
+        $subscriptionStatus = Yii::t('app', "Modo prueba");
     } else {
         $subscriptionStatus = Yii::t('app', "Inactive");
     }

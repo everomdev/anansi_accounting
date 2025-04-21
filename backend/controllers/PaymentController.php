@@ -123,8 +123,9 @@ class PaymentController extends Controller
     {
         $user = User::findOne(['id' => \Yii::$app->user->id]);
         //die(var_dump($nickname));
-        if ($priceAmount > 0) {
+        if ($priceAmount >= 0) {
             $session = $user->plan->generateCheckoutSession($user, $price, $priceAmount, $coupon_id, $nickname);
+            //die(var_dump($session));
             if (empty($session)) {
                 \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
                 return $this->redirect(['site/enable-subscription']);
@@ -132,7 +133,7 @@ class PaymentController extends Controller
 
             return $this->redirect($session->url);
         } 
-        if($priceAmount == 0 ){
+        /*if($priceAmount == 0 ){
             $subscription = $user->plan->createManualSubscription($user,$coupon_id);
             if (empty($subscription)) {
                 \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
@@ -141,7 +142,7 @@ class PaymentController extends Controller
 
             \Yii::$app->session->setFlash('success', "Subscription started");
             return $this->redirect(['site/index']);
-        }
+        }*/
     }
 
     public function actionStripeCheckoutSuccess($session_id, $plan, $user)

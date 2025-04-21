@@ -44,6 +44,7 @@ class Coupon extends \yii\db\ActiveRecord
         return [
             [['name'], 'required'],
             [['discount'], 'number'],
+            [['stripe_coupon_id'], 'string', 'max' => 255],
             [['quantity'], 'default', 'value' => null],
             [['quantity'], 'integer'],
             // [['gratitude'], 'string'],
@@ -72,6 +73,7 @@ class Coupon extends \yii\db\ActiveRecord
             'gratitude' => Yii::t('app', 'Gratitude'),
             'expiration_date' => Yii::t('app', 'Fecha de vigencia'),
             'plan_id' => Yii::t('app', 'Plan'),
+            'stripe_coupon_id' => Yii::t('app', 'ID del cupón en Stripe'),
         ];
     }
 

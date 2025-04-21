@@ -316,31 +316,21 @@ class Plan extends \yii\db\ActiveRecord
                 ],
             ];
             // Agregar line_items según si hay un coupon_id o no
-            // die(var_dump($nickname));
             if ($coupon_id) {
-                // die(var_dump($nickname));
-                $sessionData['line_items'][] = [
-                    'price_data' => [
-                        'currency' => 'usd', // Moneda del pago
-                        'product_data' => [
-                            'name' => 'Cupon de descuento', // Nombre del producto o servicio
-                        ],
-                        'unit_amount' => $priceAmount * 100, // Monto en centavos (por ejemplo, $50.00 = 5000) // Monto en centavos (por ejemplo, $100.00 = 10000)
-                        'recurring' => [
-                            'interval' => $nickname=='mes'?'month':'year', // Intervalo de facturación (puede ser 'day', 'week', 'month', 'year')
-                        ],
-                    ],
-                    'quantity' => 1, // Cantidad de unidades
-                ];
-            } else {
                 $sessionData['line_items'][] = [
                     'price' => $priceId,
                     'quantity' => 1
                 ];
+                $coupon = Coupon::findOne(['id' => $coupon_id]);
+                $sessionData['discounts'] = [
+                    ['coupon' => $coupon->stripe_coupon_id]
+                ];
             }
+            //die(var_dump('session'));
 
             // Crear la sesión de checkout en Stripe
             $session = $stripe->checkout->sessions->create($sessionData);
+            //die(var_dump($session));
 
             return $session;
         } catch (\Exception $e) {

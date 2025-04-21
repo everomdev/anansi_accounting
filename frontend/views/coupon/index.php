@@ -48,7 +48,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'expiration_date:date',
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{update} {delete}"
+                'template' => "{delete}"
             ],
         ],
     ]); ?>
