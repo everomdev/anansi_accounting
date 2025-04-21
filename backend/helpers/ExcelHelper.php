@@ -754,12 +754,11 @@ class ExcelHelper
     {
         try {
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
-    
             $recipeData = [];
             $ingredientData = [];
     
-            $recipesSheet = $spreadsheet->getSheetByName('Plantilla para importar recetas');
-            $ingredientsSheet = $spreadsheet->getSheetByName('Ingredients');
+            $recipesSheet = $spreadsheet->getSheetByName('FICHA GENERAL DE LA RECETA');
+            $ingredientsSheet = $spreadsheet->getSheetByName('INGREDIENTES');
     
             if ($recipesSheet === null) {
                 throw new HttpException(400, 'La hoja "Recipes" no se encontró en el archivo Excel.');
@@ -768,7 +767,6 @@ class ExcelHelper
             if ($ingredientsSheet === null) {
                 throw new HttpException(400, 'La hoja "Ingredients" no se encontró en el archivo Excel.');
             }
-    
             // Importar recetas
             $rowIterator = $recipesSheet->getRowIterator();
             while (true) {
@@ -810,7 +808,7 @@ class ExcelHelper
                 }
                 $rowIterator->next();
             }
-    
+            //var_dump($data);
             // Importar ingredientes agrupados por receta
             $rowIterator = $ingredientsSheet->getRowIterator();
             while (true) {
