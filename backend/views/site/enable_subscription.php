@@ -143,6 +143,9 @@ $(document).on('click', '#apply-coupon', function() {
         success: function(response) {
             if (response.success) {
                 $('#coupon-message').text(response.message).removeClass('text-danger').addClass('text-success');
+                
+                // Obtener el porcentaje de descuento de la respuesta (con valor por defecto)
+                var discountPercentage = response.discount || 0;
 
                 // Actualizar el precio con el descuento aplicado
                 $('.btn-warning').each(function(index) {
@@ -174,9 +177,18 @@ $(document).on('click', '#apply-coupon', function() {
                     // Mostrar el precio original tachado
                     var originalPrice = $(this).data('original-price') || prices[index];
                     if (!$(this).prev('.text-decoration-line-through').length) {
-                        $(this).before('<div class="text-center mb-2"><span class="text-decoration-line-through text-muted">$' + 
-                                       originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-' + 
-                                       response.discount_percentage + '%</span></div>');
+                        // Verificar el tipo de descuento
+                        if (response.type_discount === 'amount') {
+                            // Si es un monto fijo
+                            $(this).before('<div class="text-center mb-2"><span class="text-decoration-line-through text-muted">$' + 
+                                           originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-$' + 
+                                           response.discount.toFixed(2) + '</span></div>');
+                        } else {
+                            // Si es un porcentaje
+                            $(this).before('<div class="text-center mb-2"><span class="text-decoration-line-through text-muted">$' + 
+                                           originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-' + 
+                                           response.discount + '%</span></div>');
+                        }
                     }
                 });
             } else {

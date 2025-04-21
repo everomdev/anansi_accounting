@@ -240,20 +240,27 @@ class CouponController extends Controller
                 }
             }
             
-            // Crear el cupón en Stripe
-            $stripeCoupon = $stripe->coupons->create([
-                'id' => $model->code, // Usar el código como ID
+            $couponData = [
+                'id' => $model->code,
                 'name' => $model->name ?: $model->code,
-                'percent_off' => (float)$model->discount,
                 'duration' => $duration,
-                'redeem_by' => $model->expiration_date, // Fecha de expiración como timestamp
+                'redeem_by' => $model->expiration_date,
                 'max_redemptions' => $model->quantity ?: null,
                 'metadata' => [
                     'created_by' => Yii::$app->user->id,
                     'description' => 'Cupon creado desde el sistema',
                     'plan_id' => $model->plan_id ?: ''
                 ]
-            ]);
+            ];
+            
+            if ($model->type == 'per_cent') {
+                $couponData['percent_off'] = (float)$model->discount;
+            } elseif ($model->type == 'amount') {
+                $couponData['amount_off'] = (int)($model->discount * 100); // en centavos
+                $couponData['currency'] = 'usd';
+            }
+            $stripeCoupon = $stripe->coupons->create($couponData);
+
             
             // Devolver el ID del cupón creado
             return $stripeCoupon->id;

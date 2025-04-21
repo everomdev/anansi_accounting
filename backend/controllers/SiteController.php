@@ -188,6 +188,8 @@ class SiteController extends Controller
             'new_price' => $newPrices,
             'coupon_id' => $coupon['id'],
             'error' => false,
+            'type_discount' => $coupon['type'],
+            'discount' => $coupon['discount'],
             'message' => Yii::t('app', "Cupón Válido!")
         ]);
     }
