@@ -1095,6 +1095,12 @@ public function actionGetSubStandardRecipes()
         }
     }
 
+    // Guardar datos en la sesión para usarlos en menu_improvement
+    Yii::$app->session->set('menuAnalysisData', $data);
+    Yii::$app->session->set('sortByCostPercent', $sortByCostPercent);
+    Yii::$app->session->set('sortByPopularity', $sortByPopularity);
+    Yii::$app->session->set('sortBySales', $sortBySales);
+    Yii::$app->session->set('paretoCategories', $paretoCategories);
     return $this->render('analytics', [
         'data' => $data,
         'sortByCostPercent' => $sortByCostPercent,
