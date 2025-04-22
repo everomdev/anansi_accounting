@@ -61,10 +61,18 @@ class SiteController extends Controller
             ],
             'captcha' => [
                 'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => null, // Solo para pruebas
-                'minLength' => 4, // Longitud mínima del código CAPTCHA
-                'maxLength' => 5, // Longitud máxima del código CAPTCHA
-                'testLimit' => 3,
+                //'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+                'minLength' => 5, // Aumentada la longitud mínima
+                'maxLength' => 6, // Aumentada la longitud máxima
+                'testLimit' => 1, // Permitir más intentos antes de generar nuevo código
+                'width' => 150, // Ancho de la imagen
+                'height' => 50, // Alto de la imagen
+                'padding' => 5, // Padding de la imagen
+                'backColor' => 0xF5F5F5, // Color de fondo
+                'foreColor' => 0x2040A0, // Color del texto
+                'offset' => -2, // Offset para superponer caracteres
+                'transparent' => true, // Hacer el fondo transparente
+                //'fontFile' => '@webroot/fonts/captcha.ttf', // Fuente personalizada si existe
             ],
         ];
     }
