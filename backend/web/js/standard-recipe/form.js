@@ -158,7 +158,7 @@ function computeCost() {
             $("#cost-value").data('price', costPerPortion.toFixed(2));
             
             // Actualizar el porcentaje de costo si hay un precio establecido
-            updateCostPercent();
+           //updateCostPercent();
         }
     }
 }
