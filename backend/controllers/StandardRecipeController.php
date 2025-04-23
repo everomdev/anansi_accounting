@@ -912,68 +912,7 @@ public function actionGetSubStandardRecipes()
 
         return $this->redirect(['standard-recipe/menu-recipes']);
     }
-
-    /*public function actionAnalytics($family = 'all')
-    {
-        $business = RedisKeys::getBusiness();
-
-        $recipes = StandardRecipe::find()
-            ->where([
-                'business_id' => $business->id,
-                'in_menu' => true,
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
-            ]);
-        $combos = Menu::find()
-            ->innerJoin('recipe_category', 'recipe_category.id=menu.category_id')
-            ->where([
-                'menu.business_id' => $business->id,
-                'in_menu' => true,
-            ]);
-        if ($family != 'all') {
-            $recipes->andWhere(['type_of_recipe' => $family]);
-            $combos->andWhere(['recipe_category.name' => $family]);
-        }
-
-        $recipes = $recipes->all();
-        $combos = $combos->all();
-
-        $data = array_merge($recipes, $combos);
-        $sortByCostPercent = $data;
-        $sortByPopularity = $data;
-        $sortBySales = $data;
-
-        usort($sortByCostPercent, function ($itemA, $itemB) {
-            return ($itemA->costPercent * 100) - ($itemB->costPercent * 100);
-        });
-        usort($sortByPopularity, function ($itemA, $itemB) {
-            return $itemB->sales - $itemA->sales;
-        });
-        die(var_dump($sortByPopularity));
-        usort($sortBySales, function ($itemA, $itemB) {
-            return ($itemB->sales * $itemB->price) - ($itemA->sales * $itemA->price);
-        });
-
-        $sortByCostPercent = ArrayHelper::getColumn($sortByCostPercent, function ($item) {
-            return sprintf("%s_%s", get_class($item), $item->id);
-        });
-        $sortByPopularity = ArrayHelper::getColumn($sortByPopularity, function ($item) {
-            return sprintf("%s_%s", get_class($item), $item->id);
-        });
-        $sortBySales = ArrayHelper::getColumn($sortBySales, function ($item) {
-            return sprintf("%s_%s", get_class($item), $item->id);
-        });
-
-        return $this->render('analytics', [
-            'data' => $data,
-            'sortByCostPercent' => $sortByCostPercent,
-            'sortByPopularity' => $sortByPopularity,
-            'sortBySales' => $sortBySales,
-            'family' => $family
-        ]);
-
-    }*/
-    public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc')
+    /*public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc')
 {
     $business = RedisKeys::getBusiness();
 
@@ -1111,6 +1050,157 @@ public function actionGetSubStandardRecipes()
         'totalSales' => $totalSales,
         'currentSort' => $sort,       // Para mostrar el orden actual
         'currentDirection' => $direction // Para mostrar la dirección
+    ]);
+}*/
+public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc')
+{
+    $business = RedisKeys::getBusiness();
+
+    // Obtener recetas y combos en una sola consulta optimizada
+    $query = (new \yii\db\Query())
+        ->select([
+            'id' => 'sr.id',
+            'name' => 'sr.title',
+            'type' => new \yii\db\Expression("'recipe'"),
+            'type_of_recipe' => 'sr.type_of_recipe',
+            'price' => 'sr.price',
+            'cost' => 'sr.custom_cost',
+            'sales' => 'sr.sales',
+            'cost_percent' => new \yii\db\Expression('(sr.custom_cost / NULLIF(sr.price, 0)) * 100'),
+            'sales_value' => new \yii\db\Expression('sr.price * sr.sales')
+        ])
+        ->from(['sr' => 'standard_recipe'])
+        ->where([
+            'sr.business_id' => $business->id,
+            'sr.in_menu' => true,
+            'sr.in_construction' => 0,
+            'sr.type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+        ]);
+
+    if ($family != 'all') {
+        $query->andWhere(['sr.type_of_recipe' => $family]);
+    }
+
+    $combosQuery = (new \yii\db\Query())
+        ->select([
+            'id' => 'm.id',
+            'name' => 'm.name',
+            'type' => new \yii\db\Expression("'combo'"),
+            'type_of_recipe' => 'rc.name',
+            'price' => 'm.total_price',
+            'cost' => 'm.total_cost',
+            'sales' => 'm.sales',
+            'cost_percent' => new \yii\db\Expression('(m.total_cost / NULLIF(m.total_price, 0)) * 100'),
+            'sales_value' => new \yii\db\Expression('m.total_price * m.sales')
+        ])
+        ->from(['m' => 'menu'])
+        ->innerJoin(['rc' => 'recipe_category'], 'rc.id = m.category_id')
+        ->where([
+            'm.business_id' => $business->id,
+            'm.in_menu' => true,
+        ]);
+
+    if ($family != 'all') {
+        $combosQuery->andWhere(['rc.name' => $family]);
+    }
+
+    // Unir ambas consultas y ejecutar una sola query
+    $combinedQuery = (new \yii\db\Query())
+        ->from(['combined' => $query->union($combosQuery)]);
+
+    // Obtener todos los datos en un solo fetch
+    $data = $combinedQuery->all();
+
+    // Calcular total de ventas para Pareto
+    $totalSales = array_sum(array_column($data, 'sales'));
+
+    // Función para ordenar según parámetros
+    $sortFunction = function ($a, $b) use ($sort, $direction) {
+        $compare = 0;
+        
+        switch ($sort) {
+            case 'name':
+                $compare = strcasecmp($a['name'], $b['name']);
+                break;
+                
+            case 'cost-percent':
+                $compare = ($a['cost_percent'] <=> $b['cost_percent']);
+                break;
+                
+            case 'popularity':
+                $compare = ($a['sales'] <=> $b['sales']);
+                break;
+                
+            case 'sales':
+                $compare = ($a['sales_value'] <=> $b['sales_value']);
+                break;
+        }
+        
+        return ($direction === 'desc') ? -$compare : $compare;
+    };
+
+    // Ordenar datos principales si es necesario
+    if ($sort) {
+        usort($data, $sortFunction);
+    }
+
+    // Generar versiones ordenadas una sola vez
+    $sortedVersions = [
+        'costPercent' => $data,
+        'popularity' => $data,
+        'sales' => $data
+    ];
+
+    usort($sortedVersions['costPercent'], fn($a, $b) => $a['cost_percent'] <=> $b['cost_percent']);
+    usort($sortedVersions['popularity'], fn($a, $b) => $b['sales'] <=> $a['sales']);
+    usort($sortedVersions['sales'], fn($a, $b) => $b['sales_value'] <=> $a['sales_value']);
+
+    // Generar claves únicas y categorías Pareto
+    $paretoItems = $sortedVersions['popularity']; // Ya está ordenado por popularidad
+    $paretoCategories = [];
+    $accumulatedPercentage = 0;
+
+    foreach ($paretoItems as $item) {
+        $itemKey = "{$item['type']}_{$item['id']}";
+        
+        if ($totalSales > 0) {
+            $itemPercentage = ($item['sales'] / $totalSales) * 100;
+            $accumulatedPercentage += $itemPercentage;
+            
+            if ($accumulatedPercentage <= 80) {
+                $paretoCategories[$itemKey] = 'verde';
+            } elseif ($accumulatedPercentage <= 95) {
+                $paretoCategories[$itemKey] = 'amarillo';
+            } else {
+                $paretoCategories[$itemKey] = 'rojo';
+            }
+        } else {
+            $paretoCategories[$itemKey] = 'gris';
+        }
+    }
+
+    // Preparar datos para la vista
+    $prepareForView = function($items) {
+        return array_map(fn($item) => "{$item['type']}_{$item['id']}", $items);
+    };
+
+    // Guardar en sesión
+    Yii::$app->session->set('menuAnalysisData', $data);
+    Yii::$app->session->set('sortByCostPercent', $prepareForView($sortedVersions['costPercent']));
+    Yii::$app->session->set('sortByPopularity', $prepareForView($sortedVersions['popularity']));
+    Yii::$app->session->set('sortBySales', $prepareForView($sortedVersions['sales']));
+    Yii::$app->session->set('paretoCategories', $paretoCategories);
+
+    return $this->render('analytics', [
+        'data' => $data,
+        'sortByCostPercent' => $prepareForView($sortedVersions['costPercent']),
+        'sortByPopularity' => $prepareForView($sortedVersions['popularity']),
+        'sortBySales' => $prepareForView($sortedVersions['sales']),
+        'family' => $family,
+        'paretoCategories' => $paretoCategories,
+        'totalSales' => $totalSales,
+        'currentSort' => $sort,
+        'currentDirection' => $direction
     ]);
 }
     public function actionMenuImprovement()

@@ -24,7 +24,7 @@ $total = count($menuAnalysisData);
 
 if ($total > 0) {
     foreach ($menuAnalysisData as $item) {
-        $itemKey = sprintf("%s_%s", get_class($item), $item->id);
+        $itemKey = sprintf("%s_%s", $item['type'], $item['id']);
         
         // Obtener posiciones en cada categoría
         $costPercentPosition = array_search($itemKey, $sortByCostPercent) + 1;
@@ -49,22 +49,22 @@ if ($total > 0) {
         
         // 1. Recetas de excelencia: verde en todas las categorías
         if ($isCostGreen && $isPopularGreen && $isSalesGreen) {
-            $excellentRecipes[] = $item->name;
+            $excellentRecipes[] = $item['name'];
         }
         
         // 2. Recetas tóxicas: rojo en todas las categorías
         if ($isCostRed && $isPopularRed && $isSalesRed) {
-            $toxicRecipes[] = $item->name;
+            $toxicRecipes[] = $item['name'];
         }
         
         // 3. Recetas foco rojo: no rentables (rojo o amarillo en costo) pero populares y dejan buen dinero
         if (($isCostRed || $isCostYellow) && ($isPopularGreen || $isPopularYellow) && ($isSalesGreen || $isSalesYellow)) {
-            $focusRecipes[] = $item->name;
+            $focusRecipes[] = $item['name'];
         }
         
         // 4. Recetas a promocionar: rentables y populares pero no dejan tanto dinero
         if ($isCostGreen && ($isPopularGreen || $isPopularYellow) && ($isSalesRed || $isSalesYellow)) {
-            $promoteRecipes[] = $item->name;
+            $promoteRecipes[] = $item['name'];
         }
     }
 }
@@ -81,12 +81,15 @@ $countData = count($data);
 $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
 ?>
 <div class="card">
-    <div class="card-header">
-        <h4>
+<div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
             <?= Yii::t('app', "New profitability of menu: {yield}", [
                 'yield' => $business->getFormatter()->asPercent($yield, 2)
             ]) ?>
         </h4>
+        <a href="#recommendations-section" class="btn btn-primary btn-sm">
+            <i class="fas fa-lightbulb me-1"></i> <?= Yii::t('app', "Ver Recomendaciones") ?>
+        </a>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -113,8 +116,8 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
 </div>
 
 <!-- Nueva sección para las recomendaciones de mejora -->
-<div class="card mt-4">
-    <div class="card-header">
+<div class="card mt-4" id="recommendations-section">
+    <div class="card-header">   
         <h4><?= Yii::t('app', "Recomendaciones de Mejora del Menú") ?></h4>
         <p class="text-muted small">
             <?= Yii::t('app', "Basado en los datos de análisis de su menú, hemos categorizado sus recetas y proporcionado recomendaciones específicas.") ?>
@@ -221,6 +224,11 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
         <?php endif; ?>
     </div>
 </div>
+<div class="back-to-top-floating">
+    <a href="#" class="btn btn-outline-secondary btn-floating">
+        <i class="fas fa-arrow-up"></i>
+    </a>
+</div>
 <?php \yii\widgets\Pjax::end(); ?>
 <?php
 $js = <<< JS
@@ -240,7 +248,39 @@ $(document).on('change', ".modify-custom-field", function(event){
         $.pjax.reload({container: "#pjax-menu-improvement"});
     })
     return false;
-})
+});
+// Suavizar el desplazamiento a las secciones
+$('a[href="#recommendations-section"]').on('click', function(e) {
+    e.preventDefault();
+    $('html, body').animate(
+        {
+            scrollTop: $('#recommendations-section').offset().top,
+        },
+        500,
+        'linear'
+    );
+});
+
+// Mostrar/ocultar botón flotante al hacer scroll
+$(window).scroll(function() {
+    if ($(this).scrollTop() > 200) {
+        $('.back-to-top-floating').fadeIn();
+    } else {
+        $('.back-to-top-floating').fadeOut();
+    }
+});
+
+// Botón volver arriba flotante
+$('.back-to-top-floating a').on('click', function(e) {
+    e.preventDefault();
+    $('html, body').animate(
+        {
+            scrollTop: 0,
+        },
+        500,
+        'linear'
+    );
+});
 JS;
 $this->registerJs($js);
 
@@ -259,6 +299,37 @@ $css = <<< CSS
 .badge {
     font-size: 0.9rem;
     padding: 8px 12px;
+}
+
+/* Estilos para el header con botón al lado */
+.card-header.d-flex {
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Estilos para el botón flotante */
+.back-to-top-floating {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    display: none;
+}
+
+.btn-floating {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+
+.btn-floating:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 CSS;
 $this->registerCss($css);

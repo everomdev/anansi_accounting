@@ -97,7 +97,7 @@ $this->title = Yii::t('app', "Menu Analysis");
                 </thead>
                 <tbody>
                 <?php foreach ($data as $item): 
-                    $itemKey = sprintf("%s_%s", get_class($item), $item->id);
+                    $itemKey = sprintf("%s_%s", $item['type'], $item['id']);
                     $costPercentPosition = array_search($itemKey, $sortByCostPercent) + 1;
                     $popularityPosition = array_search($itemKey, $sortByPopularity) + 1;
                     $salesPosition = array_search($itemKey, $sortBySales) + 1;
@@ -127,12 +127,12 @@ $this->title = Yii::t('app', "Menu Analysis");
                                  ($salesPosition <= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
                 ?>
                 <tr>
-                    <td><?= $item->name ?></td>
-                    <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
+                    <td><?= $item['name'] ?></td>
+                    <td><?= $business->getFormatter()->asPercent($item['cost_percent']) ?></td>
                     <td style="background-color: <?= $colorCostPercent ?>"><strong class="text-white"><?= $costPercentPosition ?></strong></td>
-                    <td><?= $item->sales ?></td>
+                    <td><?= $item['sales'] ?></td>
                     <td style="background-color: <?= $colorPopularity ?>"><strong class="text-white"><?= $popularityPosition ?></strong></td>
-                    <td><?= $business->getFormatter()->asCurrency($item->price * $item->sales) ?></td>
+                    <td><?= $business->getFormatter()->asCurrency($item['price'] * $item['sales']) ?></td>
                     <td style="background-color: <?= $colorSales ?>"><strong class="text-white"><?= $salesPosition ?></strong></td>
                 </tr>
                 <?php endforeach; ?>
@@ -140,6 +140,11 @@ $this->title = Yii::t('app', "Menu Analysis");
             </table>
         </div>
     </div>
+</div>
+<div class="back-to-top-floating">
+    <a href="#" class="btn btn-outline-secondary btn-floating">
+        <i class="fas fa-arrow-up"></i>
+    </a>
 </div>
 
 <?php
@@ -152,6 +157,30 @@ th a:hover {
 }
 .fa-sort {
     opacity: 0.5;
+}
+/* Estilos para el botón flotante */
+.back-to-top-floating {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    display: none;
+}
+
+.btn-floating {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+}
+
+.btn-floating:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 CSS;
 $this->registerCss($css);
@@ -175,6 +204,26 @@ $(document).on('change', "#family-selector", function(event){
     }
     window.location.href = url;
     return false;
+});
+// Mostrar/ocultar botón flotante al hacer scroll
+$(window).scroll(function() {
+    if ($(this).scrollTop() > 200) {
+        $('.back-to-top-floating').fadeIn();
+    } else {
+        $('.back-to-top-floating').fadeOut();
+    }
+});
+
+// Botón volver arriba flotante
+$('.back-to-top-floating a').on('click', function(e) {
+    e.preventDefault();
+    $('html, body').animate(
+        {
+            scrollTop: 0,
+        },
+        500,
+        'linear'
+    );
 });
 JS;
 $this->registerJs($js);
