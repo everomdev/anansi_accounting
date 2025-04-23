@@ -66,7 +66,18 @@ $this->registerCss("
         'formatter' => $business->getFormatter(),
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
-            ['class' => 'yii\grid\SerialColumn'],
+            [
+                'label' => '#',
+                'value' => function ($model, $key, $index, $grid) use ($dataProvider) {
+                    // Calculate overall position based on current page and per page count
+                    $pagination = $dataProvider->getPagination();
+                    $page = $pagination->getPage();
+                    $pageSize = $pagination->getPageSize();
+                    return $page * $pageSize + $index + 1;
+                },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
             [
                 'attribute' => 'title',
                 'label' => 'Nombre de la receta',
@@ -126,6 +137,18 @@ $this->registerCss("
                 'attribute' => 'type_of_recipe',
                 'label' => 'Familia',
                 'enableSorting' => true,
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'observation',
+                'label' => 'Observación',
+                'format' => 'html', // Esto permite renderizar HTML
+                'value' => function($model) {
+                    // Elimina Html::encode para permitir que el HTML se renderice
+                    return $model->observation;
+                },
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],

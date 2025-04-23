@@ -37,7 +37,19 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
         'formatter' => $business->getFormatter(),
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
-            ['class' => 'yii\grid\SerialColumn'],
+            [
+                'label' => '#',
+                'value' => function ($model, $key, $index, $grid) use ($dataProvider) {
+                    // Calculate overall position based on current page and per page count
+                    $pagination = $dataProvider->getPagination();
+                    $page = $pagination->getPage();
+                    $pageSize = $pagination->getPageSize();
+                    return $page * $pageSize + $index + 1;
+                },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'enableSorting' => false,
+            ],
             [
                 'attribute' => 'title',
                 'label' => Yii::t('app', 'Nombre de la Subreceta'),
