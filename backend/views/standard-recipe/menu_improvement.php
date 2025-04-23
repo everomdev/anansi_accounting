@@ -14,10 +14,14 @@ $sortBySales = Yii::$app->session->get('sortBySales', []);
 $paretoCategories = Yii::$app->session->get('paretoCategories', []);
 
 // Categorizar recetas según análisis
-$excellentRecipes = [];
-$toxicRecipes = [];
-$focusRecipes = [];
-$promoteRecipes = [];
+$excellentRecipes = [];       // Receta Diamante
+$magnetRecipes = [];          // Receta Imán
+$mysteryRecipes = [];         // Receta Misteriosa
+$latentRecipes = [];          // Receta Latente
+$focusRecipes = [];           // Receta Foco Rojo
+$fragileRecipes = [];         // Receta Llamativa pero Frágil
+$nicheRecipes = [];           // Receta de Nicho
+$toxicRecipes = [];           // Receta Tóxica
 
 // Total de recetas para calcular percentiles
 $total = count($menuAnalysisData);
@@ -47,24 +51,29 @@ if ($total > 0) {
         
         // Categorizar las recetas según las reglas
         
-        // 1. Recetas de excelencia: verde en todas las categorías
         if ($isCostGreen && $isPopularGreen && $isSalesGreen) {
-            $excellentRecipes[] = $item['name'];
+            $excellentRecipes[] = $item['name']; // Receta Diamante
+        } 
+        elseif ($isCostGreen && $isPopularGreen && $isSalesRed) {
+            $magnetRecipes[] = $item['name']; // Receta Imán
         }
-        
-        // 2. Recetas tóxicas: rojo en todas las categorías
-        if ($isCostRed && $isPopularRed && $isSalesRed) {
-            $toxicRecipes[] = $item['name'];
+        elseif ($isCostGreen && $isPopularRed && $isSalesGreen) {
+            $mysteryRecipes[] = $item['name']; // Receta Misteriosa
         }
-        
-        // 3. Recetas foco rojo: no rentables (rojo o amarillo en costo) pero populares y dejan buen dinero
-        if (($isCostRed || $isCostYellow) && ($isPopularGreen || $isPopularYellow) && ($isSalesGreen || $isSalesYellow)) {
-            $focusRecipes[] = $item['name'];
+        elseif ($isCostGreen && $isPopularRed && $isSalesRed) {
+            $latentRecipes[] = $item['name']; // Receta Latente
         }
-        
-        // 4. Recetas a promocionar: rentables y populares pero no dejan tanto dinero
-        if ($isCostGreen && ($isPopularGreen || $isPopularYellow) && ($isSalesRed || $isSalesYellow)) {
-            $promoteRecipes[] = $item['name'];
+        elseif ($isCostRed && $isPopularGreen && $isSalesGreen) {
+            $focusRecipes[] = $item['name']; // Receta Foco Rojo
+        }
+        elseif ($isCostRed && $isPopularGreen && $isSalesRed) {
+            $fragileRecipes[] = $item['name']; // Receta Llamativa pero Frágil
+        }
+        elseif ($isCostRed && $isPopularRed && $isSalesGreen) {
+            $nicheRecipes[] = $item['name']; // Receta de Nicho
+        }
+        elseif ($isCostRed && $isPopularRed && $isSalesRed) {
+            $toxicRecipes[] = $item['name']; // Receta Tóxica
         }
     }
 }
@@ -120,13 +129,13 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
     <div class="card-header">   
         <h4><?= Yii::t('app', "Recomendaciones de Mejora del Menú") ?></h4>
         <p class="text-muted small">
-            <?= Yii::t('app', "Basado en los datos de análisis de su menú, hemos categorizado sus recetas y proporcionado recomendaciones específicas.") ?>
+            <?= Yii::t('app', "Basado en el análisis matricial de rentabilidad, popularidad y monto de venta") ?>
         </p>
     </div>
     <div class="card-body">
         <?php if (!$menuAnalysisData): ?>
             <div class="alert alert-info">
-                <?= Yii::t('app', "Por favor, visite la página de Análisis del Menú primero para obtener recomendaciones basadas en sus datos de ventas.") ?>
+                <?= Yii::t('app', "Por favor, visite la página de Análisis del Menú primero para obtener recomendaciones.") ?>
                 <?= \yii\bootstrap5\Html::a(
                     Yii::t('app', "Ir a Análisis del Menú"),
                     ['standard-recipe/analytics'],
@@ -134,14 +143,14 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                 ) ?>
             </div>
         <?php else: ?>
-            <!-- Recetas de excelencia -->
+            <!-- 1. Recetas Diamante (Excelencia) -->
             <div class="recommendation-section mb-4">
                 <h5 class="text-success">
-                    <i class="fas fa-star me-2"></i>
-                    <?= Yii::t('app', "Recetas de Excelencia") ?>
+                    <i class="fas fa-gem me-2"></i>
+                    <?= Yii::t('app', "Recetas Diamante") ?>
                 </h5>
                 <p class="text-muted">
-                    <?= Yii::t('app', "Son populares con los clientes, aportan dinero al restaurante y son rentables.") ?>
+                    <?= Yii::t('app', "Alta rentabilidad + Alta popularidad + Alto monto de venta. Son tus joyas: rentables, queridas y altamente productivas.") ?>
                 </p>
                 <?php if ($excellentRecipes): ?>
                     <div class="recipe-list">
@@ -149,19 +158,115 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                             <span class="badge bg-success me-2 mb-2"><?= $recipe ?></span>
                         <?php endforeach; ?>
                     </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Promover en redes y menú como especialidad de la casa</li>
+                            <li>Capacitar al equipo para sugerirlas proactivamente</li>
+                            <li>Asegurar disponibilidad con buen stock de insumos</li>
+                            <li>Analizar si puedes replicar su estilo para nuevas recetas</li>
+                        </ul>
+                    </div>
                 <?php else: ?>
                     <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
                 <?php endif; ?>
             </div>
 
-            <!-- Recetas foco rojo -->
+            <!-- 2. Recetas Imán -->
+            <div class="recommendation-section mb-4">
+                <h5 class="text-info">
+                    <i class="fas fa-magnet me-2"></i>
+                    <?= Yii::t('app', "Recetas Imán") ?>
+                </h5>
+                <p class="text-muted">
+                    <?= Yii::t('app', "Alta rentabilidad + Alta popularidad + Bajo monto de venta. Gustan mucho y dejan buen margen, aunque el ingreso por unidad es bajo.") ?>
+                </p>
+                <?php if ($magnetRecipes): ?>
+                    <div class="recipe-list">
+                        <?php foreach ($magnetRecipes as $recipe): ?>
+                            <span class="badge bg-info me-2 mb-2"><?= $recipe ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Usar para atraer comensales y complementar con platillos más caros</li>
+                            <li>Incluir como acompañamiento o entrada para elevar el ticket</li>
+                            <li>Destacar como extra en platillos más caros</li>
+                            <li>Evaluar ajuste de precio si el mercado lo permite</li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
+                <?php endif; ?>
+            </div>
+
+            <!-- 3. Recetas Misteriosas -->
+            <div class="recommendation-section mb-4">
+                <h5 class="text-warning">
+                    <i class="fas fa-question-circle me-2"></i>
+                    <?= Yii::t('app', "Recetas Misteriosas") ?>
+                </h5>
+                <p class="text-muted">
+                    <?= Yii::t('app', "Alta rentabilidad + Baja popularidad + Alto monto de venta. Tienen buen margen pero no se venden mucho. ¡Puede haber oro escondido!") ?>
+                </p>
+                <?php if ($mysteryRecipes): ?>
+                    <div class="recipe-list">
+                        <?php foreach ($mysteryRecipes as $recipe): ?>
+                            <span class="badge bg-warning me-2 mb-2"><?= $recipe ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Analizar si los ingredientes, nombre o presentación no conectan</li>
+                            <li>Verificar ubicación en el menú y recomendación del personal</li>
+                            <li>Ofrecer degustaciones o promociones para medir aceptación</li>
+                            <li>Relanzar con nuevo nombre o presentación si tiene potencial</li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
+                <?php endif; ?>
+            </div>
+
+            <!-- 4. Recetas Latentes -->
+            <div class="recommendation-section mb-4">
+                <h5 class="text-primary">
+                    <i class="fas fa-seedling me-2"></i>
+                    <?= Yii::t('app', "Recetas Latentes") ?>
+                </h5>
+                <p class="text-muted">
+                    <?= Yii::t('app', "Alta rentabilidad + Baja popularidad + Bajo monto de venta. No se venden ni dejan mucho ingreso, pero son rentables. Pueden tener potencial oculto.") ?>
+                </p>
+                <?php if ($latentRecipes): ?>
+                    <div class="recipe-list">
+                        <?php foreach ($latentRecipes as $recipe): ?>
+                            <span class="badge bg-primary me-2 mb-2"><?= $recipe ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Reformular o relanzar antes de decidir eliminarlas</li>
+                            <li>Evaluar si puede transformarse en guarnición o parte de otro platillo</li>
+                            <li>Investigar si los ingredientes no gustan o si el precio es desfavorable</li>
+                            <li>Probar promociones puntuales para medir su potencial</li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
+                <?php endif; ?>
+            </div>
+
+            <!-- 5. Recetas Foco Rojo -->
             <div class="recommendation-section mb-4">
                 <h5 class="text-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <?= Yii::t('app', "Recetas Foco Rojo") ?>
                 </h5>
                 <p class="text-muted">
-                    <?= Yii::t('app', "Urgente tomar acción: hacerlas rentables o hacer un sustituto rentable por el bien de las finanzas del restaurante. Estas recetas no son rentables o tan rentables pero son populares con los clientes y dejan buen dinero.") ?>
+                    <?= Yii::t('app', "Baja rentabilidad + Alta popularidad + Alto monto de venta. Se venden mucho pero drenan tus ganancias.") ?>
                 </p>
                 <?php if ($focusRecipes): ?>
                     <div class="recipe-list">
@@ -169,39 +274,86 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                             <span class="badge bg-danger me-2 mb-2"><?= $recipe ?></span>
                         <?php endforeach; ?>
                     </div>
-                <?php else: ?>
-                    <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
-                <?php endif; ?>
-            </div>
-
-            <!-- Recetas a promocionar -->
-            <div class="recommendation-section mb-4">
-                <h5 class="text-primary">
-                    <i class="fas fa-bullhorn me-2"></i>
-                    <?= Yii::t('app', "Recetas a Promocionar") ?>
-                </h5>
-                <p class="text-muted">
-                    <?= Yii::t('app', "Estas recetas son rentables, son populares o medio populares y no dejan tanto dinero: promocionarlas e incluirlas en paquetes.") ?>
-                </p>
-                <?php if ($promoteRecipes): ?>
-                    <div class="recipe-list">
-                        <?php foreach ($promoteRecipes as $recipe): ?>
-                            <span class="badge bg-primary me-2 mb-2"><?= $recipe ?></span>
-                        <?php endforeach; ?>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Ajustar precio para mejorar margen sin afectar volumen</li>
+                            <li>Sustituir ingredientes costosos sin perder calidad</li>
+                            <li>Reducir ligeramente la porción si no afecta percepción</li>
+                            <li>Usar como platillo ancla para atraer clientes</li>
+                        </ul>
                     </div>
                 <?php else: ?>
                     <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
                 <?php endif; ?>
             </div>
 
-            <!-- Recetas tóxicas -->
+            <!-- 6. Recetas Llamativas pero Frágiles -->
+            <div class="recommendation-section mb-4">
+                <h5 class="text-pink">
+                    <i class="fas fa-heart-broken me-2"></i>
+                    <?= Yii::t('app', "Recetas Llamativas pero Frágiles") ?>
+                </h5>
+                <p class="text-muted">
+                    <?= Yii::t('app', "Baja rentabilidad + Alta popularidad + Bajo monto de venta. Son populares pero te dejan muy poco. Cuidado con sostenerlas mucho tiempo.") ?>
+                </p>
+                <?php if ($fragileRecipes): ?>
+                    <div class="recipe-list">
+                        <?php foreach ($fragileRecipes as $recipe): ?>
+                            <span class="badge bg-pink me-2 mb-2"><?= $recipe ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Evaluar reformulación de ingredientes, presentación o porciones</li>
+                            <li>Ofrecer en horarios específicos y limitar su presencia</li>
+                            <li>Aumentar ligeramente el precio o combinar con productos más rentables</li>
+                            <li>Considerar reemplazo con receta más eficiente si no mejora</li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
+                <?php endif; ?>
+            </div>
+
+            <!-- 7. Recetas de Nicho -->
+            <div class="recommendation-section mb-4">
+                <h5 class="text-purple">
+                    <i class="fas fa-search-dollar me-2"></i>
+                    <?= Yii::t('app', "Recetas de Nicho") ?>
+                </h5>
+                <p class="text-muted">
+                    <?= Yii::t('app', "Baja rentabilidad + Baja popularidad + Alto monto de venta. No se venden mucho ni son rentables, pero cuando se venden dejan buena ganancia.") ?>
+                </p>
+                <?php if ($nicheRecipes): ?>
+                    <div class="recipe-list">
+                        <?php foreach ($nicheRecipes as $recipe): ?>
+                            <span class="badge bg-purple me-2 mb-2"><?= $recipe ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Usar en fechas especiales, para grupos o bajo pedido</li>
+                            <li>Convertir en platillo de temporada o para eventos especiales</li>
+                            <li>Analizar si se puede ajustar la receta para subir su margen</li>
+                            <li>Ofrecer como exclusiva para reservas o experiencias premium</li>
+                        </ul>
+                    </div>
+                <?php else: ?>
+                    <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
+                <?php endif; ?>
+            </div>
+
+            <!-- 8. Recetas Tóxicas -->
             <div class="recommendation-section mb-4">
                 <h5 class="text-secondary">
-                    <i class="fas fa-trash-alt me-2"></i>
+                    <i class="fas fa-skull-crossbones me-2"></i>
                     <?= Yii::t('app', "Recetas Tóxicas") ?>
                 </h5>
                 <p class="text-muted">
-                    <?= Yii::t('app', "NO son populares con los clientes, NO aportan dinero al restaurante y NO son rentables. Considere eliminarlas del menú o reformularlas completamente.") ?>
+                    <?= Yii::t('app', "Baja rentabilidad + Baja popularidad + Bajo monto de venta. Consumen recursos sin retorno.") ?>
                 </p>
                 <?php if ($toxicRecipes): ?>
                     <div class="recipe-list">
@@ -209,18 +361,20 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                             <span class="badge bg-secondary me-2 mb-2"><?= $recipe ?></span>
                         <?php endforeach; ?>
                     </div>
+                    <div class="mt-3">
+                        <h6><?= Yii::t('app', "Estrategias recomendadas:") ?></h6>
+                        <ul>
+                            <li>Eliminar del menú sin dudar</li>
+                            <li>Analizar aprendizajes de su falla</li>
+                            <li>Sustituir con recetas de mayor potencial</li>
+                            <li>Usar su espacio para destacar nuevas opciones</li>
+                        </ul>
+                    </div>
                 <?php else: ?>
                     <p class="fst-italic"><?= Yii::t('app', "No hay recetas en esta categoría.") ?></p>
                 <?php endif; ?>
             </div>
 
-            <!-- Personalizar las recomendaciones -->
-            <div class="mt-4">
-                <div class="alert alert-light">
-                    <h5><?= Yii::t('app', "¿Necesita recomendaciones personalizadas?") ?></h5>
-                    <p><?= Yii::t('app', "Estas son recomendaciones estándar basadas en el análisis de su menú. Para personalizar estas recomendaciones o para obtener información más detallada, póngase en contacto con nuestro equipo de soporte.") ?></p>
-                </div>
-            </div>
         <?php endif; ?>
     </div>
 </div>
@@ -330,6 +484,18 @@ $css = <<< CSS
 .btn-floating:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+.bg-pink {
+    background-color: #e83e8c !important;
+}
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+.text-pink {
+    color: #e83e8c !important;
+}
+.text-purple {
+    color: #6f42c1 !important;
 }
 CSS;
 $this->registerCss($css);
