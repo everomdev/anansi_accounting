@@ -3,6 +3,12 @@
 use kartik\editors\Summernote;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+$this->registerCss("
+    label.required:after {
+        content: ' *';
+        color: red;
+    }
+");
 
 /* @var $this yii\web\View */
 /* @var $model common\models\StandardRecipe */
@@ -57,6 +63,12 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
         ],
     ]); ?>
     <div class="card">
+    <div class="card-header bg-light">
+            <div class="alert alert-info mb-0 py-2 px-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <?= Yii::t('app', 'Los campos marcados con <span class="required">*</span> son obligatorios.') ?>
+            </div>
+        </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
@@ -75,12 +87,12 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                             $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN 
                                 ? 'Nombre de la receta' 
                                 : 'Nombre de la subreceta', 
-                            ['class' => 'col-sm-4 text-start']
+                            ['class' => 'col-sm-4 text-start required']
                         ) ?>
                     <?php endif; ?>
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                    ])->dropDownList($recipesCategoriesMap)->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    ])->dropDownList($recipesCategoriesMap)->label(null, ['class' => 'col-sm-4 text-start required']) ?>
                     <div class="row mb-3">
                         <label class="col-sm-4 text-start"><?= $model->getAttributeLabel('time_of_preparation') ?></label>
                         <div class="col-sm-8">
@@ -118,7 +130,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                     <?php $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::getOwn()->all(), 'name', 'name'), ['class' => 'form-control','id' => 'standardrecipe-yield_um'])->label(false) ?>
                     <?= $form->field($model, 'yield', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                    ])->textInput()->label(null, ['class' => 'col-sm-4 text-start required']) ?>
                     <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'convoy_id', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
@@ -142,7 +154,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                 <div id="portions-container">
                     <?= $form->field($model, 'portions', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start']) ?>
+                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start required']) ?>
                 </div>
                 <div class="row mb-3">
                     <label class="col-sm-3 text-start"><?= $model->getAttributeLabel('lifetime') ?></label>
