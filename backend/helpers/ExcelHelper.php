@@ -780,17 +780,39 @@ class ExcelHelper
                     $cellIterator->next();
                     $data['type_of_recipe'] = $cellIterator->current()->getValue(); // B - Tipo de Receta
                     $cellIterator->next();
-                    $data['time_of_preparation'] = $cellIterator->current()->getValue(); // C - Tiempo de preparación
+                    $timeValue = $cellIterator->current()->getValue();
+                    $cellIterator->next();
+                    $timeUnit = $cellIterator->current()->getValue(); // Time unit (minutes, hours, days)
+                    $data['time_of_preparation'] = $timeValue . ' ' . $timeUnit;
                     $cellIterator->next();
                     $data['yield'] = $cellIterator->current()->getValue(); // D - Rendimiento
                     $cellIterator->next();
                     $data['yield_um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
                     $cellIterator->next();
-                    $data['portions'] = $cellIterator->current()->getValue(); // F - Porciones
+                    $portionsValue = $cellIterator->current();
+                    $data['portions'] = $portionsValue->getCalculatedValue(); // F - Porciones
+                    if (!is_numeric($data['portions'])) {
+                        // Try to clean/extract numeric value if it's not already numeric
+                        $data['portions'] = preg_replace('/[^\d.]/', '', $data['portions']);
+                        // If still empty or not numeric, default to 1
+                        if (empty($data['portions']) || !is_numeric($data['portions'])) {
+                            $data['portions'] = 1;
+                        }
+                    }
                     $cellIterator->next();
-                    $data['lifetime'] = $cellIterator->current()->getValue(); // G - Duración
+                    //var_dump($data['portions']);
+                    $timeValue = $cellIterator->current()->getValue();
                     $cellIterator->next();
-                    $data['price'] = $cellIterator->current()->getValue(); // H - Precio
+                    $timeUnit = $cellIterator->current()->getValue();
+                    $data['lifetime'] = $timeValue . ' ' . $timeUnit; // G - Duración
+                    $cellIterator->next();
+                    $priceRaw = $cellIterator->current()->getValue();
+                    if (is_numeric($priceRaw)) {
+                        $data['price'] = floatval($priceRaw);
+                    } else {
+                        $cleanPrice = preg_replace('/[^\d.]/', '', strval($priceRaw));
+                        $data['price'] = floatval($cleanPrice);
+                    }
                     $cellIterator->next();
                     $data['is_food'] = $cellIterator->current()->getValue() === 'Alimento'; // K - Alimento o Bebida
                     $cellIterator->next();
@@ -803,6 +825,7 @@ class ExcelHelper
                     $cellIterator->next();
                     
                     $data['business_id'] = $business->id;
+                    
     
                     $recipeData[] = $data;
                 }

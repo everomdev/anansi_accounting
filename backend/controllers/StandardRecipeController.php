@@ -2009,322 +2009,398 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
  }
 
  public function actionExportRecipesPlantilla()
-{
-    $business = \backend\helpers\RedisKeys::getBusiness();
+ {
+     $business = \backend\helpers\RedisKeys::getBusiness();
+     
+     // Configuración para mejorar rendimiento
+     set_time_limit(300);
+     ini_set('memory_limit', '512M');
+     
+     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+     
+     // 1. Configurar hojas principales
+     $recipesSheet = $spreadsheet->getActiveSheet();
+     $recipesSheet->setTitle('FICHA GENERAL DE LA RECETA');
+     
+     // 2. Modificar cabeceras de recetas (separar duración y tiempo de preparación)
+     $recipesHeaders = ['Nombre', 'Tipo de Receta', 'Tiempo de preparación', 'Unidad de tiempo', 'Rendimiento', 
+                      'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 'Precio', 'Alimento o Bebida', 'Convoy'];
+     
+     $col = 'A';
+     foreach ($recipesHeaders as $header) {
+         $recipesSheet->setCellValue($col.'1', $header);
+         $recipesSheet->getColumnDimension($col)->setAutoSize(true);
+         $col++;
+     }
+     
+     // 3. Crear otras hojas necesarias
+     $ingredientsSheet = $spreadsheet->createSheet();
+     $ingredientsSheet->setTitle('INGREDIENTES');
+     
+     $insumosSheet = $spreadsheet->createSheet();
+     $insumosSheet->setTitle('INSUMOS');
+     
+     $convoySheet = $spreadsheet->createSheet();
+     $convoySheet->setTitle('CONVOY');
+     
+     $umSheet = $spreadsheet->createSheet();
+     $umSheet->setTitle('UMs');
+     
+     $categorySheet = $spreadsheet->createSheet();
+     $categorySheet->setTitle('Categorias');
+     
+     // 4. Configurar cabeceras de todas las hojas
+     $headers = [
+         'INGREDIENTES' => ['Receta', 'Insumo', 'Cantidad', 'UM', 'Costo'],
+         'INSUMOS' => ['Insumo', 'Cantidad', 'UM', 'Costo'],
+         'CONVOY' => ['ID Convoy', 'Nombre Convoy'],
+         'UMs' => ['Unidad de Medida'],
+         'Categorias' => ['Categoría']
+     ];
+     
+     foreach ($headers as $sheetName => $sheetHeaders) {
+         $sheet = $spreadsheet->getSheetByName($sheetName);
+         $col = 'A';
+         foreach ($sheetHeaders as $header) {
+             $sheet->setCellValue($col.'1', $header);
+             $sheet->getColumnDimension($col)->setAutoSize(true)->setWidth(50);
+             $sheet->getStyle($col)->getAlignment()->setWrapText(true);
+             $col++;
+         }
+     }
+     
+     // Configuración especial para columnas
+     $ingredientsSheet->getColumnDimension('B')->setAutoSize(true)->setWidth(30);
+     $ingredientsSheet->getStyle('B2:B500')->getAlignment()->setWrapText(true);
+     
+     $ingredientsSheet->getColumnDimension('A')->setAutoSize(true)->setWidth(30);
+     $ingredientsSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
+     
+     $recipesSheet->getColumnDimension('A')->setAutoSize(true)->setWidth(30);
+     $recipesSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
+     
+     // 5. Cargar datos con límite para la plantilla
+     $batchSize = 100;
+     
+     $unitOfMeasurements = UnitOfMeasurement::find()
+         ->select('name')
+         ->groupBy('name')
+         ->limit($batchSize)
+         ->all();
+     
+     $categories = RecipeCategory::find()
+         ->where(['business_id' => $business['id']])
+         ->andWhere(['type' => 'main'])
+         ->limit($batchSize)
+         ->all();
+     
+     $ingredientStock = IngredientStock::find()
+         ->where(['business_id' => $business['id']])
+         ->limit($batchSize)
+         ->all();
+     
+     $convoy = Convoy::find()
+         ->where(['business_id' => $business['id']])
+         ->limit($batchSize)
+         ->all();
+     
+     // 6. Llenar hojas de referencia
+     $row = 2;
+     foreach ($unitOfMeasurements as $um) {
+         $umSheet->setCellValue("A$row", $um->name);
+         $row++;
+     }
+     
+     $row = 2;
+     foreach ($categories as $category) {
+         $categorySheet->setCellValue("A$row", $category->name);
+         $row++;
+     }
+     
+     $rowConvoy = 2;
+     foreach ($convoy as $conv) {
+         $convoySheet->setCellValue("B$rowConvoy", $conv->name);
+         $rowConvoy++;
+     }
+     
+     $insumosRow = 2;
+     foreach ($ingredientStock as $ingredient) {
+         $insumosSheet->setCellValue('A'.$insumosRow, $ingredient->ingredient);
+         $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
+         $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->um);
+         $insumosSheet->setCellValue('D'.$insumosRow, $ingredient->lastPrice);
+         $insumosRow++;
+     }
+     
+     // 7. Configurar estilos
+     $centerStyle = [
+         'alignment' => [
+             'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+         ],
+     ];
+     
+     $recipesSheet->getStyle('A1:L100')->applyFromArray($centerStyle);
+     $ingredientsSheet->getStyle('A1:E500')->applyFromArray($centerStyle);
+     $insumosSheet->getStyle('A1:D100')->applyFromArray($centerStyle);
+     $convoySheet->getStyle('A1:B100')->applyFromArray($centerStyle);
+     $umSheet->getStyle('A1:A100')->applyFromArray($centerStyle);
+     $categorySheet->getStyle('A1:A100')->applyFromArray($centerStyle);
+     $recipesSheet->getColumnDimension('J')->setWidth(15);
+     
+     // 8. Configurar TODAS las validaciones optimizadas
+     
+     // a) Validación para nombres de recetas en INGREDIENTES
+     $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+     $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $validation->setAllowBlank(false);
+     $validation->setShowInputMessage(true);
+     $validation->setShowErrorMessage(true);
+     $validation->setShowDropDown(true);
+     $validation->setErrorTitle('Error de entrada');
+     $validation->setError('Debe seleccionar una receta existente');
+     $validation->setPromptTitle('Seleccionar receta');
+     $validation->setPrompt('Seleccione una receta de la lista');
+     $validation->setFormula1('=\'FICHA GENERAL DE LA RECETA\'!$A$2:$A$100');
+     
+     // Aplicar a 500 filas para permitir múltiples ingredientes por receta
+     for ($row = 2; $row <= 500; $row++) {
+         $ingredientsSheet->getCell('A'.$row)->setDataValidation(clone $validation);
+     }
+     
+     // b) Validación para Alimento o Bebida
+     $dataValidationFoodOrDrink = $recipesSheet->getCell('K2')->getDataValidation();
+     $dataValidationFoodOrDrink->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $dataValidationFoodOrDrink->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationFoodOrDrink->setAllowBlank(false);
+     $dataValidationFoodOrDrink->setShowInputMessage(true);
+     $dataValidationFoodOrDrink->setShowErrorMessage(true);
+     $dataValidationFoodOrDrink->setShowDropDown(true);
+     $dataValidationFoodOrDrink->setErrorTitle('Error de entrada');
+     $dataValidationFoodOrDrink->setError('Este valor no es admitido');
+     $dataValidationFoodOrDrink->setPromptTitle('Selecciona una opción');
+     $dataValidationFoodOrDrink->setPrompt('Por favor, selecciona un valor del desplegable.');
+     $dataValidationFoodOrDrink->setFormula1('"Alimento,Bebida"');
+     
+     // c) Validación para unidades de medida (UM)
+     $dataValidationUM = $ingredientsSheet->getCell('D2')->getDataValidation();
+     $dataValidationUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $dataValidationUM->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationUM->setAllowBlank(false);
+     $dataValidationUM->setShowInputMessage(true);
+     $dataValidationUM->setShowErrorMessage(true);
+     $dataValidationUM->setShowDropDown(true);
+     $dataValidationUM->setErrorTitle('Error de entrada');
+     $dataValidationUM->setError('Este valor no es admitido');
+     $dataValidationUM->setPromptTitle('Selecciona una unidad de medida');
+     $dataValidationUM->setPrompt('Por favor, selecciona un valor del desplegable.');
+     $dataValidationUM->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
+     
+     // d) Validación para categorías
+     $dataValidationCategory = $recipesSheet->getCell('B2')->getDataValidation();
+     $dataValidationCategory->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $dataValidationCategory->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationCategory->setAllowBlank(false);
+     $dataValidationCategory->setShowInputMessage(true);
+     $dataValidationCategory->setShowErrorMessage(true);
+     $dataValidationCategory->setShowDropDown(true);
+     $dataValidationCategory->setErrorTitle('Error de entrada');
+     $dataValidationCategory->setError('Este valor no es admitido');
+     $dataValidationCategory->setPromptTitle('Selecciona una categoría');
+     $dataValidationCategory->setPrompt('Por favor, selecciona un valor del desplegable.');
+     $dataValidationCategory->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
+     
+     // e) Validación para rendimiento (sólo números)
+     $dataValidationYield = $recipesSheet->getCell('E2')->getDataValidation();
+     $dataValidationYield->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+     $dataValidationYield->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationYield->setAllowBlank(false);
+     $dataValidationYield->setShowInputMessage(true);
+     $dataValidationYield->setShowErrorMessage(true);
+     $dataValidationYield->setErrorTitle('Error de entrada');
+     $dataValidationYield->setError('Este campo solo acepta valores numéricos');
+     $dataValidationYield->setPromptTitle('Ingrese el rendimiento');
+     $dataValidationYield->setPrompt('Por favor, ingrese un valor numérico para el rendimiento.');
+     $dataValidationYield->setFormula1(0);
+     $dataValidationYield->setFormula2(999999);
+     
+     // f) Validación para convoy
+     $dataValidationConvoy = $recipesSheet->getCell('L2')->getDataValidation();
+     $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationConvoy->setAllowBlank(false);
+     $dataValidationConvoy->setShowInputMessage(true);
+     $dataValidationConvoy->setShowErrorMessage(true);
+     $dataValidationConvoy->setShowDropDown(true);
+     $dataValidationConvoy->setErrorTitle('Error de entrada');
+     $dataValidationConvoy->setError('Este valor no es admitido');
+     $dataValidationConvoy->setPromptTitle('Selecciona un convoy');
+     $dataValidationConvoy->setPrompt('Por favor, selecciona un valor del desplegable.');
+     $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
+     
+     // g) Validación para insumos
+     $dataValidationInsumos = $ingredientsSheet->getCell('B2')->getDataValidation();
+     $dataValidationInsumos->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $dataValidationInsumos->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationInsumos->setAllowBlank(false);
+     $dataValidationInsumos->setShowInputMessage(true);
+     $dataValidationInsumos->setShowErrorMessage(true);
+     $dataValidationInsumos->setShowDropDown(true);
+     $dataValidationInsumos->setErrorTitle('Error de entrada');
+     $dataValidationInsumos->setError('Este valor no es admitido');
+     $dataValidationInsumos->setPromptTitle('Selecciona un insumo');
+     $dataValidationInsumos->setPrompt('Por favor, selecciona un valor del desplegable.');
+     $dataValidationInsumos->setFormula1('=INSUMOS!$A$2:$A$' . ($insumosRow - 1));
+     
+     // h) Validación para unidades de tiempo (duración y tiempo de preparación)
+     $dataValidationTimeUnits = $recipesSheet->getCell('D2')->getDataValidation();
+     $dataValidationTimeUnits->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $dataValidationTimeUnits->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationTimeUnits->setAllowBlank(false);
+     $dataValidationTimeUnits->setShowInputMessage(true);
+     $dataValidationTimeUnits->setShowErrorMessage(true);
+     $dataValidationTimeUnits->setShowDropDown(true);
+     $dataValidationTimeUnits->setErrorTitle('Error de entrada');
+     $dataValidationTimeUnits->setError('Este valor no es admitido');
+     $dataValidationTimeUnits->setPromptTitle('Selecciona una unidad de tiempo');
+     $dataValidationTimeUnits->setPrompt('Por favor, selecciona una unidad de tiempo.');
+     $dataValidationTimeUnits->setFormula1('"minutos,horas,días"');
+     
+     // Validación para valores numéricos en tiempo de preparación
+     $dataValidationTimeValue = $recipesSheet->getCell('C2')->getDataValidation();
+     $dataValidationTimeValue->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+     $dataValidationTimeValue->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationTimeValue->setAllowBlank(false);
+     $dataValidationTimeValue->setShowInputMessage(true);
+     $dataValidationTimeValue->setShowErrorMessage(true);
+     $dataValidationTimeValue->setErrorTitle('Error de entrada');
+     $dataValidationTimeValue->setError('Este campo solo acepta valores numéricos');
+     $dataValidationTimeValue->setPromptTitle('Ingrese el valor');
+     $dataValidationTimeValue->setPrompt('Por favor, ingrese un valor numérico.');
+     $dataValidationTimeValue->setFormula1(0);
+     $dataValidationTimeValue->setFormula2(999999);
+     
+     // Validación para valores numéricos en duración
+     $dataValidationDurationValue = $recipesSheet->getCell('H2')->getDataValidation();
+     $dataValidationDurationValue->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+     $dataValidationDurationValue->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationDurationValue->setAllowBlank(false);
+     $dataValidationDurationValue->setShowInputMessage(true);
+     $dataValidationDurationValue->setShowErrorMessage(true);
+     $dataValidationDurationValue->setErrorTitle('Error de entrada');
+     $dataValidationDurationValue->setError('Este campo solo acepta valores numéricos');
+     $dataValidationDurationValue->setPromptTitle('Ingrese el valor');
+     $dataValidationDurationValue->setPrompt('Por favor, ingrese un valor numérico.');
+     $dataValidationDurationValue->setFormula1(0);
+     $dataValidationDurationValue->setFormula2(999999);
     
-    // Configuración para mejorar rendimiento
-    set_time_limit(300);
-    ini_set('memory_limit', '512M');
-    
-    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    
-    // 1. Configurar hojas principales
-    $recipesSheet = $spreadsheet->getActiveSheet();
-    $recipesSheet->setTitle('FICHA GENERAL DE LA RECETA');
-    
-    // 2. Configurar cabeceras de recetas (sin datos de prueba)
-    $recipesHeaders = ['Nombre', 'Tipo de Receta', 'Tiempo de preparación', 'Rendimiento', 
-                     'Rendimiento UM', 'Porciones', 'Duración', 'Precio', 'Alimento o Bebida', 'Convoy'];
-    
-    $col = 'A';
-    foreach ($recipesHeaders as $header) {
-        $recipesSheet->setCellValue($col.'1', $header);
-        $recipesSheet->getColumnDimension($col)->setAutoSize(true);
-        $col++;
-    }
-    
-    // 3. Crear otras hojas necesarias
-    $ingredientsSheet = $spreadsheet->createSheet();
-    $ingredientsSheet->setTitle('INGREDIENTES');
-    
-    $insumosSheet = $spreadsheet->createSheet();
-    $insumosSheet->setTitle('INSUMOS');
-    
-    $convoySheet = $spreadsheet->createSheet();
-    $convoySheet->setTitle('CONVOY');
-    
-    $umSheet = $spreadsheet->createSheet();
-    $umSheet->setTitle('UMs');
-    
-    $categorySheet = $spreadsheet->createSheet();
-    $categorySheet->setTitle('Categorias');
-    
-    // 4. Configurar cabeceras de todas las hojas
-    $headers = [
-        'INGREDIENTES' => ['Receta', 'Insumo', 'Cantidad', 'UM', 'Costo'],
-        'INSUMOS' => ['Insumo', 'Cantidad', 'UM', 'Costo'],
-        'CONVOY' => ['ID Convoy', 'Nombre Convoy'],
-        'UMs' => ['Unidad de Medida'],
-        'Categorias' => ['Categoría']
-    ];
-    
-    foreach ($headers as $sheetName => $sheetHeaders) {
-        $sheet = $spreadsheet->getSheetByName($sheetName);
-        $col = 'A';
-        foreach ($sheetHeaders as $header) {
-            $sheet->setCellValue($col.'1', $header);
-            $sheet->getColumnDimension($col)->setAutoSize(true)->setWidth(50);
-            $sheet->getStyle($col)->getAlignment()->setWrapText(true);
-            $col++;
-        }
-    }
-    // Configuración especial para columna B (Insumo)
-    $ingredientsSheet->getColumnDimension('B') // Columna B = Insumo
-        ->setAutoSize(true)
-        ->setWidth(30); // Ancho máximo opcional
-    
-    $ingredientsSheet->getStyle('B2:B500')
-        ->getAlignment()
-        ->setWrapText(true); // Ajuste de texto
-    
-    // Configuración especial para columna B (Insumo)
-    $ingredientsSheet->getColumnDimension('A') // Columna B = Insumo
-        ->setAutoSize(true)
-        ->setWidth(30); // Ancho máximo opcional
-    
-    $ingredientsSheet->getStyle('A2:A500')
-        ->getAlignment()
-        ->setWrapText(true); // Ajuste de texto
-    // Configuración especial para columna B (Insumo)
-    $recipesSheet->getColumnDimension('A') // Columna B = Insumo
-        ->setAutoSize(true)
-        ->setWidth(30); // Ancho máximo opcional
-    
-    $recipesSheet->getStyle('A2:A500')
-        ->getAlignment()
-        ->setWrapText(true); // Ajuste de texto
-    
-    // 5. Cargar datos con límite para la plantilla
-    $batchSize = 100;
-    
-    $unitOfMeasurements = UnitOfMeasurement::find()
-        ->select('name')
-        ->groupBy('name')
-        ->limit($batchSize)
-        ->all();
-    
-    $categories = RecipeCategory::find()
-        ->where(['business_id' => $business['id']])
-        ->limit($batchSize)
-        ->all();
-    
-    $ingredientStock = IngredientStock::find()
-        ->where(['business_id' => $business['id']])
-        ->limit($batchSize)
-        ->all();
-    
-    $convoy = Convoy::find()
-        ->where(['business_id' => $business['id']])
-        ->limit($batchSize)
-        ->all();
-    
-    // 6. Llenar hojas de referencia
-    $row = 2;
-    foreach ($unitOfMeasurements as $um) {
-        $umSheet->setCellValue("A$row", $um->name);
-        $row++;
-    }
-    
-    $row = 2;
-    foreach ($categories as $category) {
-        $categorySheet->setCellValue("A$row", $category->name);
-        $row++;
-    }
-    
-    $rowConvoy = 2;
-    foreach ($convoy as $conv) {
-        $convoySheet->setCellValue("B$rowConvoy", $conv->name);
-        $rowConvoy++;
-    }
-    
-    $insumosRow = 2;
-    foreach ($ingredientStock as $ingredient) {
-        $insumosSheet->setCellValue('A'.$insumosRow, $ingredient->ingredient);
-        $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
-        $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->um);
-        $insumosSheet->setCellValue('D'.$insumosRow, $ingredient->lastPrice);
-        $insumosRow++;
-    }
-    
-    // 7. Configurar estilos
-    $centerStyle = [
-        'alignment' => [
-            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-        ],
-    ];
-    
-    $recipesSheet->getStyle('A1:J100')->applyFromArray($centerStyle);
-    $ingredientsSheet->getStyle('A1:E500')->applyFromArray($centerStyle);
-    $insumosSheet->getStyle('A1:D100')->applyFromArray($centerStyle);
-    $convoySheet->getStyle('A1:B100')->applyFromArray($centerStyle);
-    $umSheet->getStyle('A1:A100')->applyFromArray($centerStyle);
-    $categorySheet->getStyle('A1:A100')->applyFromArray($centerStyle);
-    
-    // 8. Configurar TODAS las validaciones optimizadas
-    
-    // a) Validación para nombres de recetas en INGREDIENTES (con solución para dropdown)
-    $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
-    $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $validation->setAllowBlank(false);
-    $validation->setShowInputMessage(true);
-    $validation->setShowErrorMessage(true);
-    $validation->setShowDropDown(true);
-    $validation->setErrorTitle('Error de entrada');
-    $validation->setError('Debe seleccionar una receta existente');
-    $validation->setPromptTitle('Seleccionar receta');
-    $validation->setPrompt('Seleccione una receta de la lista');
-    $validation->setFormula1('=\'FICHA GENERAL DE LA RECETA\'!$A$2:$A$100');
-    
-    // Solución para que el dropdown muestre desde el inicio
-    $ingredientsSheet->setSelectedCell('A2'); // Fuerza posición inicial
-    
-    // Aplicar a 500 filas para permitir múltiples ingredientes por receta
-    for ($row = 2; $row <= 500; $row++) {
-        $ingredientsSheet->getCell('A'.$row)->setDataValidation(clone $validation);
-    }
-    
-    // b) Validación para Alimento o Bebida
-    $dataValidationFoodOrDrink = $recipesSheet->getCell('I2')->getDataValidation();
-    $dataValidationFoodOrDrink->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $dataValidationFoodOrDrink->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidationFoodOrDrink->setAllowBlank(false);
-    $dataValidationFoodOrDrink->setShowInputMessage(true);
-    $dataValidationFoodOrDrink->setShowErrorMessage(true);
-    $dataValidationFoodOrDrink->setShowDropDown(true);
-    $dataValidationFoodOrDrink->setErrorTitle('Error de entrada');
-    $dataValidationFoodOrDrink->setError('Este valor no es admitido');
-    $dataValidationFoodOrDrink->setPromptTitle('Selecciona una opción');
-    $dataValidationFoodOrDrink->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidationFoodOrDrink->setFormula1('"Alimento,Bebida"');
-    
-    for ($i = 2; $i <= 50; $i++) {
-        $recipesSheet->getCell("I$i")->setDataValidation(clone $dataValidationFoodOrDrink);
-    }
-    
-    // c) Validación para unidades de medida (con solución para dropdown)
-    $dataValidationUM = $ingredientsSheet->getCell('D2')->getDataValidation();
-    $dataValidationUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $dataValidationUM->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidationUM->setAllowBlank(false);
-    $dataValidationUM->setShowInputMessage(true);
-    $dataValidationUM->setShowErrorMessage(true);
-    $dataValidationUM->setShowDropDown(true);
-    $dataValidationUM->setErrorTitle('Error de entrada');
-    $dataValidationUM->setError('Este valor no es admitido');
-    $dataValidationUM->setPromptTitle('Selecciona una unidad de medida');
-    $dataValidationUM->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidationUM->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
-    
-    // Solución para que el dropdown muestre desde el inicio
-    $ingredientsSheet->setSelectedCell('D2'); // Fuerza posición inicial
-    
-    // d) Validación para categorías (con solución para dropdown)
-    $dataValidationCategory = $recipesSheet->getCell('B2')->getDataValidation();
-    $dataValidationCategory->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $dataValidationCategory->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidationCategory->setAllowBlank(false);
-    $dataValidationCategory->setShowInputMessage(true);
-    $dataValidationCategory->setShowErrorMessage(true);
-    $dataValidationCategory->setShowDropDown(true);
-    $dataValidationCategory->setErrorTitle('Error de entrada');
-    $dataValidationCategory->setError('Este valor no es admitido');
-    $dataValidationCategory->setPromptTitle('Selecciona una categoría');
-    $dataValidationCategory->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidationCategory->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
-    
-    // Solución para que el dropdown muestre desde el inicio
-    $recipesSheet->setSelectedCell('B2'); // Fuerza posición inicial
-    
-    // e) Validación para rendimiento
-    $dataValidationYield = $recipesSheet->getCell('D2')->getDataValidation();
-    $dataValidationYield->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
-    $dataValidationYield->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidationYield->setAllowBlank(false);
-    $dataValidationYield->setShowInputMessage(true);
-    $dataValidationYield->setShowErrorMessage(true);
-    $dataValidationYield->setErrorTitle('Error de entrada');
-    $dataValidationYield->setError('Este campo solo acepta valores numéricos');
-    $dataValidationYield->setPromptTitle('Ingrese el rendimiento');
-    $dataValidationYield->setPrompt('Por favor, ingrese un valor numérico para el rendimiento.');
-    $dataValidationYield->setFormula1(0);
-    $dataValidationYield->setFormula2(999999);
-    
-    // f) Validación para convoy (con solución para dropdown)
-    $dataValidationConvoy = $recipesSheet->getCell('J2')->getDataValidation();
-    $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidationConvoy->setAllowBlank(false);
-    $dataValidationConvoy->setShowInputMessage(true);
-    $dataValidationConvoy->setShowErrorMessage(true);
-    $dataValidationConvoy->setShowDropDown(true);
-    $dataValidationConvoy->setErrorTitle('Error de entrada');
-    $dataValidationConvoy->setError('Este valor no es admitido');
-    $dataValidationConvoy->setPromptTitle('Selecciona un convoy');
-    $dataValidationConvoy->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
-    
-    // Solución para que el dropdown muestre desde el inicio
-    $recipesSheet->setSelectedCell('J2'); // Fuerza posición inicial
-    
-    // g) Validación para insumos (con solución para dropdown)
-    $dataValidationInsumos = $ingredientsSheet->getCell('B2')->getDataValidation();
-    $dataValidationInsumos->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $dataValidationInsumos->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidationInsumos->setAllowBlank(false);
-    $dataValidationInsumos->setShowInputMessage(true);
-    $dataValidationInsumos->setShowErrorMessage(true);
-    $dataValidationInsumos->setShowDropDown(true);
-    $dataValidationInsumos->setErrorTitle('Error de entrada');
-    $dataValidationInsumos->setError('Este valor no es admitido');
-    $dataValidationInsumos->setPromptTitle('Selecciona un insumo');
-    $dataValidationInsumos->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidationInsumos->setFormula1('=INSUMOS!$A$2:$A$' . ($insumosRow - 1));
-    
-    // Solución para que el dropdown muestre desde el inicio
-    $ingredientsSheet->setSelectedCell('B2'); // Fuerza posición inicial
-    
-    // Aplicar todas las validaciones a las celdas correspondientes
-    for ($i = 2; $i <= 50; $i++) {
-        // Hoja INGREDIENTES
-        $ingredientsSheet->getCell("D$i")->setDataValidation(clone $dataValidationUM);
-        $ingredientsSheet->getCell("B$i")->setDataValidation(clone $dataValidationInsumos);
-        
-        // Hoja RECETAS
-        $recipesSheet->getCell("B$i")->setDataValidation(clone $dataValidationCategory);
-        $recipesSheet->getCell("E$i")->setDataValidation(clone $dataValidationUM);
-        $recipesSheet->getCell("D$i")->setDataValidation(clone $dataValidationYield);
-        $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationConvoy);
-    }
-    
-    // 9. Configurar fórmulas para costo y UM automáticas
-    for ($i = 2; $i <= 500; $i++) {
-        $ingredientsSheet->setCellValue("D$i", "=IFERROR(VLOOKUP(B$i, INSUMOS!A:D, 3, FALSE), \"\")");
-        $ingredientsSheet->setCellValue("E$i", "=IF(IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\")=\"\",\"\",\"$\"&IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\"))");
-    }
-    
-    // 10. Nota informativa
-    $ingredientsSheet->setCellValue('G1', 'NOTA: El nombre de la receta debe existir primero en la hoja "FICHA GENERAL DE LA RECETA"');
-    $ingredientsSheet->mergeCells('G1:J1');
-    $ingredientsSheet->getStyle('G1')->getFont()
-        ->setItalic(true)
-        ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED));
-    
-    foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
-        $worksheet->calculateColumnWidths();
-    }
-    // 11. Generar el archivo
-    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-    $writer->setPreCalculateFormulas(false);
-    
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="Plantilla_Recetas_Final.xlsx"');
-    header('Cache-Control: max-age=0');
-    
-    $writer->save('php://output');
-    exit;
-}
+     // Modificar la validación para permitir valores más grandes
+     $dataValidationPrice = $recipesSheet->getCell('J2')->getDataValidation();
+     $dataValidationPrice->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+     $dataValidationPrice->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $dataValidationPrice->setAllowBlank(true);
+     $dataValidationPrice->setShowInputMessage(true);
+     $dataValidationPrice->setShowErrorMessage(true);
+     $dataValidationPrice->setErrorTitle('Error de entrada');
+     $dataValidationPrice->setError('Este campo solo acepta valores numéricos');
+     $dataValidationPrice->setPromptTitle('Ingrese el precio');
+     $dataValidationPrice->setPrompt('Por favor, ingrese un valor numérico para el precio (ej: 1,254,525.25)');
+     $dataValidationPrice->setFormula1(0);
+     $dataValidationPrice->setFormula2(99999999); // Aumentar el límite máximo
+
+     $recipesSheet->getStyle('J2:J100')->getNumberFormat()->setFormatCode('$#,##0.00');
+     
+     // Aplicar todas las validaciones a las celdas correspondientes
+     for ($i = 2; $i <= 50; $i++) {
+         // Hoja INGREDIENTES
+         $ingredientsSheet->getCell("D$i")->setDataValidation(clone $dataValidationUM);
+         $ingredientsSheet->getCell("B$i")->setDataValidation(clone $dataValidationInsumos);
+         
+         // Hoja RECETAS
+         $recipesSheet->getCell("B$i")->setDataValidation(clone $dataValidationCategory);
+         $recipesSheet->getCell("F$i")->setDataValidation(clone $dataValidationUM);
+         $recipesSheet->getCell("E$i")->setDataValidation(clone $dataValidationYield);
+         $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationConvoy);
+         $recipesSheet->getCell("K$i")->setDataValidation(clone $dataValidationFoodOrDrink);
+         $recipesSheet->getCell("D$i")->setDataValidation(clone $dataValidationTimeUnits);
+         $recipesSheet->getCell("I$i")->setDataValidation(clone $dataValidationTimeUnits);
+         $recipesSheet->getCell("C$i")->setDataValidation(clone $dataValidationTimeValue);
+         $recipesSheet->getCell("H$i")->setDataValidation(clone $dataValidationDurationValue);
+         $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationPrice);
+     }
+     
+     // 9. Configurar fórmulas
+     
+     // Para el cálculo automático del costo y UM en INGREDIENTES (limitando a 2 decimales)
+     for ($i = 2; $i <= 500; $i++) {
+         $ingredientsSheet->setCellValue("D$i", "=IFERROR(VLOOKUP(B$i, INSUMOS!A:D, 3, FALSE), \"\")");
+         $ingredientsSheet->setCellValue("E$i", "=IF(IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\")=\"\",\"\",ROUND(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), 2))");
+         
+         // Dar formato de moneda a la columna de costo
+         $ingredientsSheet->getStyle("E$i")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+     }
+     
+     // 11. Añadir fórmula para bloquear el campo de porciones cuando se seleccionan ciertos rendimientos
+     for ($i = 2; $i <= 50; $i++) {
+         // Si el rendimiento UM es porción, pieza o rebanada, poner un 1 fijo en porciones
+         $formulaLockPortions = "=IF(OR(F$i=\"porción\",F$i=\"pieza\",F$i=\"rebanada\",F$i=\"porcion\",F$i=\"Porción\",F$i=\"Pieza\",F$i=\"Rebanada\"),1,\"\")";
+         $recipesSheet->setCellValue("G$i", $formulaLockPortions);
+         
+         // Validación dinámica para el campo Porciones
+         $portionsValidation = $recipesSheet->getCell("G$i")->getDataValidation();
+         $portionsValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
+         $portionsValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+         $portionsValidation->setAllowBlank(false);
+         $portionsValidation->setShowInputMessage(true);
+         $portionsValidation->setShowErrorMessage(true);
+         $portionsValidation->setErrorTitle('Campo bloqueado');
+         $portionsValidation->setError('Este campo está bloqueado cuando la unidad de rendimiento es porción, pieza o rebanada');
+         $portionsValidation->setPromptTitle('Porciones');
+         $portionsValidation->setPrompt('Ingrese el número de porciones si la unidad no es porción, pieza o rebanada');
+         $portionsValidation->setFormula1("=IF(OR(F$i=\"porción\",F$i=\"pieza\",F$i=\"rebanada\",F$i=\"porcion\",F$i=\"Porción\",F$i=\"Pieza\",F$i=\"Rebanada\"),FALSE,TRUE)");
+         
+         $recipesSheet->getCell("G$i")->setDataValidation($portionsValidation);
+     }
+     
+     // 12. Nota informativa
+     $ingredientsSheet->setCellValue('G1', 'NOTA: El nombre de la receta debe existir primero en la hoja "FICHA GENERAL DE LA RECETA"');
+     $ingredientsSheet->mergeCells('G1:J1');
+     $ingredientsSheet->getStyle('G1')->getFont()
+         ->setItalic(true)
+         ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED));
+     
+     // 13. Nota sobre tiempo de preparación y duración
+     /*$recipesSheet->setCellValue('C1:D1', 'Ingrese tiempo y seleccione unidad');
+     $recipesSheet->getStyle('C1:D1')->getFont()
+         ->setItalic(true)
+         ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKBLUE));
+     
+     $recipesSheet->setCellValue('H1:I1', 'Ingrese duración y seleccione unidad');
+     $recipesSheet->getStyle('H1:I1')->getFont()
+         ->setItalic(true)
+         ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKBLUE));
+     */
+     // 14. Ajustar anchos de columna
+     foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
+         $worksheet->calculateColumnWidths();
+     }
+     
+     // 15. Definir la primera hoja como activa al abrir el archivo
+     $spreadsheet->setActiveSheetIndex(0);
+     
+     // 16. Generar el archivo
+     $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+     $writer->setPreCalculateFormulas(true); // Calcular fórmulas antes de guardar
+     
+     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+     header('Content-Disposition: attachment;filename="Plantilla_Recetas_Final.xlsx"');
+     header('Cache-Control: max-age=0');
+     
+     // Guardar el archivo directamente a la salida
+     $writer->save('php://output');
+     exit;
+ }
  public function actionEditStep()
 {
     $id = Yii::$app->request->post('id');

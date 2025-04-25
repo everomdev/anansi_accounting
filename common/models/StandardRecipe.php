@@ -136,7 +136,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 'custom_cost',
                 'custom_price'
             ], 'number'],
-            [['price'], 'number', 'min' => 0, 'max' => 999999.99, 'numberPattern' => '/^\s*[0-9]{1,3}(([,.][0-9]{3})*)?([,.][0-9]+)?\s*$/'],
+            [['price'], 'validatePrice'],
             [['in_construction', 'in_menu', 'is_food'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe'],
             [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
@@ -220,6 +220,51 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
         return true;
     }
+    public function validatePrice($attribute, $params)
+{
+    $value = $this->$attribute;
+    
+    // Si ya es un número, validar directamente
+    if (is_numeric($value)) {
+        if ($value < 0 || $value > 999999.99) {
+            $this->addError($attribute, 'El precio debe estar entre 0 y 999,999.99');
+        }
+        return;
+    }
+    
+    // Si es string, intentar convertir
+    if (is_string($value)) {
+        // Detectar el formato y convertir
+        if (preg_match('/^[0-9]{1,3}(,[0-9]{3})+(.[0-9]{1,2})?$/', $value)) {
+            // Formato americano: 1,234.56
+            $numericValue = str_replace(',', '', $value);
+        } elseif (preg_match('/^[0-9]{1,3}(\.[0-9]{3})+(,[0-9]{1,2})?$/', $value)) {
+            // Formato europeo: 1.234,56
+            $numericValue = str_replace(['.', ','], ['', '.'], $value);
+        } elseif (strpos($value, ',') !== false && strpos($value, '.') === false) {
+            // Formato simple con coma: 1234,56
+            $numericValue = str_replace(',', '.', $value);
+        } else {
+            $numericValue = $value;
+        }
+        
+        if (!is_numeric($numericValue)) {
+            $this->addError($attribute, 'El precio debe ser un número válido');
+            return;
+        }
+        
+        $numericValue = (float)$numericValue;
+        if ($numericValue < 0 || $numericValue > 999999.99) {
+            $this->addError($attribute, 'El precio debe estar entre 0 y 999,999.99');
+            return;
+        }
+        
+        // Almacenar el valor convertido
+        $this->$attribute = $numericValue;
+    } else {
+        $this->addError($attribute, 'El precio debe ser un número');
+    }
+}
 
     /**
      * Gets query for [[IngredientStandardRecipes]].

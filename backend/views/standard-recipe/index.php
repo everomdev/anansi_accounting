@@ -143,13 +143,14 @@ $this->registerCss("
             ],
             [
                 'attribute' => 'observation',
-                'label' => 'Observación',
+                'label' => 'Observaciones',
                 'format' => 'html', // Esto permite renderizar HTML
                 'value' => function($model) {
                     // Elimina Html::encode para permitir que el HTML se renderice
-                    return $model->observation;
+                    return $model->observation ? $model->observation : 'Sin observaciones';
                 },
                 'encodeLabel' => false,
+                'enableSorting' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],

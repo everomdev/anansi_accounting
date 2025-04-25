@@ -88,6 +88,19 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
                 'format' => 'text',
                 'enableSorting' => true, // Enable sorting for this column
             ],
+            [
+                'attribute' => 'observation',
+                'label' => 'Observaciones',
+                'format' => 'html', // Esto permite renderizar HTML
+                'value' => function($model) {
+                    // Elimina Html::encode para permitir que el HTML se renderice
+                    return $model->observation;
+                },
+                'encodeLabel' => false,
+                'enableSorting' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
 
 //            'costPercent:percent',
             [
