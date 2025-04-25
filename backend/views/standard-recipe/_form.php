@@ -5,7 +5,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 $this->registerCss("
     label.required:after {
-        content: ' *';
+        content: '*';
         color: red;
     }
 ");
@@ -634,5 +634,88 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('form-recipe').addEventListener('submit', function() {
         updateLifetime();
     });
+});
+// Control dinámico de porciones según unidad final (um)
+document.addEventListener('DOMContentLoaded', function() {
+    const umField = document.getElementById('standardrecipe-um');
+    const yieldUmField = document.getElementById('standardrecipe-yield_um');
+    const portionsField = document.getElementById('standardrecipe-portions');
+    const portionsContainer = document.getElementById('portions-container');
+    
+    // Unidades volumétricas o de peso
+    const volumeWeightUMs = [
+        'litro', 'litros', 'l', 'lt', 'lts',  
+        'kilogramo', 'kilogramos', 'kg', 'kgs',
+        'gramo', 'gramos', 'g', 'gr',
+        'mililitro', 'mililitros', 'ml', 'mls',
+        'onza', 'onzas', 'oz',
+        'libra', 'libras', 'lb', 'lbs'
+    ];
+    
+    // Unidades individuales
+    const individualUMs = [
+        'porción', 'porciones', 'porcion', 'porciones',
+        'pieza', 'piezas', 
+        'rebanada', 'rebanadas',
+        'unidad', 'unidades'
+    ];
+    
+    function normalizeText(text) {
+        return text.toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar acentos
+    }
+    
+    function updatePortionsInfo() {
+        if (!umField || !portionsField) return;
+        
+        const selectedUM = normalizeText(umField.value);
+        const selectedYieldUM = yieldUmField ? normalizeText(yieldUmField.value) : '';
+        
+        let tooltipText = '';
+        
+        // Caso 1: Si unidad final es volumen/peso
+        if (volumeWeightUMs.some(um => selectedUM.includes(normalizeText(um)))) {
+            // Opciones
+            tooltipText = 'Opciones para unidad final ' + umField.value + ':<br>' +
+                          '1. Rendimiento en ' + umField.value + ' → porciones = 1<br>' +
+                          '2. Rendimiento en PORCIÓN → porciones = cualquier número';
+        }
+        // Caso 2: Si unidad final es porción/individual
+        else if (individualUMs.some(um => selectedUM.includes(normalizeText(um)))) {
+            tooltipText = 'Opciones para porciones:<br>' +
+                          '1. Rendimiento en LITROS/KILOGRAMOS → porciones = cualquier número<br>' +
+                          '2. Rendimiento en PORCIÓN → porciones = 1<br>' +
+                          '3. Rendimiento en PORCIÓN → porciones = cualquier número';
+        }
+        
+        // Mostrar información de ayuda
+        if (tooltipText) {
+            const formHelp = portionsContainer.querySelector('.form-text') || document.createElement('small');
+            formHelp.className = 'form-text text-muted mt-1';
+            formHelp.innerHTML = tooltipText;
+            
+            if (!portionsContainer.querySelector('.form-text')) {
+                portionsField.parentNode.appendChild(formHelp);
+            } else {
+                portionsContainer.querySelector('.form-text').innerHTML = tooltipText;
+            }
+        } else {
+            const tooltipElement = portionsContainer.querySelector('.form-text');
+            if (tooltipElement) tooltipElement.remove();
+        }
+    }
+    
+    // Ejecutar cuando cambie la unidad final
+    if (umField) {
+        umField.addEventListener('change', updatePortionsInfo);
+    }
+    
+    // Ejecutar cuando cambie la unidad de rendimiento
+    if (yieldUmField) {
+        yieldUmField.addEventListener('change', updatePortionsInfo);
+    }
+    
+    // También ejecutar al cargar para configuración inicial
+    updatePortionsInfo();
 });
 </script>
