@@ -1221,7 +1221,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             ])->all();
 
         return $this->render('menu_improvement', [
-            'data' => array_merge($recipes, $combos)
+            'data' => array_merge($recipes, $combos),
+            'formatter' => $business->getFormatter()
         ]);
     }
 

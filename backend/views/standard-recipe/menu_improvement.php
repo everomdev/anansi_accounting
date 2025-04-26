@@ -113,8 +113,24 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                 <?php foreach ($data as $item): ?>
                     <tr>
                         <td><?= $item->name ?></td>
-                        <td><?= \yii\bootstrap5\Html::activeInput('number', $item, 'custom_cost', ['class' => 'form-control modify-custom-field', 'data-url' => get_class($item) == StandardRecipe::class ? \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])]) ?></td>
-                        <td><?= \yii\bootstrap5\Html::activeInput('number', $item, 'custom_price', ['class' => 'form-control modify-custom-field', 'data-url' => get_class($item) == StandardRecipe::class ? \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])]) ?></td>
+                        <td>
+                            <?= \yii\bootstrap5\Html::activeInput('text', $item, 'custom_cost', [
+                                'class' => 'form-control modify-custom-field',
+                                'value' => $formatter->asDecimal($item->custom_cost,2),
+                                'data-url' => get_class($item) == StandardRecipe::class ? 
+                                    \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : 
+                                    \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
+                            ]) ?>
+                        </td>
+                        <td>
+                            <?= \yii\bootstrap5\Html::activeInput('text', $item, 'custom_price', [
+                                'class' => 'form-control modify-custom-field',
+                                'value' => $formatter->asDecimal($item->custom_price,2),
+                                'data-url' => get_class($item) == StandardRecipe::class ? 
+                                    \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : 
+                                    \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
+                            ]) ?>
+                        </td>
                         <td><?= $business->getFormatter()->asPercent($item->getCostPercent(true), 2) ?></td>
                     </tr>
                 <?php endforeach; ?>
