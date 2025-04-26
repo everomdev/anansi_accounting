@@ -1332,9 +1332,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $title = Yii::$app->request->post('title');
         $businessId = Yii::$app->request->post('business_id');
-        $type = Yii::$app->request->post('type');
+        // $type = Yii::$app->request->post('type');
         $exists = StandardRecipe::find()
-            ->where(['title' => $title, 'business_id' => $businessId, 'type' => $type])
+            ->where(['title' => $title, 'business_id' => $businessId])
             ->exists();
 
         return ['exists' => $exists];
