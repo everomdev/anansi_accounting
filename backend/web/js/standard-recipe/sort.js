@@ -71,6 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Para valores de moneda, eliminar símbolos y formateo
                 value = parseFloat(value.replace(/[^\d.,]/g, '')
                                        .replace(',', '.')) || 0;
+            } else if (columnName === 'ingredientCount' || columnName === 'subRecipeCount') {
+                // Para conteos de ingredientes y subrecetas, convertir a número
+                value = parseInt(value) || 0;
             } else if (columnName === 'costPercent') {
                 // Para porcentajes, convertir a decimal
                 value = parseFloat(value.replace('%', '').trim()) / 100 || 0;
@@ -115,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Crear el indicador
             const indicator = document.createElement('span');
             indicator.className = 'sort-indicator';
-            indicator.innerHTML = direction === 'asc' ? ' ↑' : ' ↓';
+            indicator.innerHTML = direction === 'asc' ? ' ▲' : ' ▼';
             
             // Añadir el indicador al encabezado
             activeHeader.appendChild(indicator);

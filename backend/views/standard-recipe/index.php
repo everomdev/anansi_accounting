@@ -16,22 +16,26 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
 $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
-$this->registerCss("
-    .sortable-column {
+$this->registerCss('
+    .grid-view th a {
+        color: #333;
+        text-decoration: none;
         position: relative;
-        cursor: pointer;
+        display: block;
     }
-    .sortable-column:hover {
-        background-color: rgba(0,0,0,0.05);
+    .grid-view th a.asc:after {
+        content: " ▲";
+        font-size: 12px;
     }
-    .sort-indicator {
-        margin-left: 5px;
-        font-weight: bold;
+    .grid-view th a.desc:after {
+        content: " ▼";
+        font-size: 12px;
     }
-    .sorted-asc, .sorted-desc {
-        background-color: rgba(0,0,0,0.1);
+    .grid-view th a:hover {
+        color: #333;
+        text-decoration: none;
     }
-");
+');
 ?>
 <div class="standard-recipe-index">
     <p>
@@ -120,8 +124,13 @@ $this->registerCss("
                     return $ingredientCount[$model->id]['ingredientCount'] ?? 0;
                 },
                 'encodeLabel' => false,
+                'enableSorting' => true,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'ingredientCount'
+                ],
             ],
             [
                 'attribute' => 'subRecipeCount',
@@ -130,8 +139,13 @@ $this->registerCss("
                     return $ingredientCount[$model->id]['sub_recipe'] ?? 0;
                 },
                 'encodeLabel' => false,
+                'enableSorting' => true,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'subRecipeCount'
+                ],
             ],
             [
                 'attribute' => 'type_of_recipe',
@@ -156,7 +170,10 @@ $this->registerCss("
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{update} {delete}"
+                'template' => "{update} {delete}",
+                
+                'headerOptions' => ['class' => 'text-center'],
+                'contentOptions' => ['class' => 'text-center'],
             ],
         ],
     ]); ?>
