@@ -264,10 +264,16 @@ class StandardRecipeController extends Controller
     public function actionIndex($type = StandardRecipe::STANDARD_RECIPE_TYPE_MAIN)
     {
         $page = (int)Yii::$app->request->get('page', 1);
+        // Personalizar elementos por página
+        $perPage = (int)Yii::$app->request->get('per-page');
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10; // Valor predeterminado
+        }
         Url::remember(['standard-recipe/index', 'type' => $type, 'page' => $page], 'index-recipe');
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new StandardRecipeSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->pagination->pageSize = $perPage;
         $dataProvider->query->andWhere([
             'business_id' => $business['id'],
             'in_construction' => 0,
