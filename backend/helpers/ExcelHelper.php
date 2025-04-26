@@ -818,10 +818,9 @@ class ExcelHelper
                     $cellIterator->next();
                     $convoyName = $cellIterator->current()->getValue(); // L - Convoy
                     $convoy = Convoy::find()->where(['name' => $convoyName, 'business_id' => $business->id])->one();
-                    if (!$convoy) {
-                        throw new HttpException(400, "No se encontró el convoy \"{$convoyName}\" en el negocio.");
+                    if ($convoy) {
+                        $data['convoy_id'] = $convoy->id;
                     }
-                    $data['convoy_id'] = $convoy->id;
                     $cellIterator->next();
                     
                     $data['business_id'] = $business->id;
