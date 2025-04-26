@@ -278,14 +278,71 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
             ]) ?>
 
             <br>
-            <?= $form->field($model, 'equipment')->widget(Summernote::class, [
-                'useKrajeePresets' => true,
-                'useKrajeeStyle' => false,
-                'pluginOptions' => [
-                    'height' => 200
-                ]
-                // other widget settings
-            ]) ?>
+            <div class="card mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-utensils me-2"></i><?= Yii::t('app', 'Equipos y utensilios') ?></h5>
+        <button type="button" class="btn btn-sm btn-primary" id="add-equipment-btn">
+            <i class="fas fa-plus me-1"></i> <?= Yii::t('app', 'Añadir equipo') ?>
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="equipment-container" class="mb-3">
+            <!-- Los equipos se mostrarán aquí -->
+        </div>
+        <div class="alert alert-info" id="no-equipment-message">
+            <i class="fas fa-info-circle me-2"></i> <?= Yii::t('app', 'Añada los equipos y utensilios necesarios para la receta') ?>
+        </div>
+
+        <!-- Vista previa del texto completo -->
+        <div class="mt-4 border-top pt-3">
+            <h6><i class="fas fa-eye me-2"></i><?= Yii::t('app', 'Vista previa') ?></h6>
+            <div id="equipment-preview" class="p-3 bg-light rounded">
+                <!-- La vista previa se mostrará aquí -->
+            </div>
+        </div>
+
+        <!-- Campo oculto para almacenar los equipos -->
+        <?= $form->field($model, 'equipment')->hiddenInput(['id' => 'equipment-hidden'])->label(false) ?>
+    </div>
+</div>
+
+<!-- Modal para añadir/editar equipo -->
+<div class="modal fade" id="equipment-modal" tabindex="-1" aria-labelledby="equipmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="equipmentModalLabel"><?= Yii::t('app', 'Añadir equipo') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="equipment-section" class="form-label"><?= Yii::t('app', 'Sección (opcional)') ?></label>
+                    <input type="text" class="form-control" id="equipment-section" name="equipment-section" placeholder="<?= Yii::t('app', 'Ej: Para la preparación de la mezcla') ?>">
+                    <small class="form-text text-muted"><?= Yii::t('app', 'Agrupe los equipos por sección o deje en blanco') ?></small>
+                </div>
+                <div class="mb-3">
+                    <label for="equipment-name" class="form-label"><?= Yii::t('app', 'Nombre del equipo o utensilio') ?></label>
+                    <input type="text" class="form-control" id="equipment-name" name="equipment-name" placeholder="<?= Yii::t('app', 'Ej: Tabla de cortar, Cuchillo, Bowl') ?>">
+                </div>
+                <div class="mb-3">
+                    <label for="equipment-description" class="form-label"><?= Yii::t('app', 'Descripción (opcional)') ?></label>
+                    <textarea class="form-control" id="equipment-description" rows="2" placeholder="<?= Yii::t('app', 'Ej: Para picar la cebolla y el ajo') ?>"></textarea>
+                </div>
+                <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="equipment-essential" name="equipment-essential">
+                    <label class="form-check-label" for="equipment-essential"><?= Yii::t('app', 'Equipo esencial') ?></label>
+                    <small class="d-block text-muted"><?= Yii::t('app', 'Marque esta opción si es indispensable para la preparación') ?></small>
+                </div>
+                <input type="hidden" id="equipment-index" name="equipment-index" value="-1">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cancelar') ?></button>
+                <button type="button" class="btn btn-primary" id="save-equipment"><?= Yii::t('app', 'Guardar equipo') ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
             <?= $this->render('create/_special_steps', [
                 'model' => $model
             ]) ?>
@@ -542,6 +599,26 @@ document.addEventListener('DOMContentLoaded', function() {
         validateAndFormatPrice(this, false);
     });
 });
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener referencia al formulario
+    const recipeForm = document.getElementById('form-recipe');
+    
+    if (recipeForm) {
+        recipeForm.addEventListener('submit', function(e) {
+            // Obtener referencia al campo de precio
+            const priceInput = document.getElementById('price-input');
+            
+            if (priceInput) {
+                // Usar el valor raw guardado en el atributo data-raw-value
+                const rawValue = priceInput.getAttribute('data-raw-value');
+                if (rawValue) {
+                    // Usar el valor numérico puro para el envío
+                    priceInput.value = rawValue;
+                }
+            }
+        });
+    }
+});
 
 // Configuración por defecto
 window.userFormatConfig = window.userFormatConfig || {
@@ -584,17 +661,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     });
-    
-    // Buscar el campo select para permitir entrada de texto
-    const unitSelect = document.getElementById('time-unit-select');
-    if (unitSelect) {
-        // Opcionalmente, puedes usar un plugin como Select2 para permitir búsqueda
-        // Si ya tienes Select2 en tu proyecto:
-        // $(unitSelect).select2({
-        //     minimumResultsForSearch: -1, // No mostrar búsqueda para pocas opciones
-        //     width: '100%'
-        // });
-    }
     
     // Asegurar que el formulario envíe el valor combinado
     document.getElementById('form-recipe').addEventListener('submit', function() {
@@ -723,4 +789,356 @@ document.addEventListener('DOMContentLoaded', function() {
     // También ejecutar al cargar para configuración inicial
     updatePortionsInfo();
 });
+document.addEventListener('DOMContentLoaded', function() {
+    // Referencias a elementos del DOM
+    const equipmentContainer = document.getElementById('equipment-container');
+    const equipmentHiddenField = document.getElementById('equipment-hidden');
+    const equipmentPreview = document.getElementById('equipment-preview');
+    const noEquipmentMessage = document.getElementById('no-equipment-message');
+    const addEquipmentBtn = document.getElementById('add-equipment-btn');
+    const equipmentModal = new bootstrap.Modal(document.getElementById('equipment-modal'));
+    
+    // Campos del modal
+    const equipmentSection = document.getElementById('equipment-section');
+    const equipmentName = document.getElementById('equipment-name');
+    const equipmentDescription = document.getElementById('equipment-description');
+    const equipmentEssential = document.getElementById('equipment-essential');
+    const equipmentIndex = document.getElementById('equipment-index');
+    const saveEquipmentBtn = document.getElementById('save-equipment');
+    const equipmentModalLabel = document.getElementById('equipmentModalLabel');
+    
+    // Lista de equipos
+    let equipmentList = [];
+    
+    // Intentar cargar equipos existentes
+    try {
+        const existingEquipment = equipmentHiddenField.value;
+        if (existingEquipment) {
+            // Intentar parsear datos existentes
+            if (existingEquipment.startsWith('[') && existingEquipment.endsWith(']')) {
+                // Es un formato JSON
+                equipmentList = JSON.parse(existingEquipment);
+            } else {
+                // Es un formato de texto, convertirlo a estructura
+                const lines = existingEquipment.split('\n');
+                let currentSection = '';
+                
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
+                    
+                    // Detectar si es un título de sección (en mayúsculas o con "Para" al inicio)
+                    if (line === line.toUpperCase() || line.startsWith('Para')) {
+                        currentSection = line;
+                    } 
+                    // Detectar si es un equipo con descripción (formato: "Equipo – Descripción")
+                    else if (line.includes('–') || line.includes('-')) {
+                        const parts = line.split(/[-–]/);
+                        if (parts.length >= 2) {
+                            equipmentList.push({
+                                section: currentSection,
+                                name: parts[0].trim(),
+                                description: parts.slice(1).join('-').trim(),
+                                essential: false
+                            });
+                        }
+                    } 
+                    // Si es solo un nombre de equipo
+                    else {
+                        equipmentList.push({
+                            section: currentSection,
+                            name: line,
+                            description: '',
+                            essential: false
+                        });
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Error al parsear equipos existentes:', e);
+        equipmentList = [];
+    }
+    
+    // Renderizar equipos iniciales
+    renderEquipment();
+    
+    // Evento para añadir nuevo equipo
+    addEquipmentBtn.addEventListener('click', function() {
+        clearModal();
+        equipmentModalLabel.textContent = '<?= Yii::t('app', 'Añadir equipo') ?>';
+        equipmentModal.show();
+    });
+    
+    // Evento para guardar equipo
+    saveEquipmentBtn.addEventListener('click', function() {
+        const index = parseInt(equipmentIndex.value);
+        const equipment = {
+            section: equipmentSection.value.trim(),
+            name: equipmentName.value.trim(),
+            description: equipmentDescription.value.trim(),
+            essential: equipmentEssential.checked
+        };
+        
+        // Validaciones
+        if (!equipment.name) {
+            alert('<?= Yii::t('app', 'Por favor, introduce el nombre del equipo.') ?>');
+            return;
+        }
+        
+        if (index === -1) {
+            // Nuevo equipo - si no tiene sección, usar la última sección usada
+            if (!equipment.section && equipmentList.length > 0) {
+                const lastEquipment = equipmentList[equipmentList.length - 1];
+                equipment.section = lastEquipment.section || '';
+            }
+            equipmentList.push(equipment);
+        } else {
+            // Editar equipo existente
+            equipmentList[index] = equipment;
+        }
+        
+        renderEquipment();
+        equipmentModal.hide();
+    });
+    
+    // Función para renderizar los equipos
+    function renderEquipment() {
+        equipmentContainer.innerHTML = '';
+        
+        // Mostrar/ocultar mensaje de no hay equipos
+        if (equipmentList.length === 0) {
+            noEquipmentMessage.style.display = 'block';
+            equipmentPreview.innerHTML = '<em><?= Yii::t('app', 'No se han añadido equipos a la receta.') ?></em>';
+            return;
+        }
+        
+        noEquipmentMessage.style.display = 'none';
+        
+        // Pre-procesamiento para manejar equipos sin sección
+        // Asignar secciones basadas en el equipo anterior
+        let lastSection = '';
+        for (let i = 0; i < equipmentList.length; i++) {
+            if (!equipmentList[i].section) {
+                equipmentList[i].section = lastSection;
+            } else {
+                lastSection = equipmentList[i].section;
+            }
+        }
+        
+        // Agrupar equipos por sección
+        const groupedEquipment = {};
+        equipmentList.forEach((equip, index) => {
+            const section = equip.section || '';
+            if (!groupedEquipment[section]) {
+                groupedEquipment[section] = [];
+            }
+            groupedEquipment[section].push({...equip, index});
+        });
+        
+        // Generar tarjetas por sección
+        Object.entries(groupedEquipment).forEach(([section, equipments]) => {
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'mb-4';
+            
+            // Mostrar encabezado solo si hay una sección definida
+            if (section) {
+                sectionDiv.innerHTML = `<h6 class="mb-3">${section}</h6>`;
+            } else {
+                sectionDiv.innerHTML = `<h6 class="mb-3"><?= Yii::t('app', 'Otros utensilios') ?></h6>`;
+            }
+            
+            // Lista de equipos en esta sección
+            const equipmentsList = document.createElement('div');
+            equipmentsList.className = 'ms-2';
+            
+            equipments.forEach(equip => {
+                const equipItem = document.createElement('div');
+                equipItem.className = 'card mb-2' + (equip.essential ? ' border-primary' : '');
+                
+                // Construir contenido del equipo
+                equipItem.innerHTML = `
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">
+                                    ${equip.essential ? '<i class="fas fa-star text-primary me-1" title="Esencial"></i>' : ''}
+                                    ${equip.name}
+                                </span>
+                                ${equip.description ? `<span class="text-muted ms-2">– ${equip.description}</span>` : ''}
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary edit-equipment-btn" data-index="${equip.index}">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-equipment-btn" data-index="${equip.index}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                equipmentsList.appendChild(equipItem);
+            });
+            
+            sectionDiv.appendChild(equipmentsList);
+            equipmentContainer.appendChild(sectionDiv);
+        });
+        
+        // Configurar eventos para los botones
+        document.querySelectorAll('.edit-equipment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                editEquipment(index);
+            });
+        });
+        
+        document.querySelectorAll('.delete-equipment-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                if (confirm('<?= Yii::t('app', '¿Estás seguro de eliminar este equipo?') ?>')) {
+                    equipmentList.splice(index, 1);
+                    renderEquipment();
+                }
+            });
+        });
+        
+        // Generar vista previa del texto completo
+        let previewHtml = '<h5 class="mb-3"><?= Yii::t('app', 'UTENSILIOS Y EQUIPO DE COCINA NECESARIOS') ?></h5>';
+        
+        Object.entries(groupedEquipment).forEach(([section, equipments]) => {
+            if (section) {
+                previewHtml += `<p class="fw-bold mb-2">${section}:</p>`;
+            } else {
+                previewHtml += `<p class="fw-bold mb-2"><?= Yii::t('app', 'Otros utensilios') ?>:</p>`;
+            }
+            
+            previewHtml += '<ul class="mb-3">';
+            equipments.forEach(equip => {
+                let itemHtml = `<li>${equip.name}`;
+                
+                if (equip.description) {
+                    itemHtml += ` – ${equip.description}`;
+                }
+                
+                if (equip.essential) {
+                    itemHtml = itemHtml.replace('<li>', '<li class="fw-bold text-primary">');
+                }
+                
+                itemHtml += '</li>';
+                previewHtml += itemHtml;
+            });
+            previewHtml += '</ul>';
+        });
+        
+        equipmentPreview.innerHTML = previewHtml;
+        
+        // Actualizar el campo oculto para el formulario
+        updateHiddenField();
+    }
+    
+    // Función para editar un equipo
+    function editEquipment(index) {
+        const equipment = equipmentList[index];
+        
+        equipmentSection.value = equipment.section || '';
+        equipmentName.value = equipment.name || '';
+        equipmentDescription.value = equipment.description || '';
+        equipmentEssential.checked = equipment.essential || false;
+        equipmentIndex.value = index;
+        
+        equipmentModalLabel.textContent = '<?= Yii::t('app', 'Editar equipo') ?>';
+        equipmentModal.show();
+    }
+    
+    // Función para limpiar el modal y sugerir la última sección
+    function clearModal() {
+        // Sugerir la última sección utilizada si existe algún equipo
+        if (equipmentList.length > 0) {
+            const lastEquipment = equipmentList[equipmentList.length - 1];
+            equipmentSection.value = lastEquipment.section || '';
+        } else {
+            equipmentSection.value = '';
+        }
+        
+        equipmentName.value = '';
+        equipmentDescription.value = '';
+        equipmentEssential.checked = false;
+        equipmentIndex.value = -1;
+    }
+    
+    // Función para actualizar el campo oculto
+    function updateHiddenField() {
+        // Guardar como JSON estructurado
+        equipmentHiddenField.value = JSON.stringify(equipmentList);
+    }
+    
+    // Asegurar que el formulario envía el valor combinado
+    document.getElementById('form-recipe').addEventListener('submit', function() {
+        updateHiddenField();
+    });
+});
+// Asegurar que el formulario se envíe correctamente
+(function() {
+    const formRecipe = document.getElementById('form-recipe');
+    
+    if (formRecipe) {
+        // Remover todos los listeners de submit existentes
+        const clonedForm = formRecipe.cloneNode(true);
+        formRecipe.parentNode.replaceChild(clonedForm, formRecipe);
+        
+        // Añadir un nuevo listener limpio
+        clonedForm.addEventListener('submit', function(e) {
+            // Manejar precio
+            const priceInput = document.getElementById('price-input');
+            if (priceInput && priceInput.getAttribute('data-raw-value')) {
+                priceInput.value = priceInput.getAttribute('data-raw-value');
+            }
+            
+            // Manejar equipment
+            const equipmentHiddenField = document.getElementById('equipment-hidden');
+            if (window.equipmentList && equipmentHiddenField) {
+                equipmentHiddenField.value = JSON.stringify(window.equipmentList || []);
+            }
+            
+            // Manejar tiempo y duración
+            updateTimeFields();
+            
+            // Continuar con el envío normal
+            return true;
+        });
+        
+        // Helper para actualizar campos de tiempo
+        function updateTimeFields() {
+            // Tiempo de preparación
+            const timeValueInput = document.getElementById('time-value-input');
+            const timeUnitSelect = document.getElementById('time-unit-select');
+            const timeOfPreparationHidden = document.getElementById('time-of-preparation-hidden');
+            
+            if (timeValueInput && timeUnitSelect && timeOfPreparationHidden) {
+                const value = timeValueInput.value.trim();
+                const unit = timeUnitSelect.value;
+                
+                if (value) {
+                    timeOfPreparationHidden.value = value + ' ' + unit;
+                }
+            }
+            
+            // Lifetime
+            const lifetimeValueInput = document.getElementById('lifetime-value-input');
+            const lifetimeUnitSelect = document.getElementById('lifetime-unit-select');
+            const lifetimeHidden = document.getElementById('lifetime-hidden');
+            
+            if (lifetimeValueInput && lifetimeUnitSelect && lifetimeHidden) {
+                const value = lifetimeValueInput.value.trim();
+                const unit = lifetimeUnitSelect.value;
+                
+                if (value) {
+                    lifetimeHidden.value = value + ' ' + unit;
+                }
+            }
+        }
+    }
+})();
 </script>

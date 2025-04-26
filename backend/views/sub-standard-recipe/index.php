@@ -35,7 +35,6 @@ $this->registerCss('
     }
 ');
 ?>
-?>
 
 <div class="sub-standard-recipe-index">
 
