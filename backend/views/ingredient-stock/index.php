@@ -17,6 +17,27 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
     'depends' => \yii\web\YiiAsset::class,
     'position' => $this::POS_END
 ]);
+$this->registerCss('
+    .grid-view th a {
+        color: #333;
+        text-decoration: none;
+        position: relative;
+        display: block;
+    }
+    .grid-view th a.asc:after {
+        content: " ▲";
+        font-size: 12px;
+    }
+    .grid-view th a.desc:after {
+        content: " ▼";
+        font-size: 12px;
+    }
+    .grid-view th a:hover {
+        color: #333;
+        text-decoration: none;
+    }
+');
+?>
 ?>
 <div class="ingredient-stock-index">
     <div class="d-flex flex-wrap">

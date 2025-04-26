@@ -30,6 +30,6 @@ foreach ($selectedAllergies as $selectedAllergy) {
 
 <br>
 <div class="form-group">
-    <?= \yii\bootstrap5\Html::label("Otros (poner ; para insertar)", 'allergies-other') ?>
+    <?= \yii\bootstrap5\Html::label("Otros (Escribir un nuevo alérgeno y al finalizar ; para insertarlo)", 'allergies-other') ?>
     <?= \yii\bootstrap5\Html::textInput('allergies-other', '', ['class' => 'form-control', 'id' => 'allergies-other']) ?>
 </div>

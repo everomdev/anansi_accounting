@@ -14,7 +14,29 @@ $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
+$this->registerCss('
+    .grid-view th a {
+        color: #333;
+        text-decoration: none;
+        position: relative;
+        display: block;
+    }
+    .grid-view th a.asc:after {
+        content: " ▲";
+        font-size: 12px;
+    }
+    .grid-view th a.desc:after {
+        content: " ▼";
+        font-size: 12px;
+    }
+    .grid-view th a:hover {
+        color: #333;
+        text-decoration: none;
+    }
+');
 ?>
+?>
+
 <div class="sub-standard-recipe-index">
 
 
