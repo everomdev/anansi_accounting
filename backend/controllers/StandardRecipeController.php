@@ -80,6 +80,7 @@ class StandardRecipeController extends Controller
                             'export-recipes-to-excel',
                             'export-recipes-plantilla',
                             'import-recipes',
+                            'import-sub-recipes',
                             'edit-step',
                             'move-step',
                             'get-available-ingredients',
@@ -111,6 +112,7 @@ class StandardRecipeController extends Controller
                             'export-recipes-to-excel',
                             'export-recipes-plantilla',
                             'import-recipes',
+                            'import-sub-recipes',
                             'move-step',
                             'edit-step',
                             'get-available-ingredients',
@@ -460,6 +462,25 @@ class StandardRecipeController extends Controller
         if ($file) {
             try {
                 ExcelHelper::importRecipe($business, $file->tempName);
+            }catch (\Exception $e) {
+                $errors = json_decode($e->getMessage(), true);
+                foreach ($errors as $field => $fieldErrors) {
+                    Yii::$app->session->setFlash('error', implode("\n", $fieldErrors));
+                }
+            }
+        }
+
+        return $this->redirect(['standard-recipe/index']);
+    }
+    public function actionImportSubRecipes($id)
+    {
+        $business = Business::findOne(['id' => $id]);
+
+        $file = UploadedFile::getInstanceByName('ingredient-file');//
+
+        if ($file) {
+            try {
+                ExcelHelper::importSubRecipe($business, $file->tempName);
             }catch (\Exception $e) {
                 $errors = json_decode($e->getMessage(), true);
                 foreach ($errors as $field => $fieldErrors) {
@@ -2009,23 +2030,52 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      exit;
  }
 
- public function actionExportRecipesPlantilla()
+ public function actionExportRecipesPlantilla($type)
  {
      $business = \backend\helpers\RedisKeys::getBusiness();
-     
+     //die(var_dump($type));
      // Configuración para mejorar rendimiento
      set_time_limit(300);
      ini_set('memory_limit', '512M');
-     
+     // Configurar títulos según el tipo
+    $mainTitle = ($type === 'sub') ? 'FICHA GENERAL DE LA SUBRECETA' : 'FICHA GENERAL DE LA RECETA';
+    $ingredientsTitle = ($type === 'sub') ? 'INGREDIENTES PARA SUBRECETA' : 'INGREDIENTES';
      $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
      
      // 1. Configurar hojas principales
      $recipesSheet = $spreadsheet->getActiveSheet();
-     $recipesSheet->setTitle('FICHA GENERAL DE LA RECETA');
+     $recipesSheet->setTitle($mainTitle);
      
      // 2. Modificar cabeceras de recetas (separar duración y tiempo de preparación)
-     $recipesHeaders = ['Nombre', 'Tipo de Receta', 'Tiempo de preparación', 'Unidad de tiempo', 'Rendimiento', 
-                      'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 'Precio', 'Alimento o Bebida', 'Convoy'];
+     // Configurar headers según el tipo
+    $recipesHeaders = ($type === 'sub') 
+    ? [
+        'Nombre', 
+        'Tipo de Subreceta', 
+        'Tiempo de preparación', 
+        'Unidad de tiempo', 
+        'Rendimiento', 
+        'Rendimiento UM', 
+        'Porciones', 
+        'Duración', 
+        'Unidad de duración',
+        'Unidad de medida final'
+      ]
+    : [
+        'Nombre', 
+        'Tipo de Receta', 
+        'Tiempo de preparación', 
+        'Unidad de tiempo', 
+        'Rendimiento', 
+        'Rendimiento UM', 
+        'Porciones', 
+        'Duración', 
+        'Unidad de duración', 
+        'Precio', 
+        'Alimento o Bebida', 
+        'Convoy',
+        'Unidad de medida final'
+      ];
      
      $col = 'A';
      foreach ($recipesHeaders as $header) {
@@ -2052,7 +2102,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      // 4. Configurar cabeceras de todas las hojas
      $headers = [
-         'INGREDIENTES' => ['Receta', 'Insumo', 'Cantidad', 'UM', 'Costo'],
+         'INGREDIENTES' => [($type === 'sub' ? 'SubReceta' : 'Receta'), 'Insumo', 'Cantidad', 'UM', 'Costo'],
          'INSUMOS' => ['Insumo', 'Cantidad', 'UM', 'Costo'],
          'CONVOY' => ['ID Convoy', 'Nombre Convoy'],
          'UMs' => ['Unidad de Medida'],
@@ -2091,7 +2141,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      $categories = RecipeCategory::find()
          ->where(['business_id' => $business['id']])
-         ->andWhere(['type' => 'main'])
+         ->andWhere(['type' => $type])
          ->limit($batchSize)
          ->all();
      
@@ -2150,7 +2200,28 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $recipesSheet->getColumnDimension('J')->setWidth(15);
      
      // 8. Configurar TODAS las validaciones optimizadas
-     
+     $colFinalUM = ($type === 'sub') ? 'J' : 'M'; // Ajusta estas letras según tu estructura de columnas
+
+$dataValidationFinalUM = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
+$dataValidationFinalUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+$dataValidationFinalUM->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+$dataValidationFinalUM->setAllowBlank(false);
+$dataValidationFinalUM->setShowInputMessage(true);
+$dataValidationFinalUM->setShowErrorMessage(true);
+$dataValidationFinalUM->setShowDropDown(true);
+$dataValidationFinalUM->setErrorTitle('Error de entrada');
+$dataValidationFinalUM->setError('Seleccione una unidad de medida válida');
+$dataValidationFinalUM->setPromptTitle('Unidad de medida final');
+$dataValidationFinalUM->setPrompt('Seleccione la unidad de medida final para esta receta');
+$dataValidationFinalUM->setFormula1('=UMs!$A$2:$A$'.(count($unitOfMeasurements)+1));
+
+// 2. Aplicar a todas las filas
+for ($i = 2; $i <= 50; $i++) {
+    $recipesSheet->getCell($colFinalUM.$i)->setDataValidation(clone $dataValidationFinalUM);
+}
+
+// 3. Ajustar ancho de columna si es necesario
+$recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      // a) Validación para nombres de recetas en INGREDIENTES
      $validation = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
      $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
@@ -2163,7 +2234,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $validation->setError('Debe seleccionar una receta existente');
      $validation->setPromptTitle('Seleccionar receta');
      $validation->setPrompt('Seleccione una receta de la lista');
-     $validation->setFormula1('=\'FICHA GENERAL DE LA RECETA\'!$A$2:$A$100');
+    if ($type === 'sub') {
+        $validation->setFormula1('=\'FICHA GENERAL DE LA SUBRECETA\'!$A$2:$A$100');
+    } else {
+        $validation->setFormula1('=\'FICHA GENERAL DE LA RECETA\'!$A$2:$A$100');
+    }
      
      // Aplicar a 500 filas para permitir múltiples ingredientes por receta
      for ($row = 2; $row <= 500; $row++) {
@@ -2295,7 +2370,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $dataValidationDurationValue->setPrompt('Por favor, ingrese un valor numérico.');
      $dataValidationDurationValue->setFormula1(0);
      $dataValidationDurationValue->setFormula2(999999);
-    
+    if ($type !== 'sub'){
      // Modificar la validación para permitir valores más grandes
      $dataValidationPrice = $recipesSheet->getCell('J2')->getDataValidation();
      $dataValidationPrice->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
@@ -2311,7 +2386,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $dataValidationPrice->setFormula2(99999999); // Aumentar el límite máximo
 
      $recipesSheet->getStyle('J2:J100')->getNumberFormat()->setFormatCode('$#,##0.00');
-     
+    }
      // Aplicar todas las validaciones a las celdas correspondientes
      for ($i = 2; $i <= 50; $i++) {
          // Hoja INGREDIENTES
@@ -2328,7 +2403,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          $recipesSheet->getCell("I$i")->setDataValidation(clone $dataValidationTimeUnits);
          $recipesSheet->getCell("C$i")->setDataValidation(clone $dataValidationTimeValue);
          $recipesSheet->getCell("H$i")->setDataValidation(clone $dataValidationDurationValue);
-         $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationPrice);
+         if ($type !== 'sub') {
+             $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationPrice);
+         }
      }
      
      // 9. Configurar fórmulas

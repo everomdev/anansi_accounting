@@ -19,12 +19,16 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
 
 
     <p>
-        <?= Html::a(Yii::t('app', 'Nueva Subreceta'), \yii\helpers\Url::to(['standard-recipe/create', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success']) ?>
-        <?= Html::a(Yii::t('app', 'Duplicate'), \yii\helpers\Url::to(['sub-standard-recipe/duplicate-recipes']), ['class' => 'btn btn-success', 'id' => 'btn-duplicate-recipes']) ?>
-        <?= Html::a(Yii::t('app', 'Descargar PDF'), \yii\helpers\Url::to(['standard-recipe/download-recipes-pdf', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success', 'id' => 'btn-download-recipes']) ?>
-        <?= Html::a(Yii::t('app', 'Descargar Excel'), \yii\helpers\Url::to(['standard-recipe/download-recipes','type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success', 'id' => 'btn-download-recipes']) ?>
+        <?= Html::a(Yii::t('app', 'Nueva Subreceta'), \yii\helpers\Url::to(['standard-recipe/create', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success m-1']) ?>
+        <?= Html::a(Yii::t('app', 'Duplicate'), \yii\helpers\Url::to(['sub-standard-recipe/duplicate-recipes']), ['class' => 'btn btn-success m-1', 'id' => 'btn-duplicate-recipes']) ?>
+        <?= Html::a(Yii::t('app', 'Descargar PDF'), \yii\helpers\Url::to(['standard-recipe/download-recipes-pdf', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success m-1', 'id' => 'btn-download-recipes']) ?>
+        <?= Html::a(Yii::t('app', 'Descargar Excel'), \yii\helpers\Url::to(['standard-recipe/download-recipes','type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success m-1', 'id' => 'btn-download-recipes']) ?>
+        <?= Html::a(Yii::t('app', 'Descargar Plantilla'), \yii\helpers\Url::to(['standard-recipe/export-recipes-plantilla','type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success m-1', 'id' => 'btn-export-recipes-plantilla']) ?>
+        <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar recetas', [
+            'icon' => ""
+        ]), '#', ['class' => 'btn btn-warning m-1', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
-                ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'btn-delete-recipes']) ?>
+        ]), ['#'], ['class' => 'btn btn-danger m-1', 'id' => 'btn-delete-recipes']) ?>
 
     </p>
     <?php Pjax::begin(['id' => 'sub-standard-recipes-pjax']); ?>
@@ -94,7 +98,7 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
                 'format' => 'html', // Esto permite renderizar HTML
                 'value' => function($model) {
                     // Elimina Html::encode para permitir que el HTML se renderice
-                    return $model->observation;
+                    return $model->observation ? $model->observation : 'Sin observaciones';
                 },
                 'encodeLabel' => false,
                 'enableSorting' => false,
@@ -118,6 +122,32 @@ $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['d
 
 <?php Pjax::end(); ?>
 </div>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-upload-file',
+    'title' => Yii::t('app', "Importar recetas")
+]);
+$url = \yii\helpers\Url::to(['standard-recipe/import-sub-recipes', 'id' => $business->id]);
+\yii\bootstrap5\ActiveForm::begin([
+    'action' => $url,
+    'method' => 'post',
+    'options' => [
+        'enctype' => 'multipart/form-data'
+    ]
+]);
+
+echo \yii\bootstrap5\Html::input('file', 'ingredient-file', '', [
+    'class' => 'form-control'
+]);
+echo "<br>";
+echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
+    'class' => 'btn btn-success'
+]);
+
+\yii\bootstrap5\ActiveForm::end();
+
+\yii\bootstrap5\Modal::end();
+?>
 <?php
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-bulk-remove',
