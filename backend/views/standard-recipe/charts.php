@@ -21,25 +21,25 @@ $this->registerJsVar('locale', str_replace('_', '-', $business->getFormatter()->
 ?>
 
 <div class="row">
-    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
+    <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_sales_by_family', [
             'totalSales' => $totalSales,
             'categories' => $categories
         ]) ?>
     </div>
-    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
+    <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_eighty_percet_of_sales.php') ?>
     </div>
-    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
+    <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_eighty_percet_of_popularity.php') ?>
     </div>
-    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
+    <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_more_profitable.php') ?>
     </div>
-    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
+    <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_spend_the_most.php') ?>
     </div>
-    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
+    <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_frequent_ingredients.php') ?>
     </div>
 </div>
