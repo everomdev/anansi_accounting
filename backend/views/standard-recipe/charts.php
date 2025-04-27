@@ -10,6 +10,11 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/charts.js"), [
     'depends' => [\yii\web\YiiAsset::class],
     'position' => $this::POS_END
 ]);
+// Registrar el nuevo archivo para la funcionalidad de pantalla completa
+$this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/chart-fullscreen.js"), [
+    'depends' => [\yii\web\YiiAsset::class, \backend\assets\ChartJsAsset::class],
+    'position' => $this::POS_END
+]);
 $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business->currency_code));
 $this->registerJsVar('currencySymbol', $business->getFormatter()->currencyCode);
 $this->registerJsVar('locale', str_replace('_', '-', $business->getFormatter()->locale));
@@ -37,10 +42,25 @@ $this->registerJsVar('locale', str_replace('_', '-', $business->getFormatter()->
     <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4 mb-3">
         <?= $this->render('charts/_frequent_ingredients.php') ?>
     </div>
-
-
-
-
+</div>
+<!-- Modal para pantalla completa -->
+<div class="modal fade" id="chartFullscreenModal" tabindex="-1" aria-labelledby="chartFullscreenModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chartFullscreenModalLabel"><?= Yii::t('app', 'Detalles del gráfico') ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body d-flex justify-content-center align-items-center">
+                <div id="fullscreen-chart-container" class="w-100 h-100 d-flex flex-column justify-content-center">
+                    <!-- El gráfico se renderizará aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cerrar') ?></button>
+            </div>
+        </div>
+    </div>
 </div>
 
 

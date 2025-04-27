@@ -32,8 +32,13 @@ foreach ($rawData as $rawDatum){
 $this->registerJsVar('dataSpendTheMost', $data);
 $this->registerJsVar('labelsSpendTheMost', $labels);
 ?>
-<div class="card">
-    <div class="card-header"><h5><?= Yii::t("app", "20 ingredients on which you spend the most") ?></h5></div>
+<div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><?= Yii::t("app", "20 ingredients on which you spend the most") ?></h5>
+        <button type="button" class="btn btn-sm btn-outline-primary fullscreen-btn" data-chart-id="spendTheMost">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
     <div class="card-body">
         <canvas id="spendTheMost"></canvas>
     </div>

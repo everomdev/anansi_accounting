@@ -61,8 +61,13 @@ $this->registerJsVar('labelsEightyPercentPopularity', $labels);
 
 ?>
 
-<div class="card">
-    <div class="card-header"><h5><?= Yii::t("app", "80% of popularity") ?></h5></div>
+<div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><?= Yii::t("app", "80% of popularity") ?></h5>
+        <button type="button" class="btn btn-sm btn-outline-primary fullscreen-btn" data-chart-id="eightyPercentPopularity">
+            <i class="fas fa-expand"></i>
+        </button>
+    </div>
     <div class="card-body">
         <canvas id="eightyPercentPopularity"></canvas>
     </div>
