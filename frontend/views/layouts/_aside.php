@@ -19,12 +19,10 @@ if (in_array($action, ['price-trend', 'storage', 'theoretical-yield', 'real-yiel
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo">
         <a href="index.html" class="app-brand-link">
-              <span class="app-brand-logo demo">
-
-              </span>
-            <span class="app-brand-text demo menu-text fw-bolder ms-2">
-                <?= "Sistema de costeo" ?>
-            </span>
+        <span class="app-brand-text demo menu-text fw-bolder ms-2" style="white-space: normal; font-size: 1.5rem; line-height: 1.2; text-transform: uppercase; text-align: center; display: block;">
+            <div style="font-size: 1.3rem;">Sistema para</div>
+            <div style="font-size: 1.7rem; margin-top: -5px;">Restaurantes</div>
+        </span>
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">

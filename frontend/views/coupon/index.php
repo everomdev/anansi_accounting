@@ -47,6 +47,26 @@ $this->params['breadcrumbs'][] = $this->title;
             'expiration:date',
             'expiration_date:date',
             [
+                'label' => Yii::t('app', 'Plan Asociado'),
+                'format' => 'html',
+                'value' => function ($model) {
+                    // Eliminar el die(var_dump($model)) que detiene la ejecución
+                    
+                    // Usar la relación definida en el modelo
+                    if ($model->plan) {
+                        return Html::tag('span', Html::encode($model->plan->name), [
+                            'class' => 'badge bg-info',
+                            'title' => Html::encode($model->plan->description ?? '')
+                        ]);
+                    }
+                    
+                    // Si no tiene plan asociado
+                    return '<span class="text-muted">' . Yii::t('app', 'Sin plan asociado') . '</span>';
+                },
+                'headerOptions' => ['class' => 'text-center'],
+                'contentOptions' => ['class' => 'text-center'],
+            ],
+            [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{delete}"
             ],
