@@ -84,6 +84,7 @@ $this->registerCss('
         ]), '#', ['class' => 'btn btn-warning m-1', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
         ]), ['#'], ['class' => 'btn btn-danger m-1', 'id' => 'btn-delete-recipes']) ?>
+        <?= Html::a('Exportar Recetas Completas', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
 
     </p>
     <?php Pjax::begin(['id' => 'sub-standard-recipes-pjax']); ?>
@@ -279,6 +280,87 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 </div>
 <?php
 \yii\bootstrap5\Modal::end();
+?>
+<?php
+// Modal para exportar recetas seleccionadas
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-export-recipes',
+    'title' => Yii::t('app', "Exportar recetas seleccionadas"),
+]);
+?>
+<p>¿Deseas exportar todas las recetas seleccionadas o solo las de la página actual?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Exportar las seleccionadas'), [
+        'class' => 'btn btn-success',
+        'id' => 'export-current-page'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Exportar todas'), [
+        'class' => 'btn btn-success',
+        'id' => 'export-all'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para mostrar error cuando no hay elementos seleccionados para exportar
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-no-export-selection',
+    'title' => Yii::t('app', "Selección vacía"),
+]);
+?>
+<p>No has seleccionado ninguna receta para exportar. Por favor, selecciona al menos una receta.</p>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+$this->registerJs("
+    // Nuevo código para manejo de exportación
+document.getElementById('download-recipes-complete-excel').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Obtener IDs de las filas seleccionadas
+    const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+    
+    if (selectedIds.length === 0) {
+        // Mostrar modal de error si no hay selección
+        const noSelectionModal = new bootstrap.Modal(document.getElementById('modal-no-export-selection'));
+        noSelectionModal.show();
+        return;
+    }
+    
+    // Mostrar el modal de confirmación para exportación
+    const exportModal = new bootstrap.Modal(document.getElementById('modal-export-recipes'));
+    exportModal.show();
+});
+
+// Manejar la exportación de las recetas seleccionadas
+document.getElementById('export-current-page').addEventListener('click', function() {
+    const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&type=sub';
+    }
+});
+
+// Manejar la exportación de todas las recetas (todas las páginas)
+document.getElementById('export-all').addEventListener('click', function() {
+    const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&all=true' + '&type=sub';
+    }
+});
+");
 ?>
 <style>
     #btn-delete-recipes:disabled {
