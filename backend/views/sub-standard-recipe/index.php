@@ -84,7 +84,7 @@ $this->registerCss('
         ]), '#', ['class' => 'btn btn-warning m-1', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
         ]), ['#'], ['class' => 'btn btn-danger m-1', 'id' => 'btn-delete-recipes']) ?>
-        <?= Html::a('Exportar Recetas Completas', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
+        <?= Html::a('Exportar Subrecetas Completas', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
 
     </p>
     <?php Pjax::begin(['id' => 'sub-standard-recipes-pjax']); ?>
