@@ -321,7 +321,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                 </div>
                 <div class="mb-3">
                     <label for="equipment-section" class="form-label"><?= Yii::t('app', 'Sección (opcional)') ?></label>
-                    <input type="text" class="form-control" id="equipment-section" name="equipment-section" placeholder="<?= Yii::t('app', 'Agrupa los equipos por áreas de uso(ej. Cocción, Emplatado)') ?>">
+                    <input type="text" class="form-control" id="equipment-section" name="equipment-section" placeholder="<?= Yii::t('app', 'Agrupa los equipos por áreas de uso (ej. Cocción, Emplatado)') ?>">
                     <small class="form-text text-muted"><?= Yii::t('app', 'Agrupe los equipos por sección o deje en blanco') ?></small>
                 </div>
                 <div class="mb-3">

@@ -36,8 +36,41 @@ $this->registerCss('
         color: #333;
         text-decoration: none;
     }
+        /* Estilos para encabezados fijos */
+    .sticky-header-container {
+        position: relative;
+        overflow: auto;
+        max-height: calc(90vh - 80px); /* Ajusta según tu diseño */
+        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    
+    .sticky-header-table {
+        margin-bottom: 0;
+    }
+    
+    .sticky-header-table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+   
+    
+    /* Mejorar la apariencia de las columnas ordenables */
+    .sortable-column {
+        background-color: rgba(0,0,0,0.01);
+    }
+    
+    /* Asegurar que el texto de los encabezados no se corte */
+    .sticky-header-table th {
+        white-space: normal;
+        vertical-align: middle;
+    }
 ');
-?>
 ?>
 <div class="ingredient-stock-index">
     <div class="d-flex flex-wrap">
@@ -67,14 +100,31 @@ $this->registerCss('
             ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
         </div>
     </div>
-
+<!-- Selector de elementos por página y filtros mejorados -->
+<div class="row mb-2 align-items-center">
+    <div class="col-md-4">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+            <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 70px;">
+                <?php foreach ([10, 25, 50, 100] as $value): ?>
+                <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                <?php endforeach; ?>
+            </select>
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'insumos por página') ?></span>
+        </div>
+    </div>
+</div>
     <?php Pjax::begin(['id' => 'ingredient-stock-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
+    <div class="table-responsive sticky-header-container">
+    <div class="row"></div>
     <?= GridView::widget([
         'id' => 'ingredient-stock-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'tableOptions' => ['class' => 'table sticky-header-table'],
+        'options' => ['class' => 'grid-view sticky-header-grid'],
+        'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
         'formatter' => $business->getFormatter(),
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
@@ -170,7 +220,7 @@ $this->registerCss('
     ]); ?>
 
     <?php Pjax::end(); ?>
-
+    </div>
 </div>
 <?php
 \yii\bootstrap5\Modal::begin([
@@ -279,3 +329,20 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 <?php
 \yii\bootstrap5\Modal::end();
 ?>
+<script>
+    // Detector de cambio en elementos por página
+document.getElementById('per-page-selector').addEventListener('change', function() {
+    const pageSize = this.value;
+    
+    // Crear URL con nuevo tamaño de página
+    let url = new URL(window.location);
+    url.searchParams.set('per-page', pageSize);
+    
+    // Recargar con el nuevo tamaño de página
+    $.pjax.reload({
+        container: '#ingredient-stock-pjax',
+        url: url.toString(),
+        timeout: 10000
+    });
+});
+</script>

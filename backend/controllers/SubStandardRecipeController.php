@@ -84,8 +84,12 @@ class SubStandardRecipeController extends Controller
     {
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new StandardRecipeSearch();
-
+        $perPage = (int)Yii::$app->request->get('per-page');
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10; // Valor predeterminado
+        }
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->pagination->pageSize = $perPage;
         $dataProvider->query->andWhere([
             'business_id' => $business['id'],
             'in_construction' => 0,

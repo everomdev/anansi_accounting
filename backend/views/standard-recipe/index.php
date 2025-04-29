@@ -96,22 +96,19 @@ $this->registerCss('
         </div>
     <?php Pjax::begin(['id' => 'standard-recipes-pjax']); ?>
     <!-- Selector de elementos por página y filtros mejorados -->
-    <div class="row mb-3 align-items-center">
-        <div class="col-md-6">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-light">
-                    <i class="fas fa-list"></i>&nbsp;<?= Yii::t('app', 'Mostrar') ?>
-                </span>
-                <select id="per-page-selector" class="form-select form-select-sm">
-                    <option value="10" <?= $dataProvider->pagination->pageSize == 10 ? 'selected' : '' ?>>10</option>
-                    <option value="25" <?= $dataProvider->pagination->pageSize == 25 ? 'selected' : '' ?>>25</option>
-                    <option value="50" <?= $dataProvider->pagination->pageSize == 50 ? 'selected' : '' ?>>50</option>
-                    <option value="100" <?= $dataProvider->pagination->pageSize == 100 ? 'selected' : '' ?>>100</option>
-                </select>
-                <span class="input-group-text bg-light"><?= Yii::t('app', 'elementos por página') ?></span>
-            </div>
+    <div class="row mb-2 align-items-center">
+    <div class="col-md-4">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+            <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 70px;">
+                <?php foreach ([10, 25, 50, 100] as $value): ?>
+                <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                <?php endforeach; ?>
+            </select>
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'recetas por página') ?></span>
         </div>
     </div>
+</div>
     
 <div class="table-responsive sticky-header-container">
     <div class="row"></div>
