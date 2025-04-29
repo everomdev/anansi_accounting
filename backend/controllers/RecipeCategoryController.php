@@ -61,10 +61,15 @@ class RecipeCategoryController extends Controller
     {
         $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
         $searchModel = new RecipeCategorySearch();
+        $perPage = (int)Yii::$app->request->get('per-page');
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10; // Valor predeterminado
+        }
         if (!Yii::$app->user->can('admin')) {
             $searchModel->business_id = $business['id'];
         }
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->pagination->pageSize = $perPage;
 
         return $this->render('index', [
             'searchModel' => $searchModel,

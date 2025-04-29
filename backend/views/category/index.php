@@ -41,6 +41,40 @@ $this->registerCss('
         color: #333;
         text-decoration: none;
     }
+        /* Estilos para encabezados fijos */
+    .sticky-header-container {
+        position: relative;
+        overflow: auto;
+        max-height: calc(90vh - 80px); /* Ajusta según tu diseño */
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    
+    .sticky-header-table {
+        margin-bottom: 0;
+    }
+    
+    .sticky-header-table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+   
+    
+    /* Mejorar la apariencia de las columnas ordenables */
+    .sortable-column {
+        background-color: rgba(0,0,0,0.01);
+    }
+    
+    /* Asegurar que el texto de los encabezados no se corte */
+    .sticky-header-table th {
+        white-space: normal;
+        vertical-align: middle;
+    }
 ');
 ?>
 <div class="category-index">
@@ -52,12 +86,29 @@ $this->registerCss('
         ]) ?>
     </p>
 
-    <?php Pjax::begin(); ?>
+    <?php Pjax::begin(['id' => 'family-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
+    <div class="row mb-2 align-items-center">
+    <div class="col-md-4">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+            <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
+                <?php foreach ([10, 25, 50, 100] as $value): ?>
+                <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                <?php endforeach; ?>
+            </select>
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'familias por página') ?></span>
+        </div>
+    </div>
+</div>
+    <div class="table-responsive sticky-header-container">
+    <div class="row"></div>
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
+        'options' => ['class' => 'grid-view sticky-header-grid'],
+        'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
@@ -136,7 +187,7 @@ $this->registerCss('
         ],
     ]); ?>
     <?php Pjax::end(); ?>
-
+    </div>
 </div>
 
 <?php
@@ -148,3 +199,20 @@ echo '<div id="form-category-container"></div>';
 
 \yii\bootstrap5\Modal::end();
 ?>
+<script>
+    // Detector de cambio en elementos por página
+document.getElementById('per-page-selector').addEventListener('change', function() {
+    const pageSize = this.value;
+    
+    // Crear URL con nuevo tamaño de página
+    let url = new URL(window.location);
+    url.searchParams.set('per-page', pageSize);
+    
+    // Recargar con el nuevo tamaño de página
+    $.pjax.reload({
+        container: '#family-pjax',
+        url: url.toString(),
+        timeout: 10000
+    });
+});
+</script>

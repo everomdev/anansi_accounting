@@ -105,7 +105,7 @@ $this->registerCss('
     <div class="col-md-4">
         <div class="input-group input-group-sm">
             <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
-            <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 70px;">
+            <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
                 <?php foreach ([10, 25, 50, 100] as $value): ?>
                 <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
                 <?php endforeach; ?>
