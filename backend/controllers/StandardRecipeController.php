@@ -1795,10 +1795,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             ->groupBy('name')
             ->all();
             
-        $row = 2;
+        $rowUM = 2;
         foreach ($unitOfMeasurements as $um) {
-            $umSheet->setCellValue("A$row", $um->name);
-            $row++;
+            $umSheet->setCellValue("A$rowUM", $um->name);
+            $rowUM++;
         }
         
         // Categorías
@@ -1807,10 +1807,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 'business_id' => $business['id']
             ])->all();
             
-        $row = 2;
+        $rowCategory = 2;
         foreach ($categories as $category) {
-            $categorySheet->setCellValue("A$row", $category->name);
-            $row++;
+            $categorySheet->setCellValue("A$rowCategory", $category->name);
+            $rowCategory++;
         }
         
         // Convoy
@@ -2114,16 +2114,16 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          ->all();
      
      // 6. Llenar hojas de referencia
-     $row = 2;
+     $rowUM = 2;
      foreach ($unitOfMeasurements as $um) {
-         $umSheet->setCellValue("A$row", $um->name);
-         $row++;
+         $umSheet->setCellValue("A$rowUM", $um->name);
+         $rowUM++;
      }
      
-     $row = 2;
+     $rowCategory = 2;
      foreach ($categories as $category) {
-         $categorySheet->setCellValue("A$row", $category->name);
-         $row++;
+         $categorySheet->setCellValue("A$rowCategory", $category->name);
+         $rowCategory++;
      }
      
      $rowConvoy = 2;
@@ -2171,10 +2171,10 @@ $dataValidationFinalUM->setErrorTitle('Error de entrada');
 $dataValidationFinalUM->setError('Seleccione una unidad de medida válida');
 $dataValidationFinalUM->setPromptTitle('Unidad de medida final');
 $dataValidationFinalUM->setPrompt('Seleccione la unidad de medida final para esta receta');
-$dataValidationFinalUM->setFormula1('=UMs!$A$2:$A$'.(count($unitOfMeasurements)+1));
+$dataValidationFinalUM->setFormula1('=UMs!$A$2:$A$'.($rowUM-1)); // Ajusta el rango según tus datos
 
 // 2. Aplicar a todas las filas
-for ($i = 2; $i <= 50; $i++) {
+for ($i = 2; $i <= 500; $i++) {
     $recipesSheet->getCell($colFinalUM.$i)->setDataValidation(clone $dataValidationFinalUM);
 }
 
@@ -2193,9 +2193,10 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $validation->setPromptTitle('Seleccionar receta');
      $validation->setPrompt('Seleccione una receta de la lista');
     if ($type === 'sub') {
-        $validation->setFormula1('=\'FICHA GENERAL DE LA SUBRECETA\'!$A$2:$A$100');
+        // Use direct reference to the sheet since COUNTA can't be used in PHP like this
+        $validation->setFormula1('=INDIRECT("\'FICHA GENERAL DE LA SUBRECETA\'!A2:A" & COUNTA(\'FICHA GENERAL DE LA SUBRECETA\'!A:A))');
     } else {
-        $validation->setFormula1('=\'FICHA GENERAL DE LA RECETA\'!$A$2:$A$100');
+        $validation->setFormula1('=INDIRECT("\'FICHA GENERAL DE LA RECETA\'!A2:A" & COUNTA(\'FICHA GENERAL DE LA RECETA\'!A:A))');
     }
      
      // Aplicar a 500 filas para permitir múltiples ingredientes por receta
@@ -2229,7 +2230,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationUM->setError('Este valor no es admitido');
      $dataValidationUM->setPromptTitle('Selecciona una unidad de medida');
      $dataValidationUM->setPrompt('Por favor, selecciona un valor del desplegable.');
-     $dataValidationUM->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
+     $dataValidationUM->setFormula1('=UMs!$A$2:$A$' . ($rowUM - 1));
      
      // d) Validación para categorías
      $dataValidationCategory = $recipesSheet->getCell('B2')->getDataValidation();
@@ -2243,7 +2244,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationCategory->setError('Este valor no es admitido');
      $dataValidationCategory->setPromptTitle('Selecciona una categoría');
      $dataValidationCategory->setPrompt('Por favor, selecciona un valor del desplegable.');
-     $dataValidationCategory->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
+     $dataValidationCategory->setFormula1('=Categorias!$A$2:$A$' . ($rowCategory - 1));
      
      // e) Validación para rendimiento (sólo números)
      $dataValidationYield = $recipesSheet->getCell('E2')->getDataValidation();
@@ -2346,7 +2347,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $recipesSheet->getStyle('J2:J100')->getNumberFormat()->setFormatCode('$#,##0.00');
     }
      // Aplicar todas las validaciones a las celdas correspondientes
-     for ($i = 2; $i <= 50; $i++) {
+     for ($i = 2; $i <= 500; $i++) {
          // Hoja INGREDIENTES
          $ingredientsSheet->getCell("D$i")->setDataValidation(clone $dataValidationUM);
          $ingredientsSheet->getCell("B$i")->setDataValidation(clone $dataValidationInsumos);
@@ -2378,7 +2379,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      }
      
      // 11. Añadir fórmula para bloquear el campo de porciones cuando se seleccionan ciertos rendimientos
-     for ($i = 2; $i <= 50; $i++) {
+     for ($i = 2; $i <= 500; $i++) {
          // Si el rendimiento UM es porción, pieza o rebanada, poner un 1 fijo en porciones
          $formulaLockPortions = "=IF(OR(F$i=\"porción\",F$i=\"pieza\",F$i=\"rebanada\",F$i=\"porcion\",F$i=\"Porción\",F$i=\"Pieza\",F$i=\"Rebanada\"),1,\"\")";
          $recipesSheet->setCellValue("G$i", $formulaLockPortions);
