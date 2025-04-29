@@ -8,20 +8,6 @@ use yii\widgets\ActiveForm;
 /* @var $form yii\widgets\ActiveForm */
 
 // Registrar JavaScript para validación de campos
-$this->registerJs("
-// Validación para campos de teléfono
-document.querySelectorAll('#provider-phone, #provider-second_phone').forEach(function(input) {
-    input.addEventListener('input', function() {
-        // Permitir solo números, espacios, guiones y signo +
-        this.value = this.value.replace(/[^0-9\\s\\-+]/g, '');
-    });
-});
-
-// Validación para días de crédito (solo números)
-document.getElementById('provider-credit_days').addEventListener('input', function() {
-    this.value = this.value.replace(/[^0-9]/g, '');
-});
-");
 ?>
 
 <div class="provider-form">
@@ -61,7 +47,7 @@ document.getElementById('provider-credit_days').addEventListener('input', functi
                 <!-- Email con validación -->
                 <div class="col-md-6 mb-3">
                     <?= $form->field($model, 'email')
-                        ->input('email', ['maxlength' => true])
+                        ->input('email', ['maxlength' => true,'placeholder' => 'provider@example.com'])
                         ->label(Yii::t('app', 'Correo Electrónico')) ?>
                 </div>
                 
@@ -147,3 +133,95 @@ document.getElementById('provider-credit_days').addEventListener('input', functi
     <?php ActiveForm::end(); ?>
 
 </div>
+<script>
+// Validación para campos de teléfono
+document.querySelectorAll('#provider-phone, #provider-second_phone').forEach(function(input) {
+    input.addEventListener('input', function() {
+        // Permitir solo números, espacios, guiones y signo +
+        this.value = this.value.replace(/[^0-9\s\-+]/g, '');
+    });
+});
+
+// Validación para días de crédito (solo números)
+document.getElementById('provider-credit_days').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+// Validación de email en tiempo real
+const emailInput = document.getElementById('provider-email');
+if (emailInput) {
+    // Crear el contenedor del mensaje de error fuera del campo (para mejor posicionamiento)
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'email-error-container mt-1';
+    errorContainer.style.display = 'none';
+    emailInput.parentNode.appendChild(errorContainer);
+    
+    emailInput.addEventListener('input', function() {
+        validateEmail(this);
+    });
+    
+    // También validar cuando el campo pierde el foco
+    emailInput.addEventListener('blur', function() {
+        validateEmail(this, true);
+    });
+}
+
+/**
+ * Valida el formato de un email y muestra feedback visual
+ * @param {HTMLInputElement} input - El elemento input de email
+ * @param {boolean} isBlur - Si la validación ocurre al perder el foco
+ */
+function validateEmail(input, isBlur = false) {
+    // Expresión regular mejorada para validar emails con dominio válido
+    const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i;
+    
+    // Validación adicional: verificar que el dominio tenga al menos un punto y extensión válida
+    const hasDotInDomain = input.value.split('@')[1] && input.value.split('@')[1].includes('.');
+    const hasValidTLD = input.value.split('@')[1] && /\.[a-z]{2,}$/i.test(input.value.split('@')[1]);
+    
+    // Conseguir el contenedor de error
+    const errorContainer = input.parentNode.querySelector('.email-error-container');
+    
+    // No validar si está vacío y no ha perdido el foco
+    if (!input.value) {
+        resetValidation(input);
+        return;
+    }
+    
+    // Validar el formato completo
+    const isValid = emailRegex.test(input.value) && hasDotInDomain && hasValidTLD;
+    
+    // Mostrar retroalimentación visual
+    if (isValid) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        
+        // Ocultar mensaje de error
+        if (errorContainer) {
+            errorContainer.style.display = 'none';
+        }
+    } else {
+        input.classList.remove('is-valid');
+        input.classList.add('is-invalid');
+        
+        // Mostrar mensaje de error
+        if (errorContainer) {
+            errorContainer.style.display = 'block';
+            errorContainer.innerHTML = `
+                <div class="alert alert-danger py-1 px-2 mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Por favor ingresa un correo electrónico válido
+                </div>
+            `;
+        }
+    }
+}
+
+function resetValidation(input) {
+    input.classList.remove('is-valid', 'is-invalid');
+    const errorContainer = input.parentNode.querySelector('.email-error-container');
+    if (errorContainer) {
+        errorContainer.style.display = 'none';
+    }
+}
+</script>
