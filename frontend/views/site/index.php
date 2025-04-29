@@ -202,9 +202,9 @@ $this->registerCssFile('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead>
-                                    <tr>
+                                    <tr class="text-center">
                                         <th>Código</th>
-                                        <th>Plan Asociado</th>
+                                        <th>Cantidad restante</th>
                                         <th>Descuento</th>
                                         <th>Fecha Expiración</th>
                                         <th>Estado</th>
@@ -212,16 +212,16 @@ $this->registerCssFile('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font
                                 </thead>
                                 <tbody>
                                     <?php foreach ($couponStats['coupons'] as $coupon): ?>
-                                    <tr>
-                                        <td><?= Html::encode($coupon['code']) ?></td>
-                                        <td>
-                                            <span class="badge rounded-pill <?= $coupon['plan_class'] ?>">
-                                                <?= Html::encode($coupon['plan']) ?>
+                                    <tr class="text-center">
+                                        <td class="align-middle"><?= Html::encode($coupon['code']) ?></td>
+                                        <td class="align-middle">
+                                            <span>
+                                                <?= Html::encode($coupon['remaining'] !== null ? $coupon['remaining'] : 'Ilimitado') ?>
                                             </span>
                                         </td>
-                                        <td><?= $coupon['discount'] ?>%</td>
-                                        <td><?= Yii::$app->formatter->asDate($coupon['expiration']) ?></td>
-                                        <td>
+                                        <td class="align-middle"><?= $coupon['formatted_discount'] ?></td>
+                                        <td class="align-middle"><?= Yii::$app->formatter->asDate($coupon['expiration']) ?></td>
+                                        <td class="align-middle">
                                             <span class="badge rounded-pill bg-<?= $coupon['status_class'] ?>">
                                                 <?= Html::encode($coupon['status']) ?>
                                             </span>

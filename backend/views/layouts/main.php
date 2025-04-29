@@ -33,9 +33,11 @@ use common\widgets\Alert;
 <?php $this->beginBody() ?>
 
 <div class="layout-wrapper layout-content-navbar">
-    <div class="layout-container">
+    <div class="layout-container d-flex">
+    <aside class="layout-menu fixed-top vh-100 overflow-auto" style="width: 260px; margin-top: 0;">
         <?= $this->render('_aside') ?>
-        <div class="layout-page">
+    </aside>
+    <div class="layout-page ms-auto" style="width: calc(100% - 260px); overflow-y: auto; height: 100vh;">
             <?= $this->render('_navbar') ?>
             <div class="content-wrapper">
                 <div class="container-xxl flex-grow-1 container-p-y">

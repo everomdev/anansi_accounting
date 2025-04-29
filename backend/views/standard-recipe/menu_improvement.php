@@ -151,7 +151,7 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
     <div class="card-body">
         <?php if (!$menuAnalysisData): ?>
             <div class="alert alert-info">
-                <?= Yii::t('app', "Por favor, visite la página de Análisis del Menú primero para obtener recomendaciones.") ?>
+                <?= Yii::t('app', "Por favor, visite la página de Análisis del Menú y después regrese a esta página para obtener las recomendaciones.") ?>
                 <?= \yii\bootstrap5\Html::a(
                     Yii::t('app', "Ir a Análisis del Menú"),
                     ['standard-recipe/analytics'],

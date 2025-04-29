@@ -390,6 +390,12 @@ protected function getCouponStatistics()
             c.code,
             p.name as plan,
             c.discount,
+            c.type,
+            CASE 
+                WHEN c.type = 'per_cent' THEN CONCAT(c.discount, '%')
+                WHEN c.type = 'amount' THEN CONCAT('$', c.discount)
+                ELSE CONCAT(c.discount, '%') -- Default to percent if not specified
+            END as formatted_discount,
             c.expiration,
             CASE 
                 WHEN c.expiration < CURRENT_DATE() THEN 'Expirado'
@@ -411,6 +417,13 @@ protected function getCouponStatistics()
             CASE WHEN c.expiration >= CURRENT_DATE() THEN 0 ELSE 1 END,
             c.expiration DESC
     ")->queryAll();
+    // Calcular cuántos cupones quedan disponibles para cada uno
+    foreach ($coupons as &$coupon) {
+        // Obtenemos la cantidad disponible directamente de la columna quantity
+        $coupon['remaining'] = Yii::$app->db->createCommand("
+            SELECT quantity FROM coupon WHERE code = :code
+        ")->bindValue(':code', $coupon['code'])->queryScalar() ?: 0;
+    }
     
     // Si no hay datos de cupones, proporcionar algunos por defecto
     if (empty($coupons)) {

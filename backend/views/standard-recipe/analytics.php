@@ -27,6 +27,15 @@ $this->title = Yii::t('app', "Menu Analysis");
                     'id' => 'family-selector'
                 ]) ?>
             </div>
+            <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
+            </div>
+            <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 text-md-end mb-2">
+                <?= \yii\bootstrap5\Html::a(
+                    Yii::t('app', 'Ver recomendaciones'),
+                    ['standard-recipe/menu-improvement'],
+                    ['class' => 'btn btn-primary']
+                ) ?>
+            </div>
         </div>
     </div>
     <div class="card-body">

@@ -315,14 +315,14 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="equipment-section" class="form-label"><?= Yii::t('app', 'Sección (opcional)') ?></label>
-                    <input type="text" class="form-control" id="equipment-section" name="equipment-section" placeholder="<?= Yii::t('app', 'Ej: Para la preparación de la mezcla') ?>">
-                    <small class="form-text text-muted"><?= Yii::t('app', 'Agrupe los equipos por sección o deje en blanco') ?></small>
+                 <div class="mb-3">
+                    <label for="equipment-name" class="form-label"><?= Yii::t('app', 'Equipo o utensilio') ?></label>
+                    <input type="text" class="form-control" id="equipment-name" name="equipment-name" placeholder="<?= Yii::t('app', 'Ej: Tabla de cortar, Cuchillo, Bowl') ?>">
                 </div>
                 <div class="mb-3">
-                    <label for="equipment-name" class="form-label"><?= Yii::t('app', 'Nombre del equipo o utensilio') ?></label>
-                    <input type="text" class="form-control" id="equipment-name" name="equipment-name" placeholder="<?= Yii::t('app', 'Ej: Tabla de cortar, Cuchillo, Bowl') ?>">
+                    <label for="equipment-section" class="form-label"><?= Yii::t('app', 'Sección (opcional)') ?></label>
+                    <input type="text" class="form-control" id="equipment-section" name="equipment-section" placeholder="<?= Yii::t('app', 'Agrupa los equipos por áreas de uso(ej. Cocción, Emplatado)') ?>">
+                    <small class="form-text text-muted"><?= Yii::t('app', 'Agrupe los equipos por sección o deje en blanco') ?></small>
                 </div>
                 <div class="mb-3">
                     <label for="equipment-description" class="form-label"><?= Yii::t('app', 'Descripción (opcional)') ?></label>
@@ -331,13 +331,13 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                 <div class="form-check form-switch mb-3">
                 <input class="form-check-input" type="checkbox" id="equipment-essential" name="equipment-essential">
                     <label class="form-check-label" for="equipment-essential"><?= Yii::t('app', 'Equipo esencial') ?></label>
-                    <small class="d-block text-muted"><?= Yii::t('app', 'Marque esta opción si es indispensable para la preparación') ?></small>
+                    <small class="d-block text-muted"><?= Yii::t('app', 'Marca esta opción si sin este equipo no se podría preparar la receta.') ?></small>
                 </div>
                 <input type="hidden" id="equipment-index" name="equipment-index" value="-1">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cancelar') ?></button>
-                <button type="button" class="btn btn-primary" id="save-equipment"><?= Yii::t('app', 'Guardar equipo') ?></button>
+                <button type="button" class="btn btn-success" id="save-equipment"><?= Yii::t('app', 'Guardar equipo') ?></button>
             </div>
         </div>
     </div>
@@ -713,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const portionsField = document.getElementById('standardrecipe-portions');
     const portionsContainer = document.getElementById('portions-container');
     
-    // Unidades volumétricas o de peso
+    // Unidades volumétricas o de peso (con sus variantes)
     const volumeWeightUMs = [
         'litro', 'litros', 'l', 'lt', 'lts',  
         'kilogramo', 'kilogramos', 'kg', 'kgs',
@@ -731,38 +731,62 @@ document.addEventListener('DOMContentLoaded', function() {
         'unidad', 'unidades'
     ];
     
+    // Mapa de equivalencias de unidades (para normalizar)
+    const umEquivalences = {
+        'kg': ['kg', 'kgs', 'kilogramo', 'kilogramos'],
+        'g': ['g', 'gr', 'gramo', 'gramos'],
+        'l': ['l', 'lt', 'lts', 'litro', 'litros'],
+        'ml': ['ml', 'mls', 'mililitro', 'mililitros'],
+        'oz': ['oz', 'onza', 'onzas'],
+        'lb': ['lb', 'lbs', 'libra', 'libras'],
+        'porción': ['porción', 'porciones', 'porcion', 'porciones'],
+        'pieza': ['pieza', 'piezas'],
+        'rebanada': ['rebanada', 'rebanadas'],
+        'unidad': ['unidad', 'unidades']
+    };
+    
     function normalizeText(text) {
+        if (!text) return '';
         return text.toLowerCase()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar acentos
     }
     
+    function getNormalizedUnitType(unit) {
+        const normalizedUnit = normalizeText(unit);
+        for (const [baseUnit, variants] of Object.entries(umEquivalences)) {
+            if (variants.some(variant => normalizedUnit.includes(variant))) {
+                return baseUnit;
+            }
+        }
+        return normalizedUnit; // Si no encuentra coincidencia, devuelve la unidad normalizada
+    }
+    
+    function areEquivalentUnits(unit1, unit2) {
+        const normalizedUnit1 = getNormalizedUnitType(unit1);
+        const normalizedUnit2 = getNormalizedUnitType(unit2);
+        return normalizedUnit1 === normalizedUnit2;
+    }
+    
     function updatePortionsInfo() {
-        if (!umField || !portionsField) return;
+        if (!umField || !portionsField || !yieldUmField) return;
         
-        const selectedUM = normalizeText(umField.value);
-        const selectedYieldUM = yieldUmField ? normalizeText(yieldUmField.value) : '';
+        const finalUnit = umField.value;
+        const yieldUnit = yieldUmField.value;
         
-        let tooltipText = '';
-        
-        // Caso 1: Si unidad final es volumen/peso
-        if (volumeWeightUMs.some(um => selectedUM.includes(normalizeText(um)))) {
-            // Opciones
-            tooltipText = 'Opciones para unidad final ' + umField.value + ':<br>' +
-                          '1. Rendimiento en ' + umField.value + ' → porciones = 1<br>' +
-                          '2. Rendimiento en PORCIÓN → porciones = cualquier número';
-        }
-        // Caso 2: Si unidad final es porción/individual
-        else if (individualUMs.some(um => selectedUM.includes(normalizeText(um)))) {
-            tooltipText = 'Opciones para porciones:<br>' +
-                          '1. Rendimiento en LITROS/KILOGRAMOS → porciones = cualquier número<br>' +
-                          '2. Rendimiento en PORCIÓN → porciones = 1<br>' +
-                          '3. Rendimiento en PORCIÓN → porciones = cualquier número';
-        }
-        
-        // Mostrar información de ayuda
-        if (tooltipText) {
+        // Caso: Si ambas unidades son la misma unidad de peso/volumen, porciones = 1
+        if (areEquivalentUnits(finalUnit, yieldUnit) && 
+            volumeWeightUMs.some(um => normalizeText(finalUnit).includes(normalizeText(um)))) {
+            portionsField.value = '1';
+            portionsField.setAttribute('readonly', 'readonly'); // Hacer el campo de solo lectura
+            
+            // Agregar indicador visual y tooltip explicativo
+            portionsField.classList.add('bg-light');
+            
+            // Mostrar tooltip explicativo
+            const tooltipText = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad final son la misma unidad de peso/volumen (${finalUnit}).`;
+            
             const formHelp = portionsContainer.querySelector('.form-text') || document.createElement('small');
-            formHelp.className = 'form-text text-muted mt-1';
+            formHelp.className = 'form-text text-info mt-1';
             formHelp.innerHTML = tooltipText;
             
             if (!portionsContainer.querySelector('.form-text')) {
@@ -771,8 +795,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 portionsContainer.querySelector('.form-text').innerHTML = tooltipText;
             }
         } else {
-            const tooltipElement = portionsContainer.querySelector('.form-text');
-            if (tooltipElement) tooltipElement.remove();
+            // Si no cumple la condición, quitar el readonly y restaurar el estilo
+            portionsField.removeAttribute('readonly');
+            portionsField.classList.remove('bg-light');
+            
+            // Mostrar información de ayuda según el caso
+            let tooltipText = '';
+            
+            // Caso 1: Si unidad final es volumen/peso
+            if (volumeWeightUMs.some(um => normalizeText(finalUnit).includes(normalizeText(um)))) {
+                tooltipText = 'Opciones para unidad final ' + finalUnit + ':<br>' +
+                              '1. Rendimiento en ' + finalUnit + ' → porciones = 1<br>' +
+                              '2. Rendimiento en PORCIÓN → porciones = cualquier número';
+            }
+            // Caso 2: Si unidad final es porción/individual
+            else if (individualUMs.some(um => normalizeText(finalUnit).includes(normalizeText(um)))) {
+                tooltipText = 'Opciones para porciones:<br>' +
+                              '1. Rendimiento en LITROS/KILOGRAMOS → porciones = cualquier número<br>' +
+                              '2. Rendimiento en PORCIÓN → porciones = 1<br>' +
+                              '3. Rendimiento en PORCIÓN → porciones = cualquier número';
+            }
+            
+            // Mostrar información de ayuda
+            if (tooltipText) {
+                const formHelp = portionsContainer.querySelector('.form-text') || document.createElement('small');
+                formHelp.className = 'form-text text-muted mt-1';
+                formHelp.innerHTML = tooltipText;
+                
+                if (!portionsContainer.querySelector('.form-text')) {
+                    portionsField.parentNode.appendChild(formHelp);
+                } else {
+                    portionsContainer.querySelector('.form-text').innerHTML = tooltipText;
+                }
+            } else {
+                const tooltipElement = portionsContainer.querySelector('.form-text');
+                if (tooltipElement) tooltipElement.remove();
+            }
         }
     }
     

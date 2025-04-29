@@ -13,6 +13,7 @@ $ingredients = \common\models\IngredientStock::find()
     ])
     ->groupBy(['ingredient_stock.id', 'movement.ingredient_id'])
     ->orderBy(['totalQuantity' => SORT_ASC])
+    ->limit(20)
     ->asArray()
     ->all();
 
