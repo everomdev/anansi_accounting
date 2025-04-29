@@ -8,31 +8,197 @@ $movements = $business->getMovements()
 ->limit(10)
 ->all();
 
+// CSS personalizado para el nuevo diseño
+$this->registerCss("
+    .movements-container {
+        background: linear-gradient(to right, #ffffff, #f8f9fa);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        height: 380px; /* Altura fija */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .movements-container:hover {
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    }
+    
+    .movements-header {
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0; /* Evitar que el encabezado se encoja */
+    }
+    
+    .movements-header h5 {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: #2c3e50;
+        margin-bottom: 0;
+        font-size: 1.15rem;
+    }
+    
+    .movements-content {
+        overflow-y: auto; /* Agregar scroll vertical */
+        flex-grow: 1; /* Permitir que el contenido ocupe el espacio restante */
+        scrollbar-width: thin; /* Para Firefox */
+        scrollbar-color: rgba(52, 152, 219, 0.5) rgba(236, 240, 241, 0.5); /* Para Firefox */
+    }
+    
+    /* Estilizar scrollbar para navegadores webkit (Chrome, Safari, Edge) */
+    .movements-content::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .movements-content::-webkit-scrollbar-track {
+        background: rgba(236, 240, 241, 0.5);
+        border-radius: 10px;
+    }
+    
+    .movements-content::-webkit-scrollbar-thumb {
+        background-color: rgba(52, 152, 219, 0.5);
+        border-radius: 10px;
+    }
+    
+    .movements-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+    }
+    
+    .movements-table th {
+        padding: 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 0;
+        background: #f8f9fa;
+        z-index: 1;
+    }
+    
+    .movements-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        vertical-align: middle;
+        color: #34495e;
+    }
+    
+    .movements-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .movements-table tr:hover {
+        background-color: rgba(52, 152, 219, 0.03);
+    }
+    
+    .movement-type {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .movement-type-input {
+        background-color: rgba(46, 204, 113, 0.15);
+        color: #27ae60;
+    }
+    
+    .movement-type-output {
+        background-color: rgba(231, 76, 60, 0.15);
+        color: #c0392b;
+    }
+    
+    .movement-ingredient {
+        font-weight: 500;
+    }
+    
+    .movement-quantity {
+        white-space: nowrap;
+    }
+    
+    .movement-total {
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .empty-movements {
+        text-align: center;
+        padding: 2rem 0;
+        color: #95a5a6;
+    }
+    
+    .empty-movements i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .movements-badge {
+        background: rgba(52, 73, 94, 0.1);
+        color: #34495e;
+        font-weight: 600;
+        padding: 0.35rem 0.85rem;
+        border-radius: 100px;
+        font-size: 0.85rem;
+    }
+");
 ?>
-<div class="p-2">
-    <div class="card bg-secondary text-white mb-3">
-        <div class="card-header">
-            <span class="card-title"><strong>Movimientos</strong></span>
-        </div>
-        <div class="card-body">
-            <table class="table text-white table-borderless">
+
+<div class="movements-container">
+    <div class="movements-header">
+        <h5>Últimos Movimientos</h5>
+        <span class="movements-badge"><?= count($movements) ?> recientes</span>
+    </div>
+    
+    <div class="movements-content">
+        <?php if (empty($movements)): ?>
+            <div class="empty-movements">
+                <i class="fas fa-exchange-alt"></i>
+                <p>No hay movimientos recientes</p>
+            </div>
+        <?php else: ?>
+            <table class="movements-table">
                 <thead>
-                <th class="text-white">Tipo</th>
-                <th class="text-white">Insumo</th>
-                <th class="text-white">Cantidad</th>
-                <th class="text-white">Total</th>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Insumo</th>
+                        <th>Cantidad</th>
+                        <th style="text-align: right">Total</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($movements as $movement): ?>
-                    <tr>
-                        <td><?= $movement->getFormattedType() ?></td>
-                        <td><?= $movement->ingredient->ingredient ?></td>
-                        <td><?= sprintf("%s %s", $movement->quantity, $movement->ingredient->um) ?></td>
-                        <td><?= $business->formatter->asCurrency($movement->total) ?></td>
-                    </tr>
-                <?php endforeach; ?>
+                    <?php foreach ($movements as $movement): ?>
+                        <tr>
+                            <td>
+                                <?php 
+                                $typeClass = $movement->type == \common\models\Movement::TYPE_INPUT ? 'movement-type-input' : 'movement-type-output';
+                                $typeIcon = $movement->type == \common\models\Movement::TYPE_INPUT ? 'fas fa-arrow-down' : 'fas fa-arrow-up';
+                                ?>
+                                <span class="movement-type <?= $typeClass ?>">
+                                    <i class="<?= $typeIcon ?> me-1"></i>
+                                    <?= $movement->getFormattedType() ?>
+                                </span>
+                            </td>
+                            <td class="movement-ingredient"><?= $movement->ingredient->ingredient ?></td>
+                            <td class="movement-quantity"><?= sprintf("%s %s", $movement->quantity, $movement->ingredient->um) ?></td>
+                            <td class="movement-total"><?= $business->formatter->asCurrency($movement->total) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
-        </div>
+        <?php endif; ?>
     </div>
 </div>
