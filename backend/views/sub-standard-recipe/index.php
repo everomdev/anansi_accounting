@@ -109,6 +109,9 @@ $this->registerCss('
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
+        'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
+        'options' => ['class' => 'grid-view sticky-header-grid'],
+        'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
             [

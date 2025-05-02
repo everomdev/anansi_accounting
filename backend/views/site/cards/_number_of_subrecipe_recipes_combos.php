@@ -156,7 +156,7 @@ $this->registerJs("
             <div class="recipe-stat-meta">
                 <div class="recipe-stat-label">
                     <i class="fas fa-utensils text-primary"></i>
-                    Recetas Principales
+                    Recetas
                 </div>
                 <div class="recipe-stat-value">
                     <?= $recipesCount ?> <span><?= $recipesPercent ?>%</span>

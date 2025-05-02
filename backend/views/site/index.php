@@ -110,14 +110,21 @@ $this->registerCss("
             </div>
         </div>
     <?php endif; ?>
+    <?php if (Yii::$app->user->can('movements_list')): ?>
+        <div class="dashboard-card-medium">
+            <div class="dashboard-card-content">
+                <?= $this->render('cards/_movements', ['business' => $business]) ?>
+            </div>
+        </div>
+    <?php endif; ?>
     
-    <?php if (Yii::$app->user->can('ingredients_list')): ?>
+    <!-- <?php if (Yii::$app->user->can('ingredients_list')): ?>
         <div class="dashboard-card-medium">
             <div class="dashboard-card-content">
                 <?= $this->render('cards/_ingredients_with_one_provider', ['business' => $business]) ?>
             </div>
         </div>
-    <?php endif; ?>
+    <?php endif; ?> -->
     
     <!-- Tercera fila - Tablas y otros componentes -->
     <?php if (Yii::$app->user->can('recipe_list')): ?>
@@ -145,13 +152,7 @@ $this->registerCss("
         </div>
     <?php endif; ?>
     
-    <?php if (Yii::$app->user->can('movements_list')): ?>
-        <div class="dashboard-card-medium">
-            <div class="dashboard-card-content">
-                <?= $this->render('cards/_movements', ['business' => $business]) ?>
-            </div>
-        </div>
-    <?php endif; ?>
+    
     <!-- Segunda fila - Datos con scroll -->
     <?php if (Yii::$app->user->can('recipe_list')): ?>
         <div class="dashboard-card-medium">

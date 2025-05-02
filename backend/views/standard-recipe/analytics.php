@@ -32,7 +32,7 @@ $this->title = Yii::t('app', "Menu Analysis");
             <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 text-md-end mb-2">
                 <?= \yii\bootstrap5\Html::a(
                     Yii::t('app', 'Ver recomendaciones'),
-                    ['standard-recipe/menu-improvement'],
+                    ['standard-recipe/menu-improvement', '#' => 'recommendations-section'],
                     ['class' => 'btn btn-primary']
                 ) ?>
             </div>

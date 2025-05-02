@@ -2401,8 +2401,11 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      }
      
      // 12. Nota informativa
-     $ingredientsSheet->setCellValue('G1', 'NOTA: El nombre de la receta debe existir primero en la hoja "FICHA GENERAL DE LA RECETA"');
-     $ingredientsSheet->mergeCells('G1:J1');
+    $noteText = ($type === 'sub') 
+        ? 'NOTA: El nombre de la subreceta debe existir primero en la hoja "FICHA GENERAL DE LA SUBRECETA"' 
+        : 'NOTA: El nombre de la receta debe existir primero en la hoja "FICHA GENERAL DE LA RECETA"';
+    $ingredientsSheet->setCellValue('G1', $noteText);
+     $ingredientsSheet->mergeCells('G1:Q1');
      $ingredientsSheet->getStyle('G1')->getFont()
          ->setItalic(true)
          ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED));
