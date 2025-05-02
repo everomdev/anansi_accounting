@@ -279,7 +279,7 @@ class Plan extends \yii\db\ActiveRecord
         return sprintf("%s - $%s USD/mes o $%s USD/año - %s dias de prueba", $this->name, $this->monthly_price, $this->yearly_price, $this->trial_days);
     }
 
-    public function generateCheckoutSession(User $user, $priceId, $priceAmount, $coupon_id = null, $nickname = null)
+    public function generateCheckoutSession(User $user, $priceId, $priceAmount, $coupon_id, $nickname = null)
     {
         try {
             /** @var UserPlan $userPlan */
@@ -316,7 +316,7 @@ class Plan extends \yii\db\ActiveRecord
                 ],
             ];
             // Agregar line_items según si hay un coupon_id o no
-            if ($coupon_id) {
+            if ($coupon_id !== 'null') {
                 $sessionData['line_items'][] = [
                     'price' => $priceId,
                     'quantity' => 1
@@ -324,6 +324,12 @@ class Plan extends \yii\db\ActiveRecord
                 $coupon = Coupon::findOne(['id' => $coupon_id]);
                 $sessionData['discounts'] = [
                     ['coupon' => $coupon->stripe_coupon_id]
+                ];
+            } else {
+                // Always add line_items even without a coupon
+                $sessionData['line_items'][] = [
+                    'price' => $priceId,
+                    'quantity' => 1
                 ];
             }
             //die(var_dump('session'));
