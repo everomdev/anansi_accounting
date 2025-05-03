@@ -175,13 +175,16 @@ class IngredientStock extends \yii\db\ActiveRecord
         }
 
         // Save providers
-        $this->unlinkAll('providers', true);
-        foreach ($this->providers as $providerId) {
-            $provider = Provider::findOne($providerId);
-            if ($provider) {
-                $this->link('providers', $provider);
+        if (isset($this->providers) && is_array($this->providers)) {
+            $this->unlinkAll('providers', true);
+            foreach ($this->providers as $providerId) {
+                $provider = Provider::findOne($providerId);
+                if ($provider) {
+                    $this->link('providers', $provider);
+                }
             }
         }
+        
     }
 
     public function afterFind()
