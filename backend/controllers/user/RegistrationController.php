@@ -37,6 +37,7 @@ use yii\base\Module;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\symfonymailer\Message;
 
 class RegistrationController extends Controller
 {
@@ -437,9 +438,23 @@ public function actionVerificarEmail()
         protected function enviarEmailVerificacion($email, $codigo)
         {
             // Crear un usuario temporal para usar con el servicio de correo
-            $tempUser = new \common\models\User();
+            $body = <<< HTML
+            <p>Buenas, </p>
+            <p>
+            Este es el código a insertar para habilitar la autenticación de dos factores:
+            </p>
+            <p><strong>Tu código de verificación:</strong> {$codigo}</p>
+        HTML;
+
+            return Yii::$app->mailer->send((new Message())
+                ->setTo($email)
+                ->setFrom([Yii::$app->params['senderEmail'] => Yii::$app->params['senderName']])
+                ->setSubject("Código para la autenticación de dos factores")
+                ->setHtmlBody($body)
+            );
+            /*$tempUser = new \common\models\User();
             $tempUser->email = $email;
             $mailService = MailFactory::makeTwoFactorCodeMailerService($tempUser, $codigo);
-            return $mailService->run();
+            return $mailService->run();*/
         }
 }
