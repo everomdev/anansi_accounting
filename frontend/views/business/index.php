@@ -22,6 +22,14 @@ $this->params['breadcrumbs'][] = $this->title;
 
             'name',
             'user.profile.name',
+            [
+                'attribute' => 'user.email',
+                'label' => 'Correo Electrónico',
+                'format' => 'email',
+                'value' => function ($model) {
+                    return $model->user->email ?? null;
+                },
+            ],
 
             [
                     'class' => 'yii\grid\ActionColumn',
