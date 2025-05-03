@@ -444,6 +444,16 @@ public function actionVerificarEmail()
             Este es el código a insertar para habilitar la autenticación de dos factores:
             </p>
             <p><strong>Tu código de verificación:</strong> {$codigo}</p>
+            <p>
+            Válido por 10 minutos. No lo compartas.
+            </p>
+            <p>
+            Si no lo solicitaste, avísanos.
+            </p>
+            <p>
+            No responda a este correo.
+            </p>
+            <p><strong>Saludos,</strong></p>
         HTML;
 
             return Yii::$app->mailer->send((new Message())
