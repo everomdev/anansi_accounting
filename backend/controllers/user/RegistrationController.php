@@ -79,7 +79,7 @@ class RegistrationController extends Controller
                 'rules' => [
                     [
                         'allow' => true,
-                        'actions' => ['register', 'connect'],
+                        'actions' => ['register', 'connect' ,'verificar-email',],
                         'roles' => ['?'],
                     ],
                     [
@@ -100,6 +100,11 @@ class RegistrationController extends Controller
 
         if (!$this->module->enableRegistration) {
             throw new NotFoundHttpException();
+        }
+        // Verificar si el email ha sido verificado antes de permitir el acceso al formulario de registro
+        $emailVerificado = Yii::$app->session->get('email_verificado');
+        if (!$emailVerificado) {
+            return $this->redirect(['verificar-email']);
         }
         $this->layout = '@backend/views/layouts/blank.php';
         /** @var RegistrationForm $form */
@@ -349,4 +354,96 @@ class RegistrationController extends Controller
             ]
         );
     }
+    /**
+ * Primer paso: verificar email antes de mostrar formulario de registro
+ */
+public function actionVerificarEmail()
+{
+    if (!$this->module->enableRegistration) {
+        throw new NotFoundHttpException();
+    }
+    
+    $this->layout = '@backend/views/layouts/blank.php';
+    
+    // Modelo simple para recolectar solo el email
+    $model = new \yii\base\DynamicModel(['email', 'codigo_verificacion']);
+    $model->addRule(['email'], 'required')
+          ->addRule(['email'], 'email')
+          ->addRule(['codigo_verificacion'], 'string');
+    
+    // Paso 1: Usuario envía email para obtener código de verificación
+    if (Yii::$app->request->isPost && isset($_POST['enviar_codigo']) && $model->load(Yii::$app->request->post())) {
+        if ($model->validate(['email'])) {
+            // Verificar si el email ya existe en el sistema
+            $usuarioExistente = $this->userQuery->whereEmail($model->email)->one();
+            if ($usuarioExistente) {
+                Yii::$app->session->setFlash('danger', Yii::t('usuario', 'Este correo electrónico ya está registrado.'));
+                return $this->redirect(['verificar-email']);
+            }
+            
+            // Generar código aleatorio de verificación (6 dígitos)
+            $codigoVerificacion = sprintf("%06d", mt_rand(100000, 999999));
+            
+            // Almacenar el código en sesión con email
+            Yii::$app->session->set('datos_verificacion', [
+                'email' => $model->email,
+                'codigo' => $codigoVerificacion,
+                'expira' => time() + 15*60, // 15 minutos de expiración
+            ]);
+            
+            // Enviar el código de verificación por correo
+            $this->enviarEmailVerificacion($model->email, $codigoVerificacion);
+            
+            Yii::$app->session->setFlash('success', Yii::t('usuario', 
+                'Se ha enviado un código de verificación a tu correo electrónico. Por favor revisa tu bandeja de entrada e ingresa el código a continuación.'));
+            return $this->redirect(['verificar-email', 'email' => $model->email]);
+        }
+    }
+    
+    // Paso 2: Usuario envía el código de verificación
+    if (Yii::$app->request->isPost && isset($_POST['verificar_codigo']) && $model->load(Yii::$app->request->post())) {
+        $datosVerificacion = Yii::$app->session->get('datos_verificacion');
+        
+        // Comprobar si los datos de verificación existen y siguen siendo válidos
+        if (!$datosVerificacion || $datosVerificacion['expira'] < time()) {
+            Yii::$app->session->setFlash('danger', Yii::t('usuario', 
+                'El código de verificación ha expirado. Por favor solicita uno nuevo.'));
+            return $this->redirect(['verificar-email']);
+        }
+        
+        // Validar el código
+        if ($model->codigo_verificacion == $datosVerificacion['codigo']) {
+            // Almacenar el email verificado en sesión
+            Yii::$app->session->set('email_verificado', $datosVerificacion['email']);
+            
+            // Redirigir al formulario completo de registro
+            return $this->redirect(['register']);
+        } else {
+            Yii::$app->session->setFlash('danger', Yii::t('usuario', 
+                'Código de verificación inválido. Por favor intenta de nuevo.'));
+        }
+    }
+    
+    return $this->render('verificar-email', [
+        'model' => $model,
+        'mostrarInputCodigo' => isset($_GET['email']),
+        'email' => isset($_GET['email']) ? $_GET['email'] : '',
+    ]);
+}
+    
+        /**
+        * Método para enviar el código de verificación por correo electrónico
+        */
+        protected function enviarEmailVerificacion($email, $codigo)
+        {
+            return Yii::$app->mailer->compose(
+                ['html' => '@backend/views/user/mail/codigo-verificacion'],  // Ruta a la plantilla HTML
+                ['codigo' => $codigo]  // Variables que pasas a la plantilla
+            )
+                ->setFrom([Yii::$app->params['supportEmail'] => Yii::$app->name])
+                ->setTo($email)
+                ->setSubject(Yii::$app->name . ' - Código de Verificación')
+                ->setCharset('UTF-8')
+                ->send();
+        }
 }

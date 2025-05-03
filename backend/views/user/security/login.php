@@ -99,7 +99,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <?php endif ?>
                         <?php if ($module->enableRegistration): ?>
                             <p class="text-center">
-                                <?= Html::a(Yii::t('usuario', 'Don\'t have an account? Sign up!'), ['/user/registration/register']) ?>
+                                <?= Html::a(Yii::t('usuario', 'Don\'t have an account? Sign up!'), ['/user/registration/verificar-email']) ?>
                             </p>
                         <?php endif ?>
                     </div>
