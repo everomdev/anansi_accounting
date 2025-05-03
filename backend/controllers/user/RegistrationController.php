@@ -436,14 +436,10 @@ public function actionVerificarEmail()
         */
         protected function enviarEmailVerificacion($email, $codigo)
         {
-            return Yii::$app->mailer->compose(
-                ['html' => '@backend/views/user/mail/codigo-verificacion'],  // Ruta a la plantilla HTML
-                ['codigo' => $codigo]  // Variables que pasas a la plantilla
-            )
-                ->setFrom([Yii::$app->params['supportEmail'] => Yii::$app->name])
-                ->setTo($email)
-                ->setSubject(Yii::$app->name . ' - Código de Verificación')
-                ->setCharset('UTF-8')
-                ->send();
+            // Crear un usuario temporal para usar con el servicio de correo
+            $tempUser = new \common\models\User();
+            $tempUser->email = $email;
+            $mailService = MailFactory::makeTwoFactorCodeMailerService($tempUser, $codigo);
+            return $mailService->run();
         }
 }
