@@ -7,7 +7,7 @@ use yii\grid\GridView;
 /* @var $searchModel common\models\BusinessSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Businesses';
+$this->title = 'Empresas';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="business-index">
@@ -20,7 +20,10 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-            'name',
+            [
+                'attribute' => 'name',
+                'label' => 'Nombre de la Empresa',
+            ],
             'user.profile.name',
             [
                 'attribute' => 'user.email',
