@@ -43,11 +43,12 @@ class Provider extends \yii\db\ActiveRecord
         return [
             [['business_name', 'business_id'], 'required'],
             [['business_id'], 'integer'],
-            [['name', 'address', 'phone', 'second_phone', 'email', 'payment_method', 'account', 'credit_days', 'rfc', 'business_name', 'advantages', 'disadvantages', 'observations'], 'string', 'max' => 255],
+            ['payment_method', 'each', 'rule' => ['string']],
+            ['payment_method', 'required', 'message' => 'Debe seleccionar al menos un método de pago'],
+            [['name', 'address', 'phone', 'second_phone', 'email', 'account', 'credit_days', 'rfc', 'business_name', 'advantages', 'disadvantages', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
         ];
     }
-
     /**
      * {@inheritdoc}
      */
@@ -71,6 +72,32 @@ class Provider extends \yii\db\ActiveRecord
             'observations' => Yii::t('app', 'Observations'),
         ];
     }
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            // Convertir el array de métodos de pago a string para la BD
+            if (is_array($this->payment_method)) {
+                $this->payment_method = implode(',', $this->payment_method);
+            }
+            return true;
+        }
+        return false;
+    }
+     /**
+     * {@inheritdoc}
+     */
+    public function afterFind()
+    {
+        parent::afterFind();
+        // Convertir el string de la BD a array para el formulario
+        if (!empty($this->payment_method)) {
+            $this->payment_method = explode(',', $this->payment_method);
+        }
+    }
+
 
     /**
      * Gets query for [[Business]].

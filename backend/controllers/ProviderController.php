@@ -116,6 +116,8 @@ class ProviderController extends Controller
 
         $post = Yii::$app->request->post();
         if (array_key_exists('ajax', $post)) {
+            $model->payment_method = is_array($model->payment_method) ? 
+            implode(',', $model->payment_method) : '';
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
 
@@ -140,6 +142,8 @@ class ProviderController extends Controller
         $model = $this->findModel($id);
         $post = Yii::$app->request->post();
         if (array_key_exists('ajax', $post)) {
+            $model->payment_method = is_array($model->payment_method) ? 
+            implode(',', $model->payment_method) : '';
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
         if ($model->load($post) && $model->save()) {

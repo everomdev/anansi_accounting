@@ -2,6 +2,7 @@
 
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use kartik\select2\Select2;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Provider */
@@ -72,16 +73,32 @@ use yii\widgets\ActiveForm;
                         ->label(Yii::t('app', 'Dirección')) ?>
                 </div>
                 
-                <div class="col-md-4 mb-3">
-                    <?= $form->field($model, 'payment_method')
-                        ->dropDownList([
-                            'Efectivo' => Yii::t('app', 'Efectivo'),
-                            'Transferencia' => Yii::t('app', 'Transferencia'),
-                            'Cheque' => Yii::t('app', 'Cheque'),
-                            'Tarjeta' => Yii::t('app', 'Tarjeta de Crédito/Débito'),
-                            'Otro' => Yii::t('app', 'Otro')
-                        ], ['prompt' => Yii::t('app', 'Seleccionar método de pago')])
-                        ->label(Yii::t('app', 'Método de Pago')) ?>
+                <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                    <?= $form->field($model, 'payment_method')->widget(Select2::class, [
+                        'data' => [
+                            'cash' => Yii::t('app', 'Efectivo'),
+                            'transfer' => Yii::t('app', 'Transferencia Bancaria'),
+                            'check' => Yii::t('app', 'Cheque'),
+                            'credit_card' => Yii::t('app', 'Tarjeta de Crédito'),
+                            'debit_card' => Yii::t('app', 'Tarjeta de Débito'),
+                            'other' => Yii::t('app', 'Otro Método'),
+                        ],
+                        'options' => [
+                            'placeholder' => Yii::t('app', 'Selecciona los métodos de pago aceptados...'),
+                            'multiple' => true
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'tags' => true, // Permite agregar métodos personalizados
+                            'maximumInputLength' => 50,
+                        ],
+                        'pluginEvents' => [
+                            'change' => 'function() { 
+                                console.log($(this).val()); 
+                                // Aquí puedes agregar lógica adicional al cambiar la selección
+                            }',
+                        ],
+                    ])->label(Yii::t('app', 'Métodos de Pago Aceptados')) ?>
                 </div>
                 
                 <div class="col-md-4 mb-3">
