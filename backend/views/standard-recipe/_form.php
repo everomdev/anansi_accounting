@@ -781,9 +781,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Agregar indicador visual y tooltip explicativo
             portionsField.classList.add('bg-light');
-            
             // Mostrar tooltip explicativo
-            const tooltipText = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad final son la misma unidad de peso/volumen (${finalUnit}).`;
+            let tooltipText;
+            const recipeType = '<?= $model->type ?>';
+            
+            if (recipeType == '<?= \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB ?>') {
+                tooltipText = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad de medida son la misma unidad de peso/volumen (${finalUnit}).`;
+            } else {
+                tooltipText = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad final son la misma unidad de peso/volumen (${finalUnit}).`;
+            }
             
             const formHelp = portionsContainer.querySelector('.form-text') || document.createElement('small');
             formHelp.className = 'form-text text-info mt-1';

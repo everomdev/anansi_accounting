@@ -185,7 +185,7 @@ $this->registerCss('
                 'template' => "{update} {delete}",
                 'buttons' => [
                     'update' => function ($url, $model, $key) {
-                        return Html::a('<i class="fa fa-edit"></i>', \yii\helpers\Url::to(['standard-recipe/update', 'id' => $model->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'text-warning']);
+                        return Html::a('<i class="fas fa-pencil-alt"></i>', \yii\helpers\Url::to(['standard-recipe/update', 'id' => $model->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'text-warning']);
                     },
 
                 ],
