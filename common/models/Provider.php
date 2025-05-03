@@ -41,7 +41,7 @@ class Provider extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'business_id'], 'required'],
+            [['business_name', 'business_id'], 'required'],
             [['business_id'], 'integer'],
             [['name', 'address', 'phone', 'second_phone', 'email', 'payment_method', 'account', 'credit_days', 'rfc', 'business_name', 'advantages', 'disadvantages', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
