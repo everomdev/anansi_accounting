@@ -279,7 +279,7 @@ $(document).on('click', '.update-ingredient', function (event) {
     let isRecipe = $(this).data('is-recipe');
     let model = $(this).data('model');
     let currentItemName = $(this).data('name');
-    console.log(model);
+    let currentItemId = $(this).data('id');  // Guarda el ID del elemento actual
     
     // Limpiar el select
     $("#ingredient-select").empty();
@@ -294,10 +294,9 @@ $(document).on('click', '.update-ingredient', function (event) {
             type: 'GET',
             success: function(response) {
                 let selectOptions = '';
-                console.log(response);
                 
-                // Agregar la subreceta actual como primera opción
-                selectOptions += `<option value="${$(this).data('id')}" selected>${currentItemName}</option>`;
+                // Usar el ID guardado anteriormente
+                selectOptions += `<option value="${currentItemId}" selected>${currentItemName}</option>`;
                 
                 // Agregar el resto de subrecetas disponibles
                 response.forEach(function(subrecipe) {
@@ -319,8 +318,8 @@ $(document).on('click', '.update-ingredient', function (event) {
             type: 'GET',
             success: function(response) {
                 let selectOptions = '';
-                // Agregar el ingrediente actual como primera opción
-                selectOptions += `<option value="${$(this).data('id')}" selected>${currentItemName}</option>`;
+                // Usar el ID guardado anteriormente
+                selectOptions += `<option value="${currentItemId}" selected>${currentItemName}</option>`;
                 
                 // Agregar el resto de ingredientes disponibles
                 response.ingredients.forEach(function(ingredient) {
@@ -357,6 +356,8 @@ $(document).on('click', '#btn-update-ingredient', function (event) {
     let quantity = $("#ingredient-update-quantity").val();
     let selectedItem = $("#ingredient-select").val();
     let isRecipe = $(this).data('is-recipe');
+    console.log(selectedItem,quantity, isRecipe);
+    
     
     // Validar que la cantidad sea un número válido
     if (!quantity || isNaN(parseFloat(quantity))) {
