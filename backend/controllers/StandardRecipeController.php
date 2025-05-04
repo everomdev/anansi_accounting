@@ -264,16 +264,36 @@ class StandardRecipeController extends Controller
     public function actionIndex($type = StandardRecipe::STANDARD_RECIPE_TYPE_MAIN)
     {
         $page = (int)Yii::$app->request->get('page', 1);
-        // Personalizar elementos por página
-        $perPage = (int)Yii::$app->request->get('per-page');
-        if (!in_array($perPage, [10, 25, 50, 100])) {
-            $perPage = 10; // Valor predeterminado
+        // Obtener el valor de la cookie si existe
+        $savedPageSize = (int)Yii::$app->request->cookies->getValue('recipe_page_size', 10);
+        
+        // Personalizar elementos por página - solo si viene en la URL
+        $perPage = Yii::$app->request->get('per-page');
+        
+        // Si perPage no viene en la URL o no es válido, usar el valor guardado en la cookie
+        if (!$perPage || !in_array((int)$perPage, [10, 25, 50, 100])) {
+            $perPage = $savedPageSize;
+        } else {
+            // Solo guardar una nueva cookie si el valor es diferente al que ya tenemos
+            if ((int)$perPage !== $savedPageSize) {
+                $cookie = new \yii\web\Cookie([
+                    'name' => 'recipe_page_size',
+                    'value' => (int)$perPage,
+                    'expire' => time() + 86400 * 30,
+                ]);
+                Yii::$app->response->cookies->add($cookie);
+            }
         }
-        Url::remember(['standard-recipe/index', 'type' => $type, 'page' => $page], 'index-recipe');
+        
+        // Usar perPage como la cantidad de elementos por página
+        $pageSize = (int)$perPage;
+        
+        // Incluir siempre el per-page en la URL recordada
+        Url::remember(['standard-recipe/index', 'type' => $type, 'page' => $page, 'per-page' => $pageSize], 'index-recipe');
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new StandardRecipeSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-        $dataProvider->pagination->pageSize = $perPage;
+        $dataProvider->pagination->pageSize = $pageSize;
         $dataProvider->query->andWhere([
             'business_id' => $business['id'],
             'in_construction' => 0,

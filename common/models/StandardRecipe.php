@@ -126,7 +126,8 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 return !$this->isNewRecord;
             }, 'message' => "{attribute} no puede estar vacío"],
             [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime', 'type_of_recipe', 'other_specs'], 'string'],
-            [['type', 'um', 'observation'], 'string', 'max' => 255],
+            [['type', 'um'], 'string', 'max' => 255],
+            [['observation'], 'string'],
             [['type'], 'in', 'range' => [self::STANDARD_RECIPE_TYPE_MAIN, self::STANDARD_RECIPE_TYPE_SUB]],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [[

@@ -115,7 +115,13 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 </div>
                 <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 align-content-end">
                     <?= $form->field($model, 'providers')->widget(Select2::class, [
-                        'data' => $providers,
+                        'data' => \yii\helpers\ArrayHelper::map(
+                            Provider::find()->where(['business_id' => $business['id']])->all(), 
+                            'id', 
+                            function($provider) {
+                                return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                            }
+                        ),
                         'options' => ['placeholder' => 'Selecciona proveedores...', 'multiple' => true],
                         'pluginOptions' => [
                             'maximumSelectionLength' => 5,
