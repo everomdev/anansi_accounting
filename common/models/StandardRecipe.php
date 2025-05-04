@@ -610,11 +610,11 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
     public function getCostPercent($custom = false)
     {
-        if (empty($this->price)) {
+        if (empty($this->price) || $this->custom_price == 0) {
             return 0.0;
         }
 
-        if ($custom) {
+        if ($custom && $this->custom_price > 0) {
             return round(($this->custom_cost / $this->custom_price), 2);
         }
 
