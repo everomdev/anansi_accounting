@@ -2466,7 +2466,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $writer->setPreCalculateFormulas(true); // Calcular fórmulas antes de guardar
      
      header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-     header('Content-Disposition: attachment;filename="Plantilla_Recetas_Final.xlsx"');
+    header('Content-Disposition: attachment;filename="' . ($type === 'sub' ? 'Plantilla para importar Subrecetas.xlsx' : 'Plantilla para importar Recetas.xlsx') . '"');
      header('Cache-Control: max-age=0');
      
      // Guardar el archivo directamente a la salida

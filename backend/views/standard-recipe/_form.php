@@ -92,7 +92,12 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                     <?php endif; ?>
                     <?= $form->field($model, 'type_of_recipe', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                    ])->dropDownList($recipesCategoriesMap)->label(null, ['class' => 'col-sm-4 text-start required']) ?>
+                    ])->dropDownList($recipesCategoriesMap)->label(
+                        $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB 
+                            ? Yii::t('app', 'Tipo de subreceta') 
+                            : Yii::t('app', 'Tipo de receta'), 
+                        ['class' => 'col-sm-4 text-start required']
+                    ) ?>
                     <div class="row mb-3">
                         <label class="col-sm-4 text-start"><?= $model->getAttributeLabel('time_of_preparation') ?></label>
                         <div class="col-sm-8">
@@ -707,6 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 // Control dinámico de porciones según unidad final (um)
+// Control dinámico de porciones según unidad final (um) - Versión exacta según Excel
 document.addEventListener('DOMContentLoaded', function() {
     const umField = document.getElementById('standardrecipe-um');
     const yieldUmField = document.getElementById('standardrecipe-yield_um');
