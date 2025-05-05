@@ -2028,31 +2028,31 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      // Configurar headers según el tipo
     $recipesHeaders = ($type === 'sub') 
     ? [
-        'Nombre', 
-        'Tipo de Subreceta', 
-        'Tiempo de preparación', 
-        'Unidad de tiempo', 
-        'Rendimiento', 
-        'Rendimiento UM', 
-        'Porciones', 
-        'Duración', 
-        'Unidad de duración',
-        'Unidad de medida final'
+        'Nombre*', 
+        'Tipo de Subreceta*', 
+        'Tiempo de preparación*', 
+        'Unidad de tiempo*', 
+        'Rendimiento*', 
+        'Rendimiento UM*', 
+        'Porciones*', 
+        'Duración*', 
+        'Unidad de duración*',
+        'Unidad de medida final*'
       ]
     : [
-        'Nombre', 
-        'Tipo de Receta', 
-        'Tiempo de preparación', 
-        'Unidad de tiempo', 
-        'Rendimiento', 
-        'Rendimiento UM', 
-        'Porciones', 
-        'Duración', 
-        'Unidad de duración', 
-        'Precio', 
-        'Alimento o Bebida', 
+        'Nombre*', 
+        'Tipo de Receta*', 
+        'Tiempo de preparación*', 
+        'Unidad de tiempo*', 
+        'Rendimiento*', 
+        'Rendimiento UM*', 
+        'Porciones*', 
+        'Duración*', 
+        'Unidad de duración*', 
+        'Precio*', 
+        'Alimento o Bebida*', 
         'Convoy',
-        'Unidad de medida final'
+        'Unidad de medida final*'
       ];
      
      $col = 'A';
@@ -2212,12 +2212,18 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $validation->setError('Debe seleccionar una receta existente');
      $validation->setPromptTitle('Seleccionar receta');
      $validation->setPrompt('Seleccione una receta de la lista');
+    
+        
+    // Usar una fórmula dinámica que se actualice automáticamente cuando se añaden elementos
     if ($type === 'sub') {
-        // Use direct reference to the sheet since COUNTA can't be used in PHP like this
-        $validation->setFormula1('=INDIRECT("\'FICHA GENERAL DE LA SUBRECETA\'!A2:A" & COUNTA(\'FICHA GENERAL DE LA SUBRECETA\'!A:A))');
+        $sheetName = 'FICHA GENERAL DE LA SUBRECETA';
     } else {
-        $validation->setFormula1('=INDIRECT("\'FICHA GENERAL DE LA RECETA\'!A2:A" & COUNTA(\'FICHA GENERAL DE LA RECETA\'!A:A))');
+        $sheetName = 'FICHA GENERAL DE LA RECETA';
     }
+
+    // Fórmula mejorada que funciona incluso cuando no hay datos inicialmente
+    $dynamicFormula = "=OFFSET('$sheetName'!A$2,0,0,COUNTA('$sheetName'!A:A)-1,1)";
+    $validation->setFormula1($dynamicFormula);
      
      // Aplicar a 500 filas para permitir múltiples ingredientes por receta
      for ($row = 2; $row <= 500; $row++) {
@@ -2292,7 +2298,13 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationConvoy->setError('Este valor no es admitido');
      $dataValidationConvoy->setPromptTitle('Selecciona un convoy');
      $dataValidationConvoy->setPrompt('Por favor, selecciona un valor del desplegable.');
-     $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
+    if ($rowConvoy > 2) {
+        // If there are convoy items, use them for validation
+        $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
+    } else {
+        // If no convoy items, use an empty list
+        $dataValidationConvoy->setFormula1('""');
+    }
      
      // g) Validación para insumos
      $dataValidationInsumos = $ingredientsSheet->getCell('B2')->getDataValidation();
