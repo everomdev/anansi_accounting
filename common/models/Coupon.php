@@ -46,7 +46,7 @@ class Coupon extends \yii\db\ActiveRecord
             [['discount'], 'number'],
             [['stripe_coupon_id'], 'string', 'max' => 255],
             [['quantity'], 'default', 'value' => null],
-            [['quantity'], 'integer'],
+            [['quantity','usages'], 'integer'],
             // [['gratitude'], 'string'],
             [['expiration','expiration_date'], 'safe'],
             [['name', 'code', 'type'], 'string', 'max' => 255],
@@ -117,7 +117,7 @@ class Coupon extends \yii\db\ActiveRecord
             return false;
         }
         // check availability
-        if (empty($this->quantity) || $this->quantity <= 0) {
+        if (empty($this->quantity) || $this->quantity <= 0 || $this->usages >= $this->quantity) {
             return false;
         }
 

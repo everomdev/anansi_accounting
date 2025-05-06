@@ -87,9 +87,21 @@ if ($promotionCode === '15% de descuento por renovación de suscripción.') {
                                         'id' => 'coupon-form',
                                         'method' => 'post',
                                         'action' => ['check-coupon'],
+                                        'options' => [
+                                            'onsubmit' => 'return false;' // Prevenir envío automático del formulario
+                                        ]
                                     ]); ?>
-                                        <?= Html::textInput('couponCode', '', ['placeholder' => Yii::t('app', 'Ingresa código de cupón'), 'id' => 'coupon-code', 'class' => 'form-control mb-3']) ?>
-                                        <?= Html::button(Yii::t('app', "Aplicar Cupón"), ['class' => 'btn btn-primary w-100 mb-3', 'style' => "font-weight: bold; max-width: 230px", 'id' => 'apply-coupon']) ?>
+                                        <?= Html::textInput('couponCode', '', [
+                                            'placeholder' => Yii::t('app', 'Ingresa código de cupón'), 
+                                            'id' => 'coupon-code', 
+                                            'class' => 'form-control mb-3',
+                                            'onkeydown' => 'if(event.key === "Enter"){event.preventDefault(); document.getElementById("apply-coupon").click(); return false;}'
+                                        ]) ?>
+                                        <?= Html::button(Yii::t('app', "Aplicar Cupón"), [
+                                            'class' => 'btn btn-primary w-100 mb-3', 
+                                            'style' => "font-weight: bold; max-width: 230px", 
+                                            'id' => 'apply-coupon'
+                                        ]) ?>
                                     <?php ActiveForm::end(); ?>
                                     <div id="coupon-message" class="text-danger"></div>
                                 </div>

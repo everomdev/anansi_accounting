@@ -30,7 +30,50 @@ $this->params['breadcrumbs'][] = $this->title;
             'name',
             'code',
             'discount',
-            'quantity',
+            [
+                'attribute' => 'usages',
+                'label' => Yii::t('app', 'Uso'),
+                'format' => 'raw',
+                'value' => function ($model) {
+                    // Si no hay cantidad definida (cupones ilimitados)
+                    if ($model->quantity <= 0) {
+                        return Html::tag('span', 
+                            "{$model->usages} " . Yii::t('app', 'usos'),
+                            ['class' => 'text-muted']
+                        ) . ' ' . 
+                        Html::tag('span', 
+                            Yii::t('app', '(ilimitado)'), 
+                            ['class' => 'badge bg-secondary']
+                        );
+                    }
+                    
+                    // Calcular porcentaje de uso
+                    $percentage = min(100, round(($model->usages / $model->quantity) * 100));
+                    
+                    // Determinar clase de color según porcentaje
+                    $progressClass = 'bg-success';
+                    if ($percentage >= 70 && $percentage < 90) {
+                        $progressClass = 'bg-warning';
+                    } elseif ($percentage >= 90) {
+                        $progressClass = 'bg-danger';
+                    }
+                    
+                    $progressBar = <<<HTML
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar {$progressClass}" role="progressbar" 
+                            style="width: {$percentage}%;" aria-valuenow="{$percentage}" 
+                            aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small>{$model->usages}/{$model->quantity}</small>
+                        <small>{$percentage}%</small>
+                    </div>
+                    HTML;
+                    
+                    return $progressBar;
+                },
+                'headerOptions' => ['style' => 'width: 150px;'],
+            ],
             [
                 'attribute' => 'type',
                 'value' => 'formattedType',
