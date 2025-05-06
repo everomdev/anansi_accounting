@@ -288,7 +288,10 @@ class RegistrationController extends Controller
         } else {
             Yii::$app->session->setFlash(
                 'danger',
-                Yii::t('usuario', 'The confirmation link is invalid or expired. Please try requesting a new one.')
+                Yii::t(
+                    'usuario', 
+                    'El enlace de confirmación ha caducado. Por favor genera uno nuevo en la <a href="https://app.sistemapararestaurantes.com/user/resend">aquí...</a>.'
+                )
             );
         }
 
