@@ -76,6 +76,7 @@ class IngredientStockController extends Controller
                             'download-template',
                             'export',
                             'import-ingredients',
+                            'duplicate-insumos',
                             'view'
                         ],
                         'allow' => true,
@@ -387,5 +388,15 @@ class IngredientStockController extends Controller
         }
 
         throw new NotFoundHttpException(Yii::t('app', 'The requested page does not exist.'));
+    }
+    public function actionDuplicateInsumos()
+    {
+        $post = Yii::$app->request->post();
+        $insumos = IngredientStock::find()->where(['id' => $post['insumos']])->all();
+        foreach ($insumos as $insumo) {
+            $insumo->duplicate();
+        }
+
+        return $this->redirect(['index']);
     }
 }

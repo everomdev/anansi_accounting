@@ -1,3 +1,15 @@
+$(document).on('click', '#btn-duplicate-insumos', function(event){
+    event.preventDefault();
+    var selectedInsumos = $('#ingredient-stock-grid').yiiGridView('getSelectedRows');
+    if(selectedInsumos.length > 0){
+        var url = $(this).attr('href');
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {insumos: selectedInsumos},
+        });
+    }
+});
 $(document).on('click', '#bulk-remove', function(event) {
     event.preventDefault();
     var keys = $('#ingredient-stock-grid').yiiGridView('getSelectedRows');

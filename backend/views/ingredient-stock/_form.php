@@ -67,14 +67,14 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 </div>
                 
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">
-                    <?= $form->field($model, 'key')->textInput(['placeholder' => 'Ej: FRT-001'])->label('Código') ?>
+                    <?= $form->field($model, 'key')->textInput(['placeholder' => 'Ej: FRT-001'])->label('Clave*') ?>
                 </div>
                 
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">
                     <?= $form->field($model, 'um')->dropDownList(
                         \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
                         ['prompt' => '-- Seleccione --']
-                    )->label('Unidad de Medida*') ?>
+                    )->label('Unidad de Compra*') ?>
                 </div>
             </div>
             
@@ -91,14 +91,14 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                                 'limit' => 10,
                             ]
                         ],
-                    ])->label('Porciones por Unidad') ?>
+                    ])->label('Equivalencia a unidades de cocina') ?>
                 </div>
 
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
                     <?= $form->field($model, 'portion_um')->dropDownList(
                         \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
                         ['prompt' => '-- Seleccione --']
-                    )->label('UM de Porción') ?>
+                    )->label('Unidades de cocina') ?>
                 </div>
             </div>
             
@@ -109,7 +109,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                     <?= $form->field($model, 'price', [
                         'template' => "{label}<div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input}</div>{hint}{error}",
                         'inputOptions' => ['class' => 'form-control', 'id' => 'ingredientstock-price', 'required' => true, 'placeholder' => 'Ej: 500.00']
-                    ])->textInput()->label("Precio*") ?>
+                    ])->textInput()->label("Precio de compra*") ?>
                     <div class="form-text">Ingrese el precio de compra del insumo</div>
                 </div>
                 

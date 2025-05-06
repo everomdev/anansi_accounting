@@ -91,6 +91,9 @@ $this->registerCss('
             ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
         </div>
         <div class="p-2">
+        <?= Html::a(Yii::t('app', 'Duplicate'), \yii\helpers\Url::to(['ingredient-stock/duplicate-insumos']), ['class' => 'btn btn-success', 'id' => 'btn-duplicate-insumos']) ?>
+        </div>
+        <div class="p-2">
             <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Exportar insumos', [
                 'icon' => ""
             ]), ['ingredient-stock/export', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>

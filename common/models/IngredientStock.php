@@ -311,4 +311,66 @@ class IngredientStock extends \yii\db\ActiveRecord
             ->innerJoinWith('standardRecipe')
             ->andWhere(['standard_recipe.type' => 'sub']);
     }
+    public function duplicate()
+{
+    $newInsumo = new IngredientStock();
+    $newInsumo->attributes = $this->attributes;
+    $newInsumo->ingredient = $this->ingredient;
+
+    $splitText = explode(" ", $newInsumo->ingredient);
+
+    if (is_numeric(end($splitText))) {
+        $iteration = intval(end($splitText)) + 1;
+        array_pop($splitText);
+        $newInsumo->ingredient = implode(" ", $splitText);
+    } else {
+        $iteration = 1;
+        $newInsumo->ingredient .= " (Copia)";
+    }
+
+    while (IngredientStock::find()->where(['ingredient' => $newInsumo->ingredient . " $iteration"])->exists()) {
+        $iteration++;
+    }
+
+    $newInsumo->ingredient .= " $iteration";
+    // Generate a random 8-digit key
+    $newInsumo->key = (string)str_pad(mt_rand(10000000, 99999999), 8, '0', STR_PAD_LEFT);
+    // Primero guardamos el nuevo insumo para obtener su ID
+    if (!$newInsumo->save()) {
+        die(var_dump($newInsumo->getErrors()));
+        throw new \Exception('No se pudo guardar el nuevo insumo');
+    }
+
+    // Copy providers
+    $providers = (new Query())
+        ->select(['provider_id'])
+        ->from("ingredient_provider")
+        ->where(['ingredient_id' => $this->id])
+        ->all();
+
+    foreach ($providers as $provider) {
+        Yii::$app->db->createCommand()
+            ->insert('ingredient_provider', [
+                'provider_id' => $provider['provider_id'],
+                'ingredient_id' => $newInsumo->id
+            ])
+            ->execute();
+    }
+
+    // Copy stock prices
+    $stockPrices = (new Query())
+        ->select(['price', 'date', 'unit_price', 'adjusted_price'])
+        ->from("stock_price")
+        ->where(['stock_id' => $this->id])
+        ->all();
+
+    foreach ($stockPrices as $stockPrice) {
+        $stockPrice['stock_id'] = $newInsumo->id;
+        Yii::$app->db->createCommand()
+            ->insert('stock_price', $stockPrice)
+            ->execute();
+    }
+
+    return $newInsumo;
+}
 }
