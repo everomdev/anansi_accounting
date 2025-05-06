@@ -171,6 +171,12 @@ class SecurityController extends Controller
                         // Redirect with query parameter to identify the origin
                         return $this->redirect(['/site/enable-subscription', 'source' => 'expired_subscription', 'promo' => '15']);
                     }
+                    if ($userPlan->stripe_subscription_id === '' || $userPlan->stripe_subscription_status === '' || $userPlan->stripe_subscription_status === null || $userPlan->stripe_subscription_status === null) {
+                        // Guardar un mensaje flash para informar al usuario
+                        Yii::$app->session->setFlash('warning', Yii::t('app', 'Para poder usar todas las funcionalidades, por favor activa tu suscripción.'));
+                        // Redirect with query parameter to identify the origin
+                        return $this->redirect(['/site/enable-subscription']);
+                    }
                 }
                 return $this->goBack();
             }
