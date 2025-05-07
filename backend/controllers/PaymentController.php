@@ -130,11 +130,14 @@ class PaymentController extends Controller
                 \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
                 return $this->redirect(['site/enable-subscription']);
             }
-            $coupon = \common\models\Coupon::find()
-            ->where(['id' => $coupon_id])
-            ->one();
-            $coupon->usages = $coupon->usages + 1;
-            $coupon->save();
+            if ($coupon_id != null) {
+                $coupon = \common\models\Coupon::find()
+                ->where(['id' => $coupon_id])
+                ->one();
+                $coupon->usages = $coupon->usages + 1;
+                $coupon->save();
+            }
+           
             return $this->redirect($session->url);
         } 
         /*if($priceAmount == 0 ){
