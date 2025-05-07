@@ -15,6 +15,14 @@ class FlashMessages extends \yii\bootstrap5\Widget
         $messages = [];
         $flashes = Yii::$app->getSession()->getAllFlashes();
         foreach ($flashes as $type => $message){
+           // Verificar si es el mensaje de registro
+           $isRegistrationMessage = (
+            $type === 'info' && 
+            strpos($message, 'Su cuenta ha sido creada') !== false
+        );
+
+        // Configuración personalizada para el mensaje de registro
+        if ($isRegistrationMessage) {
             $messages[] = Growl::widget([
                 'type' => $this->getType($type),
                 'body' => $message,
@@ -24,7 +32,32 @@ class FlashMessages extends \yii\bootstrap5\Widget
                     'showProgressbar' => false,
                     'placement' => [
                         'from' => 'top',
-                        'align' => 'right',
+                        'align' => 'left', // Cambiado a izquierda
+                    ],
+                    'offset' => [
+                        'x' => 20, // Margen izquierdo de 20px
+                        'y' => 20  // Margen superior de 20px
+                    ]
+                ],
+                'closeButton' => [
+                    'class' => 'btn-close',
+                    'type' => 'button',
+                    'data-bs-dismiss' => 'alert',
+                    'content' => ''
+                ]
+            ]);
+        } else {
+            // Configuración estándar para otros mensajes
+            $messages[] = Growl::widget([
+                'type' => $this->getType($type),
+                'body' => $message,
+                'showSeparator' => false,
+                'delay' => 0,
+                'pluginOptions' => [
+                    'showProgressbar' => false,
+                    'placement' => [
+                        'from' => 'top',
+                        'align' => 'right', // Por defecto a la derecha
                     ]
                 ],
                 'closeButton' => [
@@ -35,6 +68,7 @@ class FlashMessages extends \yii\bootstrap5\Widget
                 ]
             ]);
         }
+    }
 
         return implode('<br>',$messages);
     }
