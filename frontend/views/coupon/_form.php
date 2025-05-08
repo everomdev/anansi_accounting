@@ -15,11 +15,6 @@ $this->registerJsFile(Yii::getAlias("@web/js/coupon/form.js"), [
     'position' => $this::POS_END
 ]);
 
-// Obtener la lista de planes disponibles
-$plans = Plan::find()->all();
-$plansArray = ArrayHelper::map($plans, 'id', 'name');
-// Añadir opción para "Todos los planes"
-$plansArray = ['' => Yii::t('app', 'All plans')] + $plansArray;
 
 BootstrapAsset::register($this);
 ?>
@@ -49,12 +44,24 @@ BootstrapAsset::register($this);
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                     <?= $form->field($model, 'type')->dropDownList(\common\models\Coupon::getFormattedTypes(), ['class' => "form-control"]) ?>
                 </div>
-                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'plan_id')->dropDownList($plansArray, [
-                        'class' => "form-control",
-                        'prompt' => Yii::t('app', 'Selecciona el plan')
+                
+                <!-- Reorganización de los campos relacionados con planes -->
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4" id="plan-field-container">
+                    <?= $form->field($model, 'plan_id')->dropDownList(
+                        \yii\helpers\ArrayHelper::map(Plan::find()->all(), 'id', 'name'),
+                        [
+                            'prompt' => Yii::t('app', 'Seleccione un plan...'),
+                            'disabled' => $model->all_plans,
+                            'class' => 'form-control mb-2'
+                        ]
+                    ) ?>
+                    
+                    <?= $form->field($model, 'all_plans')->checkbox([
+                        'id' => 'coupon-all-plans',
+                        'onchange' => 'document.querySelector("[name=\'Coupon[plan_id]\']").disabled = this.checked;'
                     ]) ?>
                 </div>
+                
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                     <?= $form->field($model, 'expiration')->input('date', [
                         'value' => isset($model->expiration_formatted) ? $model->expiration_formatted : null

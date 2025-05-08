@@ -11,6 +11,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use Stripe\Exception\ApiErrorException;
 
 /**
  * CouponController implements the CRUD actions for Coupon model.
@@ -77,6 +78,11 @@ class CouponController extends Controller
         }
 
         if ($model->load($post)) {
+            $model->all_plans = (bool)$model->all_plans;
+            // Si all_plans es true, plan_id debe ser NULL
+            if ($model->all_plans) {
+                $model->plan_id = null;
+            }
             // Ensure the date format is correct
             if (isset($model->date)) {
                 $model->date = date('Y-m-d H:i:s', strtotime($model->date));
@@ -94,6 +100,9 @@ class CouponController extends Controller
                 if ($model->save()) {
                     Yii::$app->session->setFlash('success', 'Cupón creado correctamente y sincronizado con Stripe.');
                     return $this->redirect(['index']);
+                } else {
+                    // Si hay errores, mostrarlos
+                    Yii::$app->session->setFlash('error', 'Error al guardar el cupón: ' . json_encode($model->errors));
                 }
             } else {
                 // Si falló la creación en Stripe, mostrar error
@@ -152,10 +161,15 @@ class CouponController extends Controller
     // die(var_dump($model->expiration));
 
     if ($model->load($post)) {
+         // Asegurarse de que all_plans sea un booleano
+         $model->all_plans = (bool)$model->all_plans;
+        
+         // Si all_plans es true, plan_id debe ser NULL
+         if ($model->all_plans) {
+             $model->plan_id = null;
+         }
         // Procesar las fechas antes de guardar
         if (isset($model->expiration)) {
-            // Asegurarse de guardar en el formato correcto (timestamp o datetime string)
-            // Dependiendo de cómo está configurada tu base de datos
             $model->expiration = date('Y-m-d H:i:s', strtotime($model->expiration));
         }
         
@@ -166,6 +180,9 @@ class CouponController extends Controller
         
         if ($model->save()) {
             return $this->redirect(['index']);
+        } else {
+            // Si hay errores, mostrarlos
+            Yii::$app->session->setFlash('error', 'Error al actualizar el cupón: ' . json_encode($model->errors));
         }
     }
 
@@ -239,6 +256,13 @@ class CouponController extends Controller
                     $durationInDays = 1;
                 }
             }
+            // Preparar los metadatos del cupón
+            $planMetadata = '';
+            if ($model->all_plans) {
+                $planMetadata = 'ALL_PLANS';
+            } elseif ($model->plan_id !== null) {
+                $planMetadata = (string)$model->plan_id;
+            }
             
             $couponData = [
                 'id' => $model->code,
@@ -249,7 +273,8 @@ class CouponController extends Controller
                 'metadata' => [
                     'created_by' => Yii::$app->user->id,
                     'description' => 'Cupon creado desde el sistema',
-                    'plan_id' => $model->plan_id ?: ''
+                    'plan_id' => $planMetadata,
+                    'all_plans' => $model->all_plans ? 'true' : 'false'
                 ]
             ];
             

@@ -93,9 +93,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => Yii::t('app', 'Plan Asociado'),
                 'format' => 'html',
                 'value' => function ($model) {
-                    // Eliminar el die(var_dump($model)) que detiene la ejecución
+                    if ($model->all_plans) {
+                        return Html::tag('span', Yii::t('app', 'Todos los planes'), [
+                            'class' => 'badge bg-success',
+                            'title' => Yii::t('app', 'Este cupón es válido para cualquier plan')
+                        ]);
+                    }
                     
-                    // Usar la relación definida en el modelo
                     if ($model->plan) {
                         return Html::tag('span', Html::encode($model->plan->name), [
                             'class' => 'badge bg-info',
@@ -103,7 +107,6 @@ $this->params['breadcrumbs'][] = $this->title;
                         ]);
                     }
                     
-                    // Si no tiene plan asociado
                     return '<span class="text-muted">' . Yii::t('app', 'Sin plan asociado') . '</span>';
                 },
                 'headerOptions' => ['class' => 'text-center'],
