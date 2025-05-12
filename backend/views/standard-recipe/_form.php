@@ -166,6 +166,16 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-3 text-start required']) ?>
                 </div>
+                <div id="portion-size-container" class="row mb-3 d-none">
+    <label class="col-sm-3 text-start">Tamaño de porción</label>
+    <div class="col-sm-9">
+        <div class="input-group">
+            <input type="text" id="portion-size" class="form-control" placeholder="Ej: 150">
+            <span class="input-group-text portion-size-unit"></span>
+        </div>
+        <small class="form-text text-muted">Define cuánto pesa o mide cada porción</small>
+    </div>
+</div>
                 <div class="row mb-3">
                     <label class="col-sm-3 text-start"><?= $model->getAttributeLabel('lifetime') ?></label>
                     <div class="col-sm-9">
@@ -712,152 +722,204 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 // Control dinámico de porciones según unidad final (um)
-// Control dinámico de porciones según unidad final (um) - Versión exacta según Excel
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const umField = document.getElementById('standardrecipe-um');
+    const yieldField = document.getElementById('standardrecipe-yield');
     const yieldUmField = document.getElementById('standardrecipe-yield_um');
     const portionsField = document.getElementById('standardrecipe-portions');
     const portionsContainer = document.getElementById('portions-container');
+    const portionSizeContainer = document.getElementById('portion-size-container');
+    const portionSizeField = document.getElementById('portion-size');
+    const portionSizeUnitSpan = document.querySelector('.portion-size-unit');
     
-    // Unidades volumétricas o de peso (con sus variantes)
-    const volumeWeightUMs = [
-        'litro', 'litros', 'l', 'lt', 'lts',  
-        'kilogramo', 'kilogramos', 'kg', 'kgs',
-        'gramo', 'gramos', 'g', 'gr',
-        'mililitro', 'mililitros', 'ml', 'mls',
-        'onza', 'onzas', 'oz',
-        'libra', 'libras', 'lb', 'lbs'
+    // Lista de unidades que requieren campo de tamaño de porción
+    const unidadesConTamañoPorción = [
+        'pieza', 'piezas', 'porción', 'porciones','portion' , 'rebanada', 'rebanadas', 
+        'taza', 'tazas', 'cucharada', 'cucharadas', 'cucharadita', 'cucharaditas',
+        'botella', 'botellas', 'lata', 'latas', 'bote', 'botes'
     ];
     
-    // Unidades individuales
-    const individualUMs = [
-        'porción', 'porciones', 'porcion', 'porciones',
-        'pieza', 'piezas', 
-        'rebanada', 'rebanadas',
-        'unidad', 'unidades'
-    ];
-    
-    // Mapa de equivalencias de unidades (para normalizar)
-    const umEquivalences = {
-        'kg': ['kg', 'kgs', 'kilogramo', 'kilogramos'],
-        'g': ['g', 'gr', 'gramo', 'gramos'],
-        'l': ['l', 'lt', 'lts', 'litro', 'litros'],
-        'ml': ['ml', 'mls', 'mililitro', 'mililitros'],
-        'oz': ['oz', 'onza', 'onzas'],
-        'lb': ['lb', 'lbs', 'libra', 'libras'],
-        'porción': ['porción', 'porciones', 'porcion', 'porciones'],
-        'pieza': ['pieza', 'piezas'],
-        'rebanada': ['rebanada', 'rebanadas'],
-        'unidad': ['unidad', 'unidades']
+    // Mapa para normalizar las unidades de entrada del usuario
+    const unitNormalizer = {
+        // Kilogramo y variantes
+        'kilogramo': ['kilogramo', 'kilogramos', 'kg', 'kilo', 'kilos', 'kgs'],
+        // Volumen
+        'litro': ['litro', 'litros', 'l', 'lt', 'lts'],
+        // Porciones y unidades
+        'pieza': ['pieza', 'piezas', 'pza', 'pzas'],
+        'paquete': ['paquete', 'paquetes', 'paq', 'paqs'],
+        'rebanada': ['rebanada', 'rebanadas', 'slice', 'slices', 'corte', 'cortes'],
+        'porción': ['porción', 'porciones', 'porcion', 'porciones', 'ración', 'raciones', 'racion'],
+        'onza': ['onza', 'onzas', 'oz'],
+        'libra': ['libra', 'libras', 'lb', 'lbs'],
+        // Medidas de cocina
+        'taza': ['taza', 'tazas', 'cup', 'cups'],
+        'cucharadita': ['cucharadita', 'cucharaditas', 'cdta', 'cdtas', 'tsp', 'tsps'],
+        'cucharada': ['cucharada', 'cucharadas', 'cda', 'cdas', 'tbsp', 'tbsps', 'cucharada sopera'],
+        'pizca': ['pizca', 'pizcas', 'pinch'],
+        // Otros
+        'botella': ['botella', 'botellas', 'bt', 'bts'],
+        'gota': ['gota', 'gotas', 'drop', 'drops'],
+        'lata': ['lata', 'latas', 'can', 'cans'],
+        'bote': ['bote', 'botes', 'jar', 'jars']
     };
-    
-    function normalizeText(text) {
-        if (!text) return '';
-        return text.toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Quitar acentos
-    }
-    
-    function getNormalizedUnitType(unit) {
-        const normalizedUnit = normalizeText(unit);
-        for (const [baseUnit, variants] of Object.entries(umEquivalences)) {
-            if (variants.some(variant => normalizedUnit.includes(variant))) {
+
+    // Función para normalizar unidades
+    function normalizeUnit(unitText) {
+        if (!unitText) return null;
+        
+        const normalized = unitText.toLowerCase().trim()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Eliminar acentos
+        
+        for (const [baseUnit, variants] of Object.entries(unitNormalizer)) {
+            if (variants.some(variant => normalized === variant || normalized.includes(variant))) {
                 return baseUnit;
             }
         }
-        return normalizedUnit; // Si no encuentra coincidencia, devuelve la unidad normalizada
+        
+        return null; // Unidad no reconocida
     }
     
-    function areEquivalentUnits(unit1, unit2) {
-        const normalizedUnit1 = getNormalizedUnitType(unit1);
-        const normalizedUnit2 = getNormalizedUnitType(unit2);
-        return normalizedUnit1 === normalizedUnit2;
-    }
+   // Función para comprobar si una unidad requiere tamaño de porción
+function requiresPortionSize(unitText) {
+    if (!unitText) return false;
     
-    function updatePortionsInfo() {
-        if (!umField || !portionsField || !yieldUmField) return;
+    // Normalizar el texto (quitar acentos, convertir a minúsculas)
+    const normalized = unitText.toLowerCase().trim()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    // Lista explícita de unidades que deben mostrar el tamaño de porción
+    const unidades = [
+        'pieza', 'piezas', 
+        'porcion', 'porciones', 'porción', 
+        'ración', 'raciones', 'racion',
+        'portion', 'portions',
+        'rebanada', 'rebanadas', 
+        'taza', 'tazas', 
+        'cucharada', 'cucharadas', 
+        'cucharadita', 'cucharaditas',
+        'botella', 'botellas', 
+        'lata', 'latas', 
+        'bote', 'botes'
+    ];
+    
+    // Verificar si alguna unidad coincide exactamente o está contenida
+    return unidades.some(unidad => 
+        normalized === unidad || normalized.includes(unidad));
+}
+    
+    // Función para actualizar el campo de porciones y mostrar/ocultar tamaño de porción
+    function updatePortionsField() {
+        if (!umField || !yieldUmField || !portionsField || !yieldField) return;
         
-        const finalUnit = umField.value;
-        const yieldUnit = yieldUmField.value;
+        // Obtener valor y unidad de medida final
+        const finalUnitRaw = umField.value.trim();
+        const yieldUnitRaw = yieldUmField.value.trim();
+        const yieldValue = parseFloat(yieldField.value) || 0;
         
-        // Caso: Si ambas unidades son la misma unidad de peso/volumen, porciones = 1
-        if (areEquivalentUnits(finalUnit, yieldUnit) && 
-            volumeWeightUMs.some(um => normalizeText(finalUnit).includes(normalizeText(um)))) {
-            portionsField.value = '1';
-            portionsField.setAttribute('readonly', 'readonly'); // Hacer el campo de solo lectura
-            
-            // Agregar indicador visual y tooltip explicativo
-            portionsField.classList.add('bg-light');
-            // Mostrar tooltip explicativo
-            let tooltipText;
-            const recipeType = '<?= $model->type ?>';
-            
-            if (recipeType == '<?= \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB ?>') {
-                tooltipText = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad de medida son la misma unidad de peso/volumen (${finalUnit}).`;
-            } else {
-                tooltipText = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad final son la misma unidad de peso/volumen (${finalUnit}).`;
-            }
-            
-            const formHelp = portionsContainer.querySelector('.form-text') || document.createElement('small');
-            formHelp.className = 'form-text text-info mt-1';
-            formHelp.innerHTML = tooltipText;
-            
-            if (!portionsContainer.querySelector('.form-text')) {
-                portionsField.parentNode.appendChild(formHelp);
-            } else {
-                portionsContainer.querySelector('.form-text').innerHTML = tooltipText;
+        // Resetear estado de los campos
+        portionsField.removeAttribute('readonly');
+        portionsField.classList.remove('bg-light');
+        
+        // Ocultar campo de tamaño de porción por defecto
+        if (portionSizeContainer) {
+            portionSizeContainer.classList.add('d-none');
+        }
+        
+        // Verificar si la unidad final requiere tamaño de porción
+        if (requiresPortionSize(finalUnitRaw)) {
+            // Mostrar campo de tamaño de porción
+            if (portionSizeContainer) {
+                portionSizeContainer.classList.remove('d-none');
+                
+                // Actualizar unidad en el campo de tamaño
+                if (portionSizeUnitSpan) {
+                    portionSizeUnitSpan.textContent = yieldUnitRaw;
+                }
+                
+                // Calcular porciones cuando cambie el tamaño de porción
+                portionSizeField.addEventListener('input', calculatePortions);
+                
+                // Calcular porciones inicialmente
+                calculatePortions();
             }
         } else {
-            // Si no cumple la condición, quitar el readonly y restaurar el estilo
+            // Si no requiere tamaño de porción, quitar readonly del campo porciones
             portionsField.removeAttribute('readonly');
-            portionsField.classList.remove('bg-light');
-            
-            // Mostrar información de ayuda según el caso
-            let tooltipText = '';
-            
-            // Caso 1: Si unidad final es volumen/peso
-            if (volumeWeightUMs.some(um => normalizeText(finalUnit).includes(normalizeText(um)))) {
-                tooltipText = 'Opciones para unidad final ' + finalUnit + ':<br>' +
-                              '1. Rendimiento en ' + finalUnit + ' → porciones = 1<br>' +
-                              '2. Rendimiento en PORCIÓN → porciones = cualquier número';
-            }
-            // Caso 2: Si unidad final es porción/individual
-            else if (individualUMs.some(um => normalizeText(finalUnit).includes(normalizeText(um)))) {
-                tooltipText = 'Opciones para porciones:<br>' +
-                              '1. Rendimiento en LITROS/KILOGRAMOS → porciones = cualquier número<br>' +
-                              '2. Rendimiento en PORCIÓN → porciones = 1<br>' +
-                              '3. Rendimiento en PORCIÓN → porciones = cualquier número';
-            }
-            
-            // Mostrar información de ayuda
-            if (tooltipText) {
-                const formHelp = portionsContainer.querySelector('.form-text') || document.createElement('small');
-                formHelp.className = 'form-text text-muted mt-1';
-                formHelp.innerHTML = tooltipText;
-                
-                if (!portionsContainer.querySelector('.form-text')) {
-                    portionsField.parentNode.appendChild(formHelp);
-                } else {
-                    portionsContainer.querySelector('.form-text').innerHTML = tooltipText;
-                }
-            } else {
-                const tooltipElement = portionsContainer.querySelector('.form-text');
-                if (tooltipElement) tooltipElement.remove();
-            }
+            removeFormHelp();
         }
     }
     
-    // Ejecutar cuando cambie la unidad final
+    // Función para calcular el número de porciones basado en rendimiento y tamaño
+    function calculatePortions() {
+        const yieldValue = parseFloat(yieldField.value) || 0;
+        const portionSize = parseFloat(portionSizeField.value) || 0;
+        
+        if (yieldValue > 0 && portionSize > 0) {
+            // Calcular número de porciones
+            const portions = Math.round((yieldValue / portionSize) * 100) / 100;
+            
+            // Actualizar campo de porciones
+            portionsField.value = portions;
+            portionsField.setAttribute('readonly', 'readonly');
+            portionsField.classList.add('bg-light');
+            
+            // Mostrar mensaje explicativo
+            const formHelp = getOrCreateFormHelp();
+            formHelp.className = 'form-text text-info mt-1';
+            formHelp.textContent = `Cálculo automático: ${yieldValue} ${yieldUmField.value} ÷ ${portionSize} ${yieldUmField.value} por porción = ${portions} porciones`;
+        } else if (portionSizeField.value) {
+            // Si hay valor pero es inválido
+            const formHelp = getOrCreateFormHelp();
+            formHelp.className = 'form-text text-warning mt-1';
+            formHelp.textContent = 'Ingresa valores numéricos válidos para calcular el número de porciones';
+            portionsField.removeAttribute('readonly');
+        } else {
+            // Si no hay valor de tamaño de porción, quitar readonly
+            portionsField.removeAttribute('readonly');
+            removeFormHelp();
+        }
+    }
+    
+    // Función auxiliar para obtener o crear el elemento de ayuda
+    function getOrCreateFormHelp() {
+        let helpElement = portionsContainer.querySelector('.form-text');
+        if (!helpElement) {
+            helpElement = document.createElement('small');
+            helpElement.className = 'form-text mt-1';
+            portionsField.parentNode.appendChild(helpElement);
+        }
+        return helpElement;
+    }
+    
+    // Función para eliminar mensaje de ayuda
+    function removeFormHelp() {
+        const helpElement = portionsContainer.querySelector('.form-text');
+        if (helpElement) {
+            helpElement.remove();
+        }
+    }
+
+    // Registrar eventos
     if (umField) {
-        umField.addEventListener('change', updatePortionsInfo);
+        umField.addEventListener('change', updatePortionsField);
     }
     
-    // Ejecutar cuando cambie la unidad de rendimiento
     if (yieldUmField) {
-        yieldUmField.addEventListener('change', updatePortionsInfo);
+        yieldUmField.addEventListener('change', updatePortionsField);
     }
     
-    // También ejecutar al cargar para configuración inicial
-    updatePortionsInfo();
+    if (yieldField) {
+        yieldField.addEventListener('input', function() {
+            // Solo recalcular si el tamaño de porción está visible
+            if (!portionSizeContainer.classList.contains('d-none') && portionSizeField.value) {
+                calculatePortions();
+            }
+        });
+    }
+    
+    // Ejecutar la función al cargar la página
+    updatePortionsField();
 });
 document.addEventListener('DOMContentLoaded', function() {
     // Referencias a elementos del DOM
