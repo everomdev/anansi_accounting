@@ -161,21 +161,23 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                     <?php endif; ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
-                <div id="portions-container">
-                    <?= $form->field($model, 'portions', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-3 text-start required']) ?>
-                </div>
                 <div id="portion-size-container" class="row mb-3 d-none">
-    <label class="col-sm-3 text-start">Tamaño de porción</label>
-    <div class="col-sm-9">
-        <div class="input-group">
-            <input type="text" id="portion-size" class="form-control" placeholder="Ej: 150">
-            <span class="input-group-text portion-size-unit"></span>
+        <label class="col-sm-3 text-start">Tamaño de porción</label>
+        <div class="col-sm-9">
+            <div class="input-group">
+                <input type="text" id="portion-size" class="form-control" placeholder="Ej: 150">
+                <span class="input-group-text portion-size-unit"></span>
+            </div>
+            <small class="form-text text-muted">Define cuánto pesa o mide cada porción</small>
         </div>
-        <small class="form-text text-muted">Define cuánto pesa o mide cada porción</small>
     </div>
-</div>
+    
+    <!-- Campo de porciones (ahora segundo) -->
+    <div id="portions-container">
+        <?= $form->field($model, 'portions', [
+            'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
+        ])->textInput()->label(null, ['class' => 'col-sm-3 text-start required']) ?>
+    </div>
                 <div class="row mb-3">
                     <label class="col-sm-3 text-start"><?= $model->getAttributeLabel('lifetime') ?></label>
                     <div class="col-sm-9">
@@ -809,47 +811,63 @@ function requiresPortionSize(unitText) {
 }
     
     // Función para actualizar el campo de porciones y mostrar/ocultar tamaño de porción
-    function updatePortionsField() {
-        if (!umField || !yieldUmField || !portionsField || !yieldField) return;
-        
-        // Obtener valor y unidad de medida final
-        const finalUnitRaw = umField.value.trim();
-        const yieldUnitRaw = yieldUmField.value.trim();
-        const yieldValue = parseFloat(yieldField.value) || 0;
-        
-        // Resetear estado de los campos
-        portionsField.removeAttribute('readonly');
-        portionsField.classList.remove('bg-light');
-        
-        // Ocultar campo de tamaño de porción por defecto
-        if (portionSizeContainer) {
-            portionSizeContainer.classList.add('d-none');
-        }
-        
-        // Verificar si la unidad final requiere tamaño de porción
-        if (requiresPortionSize(finalUnitRaw)) {
-            // Mostrar campo de tamaño de porción
-            if (portionSizeContainer) {
-                portionSizeContainer.classList.remove('d-none');
-                
-                // Actualizar unidad en el campo de tamaño
-                if (portionSizeUnitSpan) {
-                    portionSizeUnitSpan.textContent = yieldUnitRaw;
-                }
-                
-                // Calcular porciones cuando cambie el tamaño de porción
-                portionSizeField.addEventListener('input', calculatePortions);
-                
-                // Calcular porciones inicialmente
-                calculatePortions();
-            }
-        } else {
-            // Si no requiere tamaño de porción, quitar readonly del campo porciones
-            portionsField.removeAttribute('readonly');
-            removeFormHelp();
-        }
+   function updatePortionsField() {
+    if (!umField || !yieldUmField || !portionsField || !yieldField) return;
+    
+    // Obtener valor y unidad de medida final
+    const finalUnitRaw = umField.value.trim();
+    const yieldUnitRaw = yieldUmField.value.trim();
+    const yieldValue = parseFloat(yieldField.value) || 0;
+    
+    // Resetear estado de los campos y mostrar el campo de porciones por defecto
+    portionsField.removeAttribute('readonly');
+    portionsField.classList.remove('bg-light');
+    portionsContainer.classList.remove('d-none');
+    
+    // Ocultar campo de tamaño de porción por defecto
+    if (portionSizeContainer) {
+        portionSizeContainer.classList.add('d-none');
     }
     
+    // Verificar si la unidad final requiere tamaño de porción
+    if (requiresPortionSize(finalUnitRaw)) {
+        // Mostrar campo de tamaño de porción
+        if (portionSizeContainer) {
+            portionSizeContainer.classList.remove('d-none');
+            
+            // Actualizar unidad en el campo de tamaño
+            if (portionSizeUnitSpan) {
+                portionSizeUnitSpan.textContent = yieldUnitRaw;
+            }
+            
+            // Si no hay valor en el tamaño de porción, ocultar el campo de porciones
+            if (!portionSizeField.value) {
+                portionsContainer.classList.add('d-none');
+            }
+            
+            // Calcular porciones cuando cambie el tamaño de porción
+            portionSizeField.addEventListener('input', function() {
+                // Mostrar el campo de porciones cuando se ingrese un valor en tamaño de porción
+                if (portionSizeField.value) {
+                    portionsContainer.classList.remove('d-none');
+                } else {
+                    portionsContainer.classList.add('d-none');
+                }
+                calculatePortions();
+            });
+            
+            // Calcular porciones inicialmente si hay valor
+            if (portionSizeField.value) {
+                calculatePortions();
+                portionsContainer.classList.remove('d-none');
+            }
+        }
+    } else {
+        // Si no requiere tamaño de porción, quitar readonly del campo porciones
+        portionsField.removeAttribute('readonly');
+        removeFormHelp();
+    }
+}
     // Función para calcular el número de porciones basado en rendimiento y tamaño
     function calculatePortions() {
         const yieldValue = parseFloat(yieldField.value) || 0;
