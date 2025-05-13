@@ -2030,13 +2030,13 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     ? [
         'Nombre*', 
         'Tipo de Subreceta*', 
-        'Tiempo de preparación*', 
-        'Unidad de tiempo*', 
+        'Tiempo de preparación', 
+        'Unidad de tiempo', 
         'Rendimiento*', 
         'Rendimiento UM*', 
         'Porciones*', 
-        'Duración*', 
-        'Unidad de duración*',
+        'Duración', 
+        'Unidad de duración',
         'Unidad de medida final*'
       ]
     : [
