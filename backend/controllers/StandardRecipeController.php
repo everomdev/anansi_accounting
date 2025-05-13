@@ -432,7 +432,7 @@ class StandardRecipeController extends Controller
                 
                 $relation->save(false);
             }*/
-            return $this->redirect(Url::previous('index-recipe'));
+            // return $this->redirect(Url::previous('index-recipe'));
             if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN) {
                 return $this->redirect(['standard-recipe/index', 'type' => $model->type]);
             } else {

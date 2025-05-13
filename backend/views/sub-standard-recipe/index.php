@@ -14,6 +14,7 @@ $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
+$this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerCss('
     .grid-view th a {
         color: #333;
@@ -146,8 +147,13 @@ $this->registerCss('
                     return $ingredientCount[$model->id]['ingredientCount'] ?? 0;
                 },
                 'encodeLabel' => false,
+                'enableSorting' => true,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'ingredientCount'
+                ],
             ],
             [
                 'attribute' => 'subRecipeCount',
@@ -155,9 +161,14 @@ $this->registerCss('
                 'value' => function ($model) use ($ingredientCount) {
                     return $ingredientCount[$model->id]['subRecipeCount'] ?? 0;
                 },
-                'encodeLabel' => false,
+               'encodeLabel' => false,
+                'enableSorting' => true,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'subRecipeCount'
+                ],
             ],
             [
                 'attribute' => 'type_of_recipe',

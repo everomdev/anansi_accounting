@@ -17,6 +17,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/index.js"), [
     'depends' => \yii\web\YiiAsset::class,
     'position' => $this::POS_END
 ]);
+$this->registerJsFile(Yii::getAlias('@web/js/ingredient-stock/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerCss('
     .grid-view th a {
         color: #333;
@@ -169,7 +170,11 @@ $this->registerCss('
                 'label' => 'Último<br>precio',
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'lastUnitPrice'
+                ],
             ],
             [
                 'attribute' => 'avgUnitPrice',
@@ -177,7 +182,11 @@ $this->registerCss('
                 'label' => 'Precio<br>promedio',
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'avgUnitPrice'
+                ],
             ],
             [
                 'attribute' => 'higherUnitPrice',
@@ -185,7 +194,11 @@ $this->registerCss('
                 'label' => 'Precio<br>más alto',
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'higherUnitPrice'
+                ],
             ],
             [
                 'attribute' => 'recipeCount',
@@ -194,7 +207,11 @@ $this->registerCss('
                     return $count[$model->id]['recipes'] ?? 0;
                 },
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'recipeCount'
+                ],
             ],
             [
                 'attribute' => 'subRecipeCount',
@@ -203,7 +220,11 @@ $this->registerCss('
                     return $count[$model->id]['subRecipes'] ?? 0;
                 },
                 'contentOptions' => ['style' => 'text-align: center;'],
-                'headerOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'subRecipeCount'
+                ],
             ],
             //'observations:ntext',
 
