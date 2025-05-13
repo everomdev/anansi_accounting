@@ -165,7 +165,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
         <label class="col-sm-3 text-start">Tamaño de porción</label>
         <div class="col-sm-9">
             <div class="input-group">
-                <input type="text" id="portion-size" class="form-control" placeholder="Ej: 150">
+                <input type="text" id="portion-size" class="form-control" placeholder="Ej: 0.150">
                 <span class="input-group-text portion-size-unit"></span>
             </div>
             <small class="form-text text-muted">Define cuánto pesa o mide cada porción</small>
