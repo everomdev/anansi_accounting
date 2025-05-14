@@ -870,9 +870,33 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             if (portionSizeContainer) {
                 portionSizeContainer.classList.add('d-none');
             }
+            console.log(`Final Unit: ${finalUnitRaw}, Yield Unit: ${yieldUnitRaw}`);
+            
+            const isPiezaCase = (finalUnitRaw.includes('Pieza') && yieldUnitRaw.includes('Pieza'));
+            // CASO ESPECIAL: Si las unidades de rendimiento y final son iguales
+            if (finalUnitRaw.toLowerCase() === yieldUnitRaw.toLowerCase()  && !isPiezaCase) {
+                // Fijar el valor de porciones a 1
+                portionsField.value = '1';
+                portionsField.setAttribute('readonly', 'readonly');
+                portionsField.classList.add('bg-light');
+                
+                // Mostrar mensaje explicativo
+                const formHelp = getOrCreateFormHelp();
+                formHelp.className = 'form-text text-info mt-1';
+                formHelp.textContent = `Las porciones se establecen automáticamente a 1 porque la unidad de rendimiento y la unidad ${<?= $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB ? 
+                    "'de medida'" : "'final'" ?>} son las mismas (${finalUnitRaw})` + '<?= "" ?>';
+                
+                // Ocultar el campo de tamaño de porción, ya que no aplica en este caso
+                if (portionSizeContainer) {
+                    portionSizeContainer.classList.add('d-none');
+                }
+                
+                return; // Terminar la función aquí, no necesitamos más lógica
+            }
+
 
             // Verificar si la unidad final requiere tamaño de porción
-            if (requiresPortionSize(finalUnitRaw)) {
+            if (requiresPortionSize(finalUnitRaw)  || isPiezaCase) {
                 // Mostrar campo de tamaño de porción
                 if (portionSizeContainer) {
                     // Personalizar el texto del label según la unidad
