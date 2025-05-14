@@ -870,7 +870,6 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             if (portionSizeContainer) {
                 portionSizeContainer.classList.add('d-none');
             }
-            console.log(`Final Unit: ${finalUnitRaw}, Yield Unit: ${yieldUnitRaw}`);
             
             const isPiezaCase = (finalUnitRaw.includes('Pieza') && yieldUnitRaw.includes('Pieza'));
             // CASO ESPECIAL: Si las unidades de rendimiento y final son iguales
