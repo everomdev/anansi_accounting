@@ -208,163 +208,275 @@ class Business extends \yii\db\ActiveRecord
             ->viaTable('user_business', ['business_id' => 'id']);
     }
 
-    public function getTheoreticalYield()
-    {
-        $categories = RecipeCategory::find()
-            ->where([
-                'business_id' => $this->id
-            ])->all();
+   public function getTheoreticalYield()
+{
+    $categories = RecipeCategory::find()
+        ->where([
+            'business_id' => $this->id
+        ])->all();
 
-        $totalSales = 0;
-        $total = 0;
-        $data = [];
-        foreach ($categories as $category) {
-            $recipes = StandardRecipe::find()->where([
-                'business_id' => $this->id,
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true,
-                'type_of_recipe' => $category->name
-            ])->all();
+    $totalSales = 0;
+    $total = 0;
+    $data = [];
+    
+    // Arrays separados para alimentos y bebidas (solo recetas)
+    $foodRecipes = [];
+    $nonFoodRecipes = [];
+    
+    foreach ($categories as $category) {
+        $recipes = StandardRecipe::find()->where([
+            'business_id' => $this->id,
+            'in_construction' => 0,
+            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+            'in_menu' => true,
+            'type_of_recipe' => $category->name
+        ])->all();
 
-            $combos = Menu::find()->where([
-                'business_id' => $this->id,
-                'in_menu' => true,
-                'category_id' => $category->id
-            ])->all();
-            if (empty($recipes) && empty($combos)) {
-                continue;
-            } else {
-                if (!empty($recipes)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
-                    $total += count($recipes);
-                }
-                if (!empty($combos)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
-                    $total += count($combos);
-                }
-
-
-                $data[] = [
-                    'category' => $category,
-                    'recipes' => $recipes,
-                    'combos' => $combos,
-                ];
-            }
-        }
-        $totalCostPercent = 0;
-        $categoryCount = 0;
-        $totalCostCombo = 0;
-        $recipeCount = 0;
-        $averageCostPercent = 0;
-        foreach ($data as $category) {
-            $totalCostPercentRecipe = 0;
-            $totalCostPercent = 0;
-            $recipeCountt = count($category['recipes']);
-            $recipeCountt += count($category['combos']);
-            $recipeCount = 0;
-            foreach ($category['recipes'] as $recipe) {
-                $totalCostPercentRecipe += $recipe->costPercent;
-                $recipeCount++;
-                
-            }
-            foreach ($category['combos'] as $combo) {
-                $totalCostPercent += $combo->costPercent;
-                $recipeCount++;
-            }
-            if ($recipeCount > 0) {
-                $averageCostPercent += ($totalCostPercentRecipe+$totalCostPercent) / $recipeCount;
-                $categoryCount++;
-            }   
-        }
-        if ($categoryCount > 0) {
-            $theoricalYield = $this->getFormatter()->asPercent($averageCostPercent/$categoryCount, 2);
-        }
-       
+        $combos = Menu::find()->where([
+            'business_id' => $this->id,
+            'in_menu' => true,
+            'category_id' => $category->id
+        ])->all();
         
-        $totalPcr = 0;
-        $totalCost = 0;
-        array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
-                return $recipe->getCpr($totalSales);
-            }));
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
-                return $combo->getCpr($totalSales);
-            }));
-        });
-
-        array_walk($data, function ($el) use (&$totalCost, $totalSales) {
-            $totalCost += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
-                return $recipe->costPercent;
-            }));
-            $totalCost += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
-                return $combo->costPercent;
-            }));
-        });
-
-        if ($total != 0) {
-            $totalCost = $totalCost / $total;
+        if (empty($recipes) && empty($combos)) {
+            continue;
         } else {
-            $totalCost = 0;
-        }
-
-        return ['data' => $data, 'totalCost' => $totalCost, 'tehoricalTotal' => isset($theoricalYield) ? $theoricalYield : null];
-    }
-
-    public function getRealYield()
-    {
-        $categories = RecipeCategory::find()
-            ->where([
-                'business_id' => $this->id
-            ])->all();
-
-        $totalSales = 0;
-        $data = [];
-        foreach ($categories as $category) {
-            $recipes = StandardRecipe::find()->where([
-                'business_id' => $this->id,
-                'in_construction' => 0,
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true,
-                'type_of_recipe' => $category->name
-            ])->all();
-
-            $combos = Menu::find()->where([
-                'business_id' => $this->id,
-                'in_menu' => true,
-                'category_id' => $category->id
-            ])->all();
-            if (empty($recipes) && empty($combos)) {
-                continue;
-            } else {
-                if (!empty($recipes)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
+            if (!empty($recipes)) {
+                $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
+                $total += count($recipes);
+                
+                // Clasificar SOLO las recetas por is_food
+                foreach ($recipes as $recipe) {
+                    if ($recipe->is_food) {
+                        $foodRecipes[] = $recipe;
+                    } else {
+                        $nonFoodRecipes[] = $recipe;
+                    }
                 }
-                if (!empty($combos)) {
-                    $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
-                }
-
-
-                $data[] = [
-                    'category' => $category,
-                    'recipes' => $recipes,
-                    'combos' => $combos,
-                ];
             }
+            
+            if (!empty($combos)) {
+                $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
+                $total += count($combos);
+            }
+
+            $data[] = [
+                'category' => $category,
+                'recipes' => $recipes,
+                'combos' => $combos,
+            ];
         }
-
-        $totalPcr = 0;
-        array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
-                return $recipe->getCpr($totalSales);
-            }));
-            $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
-                return $combo->getCpr($totalSales);
-            }));
-        });
-
-        return ['data' => $data, 'totalPcr' => $totalPcr, 'totalSales' => $totalSales];
     }
+    
+    // Cálculo original para todas las recetas/combos
+    $totalCostPercent = 0;
+    $categoryCount = 0;
+    $totalCostCombo = 0;
+    $recipeCount = 0;
+    $averageCostPercent = 0;
+    
+    foreach ($data as $category) {
+        $totalCostPercentRecipe = 0;
+        $totalCostPercent = 0;
+        $recipeCountt = count($category['recipes']);
+        $recipeCountt += count($category['combos']);
+        $recipeCount = 0;
+        
+        foreach ($category['recipes'] as $recipe) {
+            $totalCostPercentRecipe += $recipe->costPercent;
+            $recipeCount++;
+        }
+        
+        foreach ($category['combos'] as $combo) {
+            $totalCostPercent += $combo->costPercent;
+            $recipeCount++;
+        }
+        
+        if ($recipeCount > 0) {
+            $averageCostPercent += ($totalCostPercentRecipe+$totalCostPercent) / $recipeCount;
+            $categoryCount++;
+        }   
+    }
+    
+    // Calcular rendimiento teórico global
+    $theoricalYield = null;
+    if ($categoryCount > 0) {
+        $theoricalYield = $this->getFormatter()->asPercent($averageCostPercent/$categoryCount, 2);
+    }
+    
+    // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
+    $foodTheoricalYield = null;
+    $foodCostTotal = 0;
+    if (!empty($foodRecipes)) {
+        $foodCostTotal = array_sum(ArrayHelper::getColumn($foodRecipes, 'costPercent'));
+        $foodCostAvg = $foodCostTotal / count($foodRecipes);
+        $foodTheoricalYield = $this->getFormatter()->asPercent($foodCostAvg, 2);
+    }
+    
+    // Calcular rendimiento teórico para recetas de bebidas (is_food = false)
+    $nonFoodTheoricalYield = null;
+    $nonFoodCostTotal = 0;
+    if (!empty($nonFoodRecipes)) {
+        $nonFoodCostTotal = array_sum(ArrayHelper::getColumn($nonFoodRecipes, 'costPercent'));
+        $nonFoodCostAvg = $nonFoodCostTotal / count($nonFoodRecipes);
+        $nonFoodTheoricalYield = $this->getFormatter()->asPercent($nonFoodCostAvg, 2);
+    }
+    
+    // Resto del cálculo original
+    $totalPcr = 0;
+    $totalCost = 0;
+    array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
+        $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
+            return $recipe->getCpr($totalSales);
+        }));
+        $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
+            return $combo->getCpr($totalSales);
+        }));
+    });
+
+    array_walk($data, function ($el) use (&$totalCost, $totalSales) {
+        $totalCost += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
+            return $recipe->costPercent;
+        }));
+        $totalCost += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
+            return $combo->costPercent;
+        }));
+    });
+
+    if ($total != 0) {
+        $totalCost = $totalCost / $total;
+    } else {
+        $totalCost = 0;
+    }
+
+    // Devolver datos originales más los agrupados solo para recetas
+    return [
+        'data' => $data, 
+        'totalCost' => $totalCost, 
+        'tehoricalTotal' => isset($theoricalYield) ? $theoricalYield : null,
+        // Nuevos datos para recetas agrupados por is_food
+        'recipesByType' => [
+            'food' => [
+                'count' => count($foodRecipes),
+                'theoricalYield' => $foodTheoricalYield,
+                'sales' => array_sum(ArrayHelper::getColumn($foodRecipes, 'sales')),
+            ],
+            'nonFood' => [
+                'count' => count($nonFoodRecipes),
+                'theoricalYield' => $nonFoodTheoricalYield,
+                'sales' => array_sum(ArrayHelper::getColumn($nonFoodRecipes, 'sales')),
+            ]
+        ]
+    ];
+}
+
+public function getRealYield()
+{
+    $categories = RecipeCategory::find()
+        ->where([
+            'business_id' => $this->id
+        ])->all();
+
+    $totalSales = 0;
+    $data = [];
+    
+    // Arrays separados para alimentos y bebidas (solo recetas)
+    $foodRecipes = [];
+    $nonFoodRecipes = [];
+    
+    foreach ($categories as $category) {
+        $recipes = StandardRecipe::find()->where([
+            'business_id' => $this->id,
+            'in_construction' => 0,
+            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+            'in_menu' => true,
+            'type_of_recipe' => $category->name
+        ])->all();
+
+        $combos = Menu::find()->where([
+            'business_id' => $this->id,
+            'in_menu' => true,
+            'category_id' => $category->id
+        ])->all();
+        
+        if (empty($recipes) && empty($combos)) {
+            continue;
+        } else {
+            if (!empty($recipes)) {
+                $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
+                
+                // Clasificar SOLO las recetas por is_food
+                foreach ($recipes as $recipe) {
+                    if ($recipe->is_food) {
+                        $foodRecipes[] = $recipe;
+                    } else {
+                        $nonFoodRecipes[] = $recipe;
+                    }
+                }
+            }
+            
+            if (!empty($combos)) {
+                $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
+            }
+
+            $data[] = [
+                'category' => $category,
+                'recipes' => $recipes,
+                'combos' => $combos,
+            ];
+        }
+    }
+
+    // Cálculo PCR global (original)
+    $totalPcr = 0;
+    array_walk($data, function ($el) use (&$totalPcr, $totalSales) {
+        $totalPcr += array_sum(ArrayHelper::getColumn($el['recipes'], function ($recipe) use ($totalSales) {
+            return $recipe->getCpr($totalSales);
+        }));
+        $totalPcr += array_sum(ArrayHelper::getColumn($el['combos'], function ($combo) use ($totalSales) {
+            return $combo->getCpr($totalSales);
+        }));
+    });
+    
+    // Calcular PCR para recetas de alimentos (is_food = true)
+    $foodPcr = 0;
+    if (!empty($foodRecipes)) {
+        foreach ($foodRecipes as $recipe) {
+            $foodPcr += $recipe->getCpr($totalSales);
+        }
+    }
+    
+    // Calcular PCR para recetas de bebidas (is_food = false)
+    $nonFoodPcr = 0;
+    if (!empty($nonFoodRecipes)) {
+        foreach ($nonFoodRecipes as $recipe) {
+            $nonFoodPcr += $recipe->getCpr($totalSales);
+        }
+    }
+    
+    // Calcular las ventas por tipo
+    $foodSales = !empty($foodRecipes) ? array_sum(ArrayHelper::getColumn($foodRecipes, 'sales')) : 0;
+    $nonFoodSales = !empty($nonFoodRecipes) ? array_sum(ArrayHelper::getColumn($nonFoodRecipes, 'sales')) : 0;
+
+    return [
+        'data' => $data, 
+        'totalPcr' => $totalPcr, 
+        'totalSales' => $totalSales,
+        // Nuevos datos para recetas agrupados por is_food
+        'recipesByType' => [
+            'food' => [
+                'count' => count($foodRecipes),
+                'pcr' => $foodPcr,
+                'sales' => $foodSales,
+            ],
+            'nonFood' => [
+                'count' => count($nonFoodRecipes),
+                'pcr' => $nonFoodPcr,
+                'sales' => $nonFoodSales,
+            ]
+        ]
+    ];
+}
 
     public function getBcgData($type = 'all')
     {

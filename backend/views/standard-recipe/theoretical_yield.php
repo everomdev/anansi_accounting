@@ -12,17 +12,56 @@ $this->title = Yii::t('app', "Theoretical Yield");
 $this->params['breadcrumbs'][] = $this->title;
 $emptyMessage = Yii::t('app', "Select some recipe to know the theoretical yield");
 $message = Yii::t('app', "The theoretical yield is: ");
+$messageFood = Yii::t('app', "Rentabilidad teórica de los alimentos: ");
+$messageNonFood = Yii::t('app', "Rentabilidad teórica de las bebidas: ");
 
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
-
 ?>
 <div class="standard-recipe-index">
+    <div class="row mb-4">
+        <div class="col-12">
+            <?php if ($tehoricalTotal !== null): ?>
+                <h4 class="alert alert-warning"
+                    id="theoretical-yield-message"><?= sprintf("%s %s", $message, $tehoricalTotal) ?></h4>
+            <?php endif; ?>
+        </div>
+    </div>
 
-    <?php if ($tehoricalTotal !== null): ?>
-        <h4 class="alert alert-warning"
-            id="theoretical-yield-message"><?= sprintf("%s %s", $message, $tehoricalTotal) ?></h4>
-    <?php endif; ?>
+    <div class="col mb-4">
+        <div class="row-md-6">
+            <?php if (isset($recipesByType) && isset($recipesByType['food']) && isset($recipesByType['food']['theoricalYield'])): ?>
+                <div class="alert alert-info" id="food-yield-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-utensils me-2"></i>
+                        <span>
+                            <?= sprintf("%s %s", $messageFood, $recipesByType['food']['theoricalYield']) ?>
+                            <?php if (isset($recipesByType['food']['count'])): ?>
+                                <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['food']['count']]) ?>)</small>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="row-md-6">
+            <?php if (isset($recipesByType) && isset($recipesByType['nonFood']) && isset($recipesByType['nonFood']['theoricalYield'])): ?>
+                <div class="alert alert-info" id="beverage-yield-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-glass-martini-alt me-2"></i>
+                        <span>
+                            <?= sprintf("%s %s", $messageNonFood, $recipesByType['nonFood']['theoricalYield']) ?>
+                            <?php if (isset($recipesByType['nonFood']['count'])): ?>
+                                <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['nonFood']['count']]) ?>)</small>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <?= \yii\bootstrap5\Html::textInput('search-box', null, ['class' => 'form-control', 'placeholder' => 'Buscar']) ?>
@@ -59,6 +98,13 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                                 <td><?= $business->getFormatter()->asCurrency($recipe->recipeLastPrice) ?></td>
                                 <td><?= $business->getFormatter()->asCurrency($recipe->price) ?></td>
                                 <td><?= Yii::$app->formatter->asPercent($recipe->costPercent, 2) ?></td>
+                                <td>
+                                    <?php if ($recipe->is_food): ?>
+                                        <span class="badge bg-success"><i class="fas fa-utensils me-1"></i> <?= Yii::t('app', "Alimento") ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-info"><i class="fas fa-glass-martini-alt me-1"></i> <?= Yii::t('app', "Bebida") ?></span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         <?php foreach ($category['combos'] as $combo): ?>
@@ -67,6 +113,9 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                                 <td><?= $business->getFormatter()->asCurrency($combo->cost) ?></td>
                                 <td><?= $business->getFormatter()->asCurrency($combo->total_price) ?></td>
                                 <td><?= Yii::$app->formatter->asPercent($combo->costPercent, 2) ?></td>
+                                <td>
+                                    <span class="badge bg-secondary"><i class="fas fa-layer-group me-1"></i> <?= Yii::t('app', "Combo") ?></span>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endforeach; ?>

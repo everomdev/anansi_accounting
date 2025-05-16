@@ -14,16 +14,54 @@ $this->title = Yii::t('app', "Real Yield");
 $this->params['breadcrumbs'][] = $this->title;
 $emptyMessage = Yii::t('app', "Select some recipe to know the real yield");
 $message = Yii::t('app', "The real yield is: ");
-
+$messageFood = Yii::t('app', "La rentabilidad real de los alimentos es: ");
+$messageNonFood = Yii::t('app', "La rentabilidad real de las bebidas es: ");
 
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
-
-
 ?>
-<div class="standard-recipe-index">
 
-    <h4 class="alert alert-warning" id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->formatter->asPercent($totalPcr)) ?></h4>
+<div class="standard-recipe-index">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="alert alert-warning" id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->formatter->asPercent($totalPcr)) ?></h4>
+        </div>
+    </div>
+
+    <div class="col mb-4">
+        <div class="row-md-6">
+            <?php if (isset($recipesByType) && isset($recipesByType['food']) && isset($recipesByType['food']['pcr'])): ?>
+                <div class="alert alert-info" id="food-yield-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-utensils me-2"></i>
+                        <span>
+                            <?= sprintf("%s %s", $messageFood, $business->formatter->asPercent($recipesByType['food']['pcr'])) ?>
+                            <?php if (isset($recipesByType['food']['count'])): ?>
+                                <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['food']['count']]) ?>)</small>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <div class="row-md-6">
+            <?php if (isset($recipesByType) && isset($recipesByType['nonFood']) && isset($recipesByType['nonFood']['pcr'])): ?>
+                <div class="alert alert-info" id="beverage-yield-message">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-glass-martini-alt me-2"></i>
+                        <span>
+                            <?= sprintf("%s %s", $messageNonFood, $business->formatter->asPercent($recipesByType['nonFood']['pcr'])) ?>
+                            <?php if (isset($recipesByType['nonFood']['count'])): ?>
+                                <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['nonFood']['count']]) ?>)</small>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <?= \yii\bootstrap5\Html::textInput('search-box', null, ['class' => 'form-control', 'placeholder' => 'Buscar']) ?>
@@ -36,47 +74,48 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     <th><?= Yii::t('app', "Cost percent") ?></th>
                     <th><?= Yii::t('app', "Sales") ?></th>
                     <th><?= Yii::t('app', "% Sales") ?></th>
-
+                    <th><?= Yii::t('app', "Tipo") ?></th>
                     </thead>
                     <tbody>
                     <?php foreach ($data as $category): ?>
-                        <?php
-
-                        ?>
-                        <tr class="bg-secondary text-white ">
+                        <tr class="bg-secondary text-white">
                             <td colspan="7" class="text-center"
                                 style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->formatter->asPercent($category['category']->getCpr(), 2)) ?></td>
                         </tr>
                         <?php foreach ($category['recipes'] as $recipe): ?>
                         <?php
                             /** @var $recipe \common\models\StandardRecipe */
-
-                            ?>
+                        ?>
                             <tr>
-
                                 <td><?= $recipe->title ?></td>
                                 <td><?= $business->formatter->asCurrency($recipe->cost) ?></td>
                                 <td><?= $business->formatter->asCurrency($recipe->price) ?></td>
                                 <td><?= Yii::$app->formatter->asPercent($recipe->costPercent, 2) ?></td>
                                 <td><?= $recipe->sales ?></td>
                                 <td><?= $business->formatter->asPercent($recipe->getSalesPercent($totalSales), 2) ?></td>
-
+                                <td>
+                                    <?php if ($recipe->is_food): ?>
+                                        <span class="badge bg-success"><i class="fas fa-utensils me-1"></i> <?= Yii::t('app', "Alimento") ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-info"><i class="fas fa-glass-martini-alt me-1"></i> <?= Yii::t('app', "Bebida") ?></span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         <?php foreach ($category['combos'] as $combo): ?>
                             <?php
                             /** @var $combo \common\models\Menu */
-
                             ?>
                             <tr>
-
                                 <td><?= $combo->title ?></td>
                                 <td><?= $business->formatter->asCurrency($combo->cost) ?></td>
                                 <td><?= $business->formatter->asCurrency($combo->total_price) ?></td>
                                 <td><?= Yii::$app->formatter->asPercent($combo->costPercent, 2) ?></td>
                                 <td><?= $combo->sales ?></td>
                                 <td><?= $business->formatter->asPercent($combo->getSalesPercent($totalSales), 2) ?></td>
-
+                                <td>
+                                    <span class="badge bg-secondary"><i class="fas fa-layer-group me-1"></i> <?= Yii::t('app', "Combo") ?></span>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
@@ -85,39 +124,8 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             </div>
         </div>
     </div>
-    <!--    --><?php //= GridView::widget([
-    //        'id' => 'grid-theoretical-yield',
-    //        'dataProvider' => $dataProvider,
-    //        'filterModel' => $searchModel,
-    //        'formatter' => [
-    //            'class' => \yii\i18n\Formatter::class,
-    //            'currencyCode' => 'usd',
-    //        ],
-    //        'columns' => [
-    //            ['class' => 'yii\grid\SerialColumn'],
-    //            [
-    //                'class' => \yii\grid\CheckboxColumn::class,
-    //                'checkboxOptions' => function ($model, $key, $index, $column) {
-    //                    return ['value' => $model->costPercent];
-    //                }
-    //            ],
-    //            'title',
-    //            [
-    //                'attribute' => 'recipeLastPrice',
-    //                'format' => 'currency',
-    //                'label' => Yii::t('app', 'Cost')
-    //            ],
-    //            'price:currency',
-    //            'costPercent:percent',
-    //            [
-    //                'class' => 'yii\grid\ActionColumn',
-    //                'template' => "{update} {delete}"
-    //            ],
-    //        ],
-    //    ]); ?>
-
-
 </div>
+
 <?php
 $js = <<< JS
 $(document).on('change', "input[type='checkbox']", function (event) {
@@ -136,7 +144,6 @@ function computeCost(forceZero = false){
         // Obtener el valor de data-cost y agregarlo al array
         const pcr = checkbox.getAttribute('data-pcr');
         totalPcr += parseFloat(pcr);
-        
       }
     });
     
@@ -145,7 +152,6 @@ function computeCost(forceZero = false){
         $("#theoretical-yield-message").html(`${message}` + totalPcr + ' %');
     }else{
         $("#theoretical-yield-message").html(`${emptyMessage}`);
-        
     }
 }
 $(document).on('change', '#check-all', (event) => {
@@ -156,8 +162,6 @@ $(document).on('change', '#check-all', (event) => {
     });
     computeCost(!_checkAll.checked);
 });
-
-
 
 $(document).on('change', '.recipe-sales', function (event) {
     let sales = $(this).val();

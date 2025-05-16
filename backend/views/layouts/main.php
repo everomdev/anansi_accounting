@@ -11,6 +11,8 @@ use yii\widgets\Breadcrumbs;
 use common\widgets\Alert;
 
 \backend\assets\SneatAsset::register($this);
+$businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <?php $this->beginPage() ?>
 <!DOCTYPE html>
@@ -71,7 +73,7 @@ use common\widgets\Alert;
                             </a>
                         </div>
                         <div class="col-md-4">
-                            <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/export-ingredients']) ?>" class="btn btn-outline-primary w-100">
+                            <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/export', 'id' => $business->id]) ?>" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-download me-2"></i> Descargar Insumos
                             </a>
                         </div>
