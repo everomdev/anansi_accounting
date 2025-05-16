@@ -67,7 +67,7 @@ class ExcelHelper
         exit(200);
     }
 
-    public static function generateIngredientsTemplate($id)
+ public static function generateIngredientsTemplate($id)
 {
     /** @var Category[] $categories */
     $categories = Category::find()->where([
@@ -84,26 +84,35 @@ class ExcelHelper
     $spreadsheet = new Spreadsheet();
     $activeWorksheet = $spreadsheet->getActiveSheet();
 
-    $activeWorksheet->setCellValue("A1", "Clave");
-    $activeWorksheet->setCellValue("B1", "Insumo");
-    $activeWorksheet->setCellValue("C1", "Categoría");
-    $activeWorksheet->setCellValue("D1", "Unidad de compra");
-    $activeWorksheet->setCellValue("E1", "Unidad de cocina");
-    $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
-    $activeWorksheet->setCellValue("G1", "Porciones por unidad");
+    // 7. Configurar estilos
+     $centerStyle = [
+         'alignment' => [
+             'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+         ],
+     ];
+    $activeWorksheet->setCellValue("A1", "Clave*");
+    $activeWorksheet->setCellValue("B1", "Insumo*");
+    $activeWorksheet->setCellValue("C1", "Categoría*");
+    $activeWorksheet->setCellValue("D1", "Unidad de compra*");
+    $activeWorksheet->setCellValue("E1", "Unidad de cocina*");
+    $activeWorksheet->setCellValue("F1", "Factor de Rendimiento*");
+    $activeWorksheet->setCellValue("G1", "Porciones por unidad*");
     $activeWorksheet->setCellValue("H1", "Observaciones");
-    $activeWorksheet->setCellValue("I1", "Precio");
+    $activeWorksheet->setCellValue("I1", "Precio*");
+    
+    $activeWorksheet->getStyle('A1:L100')->applyFromArray($centerStyle);
 
-    $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
-    $spreadsheet->getActiveSheet()->getStyle('I2:I5000')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_NUMBER_00);
+    // Set manual column widths instead of auto-size
+    $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Clave
+    $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(35); // Insumo
+    $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(18); // Categoría
+    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(18); // Unidad de compra
+    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Unidad de cocina
+    $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(20); // Factor de Rendimiento
+    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(20); // Porciones por unidad
+    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(30); // Observaciones
+    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(10);
 
     // Create a named range for categories
     $categorySheet = $spreadsheet->createSheet();
@@ -173,8 +182,9 @@ class ExcelHelper
     }
 
     // Apply data validation to the factor de rendimiento column
+    // CAMBIO: Tipo cambiado a DECIMAL para permitir valores con decimales
     $factorValidation = $spreadsheet->getActiveSheet()->getCell('F2')->getDataValidation();
-    $factorValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_WHOLE);
+    $factorValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
     $factorValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $factorValidation->setAllowBlank(false);
     $factorValidation->setShowInputMessage(true);
@@ -182,7 +192,7 @@ class ExcelHelper
     $factorValidation->setErrorTitle('Error de entrada');
     $factorValidation->setError('Este valor no es admitido');
     $factorValidation->setPromptTitle('Factor de Rendimiento');
-    $factorValidation->setPrompt('Por favor, ingresa un valor numérico sin %.');
+    $factorValidation->setPrompt('Por favor, ingresa un valor numérico entre 0 y 100 (permite decimales)');
     $factorValidation->setFormula1(0); // Valor mínimo
     $factorValidation->setFormula2(100); // Valor máximo
 
@@ -190,7 +200,7 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $factorValidation);
     }
 
-    // Apply data validation to the price column
+    // Apply data validation to the price column - Permitir cualquier valor numérico
     $priceValidation = $spreadsheet->getActiveSheet()->getCell('I2')->getDataValidation();
     $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
     $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -200,8 +210,9 @@ class ExcelHelper
     $priceValidation->setErrorTitle('Error de entrada');
     $priceValidation->setError('Este valor no es admitido');
     $priceValidation->setPromptTitle('Precio');
-    $priceValidation->setPrompt('Por favor, ingresa un valor numérico sin $.');
-    $priceValidation->setFormula1(0); // Valor mínimo
+    $priceValidation->setPrompt('Por favor, ingresa un valor numérico.');
+    $priceValidation->setFormula1(0);
+    $priceValidation->setFormula2(99999999); // Aumentar el límite máximo
 
     for ($i = 2; $i <= 5000; $i++) {
         $spreadsheet->getActiveSheet()->getCell("I$i")->setDataValidation(clone $priceValidation);
@@ -219,12 +230,18 @@ class ExcelHelper
     $legendSheet->setCellValue('A4', 'Unidad de Medida');
     $legendSheet->setCellValue('B4', 'Debe ser una de las unidades de medida listadas en la hoja UMs.');
     $legendSheet->setCellValue('A5', 'Factor de Rendimiento');
-    $legendSheet->setCellValue('B5', 'Debe ser un valor numérico entre 0 y 100.');
+    $legendSheet->setCellValue('B5', 'Debe ser un valor numérico entre 0 y 100. Permite decimales.');
     $legendSheet->setCellValue('A6', 'Precio');
-    $legendSheet->setCellValue('B6', 'Debe ser un valor numérico.');
+    $legendSheet->setCellValue('B6', 'Debe ser un valor numérico mayor que 0.');
 
     $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('A')->setAutoSize(true);
     $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('B')->setAutoSize(true);
+
+     foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
+         $worksheet->calculateColumnWidths();
+     }
+    // Activar la primera hoja antes de guardar
+    $spreadsheet->setActiveSheetIndex(0);
 
     $writer = new Xlsx($spreadsheet);
     $fileName = 'Plantilla_para_importar_insumos.xlsx';

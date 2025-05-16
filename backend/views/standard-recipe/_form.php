@@ -846,6 +846,15 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             } else if (normalized.includes('lata') || normalized.includes('bote')) {
                 return "Contenido de cada envase";
             } else if (normalized.includes('pieza')) {
+                // Check if the yield unit is related to volume (liters)
+                const yieldUnitNormalized = yieldUmField.value.trim() ? yieldUmField.value.trim().toLowerCase().trim()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+                
+                if (yieldUnitNormalized.includes('litro') || 
+                    yieldUnitNormalized.includes('lt') || 
+                    yieldUnitNormalized.includes('l')) {
+                    return "Tamaño de cada pieza";
+                }
                 return "Peso de cada pieza";
             }
 
@@ -931,7 +940,14 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
                         } else if (normalizedUnit.includes('lata') || normalizedUnit.includes('bote')) {
                             helpText.textContent = `Define el contenido de cada ${finalUnitRaw} en ${yieldUmField.value}`;
                         } else if (normalizedUnit.includes('pieza')) {
-                            helpText.textContent = `Define el peso de cada pieza en ${yieldUmField.value}`;
+                            // Check if yield unit is a liter
+                            if (yieldUmField.value.toLowerCase().includes('litro') || 
+                                yieldUmField.value.toLowerCase().includes('lt') || 
+                                yieldUmField.value.toLowerCase().includes('l')) {
+                                helpText.textContent = `Define cuántos litros contiene cada pieza`;
+                            } else {
+                                helpText.textContent = `Define el peso de cada pieza en ${yieldUmField.value}`;
+                            }
                         } else {
                             helpText.textContent = `Define cuántos ${yieldUmField.value} corresponden a cada ${finalUnitRaw}`;
                         }

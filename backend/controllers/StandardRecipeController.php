@@ -1991,8 +1991,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         }
     
         // 10. Añadir nota informativa similar a la plantilla
-        $ingredientsSheet->setCellValue('G1', 'NOTA: El nombre de la receta debe existir primero en la hoja "FICHA GENERAL DE LA RECETA"');
-        $ingredientsSheet->mergeCells('G1:J1');
+        $noteText = ($type === 'sub') 
+        ? 'NOTA: El nombre de la subreceta debe existir primero en la hoja "FICHA GENERAL DE LA SUBRECETA"' 
+        : 'NOTA: El nombre de la receta debe existir primero en la hoja "FICHA GENERAL DE LA RECETA"';
+        $ingredientsSheet->setCellValue('G1', $noteText);
+        $ingredientsSheet->mergeCells('G1:O1');
         $ingredientsSheet->getStyle('G1')->getFont()
             ->setItalic(true)
             ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED));
@@ -2045,13 +2048,13 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     : [
         'Nombre*', 
         'Tipo de Receta*', 
-        'Tiempo de preparación*', 
-        'Unidad de tiempo*', 
+        'Tiempo de preparación', 
+        'Unidad de tiempo', 
         'Rendimiento*', 
         'Rendimiento UM*', 
         'Porciones*', 
-        'Duración*', 
-        'Unidad de duración*', 
+        'Duración', 
+        'Unidad de duración', 
         'Precio*', 
         'Alimento o Bebida*', 
         'Convoy',
@@ -2375,7 +2378,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationPrice->setErrorTitle('Error de entrada');
      $dataValidationPrice->setError('Este campo solo acepta valores numéricos');
      $dataValidationPrice->setPromptTitle('Ingrese el precio');
-     $dataValidationPrice->setPrompt('Por favor, ingrese un valor numérico para el precio (ej: 1,254,525.25)');
+     $dataValidationPrice->setPrompt('Por favor, ingrese un valor numérico para el precio');
      $dataValidationPrice->setFormula1(0);
      $dataValidationPrice->setFormula2(99999999); // Aumentar el límite máximo
 
