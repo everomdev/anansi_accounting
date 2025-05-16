@@ -102,6 +102,7 @@ class ExcelHelper
     $activeWorksheet->setCellValue("I1", "Precio*");
     
     $activeWorksheet->getStyle('A1:L100')->applyFromArray($centerStyle);
+    $activeWorksheet->freezePane('D2');
 
     // Set manual column widths instead of auto-size
     $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Clave
@@ -565,6 +566,7 @@ class ExcelHelper
         $activeWorksheet->setCellValue("G1", "Porciones por unidad");
         $activeWorksheet->setCellValue("H1", "Observaciones");
         $activeWorksheet->setCellValue("I1", "Price");
+        $activeWorksheet->freezePane("C2");
 
         $ingredients = $business->getIngredientStocks()->all();
         $currentRow = 2;

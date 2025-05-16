@@ -1784,7 +1784,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $recipesSheet->getColumnDimension($col)->setAutoSize(true);
             $col++;
         }
-    
+
+        $recipesSheet->freezePane('D2');
         // 3. Configurar cabeceras para otras hojas
         $ingredientsSheet->setCellValue('A1', ($isSubrecipe ? 'SubReceta' : 'Receta'));
         $ingredientsSheet->setCellValue('B1', 'Insumo');
@@ -2102,6 +2103,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
              $sheet->getStyle($col)->getAlignment()->setWrapText(true);
              $col++;
          }
+         $sheet->freezePane('A2');
      }
      
      // Configuración especial para columnas
@@ -2182,6 +2184,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $umSheet->getStyle('A1:A100')->applyFromArray($centerStyle);
      $categorySheet->getStyle('A1:A100')->applyFromArray($centerStyle);
      $recipesSheet->getColumnDimension('J')->setWidth(15);
+
+     $recipesSheet->freezePane('D2');    // Fijar fila 1 y columna A
+    $ingredientsSheet->freezePane('D2'); // Fijar fila 1 y columna A
+    $insumosSheet->freezePane('B2');  
      
      // 8. Configurar TODAS las validaciones optimizadas
      $colFinalUM = ($type === 'sub') ? 'J' : 'M'; // Ajusta estas letras según tu estructura de columnas
