@@ -32,6 +32,10 @@ class PurchaseController extends Controller
                     'delete' => ['POST'],
                 ],
             ],
+            
+            'backupReminder' => [
+                'class' => \backend\components\BackupReminderBehavior::class,
+            ],
         ];
     }
 

@@ -31,6 +31,10 @@ class UnitOfMeasurementController extends Controller
                     'delete' => ['POST'],
                 ],
             ],
+            
+            'backupReminder' => [
+                'class' => \backend\components\BackupReminderBehavior::class,
+            ],
         ];
     }
 

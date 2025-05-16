@@ -20,6 +20,9 @@ class FlashMessages extends \yii\bootstrap5\Widget
             $type === 'info' && 
             strpos($message, 'Su cuenta ha sido creada') !== false
         );
+        if ($type === 'backup-reminder-modal') {
+            continue;
+        }
 
         // Configuración personalizada para el mensaje de registro
         if ($isRegistrationMessage) {

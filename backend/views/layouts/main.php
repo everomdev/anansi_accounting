@@ -46,7 +46,53 @@ use common\widgets\Alert;
     </div>
     <div class="layout-overlay layout-menu-toggle"></div>
 </div>
+<?php if (Yii::$app->session->hasFlash('backup-reminder-modal')): ?>
+<div class="modal fade" id="backupReminderModal" tabindex="-1" aria-labelledby="backupReminderLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="backupReminderLabel">Recordatorio de Seguridad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <?= Yii::$app->session->getFlash('backup-reminder-modal') ?>
+                
+                <!-- Botones de acción -->
+                <div class="text-center mt-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/export-recipes-to-excel', 'all' => 'true', 'type' => 'main']) ?>" class="btn btn-outline-success w-100">
+                                <i class="fas fa-download me-2"></i> Descargar Recetas
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/export-recipes-to-excel', 'all' => 'true', 'type' => 'sub']) ?>" class="btn btn-outline-info w-100">
+                                <i class="fas fa-download me-2"></i> Descargar Sub-recetas
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/export-ingredients']) ?>" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-download me-2"></i> Descargar Insumos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear una nueva instancia del modal con Bootstrap 5
+    var backupModal = new bootstrap.Modal(document.getElementById('backupReminderModal'));
+    backupModal.show();
+});
+</script>
+<?php endif; ?>
 <?php $this->endBody() ?>
 </body>
 

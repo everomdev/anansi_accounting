@@ -52,6 +52,9 @@ class CategoryController extends Controller
                     ],
                 ],
             ],
+            'backupReminder' => [
+                'class' => \backend\components\BackupReminderBehavior::class,
+            ],
         ];
     }
 

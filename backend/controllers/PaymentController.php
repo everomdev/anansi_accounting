@@ -51,6 +51,9 @@ class PaymentController extends Controller
                         ]
                     ],
                 ],
+                'backupReminder' => [
+                    'class' => \backend\components\BackupReminderBehavior::class,
+                ],
             ]
         );
     }

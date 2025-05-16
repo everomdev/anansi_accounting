@@ -47,6 +47,10 @@ class ConsumptionCenterController extends Controller
                     ],
                 ],
             ],
+            
+            'backupReminder' => [
+                'class' => \backend\components\BackupReminderBehavior::class,
+            ],
         ];
     }
 

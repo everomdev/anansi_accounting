@@ -63,6 +63,10 @@ class BusinessProfileController extends Controller
                     ],
                 ],
             ],
+            
+            'backupReminder' => [
+                'class' => \backend\components\BackupReminderBehavior::class,
+            ],
         ];
     }
 

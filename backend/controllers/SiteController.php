@@ -47,6 +47,9 @@ class SiteController extends Controller
                     'logout' => ['post'],
                 ],
             ],
+            'backupReminder' => [
+                'class' => \backend\components\BackupReminderBehavior::class,
+            ],
         ];
     }
 
