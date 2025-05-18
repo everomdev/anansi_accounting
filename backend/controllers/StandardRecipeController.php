@@ -2117,7 +2117,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $recipesSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
      
      // 5. Cargar datos con límite para la plantilla
-     $batchSize = 100;
+     $batchSize = 350;
      
      $unitOfMeasurements = UnitOfMeasurement::find()
          ->select('name')
@@ -2177,9 +2177,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          ],
      ];
      
-     $recipesSheet->getStyle('A1:L100')->applyFromArray($centerStyle);
+     $recipesSheet->getStyle('A1:L300')->applyFromArray($centerStyle);
      $ingredientsSheet->getStyle('A1:E500')->applyFromArray($centerStyle);
-     $insumosSheet->getStyle('A1:D100')->applyFromArray($centerStyle);
+     $insumosSheet->getStyle('A1:D350')->applyFromArray($centerStyle);
      $convoySheet->getStyle('A1:B100')->applyFromArray($centerStyle);
      $umSheet->getStyle('A1:A100')->applyFromArray($centerStyle);
      $categorySheet->getStyle('A1:A100')->applyFromArray($centerStyle);
@@ -2415,11 +2415,12 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      
      // Para el cálculo automático del costo y UM en INGREDIENTES (limitando a 2 decimales)
      for ($i = 2; $i <= 500; $i++) {
-         $ingredientsSheet->setCellValue("D$i", "=IFERROR(VLOOKUP(B$i, INSUMOS!A:D, 3, FALSE), \"\")");
-         $ingredientsSheet->setCellValue("E$i", "=IF(IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\")=\"\",\"\",ROUND(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), 2))");
-         
-         // Dar formato de moneda a la columna de costo
-         $ingredientsSheet->getStyle("E$i")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+         // Modificar las fórmulas para que muestren cadena vacía en lugar de cero
+    $ingredientsSheet->setCellValue("D$i", "=IF(B$i=\"\", \"\", IFERROR(VLOOKUP(B$i, INSUMOS!A:D, 3, FALSE), \"\"))");
+    $ingredientsSheet->setCellValue("E$i", "=IF(OR(B$i=\"\", C$i=\"\"), \"\", IF(IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\")=\"\",\"\",ROUND(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), 2)))");
+    
+    // Dar formato de moneda a la columna de costo
+    $ingredientsSheet->getStyle("E$i")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
      }
      
      // 11. Añadir fórmula para bloquear el campo de porciones cuando se seleccionan ciertos rendimientos
@@ -2454,17 +2455,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
          ->setItalic(true)
          ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED));
      
-     // 13. Nota sobre tiempo de preparación y duración
-     /*$recipesSheet->setCellValue('C1:D1', 'Ingrese tiempo y seleccione unidad');
-     $recipesSheet->getStyle('C1:D1')->getFont()
-         ->setItalic(true)
-         ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKBLUE));
      
-     $recipesSheet->setCellValue('H1:I1', 'Ingrese duración y seleccione unidad');
-     $recipesSheet->getStyle('H1:I1')->getFont()
-         ->setItalic(true)
-         ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKBLUE));
-     */
      // 14. Ajustar anchos de columna
      foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
          $worksheet->calculateColumnWidths();

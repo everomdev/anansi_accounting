@@ -166,7 +166,16 @@ class Business extends \yii\db\ActiveRecord
             ["Pescado", $this->id, RecipeCategory::TYPE_MAIN],
             ["Postres", $this->id, RecipeCategory::TYPE_MAIN],
             ["Vegetariano", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Hamburguesas", $this->id, RecipeCategory::TYPE_MAIN]
+            ["Hamburguesas", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Bebidas Calientes", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Bebidas Frías", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Refrescos", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Cervezas", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Vinos", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Destilados", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Cócteles", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Mezcladores", $this->id, RecipeCategory::TYPE_MAIN],
+            ["Mezcladores", $this->id, RecipeCategory::TYPE_SUB],
         ];
 
         Yii::$app->db->createCommand()
