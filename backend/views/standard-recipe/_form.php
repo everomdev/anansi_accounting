@@ -868,12 +868,16 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             // Obtener valor y unidad de medida final
             const finalUnitRaw = umField.value.trim();
             const yieldUnitRaw = yieldUmField.value.trim();
-            const yieldValue = parseFloat(yieldField.value) || 0;
-
-            // Resetear estado de los campos
+            const yieldValue = parseFloat(yieldField.value) || 0;            // Resetear estado de los campos
             portionsField.removeAttribute('readonly');
             portionsField.classList.remove('bg-light');
-            portionsContainer.classList.remove('d-none');
+
+            // Solo ocultar el campo de porciones si no hay valor y no se requiere tamaño de porción
+            if (!portionsField.value && !portionSizeField?.value) {
+                portionsContainer.classList.add('d-none');
+            } else {
+                portionsContainer.classList.remove('d-none');
+            }
 
             // Ocultar campo de tamaño de porción por defecto
             if (portionSizeContainer) {
@@ -882,9 +886,10 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             
             const isPiezaCase = (finalUnitRaw.includes('Pieza') && yieldUnitRaw.includes('Pieza'));
             // CASO ESPECIAL: Si las unidades de rendimiento y final son iguales
-            if (finalUnitRaw.toLowerCase() === yieldUnitRaw.toLowerCase()  && !isPiezaCase) {
-                // Fijar el valor de porciones a 1
-                portionsField.value = '1';
+            if (finalUnitRaw.toLowerCase() === yieldUnitRaw.toLowerCase()  && !isPiezaCase) {                // Solo fijar el valor a 1 si no hay un valor existente
+                if (!portionsField.value) {
+                    portionsField.value = '1';
+                }
                 portionsField.setAttribute('readonly', 'readonly');
                 portionsField.classList.add('bg-light');
                 
@@ -897,6 +902,11 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
                 // Ocultar el campo de tamaño de porción, ya que no aplica en este caso
                 if (portionSizeContainer) {
                     portionSizeContainer.classList.add('d-none');
+                }
+                
+                // Mostrar el campo de porciones siempre que tenga un valor
+                if (portionsField.value) {
+                    portionsContainer.classList.remove('d-none');
                 }
                 
                 return; // Terminar la función aquí, no necesitamos más lógica
@@ -951,16 +961,17 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
                         } else {
                             helpText.textContent = `Define cuántos ${yieldUmField.value} corresponden a cada ${finalUnitRaw}`;
                         }
-                    }
-                    // Si no hay valor en el tamaño de porción, ocultar el campo de porciones
-                    if (!portionSizeField.value) {
+                    }            // Si hay valor en el campo de porciones o en el tamaño de porción, mostrar el campo de porciones
+                    if (portionsField.value || portionSizeField.value) {
+                        portionsContainer.classList.remove('d-none');
+                    } else {
                         portionsContainer.classList.add('d-none');
                     }
 
                     // Calcular porciones cuando cambie el tamaño de porción
                     portionSizeField.addEventListener('input', function() {
                         // Mostrar el campo de porciones cuando se ingrese un valor en tamaño de porción
-                        if (portionSizeField.value) {
+                        if (portionSizeField.value || portionsField.value) {
                             portionsContainer.classList.remove('d-none');
                         } else {
                             portionsContainer.classList.add('d-none');
