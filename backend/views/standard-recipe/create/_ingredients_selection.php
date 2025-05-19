@@ -6,7 +6,7 @@
 use yii\helpers\ArrayHelper;
 
 $business = \backend\helpers\RedisKeys::getBusiness();
-$total = 0.0;
+$total = 0;
 $counter = 0; // Inicializamos el contador en 0
 ?>
 
@@ -48,7 +48,7 @@ $counter = 0; // Inicializamos el contador en 0
                             <?= sprintf("%s %s", $ingredientStandardRecipe->quantity, $ingredientStandardRecipe->ingredient->portion_um) ?>
                         </td>
                         <td>
-                            <?= $business->formatter->asCurrency($cost) ?>
+                            <?= $cost ?>
                         </td>
                         <td>
                             <!-- Checkbox para excluir del costeo -->
@@ -105,7 +105,7 @@ $counter = 0; // Inicializamos el contador en 0
                             <?= sprintf("%s %s", $quantity, $subStandardRecipe->um); ?>
                         </td>
                         <td>
-                            <?= $business->formatter->asCurrency($cost) ?>
+                            <?= $business->formatte->asCurrency($cost)?>
                         </td>
                         <td>
                             <!-- Checkbox para excluir del costeo -->
@@ -140,7 +140,7 @@ $counter = 0; // Inicializamos el contador en 0
                     <td colspan="3" class="text-end" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
                     <td>
                         <span id="ingredients-selection-total-cost"
-                              data-value="<?= $total ?>"><?= $business->getFormatter()->asCurrency($total) ?></span>
+                              data-value="<?= $total ?>"><?= $total ?></span>
                     </td>
                     <td colspan="3"></td>
                 </tr>
