@@ -851,9 +851,9 @@ class ExcelHelper
             }
             //var_dump($data);
             // Importar ingredientes agrupados por receta
-            $rowIterator = $ingredientsSheet->getRowIterator();
+           $rowIterator = $ingredientsSheet->getRowIterator();
             while (true) {
-                $cellIterator = $rowIterator->current()->getCellIterator('A', 'E');
+                $cellIterator = $rowIterator->current()->getCellIterator('A', 'F');
                 if ($rowIterator->current()->getRowIndex() != 1) {
                     if (empty($cellIterator->current()->getValue())) {
                         break;
@@ -861,17 +861,18 @@ class ExcelHelper
                     $data = [];
                     $data['recipe'] = $cellIterator->current()->getValue(); // A - Receta
                     $cellIterator->next();
-                    $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
+                    $data['type'] = $cellIterator->current()->getValue(); // B - Tipo (INSUMO/SUBRECETA)
                     $cellIterator->next();
-                    $data['quantity'] = $cellIterator->current()->getValue(); // C - Cantidad
+                    $data['item'] = $cellIterator->current()->getValue(); // C - Item (Insumo o Subreceta)
                     $cellIterator->next();
-                    $data['portion_um'] = $cellIterator->current()->getValue(); // D - UM
+                    $data['quantity'] = $cellIterator->current()->getValue(); // D - Cantidad
                     $cellIterator->next();
-                    $data['lastPrice'] = $cellIterator->current()->getValue(); // E - Costo
+                    $data['portion_um'] = $cellIterator->current()->getValue(); // E - UM
                     $cellIterator->next();
-    
+                    $data['lastPrice'] = $cellIterator->current()->getValue(); // F - Costo
+
                     $data['business_id'] = $business->id;
-    
+
                     if (!isset($ingredientData[$data['recipe']])) {
                         $ingredientData[$data['recipe']] = [];
                     }
@@ -879,6 +880,7 @@ class ExcelHelper
                 }
                 $rowIterator->next();
             }
+
 
             
             $transaction = \Yii::$app->db->beginTransaction();
@@ -896,19 +898,45 @@ class ExcelHelper
                         //die(var_dump(isset($ingredientData[$data['title']])));
                         if (isset($ingredientData[$data['title']])) {
                             foreach ($ingredientData[$data['title']] as $ingredient) {
-                                $ingredientStock = IngredientStock::find()
-                                    ->where(['ingredient' => $ingredient['ingredient'], 'business_id' => $business->id])
-                                    ->one();
-    
-                                if (!$ingredientStock) {
-                                    throw new HttpException(400, "No se encontró el ingrediente \"{$ingredient['ingredient']}\" en el negocio.");
+                                if ($ingredient['type'] === 'INSUMO') {
+                                    $ingredientStock = IngredientStock::find()
+                                        ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
+                                        ->one();
+
+                                    if (!$ingredientStock) {
+                                        throw new HttpException(400, "No se encontró el insumo \"{$ingredient['item']}\" en el negocio.");
+                                    }
+
+                                    $ingredientRelation = new IngredientStandardRecipe();
+                                    $ingredientRelation->ingredient_id = $ingredientStock->id;
+                                    $ingredientRelation->standard_recipe_id = $recipe->id;
+                                    $ingredientRelation->quantity = $ingredient['quantity'];
+                                    $ingredientRelation->save();
+                                } else if ($ingredient['type'] === 'SUBRECETA') {
+                                    $subrecipe = StandardRecipe::find()
+                                        ->where([
+                                            'title' => $ingredient['item'],
+                                            'business_id' => $business->id,
+                                            'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+                                        ])
+                                        ->one();
+
+                                    if (!$subrecipe) {
+                                        throw new HttpException(400, "No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.");
+                                    }
+
+                                    // Insert the relation between the main recipe and subrecipe directly to the database
+                                    Yii::$app->db->createCommand()
+                                        ->insert(
+                                            'standard_recipe_sub_standard_recipe',
+                                            [
+                                                'sub_standard_recipe_id' => $subrecipe->id,
+                                                'quantity' => $ingredient['quantity'],
+                                                'standard_recipe_id' => $recipe->id
+                                            ]
+                                        )
+                                        ->execute();
                                 }
-    
-                                $ingredientRelation = new IngredientStandardRecipe();
-                                $ingredientRelation->ingredient_id = $ingredientStock->id;
-                                $ingredientRelation->standard_recipe_id = $recipe->id;
-                                $ingredientRelation->quantity = $ingredient['quantity'];
-                                $ingredientRelation->save();
                             }
                         }
                     } else {
