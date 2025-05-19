@@ -64,7 +64,7 @@ class CategorySearch extends Category
             'group_id' => $this->group_id
         ]);
 
-        $query->andFilterWhere(['like', 'name', $this->name]);
+        $query->andFilterWhere(['like', 'category.name', $this->name]);
 
         if (!empty($this->business_id)) {
             $query->andWhere([
