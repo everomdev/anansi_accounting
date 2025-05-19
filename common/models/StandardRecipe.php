@@ -420,23 +420,22 @@ class StandardRecipe extends \yii\db\ActiveRecord
             ->andWhere(['srssr.sub_standard_recipe_id' => $this->id])
             ->one();
         return empty($data) ? 0 : $data['quantity'];
-    }
-
-    public function getSubRecipeLastPrice()
+    }    public function getSubRecipeLastPrice()
     {
         $ingredients = $this->ingredientRelations;
         $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
             return $ingredient->lastUnitPrice * $ingredient->quantity;
         });
 
-        if (empty($this->portions)) {
-            return array_sum($lastPrices);
+        $total = array_sum($lastPrices);
+
+        // Si no hay porciones o es cero, retornar el total sin dividir
+        if (empty($this->portions) || $this->portions == 0) {
+            return $total;
         }
 
-        return array_sum($lastPrices) / $this->portions;
-    }
-
-    public function getSubRecipeHigherPrice()
+        return $total / $this->portions;
+    }    public function getSubRecipeHigherPrice()
     {
         /** @var IngredientStandardRecipe[] $isr */
         $ingredients = $this->ingredientRelations;
@@ -444,26 +443,30 @@ class StandardRecipe extends \yii\db\ActiveRecord
             return $ingredient->higherUnitPrice * $ingredient->quantity;
         });
 
-        if (empty($this->portions)) {
-            return array_sum($lastPrices);
+        $total = array_sum($lastPrices);
+        
+        // Si no hay porciones o es cero, retornar el total sin dividir
+        if (empty($this->portions) || $this->portions == 0) {
+            return $total;
         }
 
-        return array_sum($lastPrices) / $this->portions;
+        return $total / $this->portions;
 
-    }
-
-    public function getSubRecipeAvgPrice()
+    }    public function getSubRecipeAvgPrice()
     {
         $ingredients = $this->ingredientRelations;
         $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
             return $ingredient->avgUnitPrice * $ingredient->quantity;
         });
 
-        if (empty($this->portions)) {
-            return array_sum($lastPrices);
+        $total = array_sum($lastPrices);
+
+        // Si no hay porciones o es cero, retornar el total sin dividir
+        if (empty($this->portions) || $this->portions == 0) {
+            return $total;
         }
 
-        return array_sum($lastPrices) / $this->portions;
+        return $total / $this->portions;
 
     }
 
@@ -482,11 +485,14 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
         if (!empty($this->convoy_id)) {
             $lastPrices[] = $this->convoy->amount;
+        }        $total = array_sum($lastPrices);
+        
+        // Si no hay porciones o el rendimiento es cero, retornar el total sin dividir
+        if (empty($this->portions) || empty($this->yield) || $this->portions == 0 || $this->yield == 0) {
+            return $total;
         }
-        if (empty($this->portions)) {
-            return array_sum($lastPrices);
-        }
-        return array_sum($lastPrices) / $this->portions / $this->yield;
+        
+        return $total / $this->portions / $this->yield;
     }
 
     public function getRecipeHigherPrice()
