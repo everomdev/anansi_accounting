@@ -112,7 +112,7 @@ function computeCost() {
         if ($(this).find('.exclude-checkbox').length > 0) {
             let ingredientName = $(this).find('td:nth-child(2)').text().trim();
             let costText = $(this).find('td:nth-child(4)').text().trim();
-            let cost = parseFloat(costText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+            let cost = parseUserNumber(costText);
             let isExcluded = $(this).find('.exclude-checkbox').is(':checked');
             let discountPercentage = parseInt($(this).find('.cost-percentage').val(), 10);
             
@@ -153,9 +153,8 @@ function computeCost() {
         
         $("#ingredients-selection-total-cost").html(formattedCost);
         
-        if ($("#cost-value").length > 0) {
-            $("#cost-value").html(formattedCost);
-            $("#cost-value").data('price', costPerPortion.toFixed(2));
+        if ($("#cost-value").length > 0) {            $("#cost-value").html(formatUserNumber(costPerPortion));
+            $("#cost-value").data('price', costPerPortion);
             
             // Actualizar el porcentaje de costo si hay un precio establecido
            //updateCostPercent();
@@ -164,25 +163,11 @@ function computeCost() {
 }
 // Función para formatear números según las preferencias del usuario
 function formatNumberWithUserPreferences(value) {
-    // Obtener información de formato del backend (se debe pasar desde PHP)
-    let decimalSeparator = '.'; // Por defecto
-    let thousandSeparator = ','; // Por defecto
-    let decimalPlaces = 2;
-    let currencySymbol = '$';
-    let currencyPosition = 'before';
-    
-    // Si hay configuración disponible en la página, usarla
-    if (typeof userFormatConfig !== 'undefined') {
-        decimalSeparator = userFormatConfig.decimalSeparator;
-        thousandSeparator = userFormatConfig.thousandSeparator;
-        currencySymbol = userFormatConfig.currencySymbol || currencySymbol;
-        console.log(`Separador decimal: ${userFormatConfig.decimalSeparator}`);
-
-        
+    const formatted = formatUserNumber(value);
+    if (typeof userFormatConfig !== 'undefined' && userFormatConfig.currencySymbol) {
+        return userFormatConfig.currencySymbol + ' ' + formatted;
     }
-    // console.log(`Separador decimal: ${decimalSeparator}, Separador de miles: ${thousandSeparator}, Símbolo de moneda: ${currencySymbol}`);
-    
-    // Formatear el número
+    return formatted;
     let fixedValue = parseFloat(value).toFixed(decimalPlaces);
     let parts = fixedValue.split('.');
     console.log(`Valor fijo: ${fixedValue}`);

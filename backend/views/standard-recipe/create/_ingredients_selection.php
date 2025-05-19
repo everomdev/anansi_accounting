@@ -6,8 +6,27 @@
 use yii\helpers\ArrayHelper;
 
 $business = \backend\helpers\RedisKeys::getBusiness();
-$total = 0;
+$businessObj = \common\models\Business::findOne(['id' => $business['id']]);
+
+$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
+$currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
+
+// Configuración para formato de números
+$formatConfig = [
+    'decimalSeparator' => $businessObj->decimal_separator,
+    'thousandSeparator' => $businessObj->thousands_separator,
+    'currencySymbol' => $currencySymbol,
+];
+$this->registerJsVar('userFormatConfig', $formatConfig);
+
+$total = 0.0;
 $counter = 0; // Inicializamos el contador en 0
+?>
+
+<?php
+$this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), [
+    'depends' => [\yii\web\YiiAsset::class]
+]);
 ?>
 
 <?php \yii\widgets\Pjax::begin([
@@ -33,11 +52,10 @@ $counter = 0; // Inicializamos el contador en 0
                     </button>
                 </th>
                 </thead>
-                <tbody>
-                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): 
+                <tbody>                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): 
                     $counter++; // Incrementamos el contador
-                    $cost = $ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity;
-                    $total += $cost;
+                    $cost = (float)($ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity);
+                    $total = (float)($total + $cost);
                     ?>
                     <tr>
                         <td><?= $counter ?></td>
@@ -46,9 +64,8 @@ $counter = 0; // Inicializamos el contador en 0
                         </td>
                         <td>
                             <?= sprintf("%s %s", $ingredientStandardRecipe->quantity, $ingredientStandardRecipe->ingredient->portion_um) ?>
-                        </td>
-                        <td>
-                            <?= $cost ?>
+                        </td>                        <td>
+                            <?= number_format($cost, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
                         </td>
                         <td>
                             <!-- Checkbox para excluir del costeo -->
@@ -89,12 +106,11 @@ $counter = 0; // Inicializamos el contador en 0
                             ]) ?>
                         </td>
                     </tr>
-                <?php endforeach; ?>
-                <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): 
+                <?php endforeach; ?>                <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): 
                     $counter++; // Incrementamos el contador para las subrecetas
-                    $quantity = $subStandardRecipe->getQuantityLinked($model->id);
-                    $cost = $subStandardRecipe->custom_cost * $quantity;
-                    $total += $cost;
+                    $quantity = (float)$subStandardRecipe->getQuantityLinked($model->id);
+                    $cost = (float)($subStandardRecipe->custom_cost * $quantity);
+                    $total = (float)($total + $cost);
                     ?>
                     <tr>
                         <td><?= $counter ?></td>
@@ -103,9 +119,8 @@ $counter = 0; // Inicializamos el contador en 0
                         </td>
                         <td>
                             <?= sprintf("%s %s", $quantity, $subStandardRecipe->um); ?>
-                        </td>
-                        <td>
-                            <?= $business->formatte->asCurrency($cost)?>
+                        </td>                        <td>
+                            <?= number_format($cost, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
                         </td>
                         <td>
                             <!-- Checkbox para excluir del costeo -->
@@ -137,10 +152,12 @@ $counter = 0; // Inicializamos el contador en 0
                     </tr>
                 <?php endforeach; ?>
                 <tr>
-                    <td colspan="3" class="text-end" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
-                    <td>
+                    <td colspan="3" class="text-end" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>                    <td>
                         <span id="ingredients-selection-total-cost"
-                              data-value="<?= $total ?>"><?= $total ?></span>
+                              data-raw-value="<?= $total ?>"
+                              data-format-config='<?= json_encode($formatConfig) ?>'>
+                            <?= number_format($total, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
+                        </span>
                     </td>
                     <td colspan="3"></td>
                 </tr>
