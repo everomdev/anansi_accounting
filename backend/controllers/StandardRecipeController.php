@@ -2087,7 +2087,6 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
  public function actionExportRecipesPlantilla($type)
  {
      $business = \backend\helpers\RedisKeys::getBusiness();
-     //die(var_dump($type));
      // Configuración para mejorar rendimiento
      set_time_limit(300);
      ini_set('memory_limit', '512M');
@@ -2187,8 +2186,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
        // Modify INGREDIENTES headers to include type selector
      $headers['INGREDIENTES'] = [
         ($type === 'sub' ? 'SubReceta' : 'Receta'),
-        'Tipo*',           // Columna para seleccionar INSUMO/SUBRECETA
-        'Item*',           // Columna que mostrará la lista dinámica
+        'Tipo*',
+        'Item*',
         'Cantidad*', 
         'UM', 
         'Costo'
@@ -2571,27 +2570,32 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      }
      
      // 11. Añadir fórmula para bloquear el campo de porciones cuando se seleccionan ciertos rendimientos
-     for ($i = 2; $i <= 500; $i++) {
-         // Si el rendimiento UM es porción, pieza o rebanada, poner un 1 fijo en porciones
-         $formulaLockPortions = "=IF(OR(F$i=\"porción\",F$i=\"pieza\",F$i=\"rebanada\",F$i=\"porcion\",F$i=\"Porción\",F$i=\"Pieza\",F$i=\"Rebanada\"),1,\"\")";
-         $recipesSheet->setCellValue("G$i", $formulaLockPortions);
-         
-         // Validación dinámica para el campo Porciones
-         $portionsValidation = $recipesSheet->getCell("G$i")->getDataValidation();
-         $portionsValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
-         $portionsValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-         $portionsValidation->setAllowBlank(false);
-         $portionsValidation->setShowInputMessage(true);
-         $portionsValidation->setShowErrorMessage(true);
-         $portionsValidation->setErrorTitle('Campo bloqueado');
-         $portionsValidation->setError('Este campo está bloqueado cuando la unidad de rendimiento es porción, pieza o rebanada');
-         $portionsValidation->setPromptTitle('Porciones');
-         $portionsValidation->setPrompt('Ingrese el número de porciones si la unidad no es porción, pieza o rebanada');
-         $portionsValidation->setFormula1("=IF(OR(F$i=\"porción\",F$i=\"pieza\",F$i=\"rebanada\",F$i=\"porcion\",F$i=\"Porción\",F$i=\"Pieza\",F$i=\"Rebanada\"),FALSE,TRUE)");
-         
-         $recipesSheet->getCell("G$i")->setDataValidation($portionsValidation);
-     }
-     
+    for ($i = 2; $i <= 500; $i++) {
+        // Determinar qué columna contiene la unidad de medida final según el tipo
+        $finalUnitColumn = ($type === 'sub') ? 'J' : 'M';
+        
+        // Bloquear el campo de porciones hasta que ambas unidades de medida estén completas
+        // y luego aplicar la lógica de bloqueo si son iguales (excepto pieza)
+        $formulaLockPortions = "=IF(OR(F$i=\"\", $finalUnitColumn$i=\"\"), \"\", IF(AND(F$i=$finalUnitColumn$i, F$i<>\"pieza\", F$i<>\"Pieza\"), 1, \"\"))";
+        $recipesSheet->setCellValue("G$i", $formulaLockPortions);
+        
+        // Validación dinámica para el campo Porciones
+        $portionsValidation = $recipesSheet->getCell("G$i")->getDataValidation();
+        $portionsValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
+        $portionsValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $portionsValidation->setAllowBlank(false);
+        $portionsValidation->setShowInputMessage(true);
+        $portionsValidation->setShowErrorMessage(true);
+        $portionsValidation->setErrorTitle('Campo bloqueado');
+        $portionsValidation->setError('El campo Porciones está bloqueado hasta que especifique ambas unidades de medida');
+        $portionsValidation->setPromptTitle('Porciones');
+        $portionsValidation->setPrompt('Ingrese el número de porciones después de completar las unidades de medida');
+        
+        // La fórmula valida si puede ser editado (TRUE) o no (FALSE)
+        // Solo será editable si ambas unidades están definidas Y no son iguales (excepto "pieza")
+        $portionsValidation->setFormula1("=IF(OR(F$i=\"\", $finalUnitColumn$i=\"\"), FALSE, IF(AND(F$i=$finalUnitColumn$i, NOT(OR(LOWER(F$i)=\"pieza\", LOWER(F$i)=\"Pieza\"))), FALSE, TRUE))");
+        $recipesSheet->getCell("G$i")->setDataValidation($portionsValidation);
+    }
      // 12. Nota informativa
     $noteText = ($type === 'sub') 
         ? 'NOTA: El nombre de la subreceta debe existir primero en la hoja "FICHA GENERAL DE LA SUBRECETA"' 
