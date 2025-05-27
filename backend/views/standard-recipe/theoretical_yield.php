@@ -17,8 +17,34 @@ $messageNonFood = Yii::t('app', "Rentabilidad teórica de las bebidas: ");
 
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+
+// Configurar años para el selector
+$currentYear = (int)date('Y');
+$years = [];
+for ($i = $currentYear - 5; $i <= $currentYear; $i++) {
+    $years[$i] = $i;
+}
+$selectedYear = Yii::$app->request->get('year', $currentYear);
 ?>
 <div class="standard-recipe-index">
+    
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtro de año') ?></h3>
+            <div class="d-flex gap-2">
+                <?= Html::beginForm(['theoretical-yield'], 'get') ?>
+                <div class="d-flex align-items-center gap-2">
+                    <?= Html::dropDownList('year',
+                        $selectedYear,
+                        $years,
+                        ['class' => 'form-select', 'id' => 'year-select']
+                    ) ?>
+                    <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
+                </div>
+                <?= Html::endForm() ?>
+            </div>
+        </div>
+    </div>
     <div class="row mb-4">
         <div class="col-12">
             <?php if ($tehoricalTotal !== null): ?>

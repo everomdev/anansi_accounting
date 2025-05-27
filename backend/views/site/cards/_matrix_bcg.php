@@ -8,8 +8,10 @@ $families = $business->getRecipeCategories()->andWhere(['type' => \common\models
 $data = [];
 
 // Procesar datos BCG
-foreach ($families as $family) {
-    $bcgData = $business->getBcgData($family->name);
+if (is_array($families) || $families instanceof \Traversable) {
+    foreach ($families as $family) {
+    $year = (int)date('Y'); // Usar el año actual
+    $bcgData = $business->getBcgData($family->name, $year);
     $totalCostEffectiveness = 0;
     array_walk($bcgData['data'], function ($item) use (&$totalCostEffectiveness) {
         $totalCostEffectiveness += ($item->sales * $item->price) - ($item->sales * $item->cost);
@@ -47,8 +49,10 @@ foreach ($families as $family) {
         }
     }
     $data[$family->name] = [$estrella, $vaca, $perro, $rata];
+    }
 }
 
+// CSS personalizado para el nuevo diseño con scrollbar
 // CSS personalizado para el nuevo diseño con scrollbar
 $this->registerCss("
     .bcg-container {

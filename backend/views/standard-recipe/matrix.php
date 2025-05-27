@@ -1,8 +1,10 @@
 <?php
 /** @var $this \yii\web\View */
-/** @var $date \common\models\StandardRecipe[]|\common\models\Menu[] */
+/** @var $data \common\models\StandardRecipe[]|\common\models\Menu[] */
 /** @var $business  \common\models\Business */
+/** @var $year int */
 
+use yii\helpers\Html;
 \backend\assets\ChartJsAsset::register($this);
 
 $this->title = Yii::t('app', "Matriz BCG");
@@ -46,8 +48,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
 
 ?>
 <div class="card">
-    <div class="card-header">
-        <div class="row">
+    <div class="card-header">        <div class="row">
             <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                 <?= \yii\bootstrap5\Html::dropDownList(
                     'category',
@@ -60,6 +61,25 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
                         'data-url' => \yii\helpers\Url::to(['standard-recipe/matrix-bcg'])
                     ]
                 ) ?>
+            </div>
+            <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
+                <?= Html::beginForm(['matrix-bcg'], 'get', ['class' => 'd-flex gap-2']) ?>
+                <?= Html::hiddenInput('type', $type) ?>
+                <?php
+                // Generar años para el selector (5 años atrás hasta el actual)
+                $currentYear = (int)date('Y');
+                $years = [];
+                for ($i = $currentYear - 5; $i <= $currentYear; $i++) {
+                    $years[$i] = $i;
+                }
+                ?>
+                <?= Html::dropDownList('year',
+                    $year ?? $currentYear,
+                    $years,
+                    ['class' => 'form-select', 'id' => 'year-select']
+                ) ?>
+                <?= Html::submitButton('Filtrar año', ['class' => 'btn btn-primary']) ?>
+                <?= Html::endForm() ?>
             </div>
             <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                 <button class="btn btn-success" data-bs-target="#modal-bcg"

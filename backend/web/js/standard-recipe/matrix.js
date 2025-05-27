@@ -76,11 +76,17 @@ $(document).on('change', '#category', function (event) {
     const _this = $(this);
     let url = _this.data('url');
     let val = _this.val();
+    let year = $('#year-select').val() || '';
 
     if (val.length === 0) {
         url += "?type=all";
     } else {
         url += "?type=" + val;
+    }
+    
+    // Añadir el año seleccionado si existe
+    if (year.length > 0) {
+        url += "&year=" + year;
     }
 
     window.location.href = url;

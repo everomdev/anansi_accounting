@@ -5,6 +5,7 @@ namespace common\models;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\i18n\Formatter;
+use common\models\MonthlySales;
 
 /**
  * This is the model class for table "business".
@@ -215,10 +216,15 @@ class Business extends \yii\db\ActiveRecord
     {
         return $this->hasMany(User::class, ['id' => 'user_id'])
             ->viaTable('user_business', ['business_id' => 'id']);
-    }
-
-   public function getTheoreticalYield()
+    }   public function getTheoreticalYield($month = null, $year = null)
 {
+    // Si no se proporciona mes o año, usar los actuales
+    if ($month === null) {
+        $month = (int)date('n');
+    }
+    if ($year === null) {
+        $year = (int)date('Y');
+    }
     $categories = RecipeCategory::find()
         ->where([
             'business_id' => $this->id
@@ -245,28 +251,41 @@ class Business extends \yii\db\ActiveRecord
             'business_id' => $this->id,
             'in_menu' => true,
             'category_id' => $category->id
-        ])->all();
-        
-        if (empty($recipes) && empty($combos)) {
+        ])->all();        if (empty($recipes) && empty($combos)) {
             continue;
         } else {
+            $recipesSales = 0;
+            $combosSales = 0;
+            
             if (!empty($recipes)) {
-                $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
-                $total += count($recipes);
-                
-                // Clasificar SOLO las recetas por is_food
+                // Cargar ventas totales de todas las recetas para el año (sumando todos los meses con ventas)
                 foreach ($recipes as $recipe) {
+                    // Obtener las ventas totales del año para la receta
+                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_RECIPE, $recipe->id, $year);
+                    $recipe->sales = $sales; // Actualizar la propiedad sales con los datos anuales
+                    $recipesSales += $sales;
+                    $total += 1;
+                    
+                    // Clasificar SOLO las recetas por is_food
                     if ($recipe->is_food) {
                         $foodRecipes[] = $recipe;
                     } else {
                         $nonFoodRecipes[] = $recipe;
                     }
                 }
+                $totalSales += $recipesSales;
             }
             
             if (!empty($combos)) {
-                $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
-                $total += count($combos);
+                // Cargar ventas para cada combo para todo el año
+                foreach ($combos as $combo) {
+                    // Obtener ventas totales del año para el combo
+                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_MENU, $combo->id, $year);
+                    $combo->sales = $sales; // Actualizar la propiedad sales con los datos anuales
+                    $combosSales += $sales;
+                    $total += 1;
+                }
+                $totalSales += $combosSales;
             }
 
             $data[] = [
@@ -356,13 +375,13 @@ class Business extends \yii\db\ActiveRecord
         $totalCost = $totalCost / $total;
     } else {
         $totalCost = 0;
-    }
-
-    // Devolver datos originales más los agrupados solo para recetas
+    }    // Devolver datos originales más los agrupados solo para recetas
     return [
         'data' => $data, 
         'totalCost' => $totalCost, 
         'tehoricalTotal' => isset($theoricalYield) ? $theoricalYield : null,
+        'month' => $month,
+        'year' => $year,
         // Nuevos datos para recetas agrupados por is_food
         'recipesByType' => [
             'food' => [
@@ -379,8 +398,16 @@ class Business extends \yii\db\ActiveRecord
     ];
 }
 
-public function getRealYield()
+public function getRealYield($month = null, $year = null)
 {
+    // Si no se proporciona mes o año, usar los actuales
+    if ($month === null) {
+        $month = (int)date('n');
+    }
+    if ($year === null) {
+        $year = (int)date('Y');
+    }
+    
     $categories = RecipeCategory::find()
         ->where([
             'business_id' => $this->id
@@ -407,25 +434,39 @@ public function getRealYield()
             'in_menu' => true,
             'category_id' => $category->id
         ])->all();
-        
-        if (empty($recipes) && empty($combos)) {
+          if (empty($recipes) && empty($combos)) {
             continue;
         } else {
+            $recipesSales = 0;
+            $combosSales = 0;
+            
             if (!empty($recipes)) {
-                $totalSales += array_sum(ArrayHelper::getColumn($recipes, 'sales'));
-                
-                // Clasificar SOLO las recetas por is_food
+                // Cargar ventas totales de todas las recetas para el año (sumando todos los meses con ventas)
                 foreach ($recipes as $recipe) {
+                    // Obtener las ventas totales del año para la receta
+                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_RECIPE, $recipe->id, $year);
+                    $recipe->sales = $sales; // Actualizar la propiedad sales con los datos anuales
+                    $recipesSales += $sales;
+                    
+                    // Clasificar SOLO las recetas por is_food
                     if ($recipe->is_food) {
                         $foodRecipes[] = $recipe;
                     } else {
                         $nonFoodRecipes[] = $recipe;
                     }
                 }
+                $totalSales += $recipesSales;
             }
             
             if (!empty($combos)) {
-                $totalSales += array_sum(ArrayHelper::getColumn($combos, 'sales'));
+                // Cargar ventas para cada combo para todo el año
+                foreach ($combos as $combo) {
+                    // Obtener ventas totales del año para el combo
+                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_MENU, $combo->id, $year);
+                    $combo->sales = $sales; // Actualizar la propiedad sales con los datos anuales
+                    $combosSales += $sales;
+                }
+                $totalSales += $combosSales;
             }
 
             $data[] = [
@@ -471,6 +512,8 @@ public function getRealYield()
         'data' => $data, 
         'totalPcr' => $totalPcr, 
         'totalSales' => $totalSales,
+        'month' => $month,
+        'year' => $year,
         // Nuevos datos para recetas agrupados por is_food
         'recipesByType' => [
             'food' => [
@@ -485,10 +528,13 @@ public function getRealYield()
             ]
         ]
     ];
-}
-
-    public function getBcgData($type = 'all')
+}    public function getBcgData($type = 'all', $year = null)
     {
+        // Si no se proporciona año, usar el actual
+        if ($year === null) {
+            $year = (int)date('Y');
+        }
+        
         $recipes = StandardRecipe::find()
             ->where([
                 'business_id' => $this->id,
@@ -510,6 +556,15 @@ public function getRealYield()
 
         $recipes = $recipes->all();
         $combos = $combos->all();
+        
+        // Cargar las ventas totales del año para cada receta y combo
+        foreach ($recipes as $recipe) {
+            $recipe->sales = MonthlySales::getTotalSales(MonthlySales::TYPE_RECIPE, $recipe->id, $year);
+        }
+        
+        foreach ($combos as $combo) {
+            $combo->sales = MonthlySales::getTotalSales(MonthlySales::TYPE_MENU, $combo->id, $year);
+        }
 
         $data = array_merge($recipes, $combos);
 
@@ -519,7 +574,8 @@ public function getRealYield()
             "data" => $data,
             'business' => $this,
             'totalSales' => $totalSales,
-            'type' => $type
+            'type' => $type,
+            'year' => $year
         ];
     }
 

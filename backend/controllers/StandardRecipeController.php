@@ -22,6 +22,7 @@ use Symfony\Component\Yaml\Yaml;
 use Yii;
 use common\models\StandardRecipe;
 use common\models\StandardRecipeSearch;
+use common\models\MonthlySales;
 use yii\data\ActiveDataProvider;
 use yii\data\Pagination;
 use yii\db\Query;
@@ -213,8 +214,7 @@ class StandardRecipeController extends Controller
                         'roles' => [
                             'theoretical_profitability_view',
                         ],
-                    ],
-                    [
+                    ],                    [
                         'actions' => [
                             'sales',
                         ],
@@ -226,6 +226,7 @@ class StandardRecipeController extends Controller
                     [
                         'actions' => [
                             'save-sales',
+                            'save-monthly-sales',
                         ],
                         'allow' => true,
                         'roles' => [
@@ -317,20 +318,29 @@ class StandardRecipeController extends Controller
         ]);
     }
 
-    public function actionTheoreticalYield()
+    public function actionTheoreticalYield($year = null)
     {
         /** @var $business \common\models\Business */
         $business = RedisKeys::getBusiness();
+        
+        // Si no se especifica año, usar el actual
+        if ($year === null) {
+            $year = (int)date('Y');
+        }
 
-        return $this->render('theoretical_yield', $business->getTheoreticalYield());
+        return $this->render('theoretical_yield', $business->getTheoreticalYield(null, $year));
     }
 
-    public function actionRealYield()
+    public function actionRealYield($year = null)
     {
         $business = RedisKeys::getBusiness();
+        
+        // Si no se especifica año, usar el actual
+        if ($year === null) {
+            $year = (int)date('Y');
+        }
 
-
-        return $this->render('real_yield', $business->getRealYield());
+        return $this->render('real_yield', $business->getRealYield(null, $year));
     }
 
 
@@ -758,42 +768,36 @@ public function actionGetSubStandardRecipes()
         }
 
         return $this->asJson(['error' => true, 'data' => $post]);
-    }      public function actionSales()
+    }    public function actionSales()
     {
         $startDate = Yii::$app->request->get('start_date');
         $endDate = Yii::$app->request->get('end_date');
         $month = Yii::$app->request->get('month', date('n')); // Si no se especifica mes, usar el mes actual
+        $year = Yii::$app->request->get('year', date('Y')); // Si no se especifica año, usar el año actual
         $business = RedisKeys::getBusinessData();
-          $month = Yii::$app->request->get('month', date('n')); // Si no se especifica mes, usar el mes actual
 
         // Base query for food recipes
-    $foodQuery = StandardRecipe::find()->where([
+        $foodQuery = StandardRecipe::find()->where([
             'business_id' => $business['id'],
             'in_construction' => 0,
             'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
             'in_menu' => true,
             'is_food' => true,
-            'sales_month' => $month,
-            'sales_month' => $month
         ]);
 
         // Base query for drink recipes
-    $drinkQuery = StandardRecipe::find()->where([
+        $drinkQuery = StandardRecipe::find()->where([
             'business_id' => $business['id'],
             'in_construction' => 0,
             'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
             'in_menu' => true,
             'is_food' => false,
-            'sales_month' => $month,
-            'sales_month' => $month
         ]);
 
         // Base query for combos
-    $comboQuery = Menu::find()->where([
+        $comboQuery = Menu::find()->where([
             'business_id' => $business['id'],
             'in_menu' => true,
-            'sales_month' => $month,
-            'sales_month' => $month
         ]);
 
         // Add date filtering if dates are provided
@@ -816,25 +820,69 @@ public function actionGetSubStandardRecipes()
             'query' => $comboQuery
         ]);
 
+        // Cargamos las ventas de cada receta desde la tabla mensual para el mes y año seleccionados
+        $this->loadMonthlySalesForDataProvider($foodDataProvider, $month, $year, MonthlySales::TYPE_RECIPE);
+        $this->loadMonthlySalesForDataProvider($drinkDataProvider, $month, $year, MonthlySales::TYPE_RECIPE);
+        $this->loadMonthlySalesForDataProvider($comboDataProvider, $month, $year, MonthlySales::TYPE_MENU);
+
         return $this->render('sales', [
             'foodDataProvider' => $foodDataProvider,
             'drinkDataProvider' => $drinkDataProvider,
-            'comboDataProvider' => $comboDataProvider,        'startDate' => $startDate,
-        'endDate' => $endDate,
-        'selectedMonth' => $month
+            'comboDataProvider' => $comboDataProvider,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'selectedMonth' => $month,
+            'selectedYear' => $year
         ]);
-    }    public function actionSaveSales($id)
+    }    /**
+     * Carga los datos de ventas mensuales para cada modelo en un data provider
+     * @param ActiveDataProvider $dataProvider Proveedor de datos a actualizar
+     * @param int $month Mes (1-12)
+     * @param int $year Año
+     * @param string $modelType Tipo de modelo ('standard_recipe' o 'menu')
+     */
+    protected function loadMonthlySalesForDataProvider($dataProvider, $month, $year, $modelType)
+    {
+        $models = $dataProvider->getModels();
+        foreach ($models as $model) {
+            // Cargar ventas desde la tabla historical
+            $model->sales = MonthlySales::getSales($modelType, $model->id, $month, $year);
+            $model->sales_month = $month; // Establecer el mes actual para la UI
+        }
+        $dataProvider->setModels($models);
+    }
+
+    /**
+     * Guarda las ventas de una receta individual (acción AJAX para la vista antigua)
+     * @param int $id ID de la receta
+     */
+    public function actionSaveSales($id)
     {
         $model = $this->findModel($id);
         $post = Yii::$app->request->post();
+        $month = null;
+        $sales = null;
 
         if (isset($post['StandardRecipe'])) {
             if (isset($post['StandardRecipe']['sales_month'])) {
-                $model->sales_month = $post['StandardRecipe']['sales_month'];
+                $month = $post['StandardRecipe']['sales_month'];
+                $model->sales_month = $month;
             }
             if (isset($post['StandardRecipe']['sales'])) {
-                $model->sales = $post['StandardRecipe']['sales'];
+                $sales = $post['StandardRecipe']['sales'];
+                $model->sales = $sales;
             }
+        }
+
+        // Si tenemos todos los datos, guardar en la tabla histórica también
+        if ($month !== null && $sales !== null) {
+            MonthlySales::saveSales(
+                MonthlySales::TYPE_RECIPE,
+                $model->id,
+                $month,
+                date('Y'), // Año actual
+                $sales
+            );
         }
 
         if ($model->save(false)) {
@@ -844,6 +892,95 @@ public function actionGetSubStandardRecipes()
         return $this->asJson([
             'success' => false,
             'errors' => array_values(array_values($model->errors))
+        ]);
+    }
+      /**
+     * Guarda las ventas de todas las recetas mostradas en la vista
+     * (Acción para el nuevo botón "Guardar ventas")
+     */
+    public function actionSaveMonthlySales()
+    {
+        $post = Yii::$app->request->post();
+        $month = isset($post['month']) ? (int)$post['month'] : (int)date('n');
+        $year = isset($post['year']) ? (int)$post['year'] : (int)date('Y');
+        $success = true;
+        $errors = [];
+        $savedItems = 0;
+        
+        // Validación básica de mes y año
+        if ($month < 1 || $month > 12) {
+            return $this->asJson([
+                'success' => false,
+                'errors' => ["Mes inválido: $month. Debe ser entre 1 y 12."]
+            ]);
+        }
+        if ($year < 2000 || $year > 2100) {
+            return $this->asJson([
+                'success' => false,
+                'errors' => ["Año inválido: $year. Debe ser entre 2000 y 2100."]
+            ]);
+        }
+        
+        // Procesar ventas de recetas (comida)
+        if (isset($post['food']) && is_array($post['food'])) {
+            foreach ($post['food'] as $recipeId => $sales) {
+                // Validar que recipeId sea un número válido
+                if (!is_numeric($recipeId) || (int)$recipeId <= 0) {
+                    $errors[] = "ID de receta inválido: $recipeId";
+                    continue;
+                }
+                
+                if (!MonthlySales::saveSales(MonthlySales::TYPE_RECIPE, (int)$recipeId, $month, $year, (float)$sales)) {
+                    $success = false;
+                    $errors[] = "Error al guardar ventas de receta ID: $recipeId";
+                } else {
+                    $savedItems++;
+                }
+            }
+        }
+        
+        // Procesar ventas de bebidas
+        if (isset($post['drink']) && is_array($post['drink'])) {
+            foreach ($post['drink'] as $recipeId => $sales) {
+                // Validar que recipeId sea un número válido
+                if (!is_numeric($recipeId) || (int)$recipeId <= 0) {
+                    $errors[] = "ID de bebida inválido: $recipeId";
+                    continue;
+                }
+                
+                if (!MonthlySales::saveSales(MonthlySales::TYPE_RECIPE, (int)$recipeId, $month, $year, (float)$sales)) {
+                    $success = false;
+                    $errors[] = "Error al guardar ventas de bebida ID: $recipeId";
+                } else {
+                    $savedItems++;
+                }
+            }
+        }
+        
+        // Procesar ventas de combos/menús
+        if (isset($post['combo']) && is_array($post['combo'])) {
+            foreach ($post['combo'] as $menuId => $sales) {
+                // Validar que menuId sea un número válido
+                if (!is_numeric($menuId) || (int)$menuId <= 0) {
+                    $errors[] = "ID de combo inválido: $menuId";
+                    continue;
+                }
+                
+                if (!MonthlySales::saveSales(MonthlySales::TYPE_MENU, (int)$menuId, $month, $year, (float)$sales)) {
+                    $success = false;
+                    $errors[] = "Error al guardar ventas de combo ID: $menuId";
+                } else {
+                    $savedItems++;
+                }
+            }
+        }
+        
+        Yii::info("Guardado de ventas mensuales completado. Mes: $month, Año: $year, Elementos guardados: $savedItems, Éxito: " . ($success ? 'Sí' : 'No'));
+        
+        return $this->asJson([
+            'success' => $success,
+            'savedItems' => $savedItems,
+            'errors' => $errors
         ]);
     }
 
@@ -1374,15 +1511,16 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             'totalSales' => $totalSales,
             'business' => $business
         ]);
-    }
-
-    public function actionMatrixBcg($type = 'all')
+    }    public function actionMatrixBcg($type = 'all', $year = null)
     {
+        // Si no se proporciona año, usar el actual
+        if ($year === null) {
+            $year = (int)date('Y');
+        }
 
         $business = RedisKeys::getBusiness();
 
-
-        return $this->render('matrix', $business->getBcgData($type));
+        return $this->render('matrix', $business->getBcgData($type, $year));
     }
 
     public function actionCharts()

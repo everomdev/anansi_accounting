@@ -4,7 +4,8 @@
 /** @var $families \common\models\RecipeCategory[] */
 
 // Obtener el valor de rentabilidad teórica
-$theoreticalYield = $business->getTheoreticalYield()['totalCost'];
+$year = (int)date('Y');
+$theoreticalYield = $business->getTheoreticalYield(null, $year)['totalCost'];
 $yieldPercentage = $business->formatter->asPercent($theoreticalYield, 2);
 
 // Determinar el estado de la rentabilidad para el color
