@@ -4,12 +4,14 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\StandardRecipeSearch */
-/* @var $dataProvider yii\data\ActiveDataProvider */
-/** @var \common\models\Business $business */
-/** @var \common\models\Category[] $categories */
+/* @var $data array */
+/* @var $totalPcr float */
+/* @var $totalSales float */
+/* @var $month int */
+/* @var $year int */
+/* @var $recipesByType array */
 
-$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$business = \backend\helpers\RedisKeys::getBusiness();
 $this->title = Yii::t('app', "Real Yield");
 $this->params['breadcrumbs'][] = $this->title;
 $emptyMessage = Yii::t('app', "Select some recipe to know the real yield");
@@ -17,21 +19,17 @@ $message = Yii::t('app', "The real yield is: ");
 $messageFood = Yii::t('app', "La rentabilidad real de los alimentos es: ");
 $messageNonFood = Yii::t('app', "La rentabilidad real de las bebidas es: ");
 
-$businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
-$business = \common\models\Business::findOne(['id' => $businessData['id']]);
-
 // Configurar años para el selector
 $currentYear = (int)date('Y');
 $years = [];
 for ($i = $currentYear - 5; $i <= $currentYear; $i++) {
     $years[$i] = $i;
 }
-$selectedYear = Yii::$app->request->get('year', $currentYear);
+$selectedYear = Yii::$app->request->get('year', $year ?? $currentYear);
 ?>
 
 <div class="standard-recipe-index">
-    
-    <div class="card mb-4">
+      <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtro de año') ?></h3>
             <div class="d-flex gap-2">
@@ -46,6 +44,16 @@ $selectedYear = Yii::$app->request->get('year', $currentYear);
                 </div>
                 <?= Html::endForm() ?>
             </div>
+        </div>
+        <div class="card-body">
+            <p class="mb-0 text-muted">
+                <i class="fas fa-calendar-alt me-2"></i>
+                <?= Yii::t('app', 'Mostrando datos del año: {year}', ['year' => $year]) ?>
+                <span class="ms-3">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    <?= Yii::t('app', 'Total de ventas: {sales}', ['sales' => $business->formatter->asCurrency($totalSales)]) ?>
+                </span>
+            </p>
         </div>
     </div>
     <div class="row mb-4">
@@ -102,11 +110,20 @@ $selectedYear = Yii::$app->request->get('year', $currentYear);
                     <th><?= Yii::t('app', "% Sales") ?></th>
                     <th><?= Yii::t('app', "Tipo") ?></th>
                     </thead>
-                    <tbody>
-                    <?php foreach ($data as $category): ?>
+                    <tbody>                    <?php foreach ($data as $category): ?>
+                        <?php
+                        // Calcular CPR de la categoría usando los datos actuales con ventas históricas
+                        $categoryTotalPcr = 0;
+                        foreach ($category['recipes'] as $recipe) {
+                            $categoryTotalPcr += $recipe->getCpr($totalSales);
+                        }
+                        foreach ($category['combos'] as $combo) {
+                            $categoryTotalPcr += $combo->getCpr($totalSales);
+                        }
+                        ?>
                         <tr class="bg-secondary text-white">
                             <td colspan="7" class="text-center"
-                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->formatter->asPercent($category['category']->getCpr(), 2)) ?></td>
+                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->formatter->asPercent($categoryTotalPcr, 2)) ?></td>
                         </tr>
                         <?php foreach ($category['recipes'] as $recipe): ?>
                         <?php

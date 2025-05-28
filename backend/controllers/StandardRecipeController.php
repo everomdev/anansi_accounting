@@ -316,11 +316,22 @@ class StandardRecipeController extends Controller
             'dataProvider' => $dataProvider,
             'ingredientCount' => $ingredientCount
         ]);
-    }
-
-    public function actionTheoreticalYield($year = null)
+    }    public function actionTheoreticalYield()
     {
-        /** @var $business \common\models\Business */
+        $business = RedisKeys::getBusiness();
+
+        $theoreticalYieldData = $business->getTheoreticalYield();
+        
+        return $this->render('theoretical_yield', [
+            'data' => $theoreticalYieldData['data'],
+            'totalCost' => $theoreticalYieldData['totalCost'],
+            'theoricalTotal' => $theoreticalYieldData['theoricalTotal'],
+            'month' => $theoreticalYieldData['month'],
+            'year' => $theoreticalYieldData['year'],
+            'recipesByType' => $theoreticalYieldData['recipesByType'],
+        ]);
+    }public function actionRealYield($year = null)
+    {
         $business = RedisKeys::getBusiness();
         
         // Si no se especifica año, usar el actual
@@ -328,19 +339,16 @@ class StandardRecipeController extends Controller
             $year = (int)date('Y');
         }
 
-        return $this->render('theoretical_yield', $business->getTheoreticalYield(null, $year));
-    }
-
-    public function actionRealYield($year = null)
-    {
-        $business = RedisKeys::getBusiness();
+        $realYieldData = $business->getRealYield(null, $year);
         
-        // Si no se especifica año, usar el actual
-        if ($year === null) {
-            $year = (int)date('Y');
-        }
-
-        return $this->render('real_yield', $business->getRealYield(null, $year));
+        return $this->render('real_yield', [
+            'data' => $realYieldData['data'],
+            'totalPcr' => $realYieldData['totalPcr'],
+            'totalSales' => $realYieldData['totalSales'],
+            'month' => $realYieldData['month'],
+            'year' => $realYieldData['year'],
+            'recipesByType' => $realYieldData['recipesByType'],
+        ]);
     }
 
 
