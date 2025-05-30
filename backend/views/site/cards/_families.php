@@ -6,13 +6,13 @@
 $families = $business->getRecipeCategories()->andWhere(['type' => \common\models\RecipeCategory::TYPE_MAIN])->all();
 
 usort($families, function($a, $b){
-    return $b->getRecipes()->count() - $a->getRecipes()->count();
+    return $b->getRecipes(\common\models\RecipeCategory::TYPE_MAIN)->count() - $a->getRecipes(\common\models\RecipeCategory::TYPE_MAIN)->count();
 });
 
 // Calcular el total de recetas en todas las familias
 $totalRecipes = 0;
 foreach ($families as $family) {
-    $totalRecipes += $family->getRecipes()->count();
+    $totalRecipes += $family->getRecipes(\common\models\RecipeCategory::TYPE_MAIN)->count();
 }
 
 // CSS personalizado para el nuevo diseño con altura fija y scroll
@@ -163,7 +163,7 @@ $this->registerCss("
         <?php else: ?>
             <?php foreach ($families as $family): ?>
                 <?php 
-                    $count = $family->getRecipes()->count();
+                    $count = $family->getRecipes(\common\models\RecipeCategory::TYPE_MAIN)->count();
                     $percent = $totalRecipes > 0 ? round(($count / $totalRecipes) * 100) : 0;
                 ?>
                 <div class="family-stat-item">

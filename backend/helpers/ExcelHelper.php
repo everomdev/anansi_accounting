@@ -102,7 +102,7 @@ class ExcelHelper
     $activeWorksheet->setCellValue("I1", "Precio*");
     
     $activeWorksheet->getStyle('A1:L100')->applyFromArray($centerStyle);
-    $activeWorksheet->freezePane('D2');
+    $activeWorksheet->freezePane('C2');
 
     // Set manual column widths instead of auto-size
     $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Clave

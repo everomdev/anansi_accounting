@@ -22,6 +22,7 @@ use Symfony\Component\Yaml\Yaml;
 use Yii;
 use common\models\StandardRecipe;
 use common\models\StandardRecipeSearch;
+use common\models\MenuSearch;
 use common\models\MonthlySales;
 use yii\data\ActiveDataProvider;
 use yii\data\Pagination;
@@ -782,7 +783,16 @@ public function actionGetSubStandardRecipes()
         $endDate = Yii::$app->request->get('end_date');
         $month = Yii::$app->request->get('month', date('n')); // Si no se especifica mes, usar el mes actual
         $year = Yii::$app->request->get('year', date('Y')); // Si no se especifica año, usar el año actual
-        $business = RedisKeys::getBusinessData();
+        
+        $business = RedisKeys::getBusinessData();        // Create search models for each type
+        $foodSearchModel = new StandardRecipeSearch();
+        $drinkSearchModel = new class extends StandardRecipeSearch {
+            public function formName()
+            {
+                return 'StandardRecipeSearchDrink';
+            }
+        };
+        $comboSearchModel = new MenuSearch();
 
         // Base query for food recipes
         $foodQuery = StandardRecipe::find()->where([
@@ -813,20 +823,46 @@ public function actionGetSubStandardRecipes()
             $foodQuery->andWhere(['between', 'date', $startDate, $endDate]);
             $drinkQuery->andWhere(['between', 'date', $startDate, $endDate]);
             $comboQuery->andWhere(['between', 'date', $startDate, $endDate]);
-        }
-
-        // Create data providers
+        }        // Create data providers with search functionality
         $foodDataProvider = new ActiveDataProvider([
-            'query' => $foodQuery
+            'query' => $foodQuery,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
         ]);
 
         $drinkDataProvider = new ActiveDataProvider([
-            'query' => $drinkQuery
+            'query' => $drinkQuery,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
         ]);
 
         $comboDataProvider = new ActiveDataProvider([
-            'query' => $comboQuery
-        ]);
+            'query' => $comboQuery,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+        ]);        // Apply search filters using different parameter names to avoid conflicts
+        $params = Yii::$app->request->queryParams;
+        
+        // Food search - usar StandardRecipeSearch como parámetro
+        $foodSearchModel->load($params);
+        if (!empty($foodSearchModel->title)) {
+            $foodDataProvider->query->andFilterWhere(['like', 'title', $foodSearchModel->title]);
+        }
+
+        // Drink search - crear parámetros manuales para evitar conflictos
+        if (isset($params['drink_title'])) {
+            $drinkSearchModel->title = $params['drink_title'];
+            $drinkDataProvider->query->andFilterWhere(['like', 'title', $params['drink_title']]);
+        }
+
+        // Combo search - usar MenuSearch como parámetro
+        $comboSearchModel->load($params);
+        if (!empty($comboSearchModel->name)) {
+            $comboDataProvider->query->andFilterWhere(['like', 'name', $comboSearchModel->name]);
+        }
 
         // Cargamos las ventas de cada receta desde la tabla mensual para el mes y año seleccionados
         $this->loadMonthlySalesForDataProvider($foodDataProvider, $month, $year, MonthlySales::TYPE_RECIPE);
@@ -837,12 +873,15 @@ public function actionGetSubStandardRecipes()
             'foodDataProvider' => $foodDataProvider,
             'drinkDataProvider' => $drinkDataProvider,
             'comboDataProvider' => $comboDataProvider,
+            'foodSearchModel' => $foodSearchModel,
+            'drinkSearchModel' => $drinkSearchModel,
+            'comboSearchModel' => $comboSearchModel,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'selectedMonth' => $month,
             'selectedYear' => $year
         ]);
-    }    /**
+    }/**
      * Carga los datos de ventas mensuales para cada modelo en un data provider
      * @param ActiveDataProvider $dataProvider Proveedor de datos a actualizar
      * @param int $month Mes (1-12)
@@ -1991,11 +2030,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
 
         $recipesSheet->freezePane('D2');
         // 3. Configurar cabeceras para otras hojas        $ingredientsSheet->setCellValue('A1', ($isSubrecipe ? 'SubReceta' : 'Receta'));
-        $ingredientsSheet->setCellValue('B1', 'Tipo*');
-        $ingredientsSheet->setCellValue('C1', 'Item*');
-        $ingredientsSheet->setCellValue('D1', 'Cantidad*'); 
-        $ingredientsSheet->setCellValue('E1', 'UM');
-        $ingredientsSheet->setCellValue('F1', 'Costo');
+        $ingredientsSheet->setCellValue('B1', 'Ingrediente o Subreceta*');
+        $ingredientsSheet->setCellValue('C1', 'Cantidad*');
+        $ingredientsSheet->setCellValue('D1', 'UM*'); 
+        $ingredientsSheet->setCellValue('E1', 'Costo');
         
         $insumosSheet->setCellValue('A1', 'Insumo');
         $insumosSheet->setCellValue('B1', 'Cantidad');
@@ -2366,6 +2404,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      $unitOfMeasurements = UnitOfMeasurement::find()
          ->select('name')
+         ->where(['business_id' => $business['id']])
          ->groupBy('name')
          ->limit($batchSize)
          ->all();
@@ -2444,8 +2483,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      $categorySheet->getStyle('A1:A100')->applyFromArray($centerStyle);
      $recipesSheet->getColumnDimension('J')->setWidth(15);
 
-     $recipesSheet->freezePane('D2');    // Fijar fila 1 y columna A
-    $ingredientsSheet->freezePane('D2'); // Fijar fila 1 y columna A
+    $recipesSheet->freezePane('B2');    // Fijar fila 1 y columna A
+    $ingredientsSheet->freezePane('B2'); // Fijar fila 1 y columna A
     $insumosSheet->freezePane('B2');  
      
      // 8. Configurar TODAS las validaciones optimizadas

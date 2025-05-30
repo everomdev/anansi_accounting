@@ -42,12 +42,29 @@ function applyOrderSettings(form) {
     labelProvider.html(label);
 }
 
-$(document).on('change', '#movement-amount, #movement-quantity', function (event) {
+$(document).on('change', '#movement-amount, #movement-quantity, #movement-tax', function (event) {
     let amount = $("#movement-amount").val();
     let quantity = $("#movement-quantity").val();
+    let tax = $("#movement-tax").val();
 
-    let unitPrice = Number.parseFloat(amount) / Number.parseFloat(quantity);
-    if (!isNaN(unitPrice)) {
-        $("#movement-unit_price").val(unitPrice);
+    // Parsear los valores, usando 0 como valor por defecto si están vacíos
+    let amountValue = Number.parseFloat(amount) || 0;
+    let quantityValue = Number.parseFloat(quantity) || 0;
+    let taxValue = Number.parseFloat(tax) || 0;
+
+    // Calcular el precio unitario sumando el impuesto al monto total
+    if (quantityValue > 0) {
+        let totalWithTax = amountValue + taxValue;
+        let unitPrice = totalWithTax / quantityValue;
+        
+        if (!isNaN(unitPrice)) {
+            $("#movement-unit_price").val(unitPrice.toFixed(2));
+        }
+    }
+    
+    // Calcular el total (amount + tax)
+    let total = amountValue + taxValue;
+    if (!isNaN(total)) {
+        $("#movement-total").val(total.toFixed(2));
     }
 })

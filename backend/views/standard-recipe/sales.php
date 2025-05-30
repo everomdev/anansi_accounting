@@ -1,6 +1,11 @@
 <?php
 /** @var $this \yii\web\View */
-/** @var $dataProvider \yii\data\ActiveDataProvider */
+/** @var $foodDataProvider \yii\data\ActiveDataProvider */
+/** @var $drinkDataProvider \yii\data\ActiveDataProvider */
+/** @var $comboDataProvider \yii\data\ActiveDataProvider */
+/** @var $foodSearchModel \common\models\StandardRecipeSearch */
+/** @var $drinkSearchModel \common\models\StandardRecipeSearch */
+/** @var $comboSearchModel \common\models\MenuSearch */
 
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -8,29 +13,109 @@ use yii\bootstrap5\ActiveForm;
 
 $this->title = Yii::t('app', "Sales");
 
-// Preparamos las columnas para las tablas
-$gridColumns = [
+// Preparamos las columnas para las tablas de alimentos
+$foodGridColumns = [
     ['class' => \yii\grid\SerialColumn::class],
-    'title',
+    [
+        'attribute' => 'title',
+        'filter' => true // Habilitar filtro automático
+    ],
     [
         'attribute' => 'cost',
         'format' => 'currency',
-        'label' => "Costo"
+        'label' => "Costo",
+        'filter' => false
     ],
-    'costPercent:percent',
+    [
+        'attribute' => 'costPercent',
+        'format' => 'percent',
+        'filter' => false
+    ],
     [
         'label' => Yii::t('app', "Sales"),
         'format' => 'raw',
+        'filter' => false,
         'value' => function ($data) use ($selectedMonth, $selectedYear) {
-            // Establecemos un nombre único basado en el tipo de modelo (comida, bebida o combo)
-            $inputName = ($data instanceof \common\models\Menu) 
-                ? 'combo[' . $data->id . ']' 
-                : (($data->is_food) ? 'food[' . $data->id . ']' : 'drink[' . $data->id . ']');
-                
+            $inputName = 'food[' . $data->id . ']';
             return Html::input('number', $inputName, $data->sales, [
                 'class' => 'form-control sales-input',
                 'data-id' => $data->id,
-                'data-type' => ($data instanceof \common\models\Menu) ? 'menu' : 'recipe',
+                'data-type' => 'recipe',
+            ]);
+        },
+    ]
+];
+
+// Preparamos las columnas para las tablas de bebidas
+$drinkGridColumns = [
+    ['class' => \yii\grid\SerialColumn::class],
+    [
+        'attribute' => 'title',
+        'filter' => Html::textInput('drink_title', 
+            Yii::$app->request->get('drink_title', ''), 
+            [
+                'class' => 'form-control',
+                'placeholder' => 'Buscar bebida...',
+                'onchange' => 'this.form.submit()'
+            ]
+        )
+    ],
+    [
+        'attribute' => 'cost',
+        'format' => 'currency',
+        'label' => "Costo",
+        'filter' => false
+    ],
+    [
+        'attribute' => 'costPercent',
+        'format' => 'percent',
+        'filter' => false
+    ],
+    [
+        'label' => Yii::t('app', "Sales"),
+        'format' => 'raw',
+        'filter' => false,
+        'value' => function ($data) use ($selectedMonth, $selectedYear) {
+            $inputName = 'drink[' . $data->id . ']';
+            return Html::input('number', $inputName, $data->sales, [
+                'class' => 'form-control sales-input',
+                'data-id' => $data->id,
+                'data-type' => 'recipe',
+            ]);
+        },
+    ]
+];
+
+// Preparamos las columnas para las tablas de combos
+$comboGridColumns = [
+    ['class' => \yii\grid\SerialColumn::class],
+    [
+        'attribute' => 'name',
+        'label' => 'Título',
+        'filter' => true // Habilitar filtro automático
+    ],
+    [
+        'attribute' => 'total_cost',
+        'format' => 'currency',
+        'label' => "Costo",
+        'filter' => false
+    ],
+    [
+        'attribute' => 'cost_precent',
+        'format' => 'percent',
+        'label' => 'Costo %',
+        'filter' => false
+    ],
+    [
+        'label' => Yii::t('app', "Sales"),
+        'format' => 'raw',
+        'filter' => false,
+        'value' => function ($data) use ($selectedMonth, $selectedYear) {
+            $inputName = 'combo[' . $data->id . ']';
+            return Html::input('number', $inputName, $data->sales, [
+                'class' => 'form-control sales-input',
+                'data-id' => $data->id,
+                'data-type' => 'menu',
             ]);
         },
     ]
@@ -47,11 +132,14 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-sales']) ?>
 
 <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtro por fechas') ?></h3>
-        <div class="d-flex gap-2">
-            <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
-            <div class="d-flex align-items-center gap-2">
+    <div class="card-header">
+        <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtrar por mes y año') ?></h3>
+    </div>
+    <div class="card-body">
+        <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="month-select" class="form-label">Mes</label>
                 <?= Html::dropDownList('month',
                     $selectedMonth ?? date('n'), 
                     [
@@ -70,17 +158,22 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     ],
                     ['class' => 'form-select', 'id' => 'month-select']
                 ) ?>
-                
+            </div>
+            
+            <div class="col-md-3">
+                <label for="year-select" class="form-label">Año</label>
                 <?= Html::dropDownList('year',
                     $selectedYear ?? date('Y'),
                     $years,
                     ['class' => 'form-select', 'id' => 'year-select']
                 ) ?>
-                
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
                 <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
             </div>
-            <?= Html::endForm() ?>
         </div>
+        <?= Html::endForm() ?>
     </div>
 </div>
 
@@ -89,11 +182,17 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?></h3>
+        <small class="text-muted"><?= $foodDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
     <div class="card-body">
         <?= \yii\grid\GridView::widget([
             'dataProvider' => $foodDataProvider,
-            'columns' => $gridColumns
+            'filterModel' => $foodSearchModel,
+            'columns' => $foodGridColumns,
+            'filterUrl' => Url::current([
+                'month' => $selectedMonth,
+                'year' => $selectedYear
+            ], true)
         ]) ?>
     </div>
 </div>
@@ -101,23 +200,33 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?></h3>
-    </div>
-    <div class="card-body">
+        <small class="text-muted"><?= $drinkDataProvider->getTotalCount() ?> recetas encontradas</small>
+    </div>    <div class="card-body">
+        <?php $form = Html::beginForm(['sales'], 'get', ['data-pjax' => 1]); ?>
+        <?= Html::hiddenInput('month', $selectedMonth) ?>
+        <?= Html::hiddenInput('year', $selectedYear) ?>
         <?= \yii\grid\GridView::widget([
             'dataProvider' => $drinkDataProvider,
-            'columns' => $gridColumns
+            'columns' => $drinkGridColumns,
         ]) ?>
+        <?= Html::endForm() ?>
     </div>
 </div>
 
 <div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?></h3>
+        <small class="text-muted"><?= $comboDataProvider->getTotalCount() ?> combos encontrados</small>
     </div>
     <div class="card-body">
         <?= \yii\grid\GridView::widget([
             'dataProvider' => $comboDataProvider,
-            'columns' => $gridColumns
+            'filterModel' => $comboSearchModel,
+            'columns' => $comboGridColumns,
+            'filterUrl' => Url::current([
+                'month' => $selectedMonth,
+                'year' => $selectedYear
+            ], true)
         ]) ?>
     </div>
 </div>
@@ -157,8 +266,15 @@ $('#btn-save-sales').on('click', function(e) {
         dataType: 'json',
         beforeSend: function() {
             $('#btn-save-sales').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...');
-        },        success: function(response) {
+        },
+        success: function(response) {
             if (response.success) {
+                Swal.fire({
+                    title: 'Éxito',
+                    text: 'Las ventas se han guardado correctamente.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
             } else {
                 // Mostrar errores
                 let errorMsg = 'Ocurrió un problema al guardar las ventas:';

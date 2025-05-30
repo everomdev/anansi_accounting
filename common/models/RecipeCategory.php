@@ -132,12 +132,12 @@ class RecipeCategory extends \yii\db\ActiveRecord
         return round($this->getTotalSales() / $totalSales, 2);
     }
 
-    public function getRecipes()
+    public function getRecipes($type)
     {
         return StandardRecipe::find()
             ->where(['business_id' => $this->business_id])
             ->andWhere([
-                'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'type' => isset($type) ? $type : \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
                 'in_construction' => 0,
                 'type_of_recipe' => $this->name
             ]);

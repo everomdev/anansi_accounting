@@ -301,7 +301,7 @@ protected function getTopIngredients()
             COUNT(*) as usage_count
         FROM ingredient_standard_recipe
         JOIN ingredient_stock i ON i.id = ingredient_id
-        GROUP BY ingredient_id, ingredient
+        GROUP BY ingredient_standard_recipe.ingredient_id, i.ingredient
         ORDER BY total_quantity DESC
         LIMIT 10
     ")->queryAll();
