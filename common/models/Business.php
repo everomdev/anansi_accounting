@@ -344,9 +344,9 @@ class Business extends \yii\db\ActiveRecord
 
 public function getRealYield($month = null, $year = null)
 {
-    // Cálculo de rentabilidad real basado en ventas históricas
+    // Cálculo de rentabilidad real basado en ventas históricas para un mes y año específicos
     // Fórmula: Σ(porcentaje_ventas * porcentaje_costo) para todas las recetas/combos
-    // donde porcentaje_ventas = ventas_individuales / total_ventas_año
+    // donde porcentaje_ventas = ventas_individuales_mes / total_ventas_mes
     
     // Si no se proporciona mes o año, usar los actuales
     if ($month === null) {
@@ -387,13 +387,12 @@ public function getRealYield($month = null, $year = null)
         } else {
             $recipesSales = 0;
             $combosSales = 0;
-            
-            if (!empty($recipes)) {
-                // Cargar ventas totales de todas las recetas para el año (sumando todos los meses con ventas)
+              if (!empty($recipes)) {
+                // Cargar ventas para el mes y año específicos
                 foreach ($recipes as $recipe) {
-                    // Obtener las ventas totales del año para la receta
-                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_RECIPE, $recipe->id, $year);
-                    $recipe->sales = $sales; // Actualizar la propiedad sales con los datos anuales
+                    // Obtener las ventas para el mes y año específicos
+                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_RECIPE, $recipe->id, $year, $month);
+                    $recipe->sales = $sales; // Actualizar la propiedad sales con los datos del mes
                     $recipesSales += $sales;
                     
                     // Clasificar SOLO las recetas por is_food
@@ -405,13 +404,12 @@ public function getRealYield($month = null, $year = null)
                 }
                 $totalSales += $recipesSales;
             }
-            
-            if (!empty($combos)) {
-                // Cargar ventas para cada combo para todo el año
+              if (!empty($combos)) {
+                // Cargar ventas para cada combo para el mes y año específicos
                 foreach ($combos as $combo) {
-                    // Obtener ventas totales del año para el combo
-                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_MENU, $combo->id, $year);
-                    $combo->sales = $sales; // Actualizar la propiedad sales con los datos anuales
+                    // Obtener ventas para el mes y año específicos
+                    $sales = MonthlySales::getTotalSales(MonthlySales::TYPE_MENU, $combo->id, $year, $month);
+                    $combo->sales = $sales; // Actualizar la propiedad sales con los datos del mes
                     $combosSales += $sales;
                 }
                 $totalSales += $combosSales;

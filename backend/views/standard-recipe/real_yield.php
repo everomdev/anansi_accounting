@@ -26,15 +26,37 @@ for ($i = $currentYear - 5; $i <= $currentYear; $i++) {
     $years[$i] = $i;
 }
 $selectedYear = Yii::$app->request->get('year', $year ?? $currentYear);
+$selectedMonth = Yii::$app->request->get('month', $month ?? (int)date('n'));
+
+// Opciones de meses
+$months = [
+    '1' => 'Enero',
+    '2' => 'Febrero', 
+    '3' => 'Marzo',
+    '4' => 'Abril',
+    '5' => 'Mayo',
+    '6' => 'Junio',
+    '7' => 'Julio',
+    '8' => 'Agosto',
+    '9' => 'Septiembre',
+    '10' => 'Octubre',
+    '11' => 'Noviembre',
+    '12' => 'Diciembre',
+];
 ?>
 
 <div class="standard-recipe-index">
       <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtro de año') ?></h3>
+            <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtrar por mes y año') ?></h3>
             <div class="d-flex gap-2">
                 <?= Html::beginForm(['real-yield'], 'get') ?>
                 <div class="d-flex align-items-center gap-2">
+                    <?= Html::dropDownList('month',
+                        $selectedMonth,
+                        $months,
+                        ['class' => 'form-select', 'id' => 'month-select']
+                    ) ?>
                     <?= Html::dropDownList('year',
                         $selectedYear,
                         $years,
@@ -48,7 +70,10 @@ $selectedYear = Yii::$app->request->get('year', $year ?? $currentYear);
         <div class="card-body">
             <p class="mb-0 text-muted">
                 <i class="fas fa-calendar-alt me-2"></i>
-                <?= Yii::t('app', 'Mostrando datos del año: {year}', ['year' => $year]) ?>
+                <?= Yii::t('app', 'Mostrando datos de {month} {year}', [
+                    'month' => $months[$month],
+                    'year' => $year
+                ]) ?>
                 <span class="ms-3">
                     <i class="fas fa-chart-bar me-2"></i>
                     <?= Yii::t('app', 'Total de ventas: {sales}', ['sales' => $business->formatter->asCurrency($totalSales)]) ?>

@@ -4,8 +4,9 @@
 /** @var $families \common\models\RecipeCategory[] */
 
 // Obtener el valor de rentabilidad real
+$month = (int)date('n');
 $year = (int)date('Y');
-$realYield = $business->getRealYield(null, $year)['totalPcr'];
+$realYield = $business->getRealYield($month, $year)['totalPcr'];
 $yieldPercentage = $business->formatter->asPercent($realYield, 2);
 
 // Determinar el estado de la rentabilidad para el color

@@ -330,17 +330,29 @@ class StandardRecipeController extends Controller
             'month' => $theoreticalYieldData['month'],
             'year' => $theoreticalYieldData['year'],
             'recipesByType' => $theoreticalYieldData['recipesByType'],
-        ]);
-    }public function actionRealYield($year = null)
+        ]);    }
+    
+    /**
+     * Displays real yield data for recipes and combos for a specific month and year
+     * @param int|null $month Month (1-12, defaults to current month)
+     * @param int|null $year Year (defaults to current year)
+     * @return mixed
+     */
+    public function actionRealYield($month = null, $year = null)
     {
         $business = RedisKeys::getBusiness();
+        
+        // Si no se especifica mes, usar el actual
+        if ($month === null) {
+            $month = (int)date('n');
+        }
         
         // Si no se especifica año, usar el actual
         if ($year === null) {
             $year = (int)date('Y');
         }
 
-        $realYieldData = $business->getRealYield(null, $year);
+        $realYieldData = $business->getRealYield($month, $year);
         
         return $this->render('real_yield', [
             'data' => $realYieldData['data'],
