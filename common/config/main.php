@@ -44,16 +44,15 @@ return [
             'translations' => [
                 'app*' => [
                     'class' => 'yii\i18n\PhpMessageSource',
-                    'basePath' => '@common/messages',
-                ],
+                    'basePath' => '@common/messages',                ],
             ]
         ],
-//        'redis' => [
-//            'class' => 'yii\redis\Connection',
-//            'hostname' => 'localhost',
-//            'port' => 6379,
-//            'database' => 0,
-//        ],
+        // 'redis' => [
+        //     'class' => 'yii\redis\Connection',
+        //     'hostname' => 'localhost',
+        //     'port' => 6379,
+        //     'database' => 0,
+        // ],
         'formatter' => [
             'locale' => 'es_MX',
             'defaultTimeZone' => 'America/Mexico_City',
@@ -64,6 +63,11 @@ return [
             'decimalSeparator' => ',',
             'thousandSeparator' => '.',
             'currencyDecimalSeparator' => ','
+        ],
+        'numberFormatter' => [
+            'class' => 'common\components\GlobalNumberFormatter',
+            'autoRegisterJs' => true,
+            'autoRegisterConfig' => true,
         ],
 
     ],

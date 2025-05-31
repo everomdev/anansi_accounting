@@ -34,13 +34,13 @@ $chartData[] = [
     "r" => 10
 ];
 
-$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business->currency_code));
+$currencySymbol = \common\helpers\NumberFormatter::getFormatConfig()['currency_symbol'];
 
 $this->registerJsVar('chartData', $chartData);
 $this->registerJsVar('popularityAxis', $popularityAxis);
 $this->registerJsVar('costEffectivenessAxis', $costEffectivenessAxis);
-$this->registerJsVar('currencySymbol', $business->getFormatter()->currencyCode);
-$this->registerJsVar('locale', str_replace('_', '-', $business->getFormatter()->locale));
+$this->registerJsVar('currencySymbol', \common\helpers\NumberFormatter::getFormatConfig()['currency_symbol']);
+$this->registerJsVar('locale', 'en-US'); // You can make this dynamic if needed
 
 $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
     'depends' => [\yii\web\YiiAsset::class]
@@ -108,18 +108,17 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
                 <th><?= Yii::t('app', "BCG") ?></th>
                 </thead>
                 <tbody>
-                <?php foreach ($data as $item): ?>
-                    <tr>
+                <?php foreach ($data as $item): ?>                    <tr>
                         <td><?= $item->name ?></td>
                         <td><?= $item->sales ?></td>
-                        <td><?= $business->getFormatter()->asCurrency($item->cost) ?></td>
-                        <td><?= $business->getFormatter()->asCurrency($item->price) ?></td>
-                        <td><?= $business->getFormatter()->asPercent($item->getSalesPercent($totalSales)) ?></td>
-                        <td><?= $business->getFormatter()->asPercent($item->costPercent) ?></td>
-                        <td><?= $business->getFormatter()->asCurrency($item->price - $item->cost) ?></td>
-                        <td><?= $business->getFormatter()->asCurrency($item->sales * $item->cost) ?></td>
-                        <td><?= $business->getFormatter()->asCurrency($item->sales * $item->price) ?></td>
-                        <td><?= $business->getFormatter()->asCurrency(($item->sales * $item->price) - ($item->sales * $item->cost)) ?></td>
+                        <td><?= formatPrice($item->cost) ?></td>
+                        <td><?= formatPrice($item->price) ?></td>
+                        <td><?= formatPercentage($item->getSalesPercent($totalSales)) ?></td>
+                        <td><?= formatPercentage($item->costPercent) ?></td>
+                        <td><?= formatPrice($item->price - $item->cost) ?></td>
+                        <td><?= formatPrice($item->sales * $item->cost) ?></td>
+                        <td><?= formatPrice($item->sales * $item->price) ?></td>
+                        <td><?= formatPrice(($item->sales * $item->price) - ($item->sales * $item->cost)) ?></td>
                         <td><?= $item->getPopularity($popularityAxis, $totalSales) ?></td>
                         <td><?= $item->getEffectiveness($costEffectivenessAxis, $totalSales) ?></td>
                         <td><?= $item->getBcg($popularityAxis, $costEffectivenessAxis, $totalSales) ?></td>

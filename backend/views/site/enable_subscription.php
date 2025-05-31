@@ -202,9 +202,33 @@ $(document).on('click', '#apply-coupon', function() {
                                            response.discount + '%</span></div>');
                         }
                     }
-                });
-            } else {
-                $('#coupon-message').text(response.error).removeClass('text-success').addClass('text-danger');
+                });            } else {
+                // Manejo de errores más específico basado en el tipo de error
+                var errorMessage = response.error;
+                var errorClass = 'text-danger';
+                
+                // Si hay un tipo de error específico, podemos personalizar el estilo
+                if (response.error_type) {
+                    switch(response.error_type) {
+                        case 'wrong_plan':
+                            errorClass = 'text-warning';
+                            // Agregar icono de advertencia para errores de plan
+                            errorMessage = '<i class="fas fa-exclamation-triangle me-1"></i>' + errorMessage;
+                            break;
+                        case 'expired':
+                            errorClass = 'text-danger';
+                            errorMessage = '<i class="fas fa-clock me-1"></i>' + errorMessage;
+                            break;
+                        case 'limit_reached':
+                            errorClass = 'text-info';
+                            errorMessage = '<i class="fas fa-info-circle me-1"></i>' + errorMessage;
+                            break;
+                        default:
+                            errorMessage = '<i class="fas fa-times-circle me-1"></i>' + errorMessage;
+                    }
+                }
+                
+                $('#coupon-message').html(errorMessage).removeClass('text-success text-danger text-warning text-info').addClass(errorClass);
             }
         },
         error: function() {

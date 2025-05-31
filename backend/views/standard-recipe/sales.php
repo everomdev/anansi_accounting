@@ -22,13 +22,17 @@ $foodGridColumns = [
     ],
     [
         'attribute' => 'cost',
-        'format' => 'currency',
         'label' => "Costo",
+        'value' => function ($data) {
+            return formatCost($data->cost);
+        },
         'filter' => false
     ],
     [
         'attribute' => 'costPercent',
-        'format' => 'percent',
+        'value' => function ($data) {
+            return formatPercentage($data->costPercent);
+        },
         'filter' => false
     ],
     [
@@ -59,16 +63,18 @@ $drinkGridColumns = [
                 'onchange' => 'this.form.submit()'
             ]
         )
-    ],
-    [
+    ],    [
         'attribute' => 'cost',
-        'format' => 'currency',
         'label' => "Costo",
+        'value' => function ($data) {
+            return formatCost($data->cost);
+        },
         'filter' => false
-    ],
-    [
+    ],    [
         'attribute' => 'costPercent',
-        'format' => 'percent',
+        'value' => function ($data) {
+            return formatPercentage($data->costPercent);
+        },
         'filter' => false
     ],
     [
@@ -93,17 +99,20 @@ $comboGridColumns = [
         'attribute' => 'name',
         'label' => 'Título',
         'filter' => true // Habilitar filtro automático
-    ],
-    [
+    ],    [
         'attribute' => 'total_cost',
-        'format' => 'currency',
         'label' => "Costo",
+        'value' => function ($data) {
+            return formatCost($data->total_cost);
+        },
         'filter' => false
     ],
     [
         'attribute' => 'cost_precent',
-        'format' => 'percent',
         'label' => 'Costo %',
+        'value' => function ($data) {
+            return formatPercentage($data->cost_precent);
+        },
         'filter' => false
     ],
     [

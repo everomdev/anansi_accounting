@@ -10,8 +10,8 @@ use yii\bootstrap5\ActiveForm;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use common\models\LoginForm;
 use yii\web\Response;
+use yii\web\BadRequestHttpException;
 use backend\components\SubscriptionTrait; // Añade esta línea
 
 /**
@@ -160,8 +160,7 @@ class SiteController extends Controller
         return $this->render('comming_soon', [
             'model' => $model
         ]);
-    }
-    public function actionCheckCoupon()
+    }    public function actionCheckCoupon()
     {
         $post = Yii::$app->request->post();
         if (!isset($post['code']) || !isset($post['prices'])) {
@@ -171,18 +170,24 @@ class SiteController extends Controller
         $coupon = Coupon::find()
             ->where(['code' => $post['code']])
             ->one();
-        if (!$coupon || !$coupon->getIsValid($post['plan_id'])) {
-            return $this->asJson([
-                'success' => false,
-                'discount' => false,
-                'error' => Yii::t('app', "Este cupón ya no esta disponible")
-            ]);
-        }
+            
+        // Si no existe el cupón
         if (!$coupon) {
             return $this->asJson([
                 'success' => false,
                 'discount' => false,
-                'error' => Yii::t('app', "Este cupón ya no esta disponible")
+                'error' => Yii::t('app', "El código de cupón ingresado no existe o no es válido.")
+            ]);
+        }
+
+        // Validar el cupón con detalles específicos
+        $validation = $coupon->validateWithDetails($post['plan_id']);
+        if (!$validation['valid']) {
+            return $this->asJson([
+                'success' => false,
+                'discount' => false,
+                'error' => $validation['error'],
+                'error_type' => $validation['error_type']
             ]);
         }
     
@@ -200,7 +205,7 @@ class SiteController extends Controller
             'error' => false,
             'type_discount' => $coupon['type'],
             'discount' => $coupon['discount'],
-            'message' => Yii::t('app', "Cupón Válido!")
+            'message' => Yii::t('app', "¡Cupón válido! Descuento aplicado correctamente.")
         ]);
     }
     

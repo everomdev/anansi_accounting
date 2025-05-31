@@ -57,9 +57,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-ingredients', 'timeout' => false]) ?>
                 <?= $form->field($model, 'plates')->textInput(['type' => 'number']) ?>
 
-                <?= \yii\bootstrap5\Html::label(Yii::t('app', "Cost")) ?>
-
-                <?= \yii\bootstrap5\Html::tag('span', $business->formatter->asCurrency($model->amount), [
+                <?= \yii\bootstrap5\Html::label(Yii::t('app', "Cost")) ?>                <?= \yii\bootstrap5\Html::tag('span', formatPrice($model->amount), [
                     'class' => 'form-control'
                 ]) ?>
                 <div class="table-responsive mt-3">
@@ -79,7 +77,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                             <tr>
                                 <td><?= $convoyIngredient->model->name ?></td>
                                 <td><?= $convoyIngredient->quantity ?></td>
-                                <td><?= $business->formatter->asCurrency($convoyIngredient->amount) ?></td>
+                                <td><?= formatPrice($convoyIngredient->amount) ?></td>
                                 <td>
 
                                     <?= \yii\bootstrap5\Html::button(Yii::t('app', "Remove"), [

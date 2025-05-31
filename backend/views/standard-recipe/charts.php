@@ -15,9 +15,11 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/chart-fullscreen.js
     'depends' => [\yii\web\YiiAsset::class, \backend\assets\ChartJsAsset::class],
     'position' => $this::POS_END
 ]);
-$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business->currency_code));
-$this->registerJsVar('currencySymbol', $business->getFormatter()->currencyCode);
-$this->registerJsVar('locale', str_replace('_', '-', $business->getFormatter()->locale));
+
+// Use global number formatter configuration
+$jsConfig = \common\helpers\NumberFormatter::getJsConfig();
+$this->registerJsVar('currencySymbol', $jsConfig['currencySymbol']);
+$this->registerJsVar('locale', 'en-US'); // You can make this dynamic if needed
 ?>
 
 <div class="row">

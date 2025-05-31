@@ -4,6 +4,7 @@ namespace common\models;
 
 use backend\traits\ProviderManagerTrait;
 use Yii;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "movement".
@@ -40,6 +41,20 @@ class Movement extends \yii\db\ActiveRecord
     const PAYMENT_TYPE_BANK_TRANSFERENCE = 'bank_transference';
     const PAYMENT_TYPE_CASH = 'cash';
     const PAYMENT_TYPE_OTHER = 'other';
+
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'priceFields' => ['amount', 'unit_price', 'total'],
+                'numberFields' => ['quantity', 'tax', 'retention'],
+            ],
+        ];
+    }
 
     /**
      * {@inheritdoc}

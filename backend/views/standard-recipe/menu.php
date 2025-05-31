@@ -103,12 +103,11 @@ $categories = RecipeCategory::find()
                         'class' => 'form-control',
                         'placeholder' => 'Buscar por título...'
                     ])
-                ],
-                [
+                ],                [
                     'attribute' => 'cost',
-                    'format' => 'currency',
                     'value' => function ($model) {
-                        return get_class($model) == \common\models\StandardRecipe::class ? $model->lastPrice : $model->cost;
+                        $cost = get_class($model) == \common\models\StandardRecipe::class ? $model->lastPrice : $model->cost;
+                        return formatCost($cost);
                     },
                     'header' => getSortableHeader('Costo', 'cost', $sort, $order),
                     'contentOptions' => ['style' => 'text-align: center;'],
@@ -116,7 +115,9 @@ $categories = RecipeCategory::find()
                 ],
                 [
                     'attribute' => 'costPercent',
-                    'format' => 'percent',
+                    'value' => function ($model) {
+                        return formatPercentage($model->costPercent);
+                    },
                     'header' => getSortableHeader('Porcentaje de costo', 'costPercent', $sort, $order),
                     'contentOptions' => ['style' => 'text-align: center;'],
                     'headerOptions' => ['style' => 'text-align: center;'],

@@ -30,7 +30,6 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
 
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $ums = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
-$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business['currency_code']));
 $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id' => $business['id']])->all(), 'id', 'name');
 ?>
 <div class="ingredient-stock-form">
@@ -103,28 +102,41 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
             </div>
             
             <div class="row mb-3">
-                <h5 class="card-title mb-3">Precios y Rendimiento</h5>
-                
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
-                    <?= $form->field($model, 'price', [
-                        'template' => "{label}<div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input}</div>{hint}{error}",
-                        'inputOptions' => ['class' => 'form-control', 'id' => 'ingredientstock-price', 'required' => true, 'placeholder' => 'Ej: 500.00']
-                    ])->textInput()->label("Precio de compra*") ?>
+                <h5 class="card-title mb-3">Precios y Rendimiento</h5>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
+                    <?= $form->field($model, 'price')->textInput([
+                        'class' => 'form-control format-price',
+                        'id' => 'ingredientstock-price',
+                        'required' => true,
+                        'placeholder' => formatPrice(500.00, 2, false),
+                        'data-format' => 'price',
+                        'value' => $model->price ? formatPrice($model->price, 2, false) : ''
+                    ])->label("Precio de compra*") ?>
                     <div class="form-text">Ingrese el precio de compra del insumo</div>
                 </div>
-                
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
+                  <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
                     <?= $form->field($model, 'yield', [
                         'template' => "{label}<div class='input-group'>{input}<span class='input-group-text'>%</span><button type='button' class='btn btn-outline-primary' id='compute-yield'><i class='bi bi-calculator'></i> Calcular</button></div>{hint}{error}",
-                        'inputOptions' => ['class' => 'form-control', 'id' => 'ingredientstock-yield', 'required' => true, 'placeholder' => 'Ej: 85']
+                        'inputOptions' => [
+                            'class' => 'form-control format-percentage', 
+                            'id' => 'ingredientstock-yield', 
+                            'required' => true, 
+                            'placeholder' => formatPercentage(85, 0, false),
+                            'data-format' => 'percentage',
+                            'value' => $model->yield ? formatNumber($model->yield, 0) : ''
+                        ]
                     ])->textInput()->label("Factor de rendimiento*") ?>
                     <div class="form-text">Entre 1% y 100%</div>
                 </div>
-                
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
+                  <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
                     <?= $form->field($model, 'adjustedPrice', [
-                        'template' => "{label}<div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input}</div>{hint}{error}",
-                        'inputOptions' => ['class' => 'form-control bg-light', 'id' => 'ingredientstock-adjustedprice', 'readonly' => true]
+                        'template' => "{label}<div class='input-group'><span class='input-group-text'>" . \common\helpers\NumberFormatter::getFormatConfig()['currency_symbol'] . "</span>{input}</div>{hint}{error}",
+                        'inputOptions' => [
+                            'class' => 'form-control bg-light format-price', 
+                            'id' => 'ingredientstock-adjustedprice', 
+                            'readonly' => true,
+                            'data-format' => 'price',
+                            'value' => $model->adjustedPrice ? formatPrice($model->adjustedPrice, 2, false) : ''
+                        ]
                     ])->textInput()->label("Precio ajustado*") ?>
                     <div class="form-text">Calculado: Precio ÷ Factor</div>
                 </div>
@@ -208,10 +220,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const priceField = document.getElementById('ingredientstock-price');
     const yieldField = document.getElementById('ingredientstock-yield');
     const adjustedPriceField = document.getElementById('ingredientstock-adjustedprice');
-    
-    // Función para calcular el precio ajustado
+      // Función para calcular el precio ajustado
     function calculateAdjustedPrice() {
-        const price = parseFloat(priceField.value);
+        // Usar el parser del sistema global de formateo
+        const price = window.BusinessNumberFormatter ? 
+            window.BusinessNumberFormatter.parseNumber(priceField.value) : 
+            parseFloat(priceField.value);
         let yieldValue = parseFloat(yieldField.value);
         
         if (!isNaN(price) && !isNaN(yieldValue) && yieldValue > 0) {
@@ -221,8 +235,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Calcular precio ajustado: precio ÷ factor de rendimiento
             const adjustedPrice = price / yieldValue;
             
-            // Formatear a 2 decimales y actualizar el campo
-            adjustedPriceField.value = adjustedPrice.toFixed(2);
+            // Formatear usando el sistema global
+            if (window.BusinessNumberFormatter) {
+                adjustedPriceField.value = window.BusinessNumberFormatter.formatNumber(adjustedPrice, 2);
+            } else {
+                adjustedPriceField.value = adjustedPrice.toFixed(2);
+            }
         } else {
             adjustedPriceField.value = '';
         }

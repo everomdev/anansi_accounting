@@ -4,6 +4,7 @@ namespace common\models;
 
 use Yii;
 use yii\db\Query;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "stock_price".
@@ -20,6 +21,18 @@ use yii\db\Query;
  */
 class StockPrice extends \yii\db\ActiveRecord
 {
+    /**
+     * {@inheritdoc}
+     */    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'priceFields' => ['price', 'unit_price', 'unit_price_yield', 'adjusted_price'],
+            ],
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */

@@ -146,32 +146,35 @@ $this->registerCss('
             [
                 'attribute' => 'title',
                 'label' => 'Nombre de la receta',
-            ],
-            [
+            ],            [
                 'attribute' => 'recipeLastPrice',
-                'format' => 'currency',
                 'label' => "Costo",
-                'contentOptions' => ['style' => 'text-align: center;'],
+                'value' => function($model) {
+                    return formatCost($model->recipeLastPrice);
+                },
+                'contentOptions' => ['style' => 'text-align: center;', 'class' => 'format-cost'],
                 'headerOptions' => [
                     'style' => 'text-align: center; cursor: pointer; font-weight: bold;',
                     'class' => 'sortable-column', 
                     'data-sort-by' => 'recipeLastPrice'
                 ],
-            ],
-            [
+            ],            [
                 'attribute' => 'price',
-                'format' => 'currency',
                 'label' => "Precio de<br>venta",
+                'value' => function($model) {
+                    return formatPrice($model->price);
+                },
                 'encodeLabel' => false,
-                'contentOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center;', 'class' => 'format-price'],
                 'headerOptions' => ['style' => 'text-align: center;'],
-            ],
-            [
+            ],            [
                 'attribute' => 'costPercent',
-                'format' => 'percent',
                 'label' => "Porcentaje<br>de costo",
+                'value' => function($model) {
+                    return formatPercentage($model->costPercent);
+                },
                 'encodeLabel' => false,
-                'contentOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center;', 'class' => 'format-percentage'],
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
                     'class' => 'sortable-column',

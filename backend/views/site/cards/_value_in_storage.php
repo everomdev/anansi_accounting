@@ -82,7 +82,7 @@ $this->registerCss("
             <i class="fas fa-warehouse"></i>
         </div>
         <div class="storage-value-info">
-            <div class="storage-value-amount"><?= $business->formatter->asCurrency($total) ?></div>
+            <div class="storage-value-amount"><?= formatPrice($total) ?></div>
            
         </div>
     </div>

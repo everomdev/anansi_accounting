@@ -134,11 +134,13 @@ $this->registerCss('
                 'value' => function ($model) {
                     return $model->title . ' (' . $model->um . ')';
                 },
-            ],
-            [
+            ],            [
                 'attribute' => 'custom_cost',
-                'format' => 'currency',
-                'label' => "Costo"
+                'label' => "Costo",
+                'value' => function($model) {
+                    return formatCost($model->custom_cost);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
             ],
             [
                 'attribute' => 'ingredientCount',

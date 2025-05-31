@@ -134,7 +134,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 //            'tax',
 //            'retention',
 //            'unit_price',
-            'total:currency',
+            [
+                'attribute' => 'total',
+                'label' => Yii::t('app', 'Total'),
+                'value' => function($model) {
+                    return formatPrice($model->total);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
+            ],
             //'observations',
             //'business_id',
             //'created_at',

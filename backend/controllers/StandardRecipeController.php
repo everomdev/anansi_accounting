@@ -1353,11 +1353,35 @@ public function actionGetSubStandardRecipes()
         'currentDirection' => $direction // Para mostrar la dirección
     ]);
 }*/
-public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc')
+public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc', $year = null, $month = null)
 {
     $business = RedisKeys::getBusiness();
+    $currentYear = $year ?: date('Y');
+    $selectedMonth = $month;
+    
+    // Agregar filtros de business_id a las consultas
+    $businessFilter = [
+        'business_id' => $business->id
+    ];    // Crear subquery para ventas de recetas desde monthly_sales
+    $recipesSalesSubquery = (new \yii\db\Query())
+        ->select([
+            'model_id',
+            'total_sales' => 'SUM(sales)'
+        ])
+        ->from('monthly_sales')
+        ->where([
+            'model_type' => MonthlySales::TYPE_RECIPE,
+            'year' => $currentYear
+        ]);
+    
+    // Agregar filtro por mes si está especificado
+    if ($selectedMonth !== null) {
+        $recipesSalesSubquery->andWhere(['month' => $selectedMonth]);
+    }
+    
+    $recipesSalesSubquery->groupBy('model_id');
 
-    // Obtener recetas y combos en una sola consulta optimizada
+    // Obtener recetas con ventas desde monthly_sales
     $query = (new \yii\db\Query())
         ->select([
             'id' => 'sr.id',
@@ -1366,11 +1390,12 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             'type_of_recipe' => 'sr.type_of_recipe',
             'price' => 'sr.price',
             'cost' => 'sr.custom_cost',
-            'sales' => 'sr.sales',
+            'sales' => new \yii\db\Expression('COALESCE(ms.total_sales, 0)'),
             'cost_percent' => new \yii\db\Expression('(sr.custom_cost / NULLIF(sr.price, 0)) * 100'),
-            'sales_value' => new \yii\db\Expression('sr.price * sr.sales')
+            'sales_value' => new \yii\db\Expression('sr.price * COALESCE(ms.total_sales, 0)')
         ])
         ->from(['sr' => 'standard_recipe'])
+        ->leftJoin(['ms' => $recipesSalesSubquery], 'sr.id = ms.model_id')
         ->where([
             'sr.business_id' => $business->id,
             'sr.in_menu' => true,
@@ -1380,8 +1405,26 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
 
     if ($family != 'all') {
         $query->andWhere(['sr.type_of_recipe' => $family]);
+    }    // Crear subquery para ventas de combos desde monthly_sales
+    $combosSalesSubquery = (new \yii\db\Query())
+        ->select([
+            'model_id',
+            'total_sales' => 'SUM(sales)'
+        ])
+        ->from('monthly_sales')
+        ->where([
+            'model_type' => MonthlySales::TYPE_MENU,
+            'year' => $currentYear
+        ]);
+    
+    // Agregar filtro por mes si está especificado
+    if ($selectedMonth !== null) {
+        $combosSalesSubquery->andWhere(['month' => $selectedMonth]);
     }
+    
+    $combosSalesSubquery->groupBy('model_id');
 
+    // Obtener combos con ventas desde monthly_sales
     $combosQuery = (new \yii\db\Query())
         ->select([
             'id' => 'm.id',
@@ -1390,12 +1433,13 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             'type_of_recipe' => 'rc.name',
             'price' => 'm.total_price',
             'cost' => 'm.total_cost',
-            'sales' => 'm.sales',
+            'sales' => new \yii\db\Expression('COALESCE(ms.total_sales, 0)'),
             'cost_percent' => new \yii\db\Expression('(m.total_cost / NULLIF(m.total_price, 0)) * 100'),
-            'sales_value' => new \yii\db\Expression('m.total_price * m.sales')
+            'sales_value' => new \yii\db\Expression('m.total_price * COALESCE(ms.total_sales, 0)')
         ])
         ->from(['m' => 'menu'])
         ->innerJoin(['rc' => 'recipe_category'], 'rc.id = m.category_id')
+        ->leftJoin(['ms' => $combosSalesSubquery], 'm.id = ms.model_id')
         ->where([
             'm.business_id' => $business->id,
             'm.in_menu' => true,
@@ -1501,7 +1545,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         'paretoCategories' => $paretoCategories,
         'totalSales' => $totalSales,
         'currentSort' => $sort,
-        'currentDirection' => $direction
+        'currentDirection' => $direction,
+        'selectedYear' => $currentYear,
+        'selectedMonth' => $selectedMonth
     ]);
 }
     public function actionMenuImprovement()

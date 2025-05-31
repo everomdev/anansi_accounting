@@ -194,7 +194,7 @@ $this->registerCss("
                             </td>
                             <td class="movement-ingredient"><?= $movement->ingredient->ingredient ?></td>
                             <td class="movement-quantity"><?= sprintf("%s %s", $movement->quantity, $movement->ingredient->um) ?></td>
-                            <td class="movement-total"><?= $business->formatter->asCurrency($movement->total) ?></td>
+                            <td class="movement-total"><?= formatPrice($movement->total) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

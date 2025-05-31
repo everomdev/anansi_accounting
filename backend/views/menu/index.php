@@ -19,12 +19,9 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         <?= Html::a('Nuevo combo', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
-    <?= GridView::widget([
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>    <?= GridView::widget([
         'dataProvider' => $dataProvider,
 //        'filterModel' => $searchModel,
-        'formatter' => $business->getFormatter(),
         'rowOptions' => [
             'class' => 'text-center'
         ],
@@ -33,16 +30,31 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
 //            'id',
             'name',
-            'total_cost:currency',
+            [
+                'attribute' => 'total_cost',
+                'label' => Yii::t('app', 'Total Cost'),
+                'value' => function($model) {
+                    return formatCost($model->total_cost);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
+            ],
 //            'totalCostByHigherPrice:currency',
 //            'totalCostByAvgPrice:currency',
-            'total_price:currency',
+            [
+                'attribute' => 'total_price',
+                'label' => Yii::t('app', 'Total Price'),
+                'value' => function($model) {
+                    return formatPrice($model->total_price);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
+            ],
             [
                 'attribute' => 'cost_percent_last_price',
                 'label' => "Porcentaje de costo último precio",
                 'value' => function ($data) {
-                    return sprintf("%s %%", $data->cost_percent_last_price*100);
+                    return formatPercentage($data->cost_percent_last_price);
                 },
+                'contentOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',

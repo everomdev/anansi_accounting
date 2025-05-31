@@ -119,26 +119,25 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
                         </tr>
                     <?php endforeach; ?>
                     <tr>
-                        <td colspan="2" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
-                        <td><?= Yii::$app->formatter->asCurrency(
+                        <td colspan="2" class="text-center" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>                        <td><?= formatPrice(
                                 array_sum(
                                         array_merge(
                                             ArrayHelper::getColumn($model->ingredientRelations, 'lastUnitPrice'),
                                             ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), 'subRecipeLastPrice')
                                         )
-                                ), 'usd') ?></td>
-                        <td><?= Yii::$app->formatter->asCurrency(array_sum(
+                                )) ?></td>
+                        <td><?= formatPrice(array_sum(
                                 array_merge(
                                     ArrayHelper::getColumn($model->ingredientRelations, 'avgUnitPrice'),
                                     ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), 'subRecipeAvgPrice')
                                 )
-                            ), 'usd') ?></td>
-                        <td><?= Yii::$app->formatter->asCurrency(array_sum(
+                            )) ?></td>
+                        <td><?= formatPrice(array_sum(
                                 array_merge(
                                     ArrayHelper::getColumn($model->ingredientRelations, 'higherUnitPrice'),
                                     ArrayHelper::getColumn($model->getSubStandardRecipes()->all(), 'subRecipeHigherPrice')
                                 )
-                            ), 'usd') ?></td>
+                            )) ?></td>
                     </tr>
                     </tbody>
                 </table>

@@ -296,26 +296,23 @@ class Business extends \yii\db\ActiveRecord
         $totalCostSum += $combo->costPercent;
         $totalItems++;
     }
-    
-    if ($totalItems > 0) {
+      if ($totalItems > 0) {
         $averageCost = $totalCostSum / $totalItems;
-        $theoricalYield = $this->getFormatter()->asPercent($averageCost, 2);
+        $theoricalYield = formatPercentage($averageCost);
     }
-    
-    // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
+      // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
     $foodTheoricalYield = null;
     if (!empty($foodRecipes)) {
         $foodCostTotal = array_sum(ArrayHelper::getColumn($foodRecipes, 'costPercent'));
         $foodCostAvg = $foodCostTotal / count($foodRecipes);
-        $foodTheoricalYield = $this->getFormatter()->asPercent($foodCostAvg, 2);
+        $foodTheoricalYield = formatPercentage($foodCostAvg);
     }
-    
-    // Calcular rendimiento teórico para recetas de bebidas (is_food = false)
+      // Calcular rendimiento teórico para recetas de bebidas (is_food = false)
     $nonFoodTheoricalYield = null;
     if (!empty($nonFoodRecipes)) {
         $nonFoodCostTotal = array_sum(ArrayHelper::getColumn($nonFoodRecipes, 'costPercent'));
         $nonFoodCostAvg = $nonFoodCostTotal / count($nonFoodRecipes);
-        $nonFoodTheoricalYield = $this->getFormatter()->asPercent($nonFoodCostAvg, 2);
+        $nonFoodTheoricalYield = formatPercentage($nonFoodCostAvg);
     }
     
     // Costo total promedio para compatibilidad

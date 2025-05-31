@@ -90,10 +90,9 @@ $countData = count($data);
 $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
 ?>
 <div class="card">
-<div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">
+<div class="card-header d-flex justify-content-between align-items-center">        <h4 class="mb-0">
             <?= Yii::t('app', "New profitability of menu: {yield}", [
-                'yield' => $business->getFormatter()->asPercent($yield, 2)
+                'yield' => formatPercentage($yield)
             ]) ?>
         </h4>
         <a href="#recommendations-section" class="btn btn-primary btn-sm">
@@ -131,7 +130,7 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                                     \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
                             ]) ?>
                         </td>
-                        <td><?= $business->getFormatter()->asPercent($item->getCostPercent(true), 2) ?></td>
+                        <td><?= formatPercentage($item->getCostPercent(true)) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

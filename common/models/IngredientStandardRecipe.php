@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "ingredient_standard_recipe".
@@ -17,6 +18,20 @@ use Yii;
  */
 class IngredientStandardRecipe extends \yii\db\ActiveRecord
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'numberFields' => ['quantity'],
+                'percentageFields' => ['cost_percentage'],
+            ],
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */

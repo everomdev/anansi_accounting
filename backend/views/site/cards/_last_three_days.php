@@ -130,11 +130,10 @@ $this->registerCss("
 ");
 ?>
 
-<div class="three-days-container">
-    <div class="three-days-header">
+<div class="three-days-container">    <div class="three-days-header">
         <h5>Gastos Recientes</h5>
         <div class="days-total">
-            <?= $business->formatter->asCurrency($totalGastos) ?>
+            <?= formatPrice($totalGastos) ?>
         </div>
     </div>
     
@@ -151,9 +150,8 @@ $this->registerCss("
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 Hoy
-            </div>
-            <div class="day-amount today-amount">
-                <?= $business->formatter->asCurrency($hoyTotal) ?>
+            </div>            <div class="day-amount today-amount">
+                <?= formatPrice($hoyTotal) ?>
             </div>
         </div>
         
@@ -164,9 +162,8 @@ $this->registerCss("
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 Ayer
-            </div>
-            <div class="day-amount yesterday-amount">
-                <?= $business->formatter->asCurrency($ayerTotal) ?>
+            </div>            <div class="day-amount yesterday-amount">
+                <?= formatPrice($ayerTotal) ?>
             </div>
         </div>
         
@@ -177,9 +174,8 @@ $this->registerCss("
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 Antier
-            </div>
-            <div class="day-amount day-before-amount">
-                <?= $business->formatter->asCurrency($antierTotal) ?>
+            </div>            <div class="day-amount day-before-amount">
+                <?= formatPrice($antierTotal) ?>
             </div>
         </div>
     <?php endif; ?>

@@ -67,6 +67,17 @@ class IngredientStock extends \yii\db\ActiveRecord
         }
     }
 
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => \common\behaviors\NumberFormatterBehavior::class,
+                'priceFields' => ['price', 'adjustedPrice'],
+                'numberFields' => ['quantity', 'yield', 'portions_per_unit', 'final_quantity'],
+            ]
+        ];
+    }
+
     public function rules()
     {
         return [

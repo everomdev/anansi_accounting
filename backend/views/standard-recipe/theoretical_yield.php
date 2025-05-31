@@ -86,17 +86,16 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                             $totalCostPercent += $combo->costPercent;
                         }
                         $averageCostPercent = $recipeCount > 0 ? $totalCostPercent / $recipeCount : 0;
-                        ?>
-                        <tr class="bg-secondary text-white ">
+                        ?>                        <tr class="bg-secondary text-white ">
                             <td colspan="5" class="text-center"
-                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->getFormatter()->asPercent($averageCostPercent, 2)) ?></td>
+                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, formatPercentage($averageCostPercent)) ?></td>
                         </tr>
                         <?php foreach ($category['recipes'] as $recipe): ?>
                             <tr>
                                 <td><?= $recipe->title ?></td>
-                                <td><?= $business->getFormatter()->asCurrency($recipe->recipeLastPrice) ?></td>
-                                <td><?= $business->getFormatter()->asCurrency($recipe->price) ?></td>
-                                <td><?= Yii::$app->formatter->asPercent($recipe->costPercent, 2) ?></td>
+                                <td><?= formatPrice($recipe->recipeLastPrice) ?></td>
+                                <td><?= formatPrice($recipe->price) ?></td>
+                                <td><?= formatPercentage($recipe->costPercent) ?></td>
                                 <td>
                                     <?php if ($recipe->is_food): ?>
                                         <span class="badge bg-success"><i class="fas fa-utensils me-1"></i> <?= Yii::t('app', "Alimento") ?></span>
@@ -105,13 +104,12 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                                     <?php endif; ?>
                                 </td>
                             </tr>
-                        <?php endforeach; ?>
-                        <?php foreach ($category['combos'] as $combo): ?>
+                        <?php endforeach; ?>                        <?php foreach ($category['combos'] as $combo): ?>
                             <tr>
                                 <td><?= $combo->title ?></td>
-                                <td><?= $business->getFormatter()->asCurrency($combo->cost) ?></td>
-                                <td><?= $business->getFormatter()->asCurrency($combo->total_price) ?></td>
-                                <td><?= Yii::$app->formatter->asPercent($combo->costPercent, 2) ?></td>
+                                <td><?= formatPrice($combo->cost) ?></td>
+                                <td><?= formatPrice($combo->total_price) ?></td>
+                                <td><?= formatPercentage($combo->costPercent) ?></td>
                                 <td>
                                     <span class="badge bg-secondary"><i class="fas fa-layer-group me-1"></i> <?= Yii::t('app', "Combo") ?></span>
                                 </td>

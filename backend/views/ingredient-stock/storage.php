@@ -28,12 +28,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'key',
             'ingredient',
             'quantity',
-            'um',
-            [
-                'format' => 'currency',
+            'um',            [
                 'label' => Yii::t('app', "Value"),
                 'value' => function ($data) {
-                    return $data->valueInMoney;
+                    return formatPrice($data->valueInMoney);
                 },
             ],
             [

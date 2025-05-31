@@ -163,9 +163,15 @@ function computeCost() {
 }
 // Función para formatear números según las preferencias del usuario
 function formatNumberWithUserPreferences(value) {
+    // Usar el sistema global de formateo si está disponible
+    if (window.BusinessNumberFormatter) {
+        return window.BusinessNumberFormatter.formatPrice(value);
+    }
+    
+    // Fallback a configuración local
     const formatted = formatUserNumber(value);
     if (typeof userFormatConfig !== 'undefined' && userFormatConfig.currencySymbol) {
-        return userFormatConfig.currencySymbol + ' ' + formatted;
+        return userFormatConfig.currencySymbol + formatted; // Sin espacio para mantener consistencia
     }
     return formatted;
     let fixedValue = parseFloat(value).toFixed(decimalPlaces);

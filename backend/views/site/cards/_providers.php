@@ -113,9 +113,8 @@ $this->registerCss("
 
 <div class="providers-container">
     <div class="providers-header">
-        <h5>Principales Proveedores</h5>
-        <div class="providers-total">
-            <?= $business->formatter->asCurrency($totalCompras) ?>
+        <h5>Principales Proveedores</h5>        <div class="providers-total">
+            <?= formatPrice($totalCompras) ?>
         </div>
     </div>
     
@@ -136,9 +135,8 @@ $this->registerCss("
                         <?= $initial ?>
                     </div>
                     <?= $provider->name ?>
-                </div>
-                <div class="provider-amount">
-                    <?= $business->formatter->asCurrency($total) ?>
+                </div>                <div class="provider-amount">
+                    <?= formatPrice($total) ?>
                 </div>
             </div>
         <?php endforeach; ?>

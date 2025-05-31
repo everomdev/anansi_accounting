@@ -27,12 +27,11 @@ $model = new \common\models\Balance();
         <th><?= Yii::t('app', 'Initial balance') ?></th>
         <th><?= Yii::t('app', 'Expenses') ?></th>
         </thead>
-        <tbody>
-        <?php foreach ($balances as $balance): ?>
+        <tbody>        <?php foreach ($balances as $balance): ?>
             <tr>
                 <td><?= $business->getFormatter()->asDate($balance->date) ?></td>
-                <td><?= $business->getFormatter()->asCurrency($balance->current_balance) ?></td>
-                <td><?= $business->getFormatter()->asCurrency($balance->expense) ?></td>
+                <td><?= formatPrice($balance->current_balance) ?></td>
+                <td><?= formatPrice($balance->expense) ?></td>
             </tr>
         <?php endforeach; ?>
         </tbody>

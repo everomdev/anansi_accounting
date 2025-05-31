@@ -24,33 +24,36 @@ $totalSales = array_sum(\yii\helpers\ArrayHelper::getColumn($dataProvider->model
     </p>
 
     <?php Pjax::begin(); ?>
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
-    <?= GridView::widget([
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>    <?= GridView::widget([
         'dataProvider' => $dataProvider,
 //        'filterModel' => $searchModel,
-        'formatter' => $business->formatter,
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
             'name',
             [
-                    'label' => "Platillos",
+                'label' => "Platillos",
                 'value' => function ($data) {
                     return count($data->convoyIngredients);
                 },
             ],
             [
-                    'attribute' => 'amount',
-                'format' => 'currency',
-                'label' => "Monto"
+                'attribute' => 'amount',
+                'label' => "Monto",
+                'value' => function($model) {
+                    return formatPrice($model->amount);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
             ],
             [
                 'attribute' => 'totalAmount',
-                'format' => 'currency',
-                'label' => "Costo"
+                'label' => "Costo",
+                'value' => function($model) {
+                    return formatCost($model->totalAmount);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
             ],
             [
-                    'attribute' => 'observations',
+                'attribute' => 'observations',
                 'value' => function ($data) {
                     return empty($data->observations) ? "Sin observaciones" : $data->observations;
                 },

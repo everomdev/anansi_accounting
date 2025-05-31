@@ -8,6 +8,7 @@ use yii\db\ActiveRecord;
 use yii\db\Expression;
 use common\models\StandardRecipe;
 use common\models\Menu;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "monthly_sales".
@@ -51,9 +52,7 @@ class MonthlySales extends ActiveRecord
             // Asegurar que no haya duplicados
             [['model_type', 'model_id', 'month', 'year'], 'unique', 'targetAttribute' => ['model_type', 'model_id', 'month', 'year']],
         ];
-    }
-
-    /**
+    }    /**
      * {@inheritdoc}
      */
     public function behaviors()
@@ -62,6 +61,10 @@ class MonthlySales extends ActiveRecord
             [
                 'class' => TimestampBehavior::class,
                 'value' => new Expression('CURRENT_TIMESTAMP'),
+            ],
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'numberFields' => ['sales'],
             ],
         ];
     }

@@ -17,19 +17,37 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         <?= Html::a(Yii::t('app', 'Add Sales'), ['sales/create'], ['class' => 'btn btn-warning']) ?>
     </p>
 
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-
-    <?= GridView::widget([
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>    <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
-        'formatter' => $business->getFormatter(),
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
             'date',
-            'amount_food:currency',
-            'amount_drinking:currency',
-            'amount_other:currency',
+            [
+                'attribute' => 'amount_food',
+                'label' => Yii::t('app', 'Food Amount'),
+                'value' => function($model) {
+                    return formatPrice($model->amount_food);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
+            ],
+            [
+                'attribute' => 'amount_drinking',
+                'label' => Yii::t('app', 'Drinking Amount'),
+                'value' => function($model) {
+                    return formatPrice($model->amount_drinking);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
+            ],
+            [
+                'attribute' => 'amount_other',
+                'label' => Yii::t('app', 'Other Amount'),
+                'value' => function($model) {
+                    return formatPrice($model->amount_other);
+                },
+                'contentOptions' => ['style' => 'text-align: right;'],
+            ],
 
             [
                 'class' => 'yii\grid\ActionColumn',

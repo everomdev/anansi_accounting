@@ -9,6 +9,7 @@ use Yii;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "plan".
@@ -31,6 +32,19 @@ use yii\helpers\Url;
 class Plan extends \yii\db\ActiveRecord
 {
     public $permissions = [];
+
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'priceFields' => ['monthly_price', 'yearly_price'],
+            ],
+        ];
+    }
 
     /**
      * {@inheritdoc}

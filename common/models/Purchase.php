@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "purchase".
@@ -21,6 +22,20 @@ use Yii;
  */
 class Purchase extends \yii\db\ActiveRecord
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'priceFields' => ['price', 'unit_price'],
+                'numberFields' => ['quantity'],
+            ],
+        ];
+    }
+
     /**
      * {@inheritdoc}
      */

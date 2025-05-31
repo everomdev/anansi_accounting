@@ -132,9 +132,7 @@ class Coupon extends \yii\db\ActiveRecord
     public function getFormattedType()
     {
         return self::getFormattedTypes()[$this->type];
-    }
-
-    public function getIsValid($plan_id)
+    }    public function getIsValid($plan_id)
     {
         // check expiration date and time
         if (empty($this->expiration) || $this->expiration <= date('Y-m-d H:i:s') || 
@@ -153,6 +151,51 @@ class Coupon extends \yii\db\ActiveRecord
         }
 
         return true;
+    }
+
+    /**
+     * Valida el cupón y retorna información detallada sobre el error
+     * @param int $plan_id
+     * @return array ['valid' => bool, 'error' => string|null, 'error_type' => string|null]
+     */
+    public function validateWithDetails($plan_id)
+    {
+        // Verificar fecha de expiración
+        if (empty($this->expiration) || $this->expiration <= date('Y-m-d H:i:s') || 
+            empty($this->expiration_date) || $this->expiration_date < time()) {
+            return [
+                'valid' => false,
+                'error' => Yii::t('app', 'Este cupón ha expirado y ya no está disponible.'),
+                'error_type' => 'expired'
+            ];
+        }
+
+        // Verificar compatibilidad con el plan
+        if (!$this->all_plans && (int)$this->plan_id !== (int)$plan_id) {
+            $planName = $this->plan ? $this->plan->name : Yii::t('app', 'plan específico');
+            return [
+                'valid' => false,
+                'error' => Yii::t('app', 'Este cupón solo es válido para el plan "{planName}". Por favor selecciona el plan correcto o tendrás que pagar el precio completo.', [
+                    'planName' => $planName
+                ]),
+                'error_type' => 'wrong_plan'
+            ];
+        }
+
+        // Verificar disponibilidad/cantidad
+        if ($this->quantity > 0 && $this->usages >= $this->quantity) {
+            return [
+                'valid' => false,
+                'error' => Yii::t('app', 'Este cupón ha alcanzado su límite de uso y ya no está disponible.'),
+                'error_type' => 'limit_reached'
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'error' => null,
+            'error_type' => null
+        ];
     }
 
     public static function applyDiscount($price, $type, $discount)

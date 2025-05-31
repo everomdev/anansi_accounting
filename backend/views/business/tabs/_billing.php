@@ -24,6 +24,7 @@ if (!empty($subscription)) {
 }
 $invoices = $user->getInvoices();
 $this->registerJsVar("currentPlanId", $plan->id);
+$this->registerJsVar("cancelSubscriptionUrl", \yii\helpers\Url::to(['//payment/cancel-subscription']));
 
 ?>
 
@@ -36,11 +37,10 @@ $this->registerJsVar("currentPlanId", $plan->id);
                 <td><?= Yii::t('app', "Current plan") ?></td>
                 <td>
                     <?php if (!empty($subscription)): ?>
-                        <?php
-                        /** @var \Stripe\SubscriptionItem $item */
+                        <?php                        /** @var \Stripe\SubscriptionItem $item */
                         $item = $subscription->items->first();
                         ?>
-                        <?= sprintf("%s - %s %s / %s", $plan->name, ($item->price->unit_amount / 100), strtoupper($item->price->currency), $item->price->recurring->interval) ?>
+                        <?= sprintf("%s - %s / %s", $plan->name, formatPrice($item->price->unit_amount / 100), $item->price->recurring->interval) ?>
                     <?php else: ?>
                         <?= $plan->name ?>
                     <?php endif; ?>
@@ -95,9 +95,8 @@ $this->registerJsVar("currentPlanId", $plan->id);
                                 date('d M Y', $invoice->lines->first()->period->start),
                                 date('d M Y', $invoice->lines->first()->period->end),
                             ) ?>
-                        </td>
-                        <td><?= date('d M Y', $invoice->effective_at) ?></td>
-                        <td><?= Yii::$app->formatter->asCurrency($invoice->total / 100, 'usd') ?></td>
+                        </td>                        <td><?= date('d M Y', $invoice->effective_at) ?></td>
+                        <td><?= formatPrice($invoice->total / 100) ?></td>
                         <td><?= $invoice->status ?></td>
                         <td><?= \yii\bootstrap5\Html::a('<i class="bx bx-download"/>', $invoice->invoice_pdf, ['class' => 'btn btn-sm btn-success']) ?></td>
                     </tr>
@@ -194,7 +193,7 @@ $(document).on('change', '#confirm-cancellation', function() {
 $(document).on('click', '#btn-confirm-cancel', function(e) {
     e.preventDefault();
     if (!$(this).prop('disabled')) {
-        window.location.href = '<?= \yii\helpers\Url::to(['//payment/cancel-subscription']) ?>';
+        window.location.href = cancelSubscriptionUrl;
     }
 });
 

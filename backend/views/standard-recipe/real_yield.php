@@ -75,15 +75,14 @@ $months = [
                     'year' => $year
                 ]) ?>
                 <span class="ms-3">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    <?= Yii::t('app', 'Total de ventas: {sales}', ['sales' => $business->formatter->asCurrency($totalSales)]) ?>
+                    <i class="fas fa-chart-bar me-2"></i>                    <?= Yii::t('app', 'Total de ventas: {sales}', ['sales' => formatPrice($totalSales)]) ?>
                 </span>
             </p>
         </div>
     </div>
     <div class="row mb-4">
         <div class="col-12">
-            <h4 class="alert alert-warning" id="theoretical-yield-message"><?= sprintf("%s %s", $message, $business->formatter->asPercent($totalPcr)) ?></h4>
+            <h4 class="alert alert-warning" id="theoretical-yield-message"><?= sprintf("%s %s", $message, formatPercentage($totalPcr*100)) ?></h4>
         </div>
     </div>
 
@@ -93,8 +92,7 @@ $months = [
                 <div class="alert alert-info" id="food-yield-message">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-utensils me-2"></i>
-                        <span>
-                            <?= sprintf("%s %s", $messageFood, $business->formatter->asPercent($recipesByType['food']['pcr'])) ?>
+                        <span>                            <?= sprintf("%s %s", $messageFood, formatPercentage($recipesByType['food']['pcr']*100)) ?>
                             <?php if (isset($recipesByType['food']['count'])): ?>
                                 <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['food']['count']]) ?>)</small>
                             <?php endif; ?>
@@ -110,7 +108,7 @@ $months = [
                     <div class="d-flex align-items-center">
                         <i class="fas fa-glass-martini-alt me-2"></i>
                         <span>
-                            <?= sprintf("%s %s", $messageNonFood, $business->formatter->asPercent($recipesByType['nonFood']['pcr'])) ?>
+                            <?= sprintf("%s %s", $messageNonFood, formatPercentage($recipesByType['nonFood']['pcr']*100)) ?>
                             <?php if (isset($recipesByType['nonFood']['count'])): ?>
                                 <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['nonFood']['count']]) ?>)</small>
                             <?php endif; ?>
@@ -145,10 +143,9 @@ $months = [
                         foreach ($category['combos'] as $combo) {
                             $categoryTotalPcr += $combo->getCpr($totalSales);
                         }
-                        ?>
-                        <tr class="bg-secondary text-white">
+                        ?>                        <tr class="bg-secondary text-white">
                             <td colspan="7" class="text-center"
-                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, $business->formatter->asPercent($categoryTotalPcr, 2)) ?></td>
+                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, formatPercentage($categoryTotalPcr*100)) ?></td>
                         </tr>
                         <?php foreach ($category['recipes'] as $recipe): ?>
                         <?php
@@ -156,11 +153,11 @@ $months = [
                         ?>
                             <tr>
                                 <td><?= $recipe->title ?></td>
-                                <td><?= $business->formatter->asCurrency($recipe->cost) ?></td>
-                                <td><?= $business->formatter->asCurrency($recipe->price) ?></td>
-                                <td><?= Yii::$app->formatter->asPercent($recipe->costPercent, 2) ?></td>
-                                <td><?= $recipe->sales ?></td>
-                                <td><?= $business->formatter->asPercent($recipe->getSalesPercent($totalSales), 2) ?></td>
+                                <td><?= formatPrice($recipe->cost) ?></td>
+                                <td><?= formatPrice($recipe->price) ?></td>
+                                <td><?= formatPercentage($recipe->costPercent*100) ?></td>
+                                <td><?= number_format($recipe->sales, 2, '.', ',') ?></td>
+                                <td><?= formatPercentage($recipe->getSalesPercent($totalSales)*100) ?></td>
                                 <td>
                                     <?php if ($recipe->is_food): ?>
                                         <span class="badge bg-success"><i class="fas fa-utensils me-1"></i> <?= Yii::t('app', "Alimento") ?></span>
@@ -173,14 +170,13 @@ $months = [
                         <?php foreach ($category['combos'] as $combo): ?>
                             <?php
                             /** @var $combo \common\models\Menu */
-                            ?>
-                            <tr>
+                            ?>                            <tr>
                                 <td><?= $combo->title ?></td>
-                                <td><?= $business->formatter->asCurrency($combo->cost) ?></td>
-                                <td><?= $business->formatter->asCurrency($combo->total_price) ?></td>
-                                <td><?= Yii::$app->formatter->asPercent($combo->costPercent, 2) ?></td>
-                                <td><?= $combo->sales ?></td>
-                                <td><?= $business->formatter->asPercent($combo->getSalesPercent($totalSales), 2) ?></td>
+                                <td><?= formatPrice($combo->cost) ?></td>
+                                <td><?= formatPrice($combo->total_price) ?></td>
+                                <td><?= formatPercentage($combo->costPercent) ?></td>
+                                <td><?= number_format($combo->sales, 2, '.', ',') ?></td>
+                                <td><?= formatPercentage($combo->getSalesPercent($totalSales)) ?></td>
                                 <td>
                                     <span class="badge bg-secondary"><i class="fas fa-layer-group me-1"></i> <?= Yii::t('app', "Combo") ?></span>
                                 </td>

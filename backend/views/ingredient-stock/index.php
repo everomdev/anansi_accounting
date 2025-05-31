@@ -121,15 +121,13 @@ $this->registerCss('
     <?php Pjax::begin(['id' => 'ingredient-stock-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
     <div class="table-responsive sticky-header-container">
-    <div class="row"></div>
-    <?= GridView::widget([
+    <div class="row"></div>    <?= GridView::widget([
         'id' => 'ingredient-stock-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'tableOptions' => ['class' => 'table sticky-header-table'],
         'options' => ['class' => 'grid-view sticky-header-grid'],
         'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
-        'formatter' => $business->getFormatter(),
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
             ['class' => 'yii\grid\SerialColumn'],
@@ -153,21 +151,21 @@ $this->registerCss('
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
-            ],
-            [
+            ],            [
                 'attribute' => 'yield',
                 'label' => "Factor de<br>rendimiento",
                 'value' => function ($data) {
-                    return sprintf('%s %%', $data->yield);
+                    return formatPercentage($data->yield);
                 },
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
-            ],
-            [
+            ],            [
                 'attribute' => 'lastUnitPrice',
-                'format' => 'currency',
                 'label' => 'Último<br>precio',
+                'value' => function ($data) {
+                    return formatPrice($data->lastUnitPrice);
+                },
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
@@ -175,11 +173,12 @@ $this->registerCss('
                     'class' => 'sortable-column',
                     'data-sort-by' => 'lastUnitPrice'
                 ],
-            ],
-            [
+            ],            [
                 'attribute' => 'avgUnitPrice',
-                'format' => 'currency',
                 'label' => 'Precio<br>promedio',
+                'value' => function ($data) {
+                    return formatPrice($data->avgUnitPrice);
+                },
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
@@ -187,11 +186,12 @@ $this->registerCss('
                     'class' => 'sortable-column',
                     'data-sort-by' => 'avgUnitPrice'
                 ],
-            ],
-            [
+            ],            [
                 'attribute' => 'higherUnitPrice',
-                'format' => 'currency',
                 'label' => 'Precio<br>más alto',
+                'value' => function ($data) {
+                    return formatPrice($data->higherUnitPrice);
+                },
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [

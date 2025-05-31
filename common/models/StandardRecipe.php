@@ -103,13 +103,15 @@ class StandardRecipe extends \yii\db\ActiveRecord
             $record->custom_cost = $record->cost;
         }
 
-    }
-
-    public function behaviors()
+    }    public function behaviors()
     {
         return [
             'image' => [
                 'class' => ImageBehave::class,
+            ],
+            'numberFormatter' => [
+                'class' => \common\behaviors\NumberFormatterBehavior::class,
+                'priceFields' => ['price', 'custom_cost'],
             ]
         ];
     }

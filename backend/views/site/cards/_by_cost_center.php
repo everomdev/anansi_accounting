@@ -162,9 +162,8 @@ $this->registerJs("
 
 <div class="cost-center-container">
     <div class="cost-center-header">
-        <h5>Consumo por Centro de Costo</h5>
-        <div class="cost-center-total">
-            <?= $business->formatter->asCurrency($totalConsumption) ?>
+        <h5>Consumo por Centro de Costo</h5>        <div class="cost-center-total">
+            <?= formatPrice($totalConsumption) ?>
         </div>
     </div>
     
@@ -196,9 +195,8 @@ $this->registerJs("
                             <div class="center-bar">
                                 <div class="center-bar-fill" data-percent="<?= $percent ?>"></div>
                             </div>
-                        </td>
-                        <td class="center-amount">
-                            <?= $business->formatter->asCurrency($center['amount']) ?>
+                        </td>                        <td class="center-amount">
+                            <?= formatPrice($center['amount']) ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

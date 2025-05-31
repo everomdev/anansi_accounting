@@ -44,13 +44,8 @@ $recipesCategoriesMap['add'] = Yii::t('app', "+ Agregar");
 
 $this->registerJsVar('createNewCategoryUrl', \yii\helpers\Url::to(['recipe-category/index']));
 
-$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
-$currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
-$formatConfig = [
-    'decimalSeparator' => $businessObj->decimal_separator,
-    'thousandSeparator' => $businessObj->thousands_separator,
-    'currencySymbol' => $currencySymbol,
-];
+// Use global number formatter configuration
+$formatConfig = \common\helpers\NumberFormatter::getJsConfig();
 $this->registerJsVar('userFormatConfig', $formatConfig);
 ?>
 
@@ -219,37 +214,33 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                             </div>
                         </div>
                     </div>
-                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
-                        <?= $form->field($model, 'price', [
+                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>                        <?= $form->field($model, 'price', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div>{error}</div></div>"
                         ])->textInput([
-                            'onkeyup' => 'this.value = this.value.replace(/[^0-9.,]/g, "")',
                             'id' => 'price-input',
-                            'value' => $model->price !== null && $model->price !== '' ? $businessObj->formatter->asCurrency($model->price) : '',
-                            'class' => 'form-control number-input',
+                            'value' => $model->price !== null && $model->price !== '' ? formatPrice($model->price) : '',
+                            'class' => 'form-control format-price-input',
                             'data-raw-value' => $model->price
-                        ])->label(null, ['class' => 'col-sm-3 text-start']) ?>
-                        <div class="row mb-3">
+                        ])->label(null, ['class' => 'col-sm-3 text-start']) ?>                        <div class="row mb-3">
                             <div class="col-sm-3 text-start">
                                 <?= Yii::t('app', "Cost") ?>
                             </div>
                             <div class="col-sm-9">
                                 <div class="input-group">
                                     <span class="input-group-text"><?= $currencySymbol ?></span>
-                                    <span class="form-control" id="cost-value"
-                                        data-price="<?= $model->lastPrice ?>"><?= $businessObj->formatter->asCurrency($model->lastPrice) ?></span>
+                                    <span class="form-control format-cost" id="cost-value"
+                                        data-value="<?= $model->lastPrice ?>"><?= formatCost($model->lastPrice) ?></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row mb-3">
+                        </div>                        <div class="row mb-3">
                             <div class="col-sm-3 text-start">
                                 <?= Yii::t('app', "Cost %") ?>
                             </div>
                             <div class="col-sm-9">
-                                <span class="form-control"
+                                <span class="form-control format-percentage"
                                     id="cost-percent"
-                                    data-raw-value="<?= $model->costPercent ?? 0 ?>">
-                                    <?= Yii::$app->formatter->asPercent($model->costPercent, 0) ?>
+                                    data-value="<?= $model->costPercent ?? 0 ?>">
+                                    <?= formatPercentage($model->costPercent) ?>
                                 </span>
                                 <small class="form-text text-muted">
                                     <?= Yii::t('app', "Porcentaje del costo en relación al precio de venta") ?>

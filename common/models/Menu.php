@@ -287,4 +287,16 @@ class Menu extends \yii\db\ActiveRecord
 
         return round($this->salesAmount / $totalSalesAmount, 2);
     }
+
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => \common\behaviors\NumberFormatterBehavior::class,
+                'priceFields' => ['total_cost', 'total_price', 'custom_cost', 'custom_price'],
+                'percentageFields' => ['cost_precent', 'cost_percent_last_price', 'cost_percent_higher_price', 'cost_percent_avg_price'],
+                'numberFields' => ['sales'],
+            ]
+        ];
+    }
 }
