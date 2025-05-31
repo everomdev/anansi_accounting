@@ -216,7 +216,8 @@ class Business extends \yii\db\ActiveRecord
     {
         return $this->hasMany(User::class, ['id' => 'user_id'])
             ->viaTable('user_business', ['business_id' => 'id']);
-    }     public function getTheoreticalYield($month = null, $year = null)
+    }     
+    public function getTheoreticalYield($month = null, $year = null)
 {
     // Para rentabilidad teórica no necesitamos mes/año, solo por compatibilidad
     if ($month === null) {
@@ -298,21 +299,21 @@ class Business extends \yii\db\ActiveRecord
     }
       if ($totalItems > 0) {
         $averageCost = $totalCostSum / $totalItems;
-        $theoricalYield = formatPercentage($averageCost);
+        $theoricalYield = formatPercentage($averageCost*100);
     }
       // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
     $foodTheoricalYield = null;
     if (!empty($foodRecipes)) {
         $foodCostTotal = array_sum(ArrayHelper::getColumn($foodRecipes, 'costPercent'));
         $foodCostAvg = $foodCostTotal / count($foodRecipes);
-        $foodTheoricalYield = formatPercentage($foodCostAvg);
+        $foodTheoricalYield = formatPercentage($foodCostAvg*100);
     }
       // Calcular rendimiento teórico para recetas de bebidas (is_food = false)
     $nonFoodTheoricalYield = null;
     if (!empty($nonFoodRecipes)) {
         $nonFoodCostTotal = array_sum(ArrayHelper::getColumn($nonFoodRecipes, 'costPercent'));
         $nonFoodCostAvg = $nonFoodCostTotal / count($nonFoodRecipes);
-        $nonFoodTheoricalYield = formatPercentage($nonFoodCostAvg);
+        $nonFoodTheoricalYield = formatPercentage($nonFoodCostAvg*100);
     }
     
     // Costo total promedio para compatibilidad

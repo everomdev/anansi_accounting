@@ -92,7 +92,8 @@ $months = [
                 <div class="alert alert-info" id="food-yield-message">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-utensils me-2"></i>
-                        <span>                            <?= sprintf("%s %s", $messageFood, formatPercentage($recipesByType['food']['pcr']*100)) ?>
+                        <span>                            
+                            <?= sprintf("%s %s", $messageFood, formatPercentage($recipesByType['food']['pcr']*100)) ?>
                             <?php if (isset($recipesByType['food']['count'])): ?>
                                 <small class="ms-2">(<?= Yii::t('app', '{n, plural, =1{# receta} other{# recetas}}', ['n' => $recipesByType['food']['count']]) ?>)</small>
                             <?php endif; ?>
@@ -174,9 +175,9 @@ $months = [
                                 <td><?= $combo->title ?></td>
                                 <td><?= formatPrice($combo->cost) ?></td>
                                 <td><?= formatPrice($combo->total_price) ?></td>
-                                <td><?= formatPercentage($combo->costPercent) ?></td>
+                                <td><?= formatPercentage($combo->costPercent*100) ?></td>
                                 <td><?= number_format($combo->sales, 2, '.', ',') ?></td>
-                                <td><?= formatPercentage($combo->getSalesPercent($totalSales)) ?></td>
+                                <td><?= formatPercentage($combo->getSalesPercent($totalSales)*100) ?></td>
                                 <td>
                                     <span class="badge bg-secondary"><i class="fas fa-layer-group me-1"></i> <?= Yii::t('app', "Combo") ?></span>
                                 </td>

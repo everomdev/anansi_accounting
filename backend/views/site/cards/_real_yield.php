@@ -7,7 +7,7 @@
 $month = (int)date('n');
 $year = (int)date('Y');
 $realYield = $business->getRealYield($month, $year)['totalPcr'];
-$yieldPercentage = formatPercentage($realYield);
+$yieldPercentage = formatPercentage($realYield*100);
 
 // Determinar el estado de la rentabilidad para el color
 $yieldStatus = 'success'; // Por defecto, asumimos buena rentabilidad

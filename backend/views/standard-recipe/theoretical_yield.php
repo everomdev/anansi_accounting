@@ -88,14 +88,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                         $averageCostPercent = $recipeCount > 0 ? $totalCostPercent / $recipeCount : 0;
                         ?>                        <tr class="bg-secondary text-white ">
                             <td colspan="5" class="text-center"
-                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, formatPercentage($averageCostPercent)) ?></td>
+                                style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, formatPercentage($averageCostPercent*100)) ?></td>
                         </tr>
                         <?php foreach ($category['recipes'] as $recipe): ?>
                             <tr>
                                 <td><?= $recipe->title ?></td>
                                 <td><?= formatPrice($recipe->recipeLastPrice) ?></td>
                                 <td><?= formatPrice($recipe->price) ?></td>
-                                <td><?= formatPercentage($recipe->costPercent) ?></td>
+                                <td><?= formatPercentage($recipe->costPercent*100) ?></td>
                                 <td>
                                     <?php if ($recipe->is_food): ?>
                                         <span class="badge bg-success"><i class="fas fa-utensils me-1"></i> <?= Yii::t('app', "Alimento") ?></span>
@@ -109,7 +109,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                                 <td><?= $combo->title ?></td>
                                 <td><?= formatPrice($combo->cost) ?></td>
                                 <td><?= formatPrice($combo->total_price) ?></td>
-                                <td><?= formatPercentage($combo->costPercent) ?></td>
+                                <td><?= formatPercentage($combo->costPercent*100) ?></td>
                                 <td>
                                     <span class="badge bg-secondary"><i class="fas fa-layer-group me-1"></i> <?= Yii::t('app', "Combo") ?></span>
                                 </td>
