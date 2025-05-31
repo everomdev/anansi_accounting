@@ -134,7 +134,8 @@ $months = [
                     <th><?= Yii::t('app', "% Sales") ?></th>
                     <th><?= Yii::t('app', "Tipo") ?></th>
                     </thead>
-                    <tbody>                    <?php foreach ($data as $category): ?>
+                    <tbody>                    
+                        <?php foreach ($data as $category): ?>
                         <?php
                         // Calcular CPR de la categoría usando los datos actuales con ventas históricas
                         $categoryTotalPcr = 0;
@@ -144,7 +145,8 @@ $months = [
                         foreach ($category['combos'] as $combo) {
                             $categoryTotalPcr += $combo->getCpr($totalSales);
                         }
-                        ?>                        <tr class="bg-secondary text-white">
+                        ?>                        
+                        <tr class="bg-secondary text-white">
                             <td colspan="7" class="text-center"
                                 style="font-weight: bold"><?= sprintf("%s: %s", $category['category']->name, formatPercentage($categoryTotalPcr*100)) ?></td>
                         </tr>
