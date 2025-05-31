@@ -60,13 +60,12 @@ $this->registerJsVar("currentPlanId", $plan->id);
                 <td><?= empty($subscription) ? '' : sprintf("%s - %s", date('d M Y', $subscription->current_period_start), date('d M Y', $subscription->current_period_end)) ?></td>
             </tr>
             </tbody>
-        </table>
-        <?php if (!empty($subscription) && ($subscription->status == 'active' or $subscription->status == 'trialing')): ?>
-            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Cancel subscription"), ['//payment/cancel-subscription'], [
+        </table>        <?php if (!empty($subscription) && ($subscription->status == 'active' or $subscription->status == 'trialing')): ?>
+            <?= \yii\bootstrap5\Html::button(Yii::t('app', "Cancel subscription"), [
                 'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => Yii::t('app', "Are you sure you want to cancel the subscription?")
-                ]
+                'id' => 'btn-cancel-subscription',
+                'data-bs-toggle' => 'modal',
+                'data-bs-target' => '#modal-cancel-subscription'
             ]) ?>
         <?php endif; ?>
         <?php if (empty($subscription) or !in_array($subscription->status, ['active', 'trialing'])): ?>
@@ -116,6 +115,51 @@ $this->registerJsVar("currentPlanId", $plan->id);
 ]);
 echo "<div id='change-plan-form-container'></div>";
 \yii\bootstrap5\Modal::end();
+
+// Modal para cancelar suscripción
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-cancel-subscription',
+    'title' => '<i class="bx bx-error text-danger"></i> Cancelar Suscripción',
+    'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT,
+    'options' => [
+        'class' => 'modal-danger'
+    ]
+]);
+?>
+<div class="modal-body">
+    <div class="alert alert-warning" role="alert">
+        <h6 class="alert-heading"><i class="bx bx-error-circle"></i> Advertencia Importante</h6>
+        <p class="mb-0">
+            Si cancelas tu suscripción, perderás acceso a todos los datos de tu cuenta, incluyendo:
+        </p>
+        <ul class="mt-2 mb-0">
+            <li>Todas las recetas y elementos del menú</li>
+            <li>Información de inventario y stock</li>
+            <li>Reportes de ventas y análisis</li>
+            <li>Configuración del negocio</li>
+            <li>Todos los datos históricos</li>
+        </ul>
+        <p class="mt-2 mb-0">
+            <strong>Esta acción no se puede deshacer.</strong>
+        </p>
+    </div>
+    
+    <div class="form-check mt-3">
+        <input class="form-check-input" type="checkbox" id="confirm-cancellation" />
+        <label class="form-check-label" for="confirm-cancellation">
+            Entiendo que perderé acceso a todos mis datos y quiero proceder con la cancelación
+        </label>
+    </div>
+</div>
+<div class="modal-footer">    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        Mantener Suscripción
+    </button>
+    <button type="button" class="btn btn-danger" id="btn-confirm-cancel" disabled>
+        Cancelar Suscripción
+    </button>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
 $js = <<< JS
 $(document).on('change', '#plan_id', function(event){
     event.preventDefault();
@@ -133,6 +177,35 @@ $(document).on('change', '#plan_id', function(event){
     })
     return false;
 })
+
+// Control del checkbox para habilitar/deshabilitar el botón de cancelación
+$(document).on('change', '#confirm-cancellation', function() {
+    const isChecked = $(this).is(':checked');
+    const cancelBtn = $('#btn-confirm-cancel');
+    
+    if (isChecked) {
+        cancelBtn.prop('disabled', false).removeClass('btn-danger').addClass('btn-outline-danger');
+    } else {
+        cancelBtn.prop('disabled', true).removeClass('btn-outline-danger').addClass('btn-danger');
+    }
+});
+
+// Manejar el click del botón de cancelación
+$(document).on('click', '#btn-confirm-cancel', function(e) {
+    e.preventDefault();
+    if (!$(this).prop('disabled')) {
+        window.location.href = '<?= \yii\helpers\Url::to(['//payment/cancel-subscription']) ?>';
+    }
+});
+
+// Resetear el modal cuando se cierre
+$('#modal-cancel-subscription').on('hidden.bs.modal', function () {
+    $('#confirm-cancellation').prop('checked', false);
+    $('#btn-confirm-cancel')
+        .prop('disabled', true)
+        .removeClass('btn-outline-danger')
+        .addClass('btn-danger');
+});
 JS;
 
 $this->registerJs($js);
