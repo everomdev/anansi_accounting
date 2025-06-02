@@ -37,6 +37,8 @@ $recipesCategories = \common\models\RecipeCategory::find()->where(['business_id'
 
 $businessObj = \common\models\Business::findOne(['id' => $business['id']]);
 
+// Obtener símbolo de moneda
+$currencySymbol = \common\helpers\NumberFormatter::getFormatConfig()['currency_symbol'];
 
 $recipesCategoriesMap = \yii\helpers\ArrayHelper::map($recipesCategories, 'name', 'name');
 
