@@ -171,7 +171,7 @@ $this->registerCss('
                 'attribute' => 'costPercent',
                 'label' => "Porcentaje<br>de costo",
                 'value' => function($model) {
-                    return formatPercentage($model->costPercent);
+                    return formatPercentage($model->costPercent*100);
                 },
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;', 'class' => 'format-percentage'],
