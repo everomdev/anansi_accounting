@@ -116,7 +116,7 @@ $categories = RecipeCategory::find()
                 [
                     'attribute' => 'costPercent',
                     'value' => function ($model) {
-                        return formatPercentage($model->costPercent);
+                        return formatPercentage($model->costPercent*100);
                     },
                     'header' => getSortableHeader('Porcentaje de costo', 'costPercent', $sort, $order),
                     'contentOptions' => ['style' => 'text-align: center;'],
