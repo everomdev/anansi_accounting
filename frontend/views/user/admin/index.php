@@ -11,6 +11,7 @@
 
 use yii\grid\GridView;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\web\View;
 use yii\widgets\Pjax;
 
@@ -39,46 +40,46 @@ $module = Yii::$app->getModule('user');
         'columns' => [
             'username',
             'email:email',
-            [
-                'attribute' => 'registration_ip',
-                'value' => function ($model) {
-                    return $model->registration_ip == null
-                        ? '<span class="not-set">' . Yii::t('usuario', '(not set)') . '</span>'
-                        : $model->registration_ip;
-                },
-                'format' => 'html',
-            ],
-            [
-                'attribute' => 'created_at',
-                'value' => function ($model) {
-                    if (extension_loaded('intl')) {
-                        return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->created_at]);
-                    }
+            // [
+            //     'attribute' => 'registration_ip',
+            //     'value' => function ($model) {
+            //         return $model->registration_ip == null
+            //             ? '<span class="not-set">' . Yii::t('usuario', '(not set)') . '</span>'
+            //             : $model->registration_ip;
+            //     },
+            //     'format' => 'html',
+            // ],
+            // [
+            //     'attribute' => 'created_at',
+            //     'value' => function ($model) {
+            //         if (extension_loaded('intl')) {
+            //             return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->created_at]);
+            //         }
 
-                    return date('Y-m-d G:i:s', $model->created_at);
-                },
-            ],
-            [
-                'attribute' => 'last_login_at',
-                'value' => function ($model) {
-                    if (!$model->last_login_at || $model->last_login_at == 0) {
-                        return Yii::t('usuario', 'Never');
-                    } elseif (extension_loaded('intl')) {
-                        return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->last_login_at]);
-                    } else {
-                        return date('Y-m-d G:i:s', $model->last_login_at);
-                    }
-                },
-            ],
-            [
-                'attribute' => 'last_login_ip',
-                'value' => function ($model) {
-                    return $model->last_login_ip == null
-                        ? '<span class="not-set">' . Yii::t('usuario', '(not set)') . '</span>'
-                        : $model->last_login_ip;
-                },
-                'format' => 'html',
-            ],
+            //         return date('Y-m-d G:i:s', $model->created_at);
+            //     },
+            // ],
+            // [
+            //     'attribute' => 'last_login_at',
+            //     'value' => function ($model) {
+            //         if (!$model->last_login_at || $model->last_login_at == 0) {
+            //             return Yii::t('usuario', 'Never');
+            //         } elseif (extension_loaded('intl')) {
+            //             return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->last_login_at]);
+            //         } else {
+            //             return date('Y-m-d G:i:s', $model->last_login_at);
+            //         }
+            //     },
+            // ],
+            // [
+            //     'attribute' => 'last_login_ip',
+            //     'value' => function ($model) {
+            //         return $model->last_login_ip == null
+            //             ? '<span class="not-set">' . Yii::t('usuario', '(not set)') . '</span>'
+            //             : $model->last_login_ip;
+            //     },
+            //     'format' => 'html',
+            // ],
             [
                 'header' => Yii::t('usuario', 'Confirmation'),
                 'value' => function ($model) {
@@ -101,7 +102,7 @@ $module = Yii::$app->getModule('user');
                 'format' => 'raw',
                 'visible' => Yii::$app->getModule('user')->enableEmailConfirmation,
             ],
-            'password_age',
+            //'password_age',
             [
                 'header' => Yii::t('usuario', 'Block status'),
                 'value' => function ($model) {
@@ -168,8 +169,7 @@ $module = Yii::$app->getModule('user');
                         }
 
                         return null;
-                    },
-                    'force-password-change' => function ($url, $model) use ($module) {
+                    },                    'force-password-change' => function ($url, $model) use ($module) {
                         if (is_null($module->maxPasswordAge)) {
                             return null;
                         }
