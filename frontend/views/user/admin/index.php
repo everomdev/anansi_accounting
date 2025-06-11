@@ -31,14 +31,68 @@ $module = Yii::$app->getModule('user');
 <?php  $this->beginContent('@Da/User/resources/views/shared/admin_layout.php') ?>
 
 <?php Pjax::begin() ?>
-<div class="table-responsive">
+<style>
+.fixed-table-container {
+    position: relative;
+    overflow: auto;
+    max-width: 100%;
+}
+
+.fixed-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.fixed-table th:first-child,
+.fixed-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: #f8f9fa;
+    z-index: 10;
+    min-width: 120px;
+}
+
+.fixed-table th:first-child {
+    background: #e9ecef;
+    z-index: 11;
+}
+
+.fixed-table thead th {
+    position: sticky;
+    top: 0;
+    background: #e9ecef;
+    z-index: 9;
+}
+
+.fixed-table th:first-child {
+    z-index: 12;
+}
+
+/* Sombra para el efecto visual */
+.fixed-table td:first-child::after,
+.fixed-table th:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -2px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.1), transparent);
+    pointer-events: none;
+}
+</style>
+<div class="fixed-table-container">
 <?= GridView::widget(
     [
         'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
-        'layout' => "{items}\n{pager}",
+        'filterModel' => $searchModel,        'layout' => "{items}\n{pager}",
+        'tableOptions' => ['class' => 'table table-striped fixed-table'],
         'columns' => [
-            'username',
+            [
+                'attribute' => 'username',
+                'headerOptions' => ['style' => 'min-width: 120px;'],
+                'contentOptions' => ['style' => 'font-weight: 600;'],
+            ],
             'email:email',
             // [
             //     'attribute' => 'registration_ip',
@@ -59,18 +113,18 @@ $module = Yii::$app->getModule('user');
             //         return date('Y-m-d G:i:s', $model->created_at);
             //     },
             // ],
-            // [
-            //     'attribute' => 'last_login_at',
-            //     'value' => function ($model) {
-            //         if (!$model->last_login_at || $model->last_login_at == 0) {
-            //             return Yii::t('usuario', 'Never');
-            //         } elseif (extension_loaded('intl')) {
-            //             return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->last_login_at]);
-            //         } else {
-            //             return date('Y-m-d G:i:s', $model->last_login_at);
-            //         }
-            //     },
-            // ],
+             [
+                 'attribute' => 'last_login_at',
+                 'value' => function ($model) {
+                     if (!$model->last_login_at || $model->last_login_at == 0) {
+                         return Yii::t('usuario', 'Never');
+                     } elseif (extension_loaded('intl')) {
+                         return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->last_login_at]);
+                     } else {
+                         return date('Y-m-d G:i:s', $model->last_login_at);
+                     }
+                 },
+             ],
             // [
             //     'attribute' => 'last_login_ip',
             //     'value' => function ($model) {
@@ -93,13 +147,13 @@ $module = Yii::$app->getModule('user');
                         Yii::t('usuario', 'Confirm'),
                         ['confirm', 'id' => $model->id],
                         [
-                            'class' => 'btn btn-xs btn-success btn-block',
+                            'class' => 'btn btn-xs btn-success',
                             'data-method' => 'post',
                             'data-confirm' => Yii::t('usuario', 'Are you sure you want to confirm this user?'),
                         ]
-                    );
-                },
+                    );                },
                 'format' => 'raw',
+                'contentOptions' => ['class' => 'text-center'],
                 'visible' => Yii::$app->getModule('user')->enableEmailConfirmation,
             ],
             //'password_age',
