@@ -7,8 +7,19 @@ use yii\widgets\ActiveForm;
 /* @var $model common\models\Convoy */
 /* @var $form yii\widgets\ActiveForm */
 
+$this->registerJsFile(Yii::getAlias("@web/js/business-number-formatter.js"), [
+    'depends' => [\yii\web\YiiAsset::class]
+]);
 $this->registerJsFile(Yii::getAlias("@web/js/convoy/form.js"), [
     'depends' => [\yii\web\YiiAsset::class]
+]);
+
+// Registrar configuración del formateador
+$this->registerJsVar('businessFormatConfig', [
+    'decimalSeparator' => $business->decimal_separator ?? '.',
+    'thousandSeparator' => $business->thousand_separator ?? ',',
+    'currencySymbol' => $business->currency_symbol ?? '$',
+    'currencyCode' => $business->currency_code ?? 'USD'
 ]);
 $isClass = \common\models\IngredientStock::class;
 $ingredients = \common\models\IngredientStock::find()
@@ -72,11 +83,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                                 'data-bs-target' => "#modal-add-ingredient"
                             ]) ?></th>
                         </thead>
-                        <tbody>
-                        <?php foreach ($model->convoyIngredients as $convoyIngredient): ?>
+                        <tbody>                        <?php foreach ($model->convoyIngredients as $convoyIngredient): ?>
                             <tr>
                                 <td><?= $convoyIngredient->model->name ?></td>
-                                <td><?= $convoyIngredient->quantity ?></td>
+                                <td><?= number_format($convoyIngredient->quantity, 2, $business->decimal_separator ?? '.', $business->thousand_separator ?? ',') ?></td>
                                 <td><?= formatPrice($convoyIngredient->amount) ?></td>
                                 <td>
 
@@ -126,23 +136,62 @@ if (!$model->isNewRecord) {
         'id' => 'form-add-ingredient',
         'enableAjaxValidation' => true,
         'action' => \yii\helpers\Url::to(['convoy/add-ingredient', 'id' => $model->id])
-    ]);
-
-    echo $form->field($convoyIngredient, 'selectedEntity')->widget(\kartik\select2\Select2::class, [
+    ]);    echo $form->field($convoyIngredient, 'selectedEntity')->widget(\kartik\select2\Select2::class, [
         'data' => $data,
         'pluginOptions' => [
             'dropdownParent' => '#modal-add-ingredient'
         ]
+    ])->label(Yii::t('app', 'Ingrediente/Subreceta'));echo $form->field($convoyIngredient, 'quantity')->textInput([
+        'class' => 'form-control',
+        'data-format' => 'number',
+        'data-decimals' => '2',
+        'step' => '0.01'
     ]);
-
-    echo $form->field($convoyIngredient, 'quantity')->textInput();
 
     echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Add"), [
         'class' => 'btn btn-success btn-sm',
     ]);
 
-    \yii\bootstrap5\ActiveForm::end();
-
-    \yii\bootstrap5\Modal::end();
+    \yii\bootstrap5\ActiveForm::end();    \yii\bootstrap5\Modal::end();
 }
+
+// JavaScript para inicializar el formateador de números
+$js = <<<JS
+$(document).ready(function() {
+    // Función específica para formatear el campo de cantidad
+    function formatQuantityField() {
+        var quantityInput = $('#convoyingredient-quantity');
+        if (quantityInput.length) {
+            // Configurar eventos específicos para el campo cantidad
+            quantityInput.off('blur.quantity').on('blur.quantity', function() {
+                var value = parseFloat(this.value) || 0;
+                this.value = value.toFixed(2);
+            });
+            
+            // Formatear valor inicial si existe
+            if (quantityInput.val()) {
+                var initialValue = parseFloat(quantityInput.val()) || 0;
+                quantityInput.val(initialValue.toFixed(2));
+            }
+        }
+    }
+    
+    // Inicializar el formateador de números cuando se abra el modal
+    $('#modal-add-ingredient').on('shown.bs.modal', function() {
+        if (window.BusinessNumberFormatter) {
+            window.BusinessNumberFormatter.setupAutoFormatInputs();
+        }
+        // Aplicar formato específico al campo cantidad
+        formatQuantityField();
+    });
+    
+    // También inicializar inmediatamente si el modal ya está visible
+    if (window.BusinessNumberFormatter) {
+        window.BusinessNumberFormatter.setupAutoFormatInputs();
+    }
+    formatQuantityField();
+});
+JS;
+
+$this->registerJs($js);
 ?>

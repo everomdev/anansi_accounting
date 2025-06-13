@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\behaviors\NumberFormatterBehavior;
 
 /**
  * This is the model class for table "convoy_ingredient".
@@ -13,11 +14,24 @@ use Yii;
  * @property int $entity_id
  *
  * @property Convoy $convoy
- * @property int $quantity [int]
+ * @property float $quantity [float]
  */
 class ConvoyIngredient extends \yii\db\ActiveRecord
 {
     public $selectedEntity;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'numberFormatter' => [
+                'class' => NumberFormatterBehavior::class,
+                'numberFields' => ['quantity'],
+            ],
+        ];
+    }
 
     /**
      * {@inheritdoc}
@@ -36,12 +50,12 @@ class ConvoyIngredient extends \yii\db\ActiveRecord
 
     /**
      * {@inheritdoc}
-     */
-    public function rules()
+     */    public function rules()
     {
         return [
             [['convoy_id', 'entity_class', 'entity_id'], 'required'],
-            [['convoy_id', 'entity_id', 'quantity'], 'integer'],
+            [['convoy_id', 'entity_id'], 'integer'],
+            [['quantity'], 'number'],
             [['entity_class', 'selectedEntity'], 'string', 'max' => 255],
             [['convoy_id'], 'exist', 'skipOnError' => true, 'targetClass' => Convoy::className(), 'targetAttribute' => ['convoy_id' => 'id']],
         ];

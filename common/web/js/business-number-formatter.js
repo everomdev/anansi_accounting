@@ -173,9 +173,7 @@ window.BusinessNumberFormatter = (function() {
      */
     function setupPercentageInput(input) {
         setupNumericInput(input, 'percentage');
-    }
-
-    /**
+    }    /**
      * Configuración general para inputs numéricos
      */
     function setupNumericInput(input, type) {
@@ -198,19 +196,22 @@ window.BusinessNumberFormatter = (function() {
             const numericValue = parseNumber(this.value);
             this.setAttribute('data-raw-value', numericValue);
             
+            // Obtener decimales del atributo data-decimals o usar 2 por defecto
+            const decimals = parseInt(this.getAttribute('data-decimals')) || 2;
+            
             // Formatear según el tipo
             switch (type) {
                 case 'price':
-                    this.value = formatPrice(numericValue);
+                    this.value = formatPrice(numericValue, decimals);
                     break;
                 case 'cost':
-                    this.value = formatCost(numericValue);
+                    this.value = formatCost(numericValue, decimals);
                     break;
                 case 'percentage':
-                    this.value = formatPercentage(numericValue);
+                    this.value = formatPercentage(numericValue, decimals);
                     break;
                 default:
-                    this.value = formatNumber(numericValue);
+                    this.value = formatNumber(numericValue, decimals);
             }
         });
 
@@ -232,26 +233,27 @@ window.BusinessNumberFormatter = (function() {
             if (!/^[0-9]$/.test(e.key)) {
                 e.preventDefault();
             }
-        });
-
-        // Formatear valor inicial si existe
+        });        // Formatear valor inicial si existe
         if (input.value) {
             const numericValue = parseNumber(input.value);
             input.setAttribute('data-raw-value', numericValue);
             
+            // Obtener decimales del atributo data-decimals o usar 2 por defecto
+            const decimals = parseInt(input.getAttribute('data-decimals')) || 2;
+            
             // Formatear según el tipo
             switch (type) {
                 case 'price':
-                    input.value = formatPrice(numericValue);
+                    input.value = formatPrice(numericValue, decimals);
                     break;
                 case 'cost':
-                    input.value = formatCost(numericValue);
+                    input.value = formatCost(numericValue, decimals);
                     break;
                 case 'percentage':
-                    input.value = formatPercentage(numericValue);
+                    input.value = formatPercentage(numericValue, decimals);
                     break;
                 default:
-                    input.value = formatNumber(numericValue);
+                    input.value = formatNumber(numericValue, decimals);
             }
         }
     }
