@@ -31,7 +31,7 @@ $foodGridColumns = [
     [
         'attribute' => 'costPercent',
         'value' => function ($data) {
-            return formatPercentage($data->costPercent);
+            return formatPercentage($data->costPercent*100);
         },
         'filter' => false
     ],
@@ -73,7 +73,7 @@ $drinkGridColumns = [
     ],    [
         'attribute' => 'costPercent',
         'value' => function ($data) {
-            return formatPercentage($data->costPercent);
+            return formatPercentage($data->costPercent*100);
         },
         'filter' => false
     ],
@@ -111,7 +111,7 @@ $comboGridColumns = [
         'attribute' => 'cost_precent',
         'label' => 'Costo %',
         'value' => function ($data) {
-            return formatPercentage($data->cost_precent);
+            return formatPercentage($data->cost_precent*100);
         },
         'filter' => false
     ],
@@ -243,6 +243,10 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <div class="d-flex justify-content-end mb-4">
     <?= Html::hiddenInput('month', $selectedMonth, ['id' => 'month-hidden']) ?>
     <?= Html::hiddenInput('year', $selectedYear, ['id' => 'year-hidden']) ?>
+</div>
+
+<!-- Barra flotante con botón de guardar siempre visible -->
+<div class="sticky-save-bar">
     <?= Html::button('Guardar ventas', [
         'class' => 'btn btn-primary btn-lg',
         'id' => 'btn-save-sales'
@@ -318,6 +322,32 @@ $('#btn-save-sales').on('click', function(e) {
 });
 JS;
 $this->registerJs($js);
+
+// CSS para la barra flotante de guardar
+$css = <<<CSS
+.sticky-save-bar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1050;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e0e0e0;
+}
+
+.sticky-save-bar .btn {
+    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+    .sticky-save-bar {
+        left: 20px;
+        right: 20px;
+        text-align: center;
+    }
+}
+CSS;
+$this->registerCss($css);
 
 // Registramos SweetAlert2 si no está incluido
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/sweetalert2@11', [
