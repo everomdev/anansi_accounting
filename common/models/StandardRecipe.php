@@ -300,11 +300,29 @@ class StandardRecipe extends \yii\db\ActiveRecord
             ->andWhere(['type' => self::STANDARD_RECIPE_TYPE_SUB]);
     }
 
+    /**
+     * Gets the count of main and sub recipes that use this recipe as a sub-recipe
+     *
+     * @return array Array with keys 'main' and 'sub' containing the respective counts
+     */
     public function getSubRecipeCount()
     {
-        return StandardRecipe::find()
+        $mainCount = StandardRecipe::find()
             ->innerJoin('standard_recipe_sub_standard_recipe', 'standard_recipe_sub_standard_recipe.standard_recipe_id=standard_recipe.id')
-            ->where(['standard_recipe_sub_standard_recipe.sub_standard_recipe_id' => $this->id]);
+            ->where(['standard_recipe_sub_standard_recipe.sub_standard_recipe_id' => $this->id])
+            ->andWhere(['standard_recipe.type' => self::STANDARD_RECIPE_TYPE_MAIN])
+            ->count();
+        
+        $subCount = StandardRecipe::find()
+            ->innerJoin('standard_recipe_sub_standard_recipe', 'standard_recipe_sub_standard_recipe.standard_recipe_id=standard_recipe.id')
+            ->where(['standard_recipe_sub_standard_recipe.sub_standard_recipe_id' => $this->id])
+            ->andWhere(['standard_recipe.type' => self::STANDARD_RECIPE_TYPE_SUB])
+            ->count();
+        
+        return [
+            'main' => $mainCount,
+            'sub' => $subCount
+        ];
     }
 
     /**

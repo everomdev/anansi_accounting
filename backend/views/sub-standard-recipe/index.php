@@ -158,8 +158,23 @@ $this->registerCss('
                 ],
             ],
             [
-                'attribute' => 'subRecipeCount',
+                'attribute' => 'RecipeCount',
                 'label' => 'Cantidad<br>Recetas',
+                'value' => function ($model) use ($ingredientCount) {
+                    return $ingredientCount[$model->id]['RecipeCount'] ?? 0;
+                },
+               'encodeLabel' => false,
+                'enableSorting' => true,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => [
+                    'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
+                    'class' => 'sortable-column',
+                    'data-sort-by' => 'subRecipeCount'
+                ],
+            ],
+            [
+                'attribute' => 'subRecipeCount',
+                'label' => 'Cantidad<br>SubRecetas',
                 'value' => function ($model) use ($ingredientCount) {
                     return $ingredientCount[$model->id]['subRecipeCount'] ?? 0;
                 },

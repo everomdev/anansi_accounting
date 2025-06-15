@@ -122,9 +122,11 @@ class SubStandardRecipeController extends Controller
         foreach ($recipes as $recipe) {
             $ingredientCount[$recipe->id] = [
                 'ingredientCount' => $recipe->getIngredientRelationsSub()->count(),
-                'subRecipeCount' => $recipe->getSubRecipeCount()->count(),
+                'subRecipeCount' => $recipe->getSubRecipeCount()['sub'],
+                'RecipeCount' => $recipe->getSubRecipeCount()['main'],
             ];
         }
+        //die(var_dump($ingredientCount));
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
