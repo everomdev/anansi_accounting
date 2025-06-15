@@ -36,7 +36,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
             <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
             <?= $form->field($model, 'total_price')->textInput(['maxlength' => true]) ?>
             <?= $form->field($model, 'category_id')->dropDownList(
-                    \yii\helpers\ArrayHelper::map($business->recipeCategories, 'id', 'name'),
+                    \yii\helpers\ArrayHelper::map($business->recipeCategoriesMain, 'id', 'name'),
             ) ?>
             <?= $form->field($model, '_recipes')->dropDownList(
                 \yii\helpers\ArrayHelper::map($availableRecipes, 'id', 'title'),

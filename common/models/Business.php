@@ -211,6 +211,11 @@ class Business extends \yii\db\ActiveRecord
     {
         return $this->hasMany(RecipeCategory::class, ['business_id' => 'id']);
     }
+    public function getRecipeCategoriesMain()
+    {
+        return $this->hasMany(RecipeCategory::class, ['business_id' => 'id'])
+            ->andWhere(['type' => RecipeCategory::TYPE_MAIN]);
+    }
 
     public function getUsers()
     {
