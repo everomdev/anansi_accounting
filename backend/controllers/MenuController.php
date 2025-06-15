@@ -101,8 +101,12 @@ class MenuController extends Controller
      */
     public function actionIndex()
     {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new MenuSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->query->andWhere([
+            'business_id' => $business['id']
+        ]);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
