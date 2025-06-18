@@ -134,11 +134,38 @@ class Menu extends \yii\db\ActiveRecord
      * Gets query for [[MenuStandardRecipes]].
      *
      * @return \yii\db\ActiveQuery
-     */
-    public function getStandardRecipes()
+     */    public function getStandardRecipes()
     {
         return $this->hasMany(StandardRecipe::className(), ['id' => 'standard_recipe_id'])
             ->viaTable('menu_standard_recipe', ['menu_id' => 'id']);
+    }
+
+    /**
+     * Gets the menu_standard_recipe records (for accessing duplicates)
+     * @return \yii\db\ActiveQuery
+     */
+    public function getMenuStandardRecipes()
+    {
+        // Verificar si existe la clase MenuStandardRecipe
+        if (class_exists('\common\models\MenuStandardRecipe')) {
+            return $this->hasMany(\common\models\MenuStandardRecipe::className(), ['menu_id' => 'id']);
+        }
+        
+        // Si no existe la clase, crear registros temporales desde la consulta directa
+        $records = [];
+        $connection = \Yii::$app->db;
+        $command = $connection->createCommand('SELECT * FROM menu_standard_recipe WHERE menu_id = :menu_id', [':menu_id' => $this->id]);
+        $rows = $command->queryAll();
+        
+        foreach ($rows as $row) {
+            $obj = new \stdClass();
+            $obj->menu_id = $row['menu_id'];
+            $obj->standard_recipe_id = $row['standard_recipe_id'];
+            $obj->standardRecipe = StandardRecipe::findOne($row['standard_recipe_id']);
+            $records[] = $obj;
+        }
+        
+        return $records;
     }
 
     public function getCategory()
