@@ -2312,6 +2312,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             ->setItalic(true)
             ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED));
         $spreadsheet->setActiveSheetIndex(0); // Esto establece la primera hoja como activa
+        
+        // Establecer la celda A2 como celda activa al abrir el archivo
+        $spreadsheet->getActiveSheet()->setSelectedCell('A2');
         // Generar el archivo Excel
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $fileName = $isSubrecipe ? 'Subrecetas_Exportadas.xlsx' : 'Recetas_Exportadas.xlsx';
@@ -2854,9 +2857,11 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
          $worksheet->calculateColumnWidths();
      }
-     
-     // 15. Definir la primera hoja como activa al abrir el archivo
+       // 15. Definir la primera hoja como activa al abrir el archivo
      $spreadsheet->setActiveSheetIndex(0);
+     
+     // Establecer la celda A2 como celda activa al abrir el archivo
+     $spreadsheet->getActiveSheet()->setSelectedCell('A2');
      
      // 16. Generar el archivo
      $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
