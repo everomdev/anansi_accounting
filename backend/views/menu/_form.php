@@ -34,14 +34,14 @@ $business = \backend\helpers\RedisKeys::getBusiness();
             <!-- Nueva sección para selección de recetas con duplicados -->
             <div class="row">
                 <div class="col-md-6">
-                    <label class="form-label"><?= Yii::t('app', 'Add Recipe') ?></label>
+                    <label class="form-label"><?= Yii::t('app', 'Añadir receta') ?></label>
                     <div class="input-group">
                         <?= Html::dropDownList('recipe-selector', '', 
                             \yii\helpers\ArrayHelper::map($availableRecipes, 'id', 'title'),
                             [
                                 'class' => 'form-select',
                                 'id' => 'recipe-selector',
-                                'prompt' => Yii::t('app', 'Select a recipe...')
+                                'prompt' => Yii::t('app', 'Seleccionar receta...')
                             ]
                         ) ?>
                         <button type="button" class="btn btn-primary" id="add-recipe-btn">
@@ -53,7 +53,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
             
             <!-- Tabla de recetas seleccionadas -->
             <div class="mt-4">
-                <label class="form-label"><?= Yii::t('app', 'Selected Recipes') ?></label>
+                <label class="form-label"><?= Yii::t('app', 'Recetas seleccionadas') ?></label>
                 <div class="table-responsive">
                     <table class="table table-striped" id="selected-recipes-table">
                         <thead>
