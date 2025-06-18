@@ -48,24 +48,24 @@ $module = Yii::$app->getModule('user');
     position: sticky;
     left: 0;
     background: #f8f9fa;
-    z-index: 10;
+    z-index: 2;
     min-width: 120px;
 }
 
 .fixed-table th:first-child {
     background: #e9ecef;
-    z-index: 11;
+    z-index: 3;
 }
 
 .fixed-table thead th {
     position: sticky;
     top: 0;
     background: #e9ecef;
-    z-index: 9;
+    z-index: 1;
 }
 
 .fixed-table th:first-child {
-    z-index: 12;
+    z-index: 4;
 }
 
 /* Sombra para el efecto visual */
@@ -76,9 +76,17 @@ $module = Yii::$app->getModule('user');
     top: 0;
     right: -2px;
     bottom: 0;
-    width: 2px;
-    background: linear-gradient(90deg, rgba(0,0,0,0.1), transparent);
+    width: 2px;    background: linear-gradient(90deg, rgba(0,0,0,0.1), transparent);
     pointer-events: none;
+}
+
+/* Asegurar que los modales tengan prioridad sobre la tabla sticky */
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
 }
 </style>
 <div class="fixed-table-container">
