@@ -7,13 +7,6 @@ use yii\widgets\ActiveForm;
 /* @var $model common\models\Movement */
 /* @var $form yii\widgets\ActiveForm */
 
-$stock = (new \yii\db\Query())
-    ->select([
-        "ingredient_stock.*",
-        "CONCAT(ingredient_stock.ingredient, ' (',ingredient_stock.um,')') as label"
-    ])
-    ->from('ingredient_stock')
-    ->all();
 
 $this->registerJsVar('movementTypeInput', \common\models\Movement::TYPE_INPUT);
 $this->registerJsVar('movementTypeOutput', \common\models\Movement::TYPE_OUTPUT);
@@ -24,15 +17,27 @@ $this->registerJsFile(Yii::getAlias("@web/js/movement/form.js"), [
     ['position' => $this::POS_END]
 ]);
 
-$providerNames = \common\models\Provider::find()->select(['name'])->asArray(true)->all();
-$providerNames = array_values(
-    array_unique(
-        \yii\helpers\ArrayHelper::getColumn($providerNames, 'name')
-    )
-);
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($business->currency_code));
+$stock = (new \yii\db\Query())
+    ->select([
+        "ingredient_stock.*",
+        "CONCAT(ingredient_stock.ingredient, ' (',ingredient_stock.um,')') as label"
+    ])
+    ->from('ingredient_stock')
+    ->where(['business_id' => $business->id])
+    ->all();
+$providerNames = \common\models\Provider::find()
+    ->select(['business_name'])
+    ->where(['business_id' => $businessData['id']])
+    ->asArray(true)
+    ->all();
+$providerNames = array_values(
+    array_unique(
+        \yii\helpers\ArrayHelper::getColumn($providerNames, 'business_name')
+    )
+);
 ?>
 
 <div class="movement-form">
@@ -62,12 +67,19 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
                             'data-setting' => 'all'
                         ]
                     ]) ?>
-                </div>
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
+                </div>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
                         <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>
                     <?php else: ?>
-                        <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Provider::find()->all(), 'name', 'name'))->label(Yii::t('app', "Provider")) ?>
+                        <?= $form->field($model, 'provider')->dropDownList(
+                            \yii\helpers\ArrayHelper::map(
+                                \common\models\Provider::find()->where(['business_id' => $businessData['id']])->all(), 
+                                'name', 
+                                function($provider) {
+                                    return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                                }
+                            )
+                        )->label(Yii::t('app', "Provider")) ?>
                     <?php endif; ?>
                 </div>
                 <?php if ($model->type != $model::TYPE_OUTPUT): ?>

@@ -85,9 +85,20 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     ]
                 ]),
             ],
-            'invoice',
-            [
+            'invoice',            [
                 'attribute' => 'provider',
+                'value' => function ($data) {
+                    // Buscar el proveedor por nombre para mostrar el business_name
+                    $provider = \common\models\Provider::find()
+                        ->where(['name' => $data->provider, 'business_id' => $data->business_id])
+                        ->one();
+                    
+                    if ($provider) {
+                        return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                    }
+                    
+                    return $data->provider;
+                },
                 'filter' => \kartik\typeahead\Typeahead::widget([
                     'scrollable' => true,
                     'dataset' => [

@@ -380,8 +380,54 @@ class IngredientStock extends \yii\db\ActiveRecord
         Yii::$app->db->createCommand()
             ->insert('stock_price', $stockPrice)
             ->execute();
-    }
+    }    return $newInsumo;
+}
 
-    return $newInsumo;
+/**
+ * Agrega un precio al historial de precios del ingrediente
+ * @param Movement|Purchase $source El movimiento o compra que genera el precio
+ */
+public function addPrice($source)
+{
+    $stockPrice = new StockPrice();
+    $stockPrice->stock_id = $this->id;
+    
+    if ($source instanceof Movement) {
+        // Para movimientos, usar los datos del movimiento
+        $stockPrice->price = $source->amount;
+        $stockPrice->unit_price = $source->unit_price;
+        $stockPrice->date = $source->date ?? date('Y-m-d');
+        
+        // Calcular unit_price_yield si existe un factor de rendimiento
+        if ($this->yield && $this->yield > 0) {
+            $stockPrice->unit_price_yield = $source->unit_price / ($this->yield / 100);
+        }
+        
+        // Calcular adjusted_price si existe unit_price
+        if ($source->unit_price && $this->yield && $this->yield > 0) {
+            $stockPrice->adjusted_price = $source->unit_price / ($this->yield / 100);
+        }
+        
+    } elseif ($source instanceof Purchase) {
+        // Para compras, usar los datos de la compra
+        $stockPrice->price = $source->price;
+        $stockPrice->unit_price = $source->unit_price ?? ($source->price / $source->quantity);
+        $stockPrice->date = $source->date;
+        
+        // Calcular unit_price_yield si existe un factor de rendimiento
+        if ($this->yield && $this->yield > 0) {
+            $stockPrice->unit_price_yield = $stockPrice->unit_price / ($this->yield / 100);
+        }
+        
+        // Calcular adjusted_price
+        if ($stockPrice->unit_price && $this->yield && $this->yield > 0) {
+            $stockPrice->adjusted_price = $stockPrice->unit_price / ($this->yield / 100);
+        }
+    }
+    
+    // Guardar el precio en el historial
+    if (!$stockPrice->save()) {
+        \Yii::error('Error al guardar el precio del stock: ' . json_encode($stockPrice->errors), __METHOD__);
+    }
 }
 }
