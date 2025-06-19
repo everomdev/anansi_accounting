@@ -2089,7 +2089,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         }
 
         $recipesSheet->freezePane('D2');
-        // 3. Configurar cabeceras para otras hojas        $ingredientsSheet->setCellValue('A1', ($isSubrecipe ? 'SubReceta' : 'Receta'));
+        // 3. Configurar cabeceras para otras hojas        
+        $ingredientsSheet->setCellValue('A1', ($isSubrecipe ? 'SubReceta' : 'Receta'));
         $ingredientsSheet->setCellValue('B1', 'Ingrediente o Subreceta*');
         $ingredientsSheet->setCellValue('C1', 'Cantidad*');
         $ingredientsSheet->setCellValue('D1', 'UM*'); 
