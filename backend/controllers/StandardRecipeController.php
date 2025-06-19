@@ -555,7 +555,7 @@ class StandardRecipeController extends Controller
             }
         }
 
-        return $this->redirect(['standard-recipe/index']);
+        return $this->redirect(['sub-standard-recipe/index']);
     }
 
     public function actionUpdateSelectedIngredient($id, $ingredientId, $isRecipe = false)
@@ -1736,10 +1736,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $sheet->setCellValue('C' . $row, '$' . $recipe->price);
                 $sheet->setCellValue('D' . $row, $recipe->costPercent*100 . '%');
                 $sheet->setCellValue('E' . $row, $recipe->getIngredientRelations()->count());
-                $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()->count());
+                $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()['main']);
             } else {
                 $sheet->setCellValue('C' . $row, $recipe->getIngredientRelations()->count());
-                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()->count());
+                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()['sub']);
             }
             $row++;
         }
@@ -2058,9 +2058,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         
         $insumosSheet = $spreadsheet->createSheet();
         $insumosSheet->setTitle('INSUMOS');
+        if ($type === StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $subrecipesSheet = $spreadsheet->createSheet();
+            $subrecipesSheet->setTitle('SUBRECETAS');
+        }
         
-        $subrecipesSheet = $spreadsheet->createSheet();
-        $subrecipesSheet->setTitle('SUBRECETAS');
         
         $convoySheet = $spreadsheet->createSheet();
         $convoySheet->setTitle('CONVOY');
@@ -2098,16 +2100,19 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $insumosSheet->setCellValue('C1', 'UM');
         $insumosSheet->setCellValue('D1', 'Costo');
         
-        $subrecipesSheet->setCellValue('A1', 'Nombre de la Subreceta');
-        $subrecipesSheet->setCellValue('B1', 'Tipo de Subreceta');
-        $subrecipesSheet->setCellValue('C1', 'Tiempo de preparación');
-        $subrecipesSheet->setCellValue('D1', 'Unidad de tiempo');
-        $subrecipesSheet->setCellValue('E1', 'Rendimiento');
-        $subrecipesSheet->setCellValue('F1', 'Rendimiento UM');
-        $subrecipesSheet->setCellValue('G1', 'Porciones');
-        $subrecipesSheet->setCellValue('H1', 'Duración');
-        $subrecipesSheet->setCellValue('I1', 'Unidad de duración');
-        $subrecipesSheet->setCellValue('J1', 'Unidad de medida final');
+        if ($type === StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $subrecipesSheet->setCellValue('A1', 'Nombre de la Subreceta');
+            $subrecipesSheet->setCellValue('B1', 'Tipo de Subreceta');
+            $subrecipesSheet->setCellValue('C1', 'Tiempo de preparación');
+            $subrecipesSheet->setCellValue('D1', 'Unidad de tiempo');
+            $subrecipesSheet->setCellValue('E1', 'Rendimiento');
+            $subrecipesSheet->setCellValue('F1', 'Rendimiento UM');
+            $subrecipesSheet->setCellValue('G1', 'Porciones');
+            $subrecipesSheet->setCellValue('H1', 'Duración');
+            $subrecipesSheet->setCellValue('I1', 'Unidad de duración');
+            $subrecipesSheet->setCellValue('J1', 'Unidad de medida final');
+        }
+        
         
         $convoySheet->setCellValue('A1', 'ID Convoy');
         $convoySheet->setCellValue('B1', 'Nombre Convoy');

@@ -316,10 +316,10 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 // Modal para exportar recetas seleccionadas
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-export-recipes',
-    'title' => Yii::t('app', "Exportar recetas seleccionadas"),
+    'title' => Yii::t('app', "Exportar subrecetas seleccionadas"),
 ]);
 ?>
-<p>¿Deseas exportar todas las recetas seleccionadas o solo las de la página actual?</p>
+<p>¿Deseas exportar todas las subrecetas seleccionadas o solo las de la página actual?</p>
 <div class="d-flex justify-content-end gap-3">
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
         'class' => 'btn btn-secondary',
