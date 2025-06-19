@@ -83,7 +83,8 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                                 'data-bs-target' => "#modal-add-ingredient"
                             ]) ?></th>
                         </thead>
-                        <tbody>                        <?php foreach ($model->convoyIngredients as $convoyIngredient): ?>
+                        <tbody>                        
+                            <?php foreach ($model->convoyIngredients as $convoyIngredient): ?>
                             <tr>
                                 <td><?= $convoyIngredient->model->name ?></td>
                                 <td><?= number_format($convoyIngredient->quantity, 2, $business->decimal_separator ?? '.', $business->thousand_separator ?? ',') ?></td>
@@ -112,6 +113,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                 <?php else: ?>
                     <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
                 <?php endif; ?>
+                <?= Html::a(Yii::t('app', 'Cancel'), 
+                    ['convoy/index'], 
+                    ['class' => 'btn btn-secondary']
+                ) ?>
             </div>
         </div>
     </div>

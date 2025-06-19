@@ -113,7 +113,7 @@ class ConvoyController extends Controller
         }
 
         if ($model->load($post) && $model->save()) {
-            return $this->refresh();
+            return $this->redirect(['index']);
         }
 
         return $this->render('update', [
