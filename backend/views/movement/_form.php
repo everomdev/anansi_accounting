@@ -11,6 +11,7 @@ use yii\widgets\ActiveForm;
 $this->registerJsVar('movementTypeInput', \common\models\Movement::TYPE_INPUT);
 $this->registerJsVar('movementTypeOutput', \common\models\Movement::TYPE_OUTPUT);
 $this->registerJsVar('movementTypeOrder', \common\models\Movement::TYPE_ORDER);
+$this->registerJsVar('getProviderPaymentTypesUrl', \yii\helpers\Url::to(['movement/get-provider-payment-types']));
 
 $this->registerJsFile(Yii::getAlias("@web/js/movement/form.js"), [
     'depends' => \yii\web\YiiAsset::class,
@@ -69,25 +70,32 @@ $providerNames = array_values(
                     ]) ?>
                 </div>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
-                        <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>
-                    <?php else: ?>
+                        <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>                    <?php else: ?>
+                        <?php 
+                            $providers = \common\models\Provider::find()->where(['business_id' => $businessData['id']])->all();
+                            $providerOptions = [];
+                            foreach ($providers as $provider) {
+                                $displayName = $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                                $providerOptions[$provider->name] = $displayName;
+                            }
+                        ?>
                         <?= $form->field($model, 'provider')->dropDownList(
-                            \yii\helpers\ArrayHelper::map(
-                                \common\models\Provider::find()->where(['business_id' => $businessData['id']])->all(), 
-                                'name', 
-                                function($provider) {
-                                    return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
-                                }
-                            )
+                            $providerOptions,
+                            [
+                                'id' => 'movement-provider',
+                                'prompt' => Yii::t('app', 'Seleccionar proveedor'),
+                                'data-providers' => json_encode(\yii\helpers\ArrayHelper::map($providers, 'name', 'id'))
+                            ]
                         )->label(Yii::t('app', "Provider")) ?>
                     <?php endif; ?>
-                </div>
-                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
+                </div>                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
                     <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                         <?= $form->field($model, 'payment_type')->dropDownList(
                             \common\models\Movement::getFormattedPaymentTypes(),
                             [
-                                'data-setting' => 'input'
+                                'id' => 'movement-payment-type',
+                                'data-setting' => 'input',
+                                'prompt' => Yii::t('app', 'Seleccionar tipo de pago')
                             ]
                         ) ?>
                     </div>

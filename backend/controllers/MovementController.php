@@ -39,15 +39,15 @@ class MovementController extends Controller
             ],
             'access' => [
                 'class' => AccessControl::className(),
-                'rules' => [
-                    [
+                'rules' => [                    [
                         'actions' => [
                             'index',
                             'view',
                             'download-template',
                             'export-movements',
                             'import-movements',
-                            'balance'
+                            'balance',
+                            'get-provider-payment-types'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -241,9 +241,81 @@ class MovementController extends Controller
             return $this->asJson(['success' => true]);
         } elseif ($balance->hasErrors()) {
             return $this->asJson(['success' => false, 'errors' => array_values(array_values($balance->errors))]);
+        }        return $this->asJson(['success' => false, 'errors' => ["Algo falló"]]);
+    }    /**
+     * Obtiene los tipos de pago disponibles para un proveedor específico
+     */
+    public function actionGetProviderPaymentTypes($providerId = null)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        try {            // Si no se proporciona providerId, devolver todos los tipos de pago específicos
+            if (empty($providerId)) {
+                return [
+                    'success' => true,
+                    'paymentTypes' => \common\models\Movement::getFormattedPaymentMethods()
+                ];
+            }
+            
+            // Buscar el proveedor por ID
+            $provider = \common\models\Provider::findOne($providerId);
+              if (!$provider) {
+                return [
+                    'success' => false,
+                    'message' => 'Proveedor no encontrado'
+                ];
+            }
+              // Obtener los métodos de pago del proveedor
+            $providerPaymentMethods = $provider->payment_method;            if (empty($providerPaymentMethods)) {
+                // Si el proveedor no tiene métodos de pago específicos, devolver todos
+                return [
+                    'success' => true,
+                    'paymentTypes' => \common\models\Movement::getFormattedPaymentMethods()
+                ];
+            }
+            
+            // Asegurar que payment_method es un array
+            if (!is_array($providerPaymentMethods)) {
+                // Si es string, convertir a array
+                if (is_string($providerPaymentMethods)) {
+                    $providerPaymentMethods = explode(',', $providerPaymentMethods);
+                    $providerPaymentMethods = array_map('trim', $providerPaymentMethods);                } else {
+                    // Si no es array ni string, devolver todos los tipos específicos
+                    return [
+                        'success' => true,
+                        'paymentTypes' => \common\models\Movement::getFormattedPaymentMethods()
+                    ];
+                }}            // Obtener los tipos de pago específicos del proveedor
+            // En lugar de mapear a los tipos genéricos, mostrar los tipos específicos
+            $providerPaymentTypes = \common\models\Movement::getFormattedPaymentMethods();
+            
+            // Filtrar solo los tipos de pago que acepta el proveedor
+            $filteredPaymentTypes = [];
+            
+            foreach ($providerPaymentMethods as $method) {
+                $method = trim($method); // Limpiar espacios
+                
+                if (isset($providerPaymentTypes[$method])) {
+                    $filteredPaymentTypes[$method] = $providerPaymentTypes[$method];
+                }
+            }              // Si no se encontró ningún tipo de pago válido, devolver todos los tipos específicos
+            if (empty($filteredPaymentTypes)) {
+                return [
+                    'success' => true,
+                    'paymentTypes' => \common\models\Movement::getFormattedPaymentMethods()
+                ];
+            }
+            
+            return [
+                'success' => true,
+                'paymentTypes' => $filteredPaymentTypes
+            ];
+              } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error al obtener los tipos de pago: ' . $e->getMessage()
+            ];
         }
-
-        return $this->asJson(['success' => false, 'errors' => ["Algo falló"]]);
     }
 
     /**

@@ -31,16 +31,23 @@ use common\behaviors\NumberFormatterBehavior;
  */
 class Movement extends \yii\db\ActiveRecord
 {
-    use ProviderManagerTrait;
-
-    const TYPE_INPUT = 'input';
+    use ProviderManagerTrait;    const TYPE_INPUT = 'input';
     const TYPE_OUTPUT = 'output';
     const TYPE_ORDER = 'order';
 
+    // Tipos de pago genéricos (para compatibilidad)
     const PAYMENT_TYPE_CARD = 'card';
     const PAYMENT_TYPE_BANK_TRANSFERENCE = 'bank_transference';
     const PAYMENT_TYPE_CASH = 'cash';
     const PAYMENT_TYPE_OTHER = 'other';
+    
+    // Métodos de pago específicos del proveedor
+    const PAYMENT_METHOD_CASH = 'cash';
+    const PAYMENT_METHOD_TRANSFER = 'transfer';
+    const PAYMENT_METHOD_CHECK = 'check';
+    const PAYMENT_METHOD_CREDIT_CARD = 'credit_card';
+    const PAYMENT_METHOD_DEBIT_CARD = 'debit_card';
+    const PAYMENT_METHOD_OTHER = 'other';
 
     /**
      * {@inheritdoc}
@@ -69,15 +76,15 @@ class Movement extends \yii\db\ActiveRecord
      */
     public function rules()
     {
-        return [
-            [['type', 'provider', 'quantity', 'ingredient_id', 'business_id'], 'required'],
+        return [            [['type', 'provider', 'quantity', 'ingredient_id', 'business_id'], 'required'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['ingredient_id', 'business_id'], 'integer'],
             [['created_at'], 'safe'],
             [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
-            [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())]
+            [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())],
+            [['payment_type'], 'in', 'range' => array_keys(self::getFormattedPaymentMethods()), 'skipOnEmpty' => true]
         ];
     }
 
@@ -199,9 +206,7 @@ class Movement extends \yii\db\ActiveRecord
             self::TYPE_OUTPUT => Yii::t('app', "Output"),
             self::TYPE_ORDER => Yii::t('app', "Order"),
         ];
-    }
-
-    public static function getFormattedPaymentTypes()
+    }    public static function getFormattedPaymentTypes()
     {
         return [
             self::PAYMENT_TYPE_CARD => Yii::t('app', "Card"),
@@ -211,14 +216,44 @@ class Movement extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * Obtiene los métodos de pago específicos que acepta el sistema
+     */
+    public static function getFormattedPaymentMethods()
+    {
+        return [
+            self::PAYMENT_METHOD_CASH => Yii::t('app', 'Efectivo'),
+            self::PAYMENT_METHOD_TRANSFER => Yii::t('app', 'Transferencia'),
+            self::PAYMENT_METHOD_CHECK => Yii::t('app', 'Cheque'),
+            self::PAYMENT_METHOD_CREDIT_CARD => Yii::t('app', 'Tarjeta Crédito'),
+            self::PAYMENT_METHOD_DEBIT_CARD => Yii::t('app', 'Tarjeta Débito'),
+            self::PAYMENT_METHOD_OTHER => Yii::t('app', 'Otro')
+        ];
+    }
+
     public function getFormattedType()
     {
         return self::getFormattedTypes()[$this->type];
-    }
-
-    public function getFormattedPaymentType()
+    }    public function getFormattedPaymentType()
     {
-        return empty($this->payment_type) ? '' : self::getFormattedPaymentTypes()[$this->payment_type];
+        if (empty($this->payment_type)) {
+            return '';
+        }
+        
+        // Primero intentar con los métodos específicos
+        $specificMethods = self::getFormattedPaymentMethods();
+        if (isset($specificMethods[$this->payment_type])) {
+            return $specificMethods[$this->payment_type];
+        }
+        
+        // Si no existe, intentar con los tipos genéricos (para compatibilidad)
+        $genericTypes = self::getFormattedPaymentTypes();
+        if (isset($genericTypes[$this->payment_type])) {
+            return $genericTypes[$this->payment_type];
+        }
+        
+        // Si no existe en ninguno, devolver el valor tal como está
+        return $this->payment_type;
     }
 
     private function applyInput()

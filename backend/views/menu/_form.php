@@ -97,6 +97,7 @@ $business = \backend\helpers\RedisKeys::getBusiness();
         <div class="card-footer">
             <div class="form-group">
                 <?= Html::submitButton('Guardar', ['class' => 'btn btn-success']) ?>
+                <?= Html::a(Yii::t('app', "Cancel"), ['menu/index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
     </div>

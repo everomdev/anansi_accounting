@@ -115,7 +115,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                 <?php endif; ?>
                 <?= Html::a(Yii::t('app', 'Cancel'), 
                     ['convoy/index'], 
-                    ['class' => 'btn btn-secondary']
+                    ['class' => 'btn btn-outline-secondary']
                 ) ?>
             </div>
         </div>
