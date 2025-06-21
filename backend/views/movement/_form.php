@@ -68,25 +68,57 @@ $providerNames = array_values(
                             'data-setting' => 'all'
                         ]
                     ]) ?>
-                </div>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
+                </div>                
+                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
                     <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
-                        <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>                    <?php else: ?>
-                        <?php 
+                        <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>                    <?php else: ?>                        <?php 
+                            // Obtener todos los proveedores del negocio
+                            // IMPORTANTE: Desde esta refactorización, el campo 'provider' almacena el business_name
+                            // ya que es obligatorio, mientras que 'name' es opcional y puede estar vacío
                             $providers = \common\models\Provider::find()->where(['business_id' => $businessData['id']])->all();
                             $providerOptions = [];
-                            foreach ($providers as $provider) {
-                                $displayName = $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
-                                $providerOptions[$provider->name] = $displayName;
+                            $providerIdMapping = [];
+                            $keyToBusinessNameMapping = [];
+                            $selectedKey = null;
+                              foreach ($providers as $provider) {
+                                // Usar business_name como display y como valor de referencia
+                                $displayName = $provider->business_name;
+                                $businessName = $provider->business_name;
+                                
+                                // Crear clave única usando business_name + id para evitar duplicados
+                                $uniqueKey = $businessName . '_' . $provider->id;
+                                $providerOptions[$uniqueKey] = $displayName;
+                                $providerIdMapping[$uniqueKey] = $provider->id;
+                                $keyToBusinessNameMapping[$uniqueKey] = $businessName;
+                                  // Si estamos editando, encontrar la clave que corresponde al proveedor actual
+                                // Buscar por business_name ya que es lo que se debe guardar (desde la refactorización)
+                                // También buscar por name para compatibilidad hacia atrás
+                                if (!empty($model->provider)) {
+                                    if ($model->provider === $businessName) {
+                                        $selectedKey = $uniqueKey;
+                                    } elseif ($model->provider === $provider->name) {
+                                        // Compatibilidad hacia atrás: si el valor almacenado es 'name'
+                                        $selectedKey = $uniqueKey;
+                                    }
+                                }
                             }
-                        ?>
-                        <?= $form->field($model, 'provider')->dropDownList(
-                            $providerOptions,
-                            [
+                        ?>                        <div class="form-group">
+                            <?= Html::activeLabel($model, 'provider', ['class' => 'form-label']) ?>
+                            <?= Html::dropDownList('movement-provider-temp', $selectedKey, $providerOptions, [
                                 'id' => 'movement-provider',
                                 'prompt' => Yii::t('app', 'Seleccionar proveedor'),
-                                'data-providers' => json_encode(\yii\helpers\ArrayHelper::map($providers, 'name', 'id'))
-                            ]
-                        )->label(Yii::t('app', "Provider")) ?>
+                                'data-providers' => json_encode($providerIdMapping),
+                                'class' => 'form-control'
+                            ]) ?>
+                            <?php if (!empty($model->provider)): ?>
+                                <!-- Campo oculto inicial para edición -->
+                                <?= Html::hiddenInput('Movement[provider]', $model->provider, ['id' => 'movement-provider-real']) ?>
+                            <?php endif; ?>
+                        </div>
+                          <script>
+                            // Mapeo para convertir la clave única de vuelta al business_name
+                            window.providerKeyToBusinessName = <?= json_encode($keyToBusinessNameMapping) ?>;
+                        </script>
                     <?php endif; ?>
                 </div>                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
                     <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">

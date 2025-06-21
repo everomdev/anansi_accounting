@@ -75,8 +75,7 @@ class Movement extends \yii\db\ActiveRecord
      * {@inheritdoc}
      */
     public function rules()
-    {
-        return [            [['type', 'provider', 'quantity', 'ingredient_id', 'business_id'], 'required'],
+    {        return [            [['type', 'provider', 'quantity', 'ingredient_id', 'business_id'], 'required'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['ingredient_id', 'business_id'], 'integer'],
             [['created_at'], 'safe'],
@@ -84,7 +83,8 @@ class Movement extends \yii\db\ActiveRecord
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
             [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())],
-            [['payment_type'], 'in', 'range' => array_keys(self::getFormattedPaymentMethods()), 'skipOnEmpty' => true]
+            [['payment_type'], 'in', 'range' => array_keys(self::getFormattedPaymentMethods()), 'skipOnEmpty' => true],
+            [['provider'], 'validateProvider']
         ];
     }
 
@@ -273,6 +273,56 @@ class Movement extends \yii\db\ActiveRecord
         $ingredient = $this->ingredient;
         $ingredient->quantity -= $this->quantity;
         $ingredient->save();
+    }
+
+    /**
+     * Validar que el proveedor existe en la base de datos
+     * Busca por business_name (valor actual) o por name (compatibilidad hacia atrás)
+     */
+    public function validateProvider($attribute, $params)
+    {
+        if (empty($this->$attribute)) {
+            return;
+        }
+        
+        // Solo validar para tipos que requieren proveedor (input y order)
+        if ($this->type === self::TYPE_OUTPUT) {
+            return;
+        }
+        
+        // Buscar proveedor por business_name (valor actual) o name (compatibilidad)
+        $provider = Provider::find()
+            ->where(['business_id' => $this->business_id])
+            ->andWhere([
+                'or',
+                ['business_name' => $this->$attribute],
+                ['name' => $this->$attribute]
+            ])
+            ->one();
+            
+        if (!$provider) {
+            $this->addError($attribute, 'El proveedor seleccionado no existe o no pertenece a este negocio.');
+        }
+    }
+
+    /**
+     * Obtener el proveedor asociado a este movimiento
+     * Busca por business_name (valor actual) o name (compatibilidad hacia atrás)
+     */
+    public function getProviderModel()
+    {
+        if (empty($this->provider) || $this->type === self::TYPE_OUTPUT) {
+            return null;
+        }
+        
+        return Provider::find()
+            ->where(['business_id' => $this->business_id])
+            ->andWhere([
+                'or',
+                ['business_name' => $this->provider],
+                ['name' => $this->provider]
+            ])
+            ->one();
     }
 
 

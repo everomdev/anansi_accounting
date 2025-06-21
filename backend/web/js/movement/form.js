@@ -70,12 +70,12 @@ $(document).on('change', '#movement-amount, #movement-quantity, #movement-tax', 
 
 // Manejar el cambio de proveedor para actualizar tipos de pago
 $(document).on('change', '#movement-provider', function() {
-    let providerName = $(this).val();
+    let providerKey = $(this).val(); // Esto será "business_name_id"
     let paymentTypeSelect = $('#movement-payment-type');
     let providersData = $(this).data('providers');
     
-    if (providerName && providersData) {
-        let providerId = providersData[providerName];
+    if (providerKey && providersData) {
+        let providerId = providersData[providerKey];
         
         if (providerId) {
             // Mostrar indicador de carga
@@ -154,7 +154,38 @@ function resetPaymentTypes() {
             // En caso de error, al menos habilitar el select
             paymentTypeSelect.empty();
             paymentTypeSelect.prop('disabled', false);
-            paymentTypeSelect.append('<option value="">Error al cargar tipos de pago</option>');
-        }
+            paymentTypeSelect.append('<option value="">Error al cargar tipos de pago</option>');        }
     });
 }
+
+// Convertir el valor del proveedor antes de enviar el formulario
+// IMPORTANTE: El campo 'provider' en la BD almacena el business_name del proveedor
+// ya que business_name es obligatorio mientras que name es opcional
+$(document).on('submit', '#movement-form', function(e) {
+    let providerSelect = $('#movement-provider');
+    let selectedKey = providerSelect.val();
+    
+    if (selectedKey && window.providerKeyToBusinessName && window.providerKeyToBusinessName[selectedKey]) {
+        let realBusinessName = window.providerKeyToBusinessName[selectedKey];
+        
+        // Crear o actualizar un campo oculto con el valor real (business_name)
+        let hiddenProviderField = $('#movement-provider-real');
+        if (hiddenProviderField.length === 0) {
+            // Si no existe, crear el campo oculto
+            $('<input type="hidden" id="movement-provider-real" name="Movement[provider]">').insertAfter(providerSelect);
+        }
+        
+        // Asignar el business_name real al campo oculto
+        $('#movement-provider-real').val(realBusinessName);
+        
+        // Deshabilitar el select original para que no se envíe
+        providerSelect.prop('disabled', true);
+    } else {
+        // Si no hay conversión, usar el valor original
+        $('#movement-provider-real').remove();
+        providerSelect.prop('disabled', false);
+    }
+    
+    // Permitir el envío del formulario
+    return true;
+});

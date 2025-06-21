@@ -135,7 +135,7 @@ class MovementController extends Controller
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['index']);
         } elseif ($model->hasErrors()) {
-            var_dump($model->errors);
+           var_dump($model->errors);
         }
 
         return $this->render('create', [
