@@ -178,10 +178,10 @@ $providerNames = array_values(
             </div>
 
 
-        </div>
-        <div class="card-footer">
+        </div>        <div class="card-footer">
             <div class="form-group">
                 <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
+                <?= Html::a(Yii::t('app', 'Cancel'), ['movement/index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
     </div>
