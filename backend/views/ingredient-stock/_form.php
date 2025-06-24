@@ -29,6 +29,10 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
 ]);
 
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+
+// Use global number formatter configuration
+$formatConfig = \common\helpers\NumberFormatter::getJsConfig();
+$this->registerJsVar('userFormatConfig', $formatConfig);
 $ums = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
 $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id' => $business['id']])->all(), 'id', 'name');
 ?>
@@ -102,13 +106,13 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
             </div>
             
             <div class="row mb-3">
-                <h5 class="card-title mb-3">Precios y Rendimiento</h5>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
-                    <?= $form->field($model, 'price')->textInput([
+                <h5 class="card-title mb-3">Precios y Rendimiento</h5>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">                    <?= $form->field($model, 'price')->textInput([
                         'class' => 'form-control format-price',
                         'id' => 'ingredientstock-price',
                         'required' => true,
                         'placeholder' => formatPrice(500.00, 2, false),
                         'data-format' => 'price',
+                        'data-decimals' => '2',
                         'value' => $model->price ? formatPrice($model->price, 2, false) : ''
                     ])->label("Precio de compra*") ?>
                     <div class="form-text">Ingrese el precio de compra del insumo</div>
@@ -214,40 +218,161 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
 
 ?>
 <script>
-    // Agregar al archivo form.js
+// Funcionalidad adicional para el formateo de números
 document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar el formateador automático para todos los campos
+    if (window.BusinessNumberFormatter) {
+        window.BusinessNumberFormatter.setupAutoFormatInputs();
+    }
+    
     // Referencias a los campos
     const priceField = document.getElementById('ingredientstock-price');
     const yieldField = document.getElementById('ingredientstock-yield');
     const adjustedPriceField = document.getElementById('ingredientstock-adjustedprice');
-      // Función para calcular el precio ajustado
+    
+    // Configuración de formato (desde el sistema global o default)
+    const formatConfig = window.userFormatConfig || window.businessFormatConfig || {
+        decimalSeparator: '.',
+        thousandSeparator: ',',
+        currencySymbol: '$'
+    };
+    
+    // Función para validar y formatear el precio según la configuración del usuario
+    function validateAndFormatPrice(input, forceFormat = false) {
+        const decimalSeparator = formatConfig.decimalSeparator;
+        const thousandSeparator = formatConfig.thousandSeparator;
+
+        // Guardar posición del cursor
+        const cursorPosition = input.selectionStart;
+
+        // Obtener valor
+        let value = input.value;
+
+        // Eliminar caracteres no válidos (excepto el separador decimal configurado)
+        const validChars = new RegExp(`[^0-9\\${decimalSeparator}]`, 'g');
+        value = value.replace(validChars, '');
+
+        // Reemplazar múltiples separadores decimales por uno solo
+        const decimalCount = (value.match(new RegExp(`\\${decimalSeparator}`, 'g')) || []).length;
+        if (decimalCount > 1) {
+            const parts = value.split(decimalSeparator);
+            value = parts[0] + decimalSeparator + parts.slice(1).join('');
+        }
+
+        // Si está escribiendo, no formatear aún (excepto para limitar decimales)
+        if (!forceFormat && document.activeElement === input) {
+            // Limitar a 2 decimales si ya hay separador
+            const parts = value.split(decimalSeparator);
+            if (parts.length > 1) {
+                parts[1] = parts[1].slice(0, 2);
+                value = parts.join(decimalSeparator);
+            }
+            input.value = value;
+            input.setAttribute('data-raw-value', value.replace(decimalSeparator, '.'));
+
+            // Restaurar posición del cursor
+            setTimeout(() => {
+                input.setSelectionRange(cursorPosition, cursorPosition);
+            }, 0);
+            return;
+        }
+
+        // Formato completo al perder el foco
+        let parts = value.split(decimalSeparator);
+        let wholePart = parts[0].replace(/\D/g, '') || '0'; // Solo dígitos
+        let decimalPart = parts.length > 1 ? parts[1].replace(/\D/g, '').slice(0, 2) : '00';
+
+        // Agregar separadores de miles solo al final
+        if (wholePart.length > 3) {
+            wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+        }
+
+        // Construir valor formateado
+        let formattedValue = wholePart;
+        if (decimalPart.length > 0) {
+            formattedValue += decimalSeparator + decimalPart;
+        } else if (forceFormat) {
+            formattedValue += decimalSeparator + '00';
+        }
+
+        // Actualizar campo
+        input.value = formattedValue;
+        input.setAttribute('data-raw-value',
+            formattedValue.replace(new RegExp(`\\${thousandSeparator}`, 'g'), '')
+            .replace(decimalSeparator, '.')
+        );
+    }
+      // Configurar eventos para el campo de precio
+    if (priceField) {
+        priceField.addEventListener('focus', function() {
+            const rawValue = this.getAttribute('data-raw-value') || '';
+            this.value = rawValue.replace('.', formatConfig.decimalSeparator);
+        });
+
+        priceField.addEventListener('blur', function() {
+            const self = this;
+            
+            // Primero actualizar con valor raw para validación AJAX
+            const rawValue = this.getAttribute('data-raw-value') || '';
+            this.value = rawValue;
+            
+            // Esperar a que termine la validación AJAX y luego formatear
+            setTimeout(function() {
+                validateAndFormatPrice(self, true);
+                setTimeout(calculateAdjustedPrice, 10);
+            }, 100);
+        });
+
+        priceField.addEventListener('keydown', function(e) {
+            const decimalSeparator = formatConfig.decimalSeparator;
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'Enter'];
+
+            if (allowedKeys.includes(e.key)) return;
+
+            if (!/^[0-9]$/.test(e.key) && e.key !== decimalSeparator) {
+                e.preventDefault();
+            }
+        });
+
+        priceField.addEventListener('input', function() {
+            validateAndFormatPrice(this, false);
+            setTimeout(calculateAdjustedPrice, 10);
+        });
+    }
+    
+    // Función para calcular el precio ajustado
     function calculateAdjustedPrice() {
-        // Usar el parser del sistema global de formateo
-        const price = window.BusinessNumberFormatter ? 
-            window.BusinessNumberFormatter.parseNumber(priceField.value) : 
-            parseFloat(priceField.value);
+        if (!priceField || !yieldField || !adjustedPriceField) return;
+        
+        // Usar el valor raw guardado
+        let price = parseFloat(priceField.getAttribute('data-raw-value')) || 0;
         let yieldValue = parseFloat(yieldField.value);
         
-        if (!isNaN(price) && !isNaN(yieldValue) && yieldValue > 0) {
+        if (!isNaN(price) && !isNaN(yieldValue) && yieldValue > 0 && price > 0) {
             // Convertir porcentaje a decimal (100% = 1.0)
             yieldValue = yieldValue / 100;
             
             // Calcular precio ajustado: precio ÷ factor de rendimiento
             const adjustedPrice = price / yieldValue;
             
-            // Formatear usando el sistema global
-            if (window.BusinessNumberFormatter) {
-                adjustedPriceField.value = window.BusinessNumberFormatter.formatNumber(adjustedPrice, 2);
-            } else {
-                adjustedPriceField.value = adjustedPrice.toFixed(2);
-            }
+            // Crear un input temporal para formatear el resultado
+            const tempInput = document.createElement('input');
+            tempInput.value = adjustedPrice.toString();
+            tempInput.setAttribute('data-raw-value', adjustedPrice.toString());
+            validateAndFormatPrice(tempInput, true);
+            
+            adjustedPriceField.value = tempInput.value;
+            adjustedPriceField.setAttribute('data-raw-value', adjustedPrice);
         } else {
             adjustedPriceField.value = '';
+            adjustedPriceField.removeAttribute('data-raw-value');
         }
     }
     
     // Validar que el factor de rendimiento esté entre 1 y 100
     function validateYield() {
+        if (!yieldField) return;
+        
         let yieldValue = parseFloat(yieldField.value);
         
         if (isNaN(yieldValue)) {
@@ -265,11 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateAdjustedPrice();
     }
     
-    // Vincular eventos
-    if (priceField) {
-        priceField.addEventListener('input', calculateAdjustedPrice);
-    }
-    
     if (yieldField) {
         yieldField.addEventListener('input', validateYield);
         yieldField.addEventListener('change', validateYield);
@@ -277,42 +397,36 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar al cargar la página
     if (priceField && yieldField && adjustedPriceField) {
-        // Si ya hay valores, calcular precio ajustado
-        if (priceField.value && yieldField.value) {
-            calculateAdjustedPrice();
+        // Si ya hay valores, formatear y calcular precio ajustado
+        if (priceField.value) {
+            // Formatear valor inicial
+            validateAndFormatPrice(priceField, true);
+        }
+          if (priceField.value && yieldField.value) {
+            setTimeout(calculateAdjustedPrice, 100);
         }
     }
     
-    // Código existente para el botón de calcular rendimiento
-    const computeYieldBtn = document.getElementById('compute-yield');
-    if (computeYieldBtn) {
-        computeYieldBtn.addEventListener('click', function() {
-            $('#modal-yield').modal('show');
-        });
-    }
-    
-    // Botón dentro del modal para calcular rendimiento
-    const btnComputeYield = document.getElementById('btn-compute-yield');
-    if (btnComputeYield) {
-        btnComputeYield.addEventListener('click', function() {
-            const initialQuantity = parseFloat(document.getElementById('initial-quantity').value);
-            const finalQuantity = parseFloat(document.getElementById('final-quantity').value);
-            
-            if (!isNaN(initialQuantity) && !isNaN(finalQuantity) && initialQuantity > 0) {
-                // Calcular factor de rendimiento como porcentaje
-                const yieldFactor = (finalQuantity / initialQuantity) * 100;
-                
-                // Actualizar el campo y cerrar el modal
-                document.getElementById('yield-result').textContent = yieldFactor.toFixed(2) + ' %';
-                document.getElementById('ingredientstock-yield').value = yieldFactor.toFixed(2);
-                
-                // Recalcular precio ajustado
-                calculateAdjustedPrice();
-                
-                // Opcional: Cerrar modal después de aceptar
-                $('#modal-yield').modal('hide');
+    // Asegurar que se envíen los valores sin formatear al servidor
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Convertir valores formateados a números antes del envío
+            if (priceField && priceField.getAttribute('data-raw-value')) {
+                priceField.value = priceField.getAttribute('data-raw-value');
+            }
+            if (adjustedPriceField && adjustedPriceField.getAttribute('data-raw-value')) {
+                adjustedPriceField.value = adjustedPriceField.getAttribute('data-raw-value');
             }
         });
     }
 });
+
+// Configuración por defecto
+window.userFormatConfig = window.userFormatConfig || {
+    decimalSeparator: '.',
+    thousandSeparator: ',',
+    currencySymbol: '$',
+    decimalPlaces: 2
+};
 </script>

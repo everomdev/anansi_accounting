@@ -34,15 +34,33 @@ class NumberFormatterBehavior extends Behavior
     /**
      * Número de decimales por defecto
      */
-    public $defaultDecimals = 2;
-
-    public function events()
+    public $defaultDecimals = 2;    public function events()
     {
         return [
+            ActiveRecord::EVENT_BEFORE_VALIDATE => 'beforeValidate',
             ActiveRecord::EVENT_BEFORE_INSERT => 'beforeSave',
             ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeSave',
             ActiveRecord::EVENT_AFTER_FIND => 'afterFind',
         ];
+    }
+
+    /**
+     * Convierte valores formateados a números antes de validar
+     */
+    public function beforeValidate($event)
+    {
+        $allFields = array_merge(
+            $this->priceFields,
+            $this->costFields,
+            $this->numberFields,
+            $this->percentageFields
+        );
+
+        foreach ($allFields as $field) {
+            if (isset($this->owner->$field) && is_string($this->owner->$field)) {
+                $this->owner->$field = NumberFormatter::parseNumber($this->owner->$field);
+            }
+        }
     }
 
     /**

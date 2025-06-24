@@ -76,14 +76,14 @@ class IngredientStock extends \yii\db\ActiveRecord
                 'numberFields' => ['quantity', 'yield', 'portions_per_unit', 'final_quantity'],
             ]
         ];
-    }
-
-    public function rules()
+    }    public function rules()
     {
         return [
             [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key'], 'required'],
             [['business_id', 'category_id'], 'integer'],
-            [['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'price', 'adjustedPrice'], 'number'],
+            [['quantity', 'yield', 'portions_per_unit', 'final_quantity'], 'number'],
+            [['price', 'adjustedPrice'], 'safe'],
+            [['price', 'adjustedPrice'], 'validatePrice'],
             [['observations', '_category', 'key'], 'string'],
             [['ingredient', 'um', 'portion_um'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
@@ -137,6 +137,49 @@ class IngredientStock extends \yii\db\ActiveRecord
         $extraFields['prices'] = "stockPrices";
 
         return $extraFields;
+    }
+
+    /**
+     * Validación personalizada para campos de precio que pueden venir formateados
+     */
+    public function validatePrice($attribute, $params)
+    {
+        if (empty($this->$attribute)) {
+            return; // Permitir valores vacíos si no son requeridos
+        }
+
+        // Si ya es un número, validar directamente
+        if (is_numeric($this->$attribute)) {
+            if ((float)$this->$attribute < 0) {
+                $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número positivo.', ['attribute' => $this->getAttributeLabel($attribute)]));
+            }
+            return;
+        }
+
+        // Si es string, intentar parsearlo con NumberFormatter
+        if (is_string($this->$attribute)) {
+            try {
+                $parsedValue = \common\helpers\NumberFormatter::parseNumber($this->$attribute);
+                
+                if (!is_numeric($parsedValue)) {
+                    $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número válido.', ['attribute' => $this->getAttributeLabel($attribute)]));
+                    return;
+                }
+                
+                if ((float)$parsedValue < 0) {
+                    $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número positivo.', ['attribute' => $this->getAttributeLabel($attribute)]));
+                    return;
+                }
+                
+                // Convertir el valor parseado al atributo
+                $this->$attribute = (float)$parsedValue;
+                
+            } catch (\Exception $e) {
+                $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número válido.', ['attribute' => $this->getAttributeLabel($attribute)]));
+            }
+        } else {
+            $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número.', ['attribute' => $this->getAttributeLabel($attribute)]));
+        }
     }
 
     public function beforeValidate()
