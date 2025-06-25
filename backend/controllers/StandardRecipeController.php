@@ -86,7 +86,8 @@ class StandardRecipeController extends Controller
                             'edit-step',
                             'move-step',
                             'get-available-ingredients',
-                            'get-sub-standard-recipes'
+                            'get-sub-standard-recipes',
+                            'import-sales-excel'
                             
 
 
@@ -118,7 +119,8 @@ class StandardRecipeController extends Controller
                             'move-step',
                             'edit-step',
                             'get-available-ingredients',
-                            'get-sub-standard-recipes'
+                            'get-sub-standard-recipes',
+                            'import-sales-excel'
 
                         ],
                         'allow' => true,
@@ -2897,4 +2899,185 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
     return $this->asJson(['success' => false]);
 }
+    /**
+     * Importa ventas desde un archivo Excel con formato ABC de Ventas
+     * Extrae información de la columna Descripción (nombre del producto) y Unidades (cantidad vendida)
+     * Además extrae la fecha desde la fila 1 del Excel: "ABC de Ventas Del 01/01/2022 al 01/02/2022"
+     */
+    public function actionImportSalesExcel()
+    {
+        try {
+            $uploadedFile = UploadedFile::getInstanceByName('excel_file');
+            
+            if (!$uploadedFile) {
+                Yii::$app->session->setFlash('error', 'No se ha seleccionado un archivo para importar.');
+                return $this->redirect(['sales']);
+            }
+            
+            // Validar extensión
+            $allowedExtensions = ['xls', 'xlsx'];
+            $extension = pathinfo($uploadedFile->name, PATHINFO_EXTENSION);
+            if (!in_array($extension, $allowedExtensions)) {
+                Yii::$app->session->setFlash('error', 'El archivo debe ser en formato Excel (.xls o .xlsx).');
+                return $this->redirect(['sales']);
+            }
+            
+            // Guardar archivo temporal
+            $tempPath = Yii::getAlias('@app/runtime/' . uniqid('import_') . '.' . $extension);
+            $uploadedFile->saveAs($tempPath);
+            
+            // Cargar la librería PhpSpreadsheet
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($tempPath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($tempPath);
+            $worksheet = $spreadsheet->getActiveSheet();
+            
+            // Extraer la fecha del título (celda A1)
+            $title = $worksheet->getCell('A1')->getValue();
+            $dateInfo = null;
+            if (preg_match('/Del\s+(\d{2})\/(\d{2})\/(\d{4})\s+al\s+(\d{2})\/(\d{2})\/(\d{4})/', $title, $matches)) {
+                // Si encuentra el formato "Del DD/MM/YYYY al DD/MM/YYYY"
+                // Usamos la fecha INICIAL (primer mes) para la importación, ya que el reporte corresponde a las ventas de ese mes
+                $month = (int)$matches[2]; // Mes inicial
+                $year = (int)$matches[3]; // Año inicial
+                
+                // Registrar la información extraída para depuración
+                Yii::info("Título del reporte: '{$title}'", 'import');
+                Yii::info("Fecha extraída: Mes {$month}, Año {$year} (primera fecha del rango)", 'import');
+            } else {
+                // Si no encuentra el formato, usar el mes y año actuales
+                $month = (int)date('n');
+                $year = (int)date('Y');
+                
+                // Registrar la advertencia sobre fecha no encontrada
+                Yii::warning("No se pudo detectar la fecha en el título: '{$title}'. Usando fecha actual: {$month}/{$year}", 'import');
+            }
+            
+            // Validar que el año esté en un rango razonable
+            if ($year < 2000 || $year > 2100) {
+                Yii::error("Año fuera de rango: {$year}. Título del reporte: '{$title}'", 'import');
+                Yii::$app->session->setFlash('error', 'No se pudo detectar un año válido en el archivo. El año detectado ({$year}) está fuera del rango permitido (2000-2100). Verifique el formato del título.');
+                unlink($tempPath);
+                return $this->redirect(['sales']);
+            }
+            
+            $business = RedisKeys::getBusiness();
+            if (!$business) {
+                throw new \yii\web\BadRequestHttpException('Negocio no encontrado');
+            }
+            
+            $importedCount = 0;
+            $notFoundCount = 0;
+            $notFoundItems = [];
+            
+            // Leer datos desde la fila 3 (headers están en fila 2)
+            $highestRow = $worksheet->getHighestDataRow();
+            
+            // Iniciar registro de log para esta importación
+            Yii::info("Iniciando importación de ventas para {$month}/{$year}. Total filas a procesar: " . ($highestRow - 2), 'import');
+            
+            // Lista para mantener un registro de lo que hemos actualizado
+            $updatedItems = [];
+            
+            for ($row = 3; $row <= $highestRow; $row++) {
+                $description = trim($worksheet->getCell('B' . $row)->getValue());
+                $units = (int)$worksheet->getCell('C' . $row)->getValue();
+                
+                if (empty($description) || $units <= 0) {
+                    continue; // Saltar filas sin descripción o sin ventas
+                }
+                
+                // Buscar la receta por nombre, haciendo comparación precisa
+                $recipe = StandardRecipe::find()
+                    ->where(['business_id' => $business->id])
+                    ->andWhere(['title' => $description])
+                    ->one();
+                
+                // Si no lo encuentra con comparación exacta, intentar con LIKE
+                if (!$recipe) {
+                    $recipe = StandardRecipe::find()
+                        ->where(['business_id' => $business->id])
+                        ->andWhere(['LIKE', 'title', $description])
+                        ->one();
+                }
+                
+                $menu = null;
+                if (!$recipe) {
+                    // Si no encuentra como receta, buscar como combo/menu con comparación exacta primero
+                    $menu = Menu::find()
+                        ->where(['business_id' => $business->id])
+                        ->andWhere(['name' => $description])
+                        ->one();
+                    
+                    // Si no lo encuentra con comparación exacta, intentar con LIKE
+                    if (!$menu) {
+                        $menu = Menu::find()
+                            ->where(['business_id' => $business->id])
+                            ->andWhere(['LIKE', 'name', $description])
+                            ->one();
+                    }
+                }
+                
+                // Registrar lo que se encontró o no se encontró
+                if (!$recipe && !$menu) {
+                    Yii::info("No se encontró el producto: '{$description}'", 'import');
+                } else {
+                    $foundType = $recipe ? 'receta' : 'menu';
+                    $foundId = $recipe ? $recipe->id : $menu->id;
+                    $foundName = $recipe ? $recipe->title : $menu->name;
+                    Yii::info("Encontrado como {$foundType}: '{$description}' → ID: {$foundId}, Nombre: '{$foundName}'", 'import');
+                }
+                
+                if ($recipe || $menu) {
+                    // Preparar los datos para guardar
+                    $modelId = $recipe ? $recipe->id : $menu->id;
+                    $modelType = $recipe ? MonthlySales::TYPE_RECIPE : MonthlySales::TYPE_MENU;
+                    
+                    // Usar el método estático saveSales para guardar o actualizar
+                    if (MonthlySales::saveSales($modelType, $modelId, $month, $year, (float)$units)) {
+                        $importedCount++;
+                        Yii::info("Guardado correctamente: {$description}, {$units} unidades para {$month}/{$year}", 'import');
+                        $updatedItems[] = [
+                            'name' => $description,
+                            'sales' => $units
+                        ];
+                    } else {
+                        Yii::error("Error al guardar: {$description}, {$units} unidades para {$month}/{$year}", 'import');
+                    }
+                } else {
+                    // No se encontró la receta o combo
+                    $notFoundCount++;
+                    if (count($notFoundItems) < 10) { // Limitar a 10 elementos para no sobrecargar el mensaje
+                        $notFoundItems[] = $description;
+                    }
+                }
+            }
+            
+            // Eliminar archivo temporal
+            unlink($tempPath);
+            
+            // Guardar log completo de la importación
+            Yii::info("Importación finalizada: {$importedCount} productos actualizados, {$notFoundCount} no encontrados para {$month}/{$year}", 'import');
+            
+            // Mostrar mensaje de éxito con detalles
+            $successMsg = "Importación completada: {$importedCount} productos actualizados para {$month}/{$year}. Reporte procesado: \"".htmlspecialchars($title)."\"";
+            if ($notFoundCount > 0) {
+                $successMsg .= "<br>No se encontraron {$notFoundCount} productos.";
+                if (!empty($notFoundItems)) {
+                    $successMsg .= "<br>Ejemplos: " . implode(', ', $notFoundItems);
+                    if ($notFoundCount > 10) {
+                        $remaining = $notFoundCount - 10;
+                        $successMsg .= " y {$remaining} más.";
+                    }
+                }
+            }
+            
+            Yii::$app->session->setFlash('success', $successMsg);
+            return $this->redirect(['sales', 'month' => $month, 'year' => $year]);
+            
+        } catch (\Exception $e) {
+            Yii::$app->session->setFlash('error', 'Error al importar el archivo: ' . $e->getMessage());
+            return $this->redirect(['sales']);
+        }
+    }
 }

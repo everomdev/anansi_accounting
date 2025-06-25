@@ -11,6 +11,30 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\bootstrap5\ActiveForm;
 
+/**
+ * Función auxiliar que devuelve el nombre del mes en español
+ * @param int $month Número del mes (1-12)
+ * @return string Nombre del mes en español
+ */
+function getMonthName($month) {
+    $months = [
+        1 => 'Enero',
+        2 => 'Febrero',
+        3 => 'Marzo',
+        4 => 'Abril',
+        5 => 'Mayo',
+        6 => 'Junio',
+        7 => 'Julio',
+        8 => 'Agosto',
+        9 => 'Septiembre',
+        10 => 'Octubre',
+        11 => 'Noviembre',
+        12 => 'Diciembre'
+    ];
+    
+    return isset($months[$month]) ? $months[$month] : '';
+}
+
 $this->title = Yii::t('app', "Sales");
 
 // Preparamos las columnas para las tablas de alimentos
@@ -145,44 +169,76 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtrar por mes y año') ?></h3>
     </div>
     <div class="card-body">
-        <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
-        <div class="row g-3">
+        <div class="row">
+            <!-- Filtros existentes -->
+            <div class="col-md-8">
+                <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="month-select" class="form-label">Mes</label>
+                        <?= Html::dropDownList('month',
+                            $selectedMonth ?? date('n'), 
+                            [
+                                '1' => 'Enero',
+                                '2' => 'Febrero',
+                                '3' => 'Marzo',
+                                '4' => 'Abril',
+                                '5' => 'Mayo',
+                                '6' => 'Junio',
+                                '7' => 'Julio',
+                                '8' => 'Agosto',
+                                '9' => 'Septiembre',
+                                '10' => 'Octubre',
+                                '11' => 'Noviembre',
+                                '12' => 'Diciembre',
+                            ],
+                            ['class' => 'form-select', 'id' => 'month-select']
+                        ) ?>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="year-select" class="form-label">Año</label>
+                        <?= Html::dropDownList('year',
+                            $selectedYear ?? date('Y'),
+                            $years,
+                            ['class' => 'form-select', 'id' => 'year-select']
+                        ) ?>
+                    </div>
+                    
+                    <div class="col-md-2 d-flex align-items-end">
+                        <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
+                    </div>
+                </div>
+                <?= Html::endForm() ?>
+            </div>
+            
+            <!-- Nueva sección para importar Excel -->
             <div class="col-md-4">
-                <label for="month-select" class="form-label">Mes</label>
-                <?= Html::dropDownList('month',
-                    $selectedMonth ?? date('n'), 
-                    [
-                        '1' => 'Enero',
-                        '2' => 'Febrero',
-                        '3' => 'Marzo',
-                        '4' => 'Abril',
-                        '5' => 'Mayo',
-                        '6' => 'Junio',
-                        '7' => 'Julio',
-                        '8' => 'Agosto',
-                        '9' => 'Septiembre',
-                        '10' => 'Octubre',
-                        '11' => 'Noviembre',
-                        '12' => 'Diciembre',
-                    ],
-                    ['class' => 'form-select', 'id' => 'month-select']
-                ) ?>
-            </div>
-            
-            <div class="col-md-3">
-                <label for="year-select" class="form-label">Año</label>
-                <?= Html::dropDownList('year',
-                    $selectedYear ?? date('Y'),
-                    $years,
-                    ['class' => 'form-select', 'id' => 'year-select']
-                ) ?>
-            </div>
-            
-            <div class="col-md-2 d-flex align-items-end">
-                <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
+                <div class="border-start ps-3">
+                    <h6 class="mb-3">Importar ventas desde Excel</h6>
+                    <?= Html::beginForm(['import-sales-excel'], 'post', [
+                        'enctype' => 'multipart/form-data',
+                        'id' => 'import-form'
+                    ]) ?>
+                    <div class="mb-3">
+                        <label for="excel-file" class="form-label">Archivo Excel</label>
+                        <?= Html::fileInput('excel_file', '', [
+                            'class' => 'form-control',
+                            'id' => 'excel-file',
+                            'accept' => '.xlsx,.xls'
+                        ]) ?>
+                        <div class="form-text">
+                            Formato: ABC de Ventas con columnas Código, Descripción, Unidades, etc.
+                        </div>
+                    </div>
+                    <?= Html::submitButton('Importar', [
+                        'class' => 'btn btn-success btn-sm',
+                        'id' => 'btn-import-excel'
+                    ]) ?>
+                    <?= Html::endForm() ?>
+                </div>
             </div>
         </div>
-        <?= Html::endForm() ?>
     </div>
 </div>
 
@@ -192,7 +248,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <div class="card mb-4">
     <div class="card-header">
-        <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?></h3>
+        <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $foodDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
     <div class="card-body">
@@ -210,7 +266,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <div class="card mb-4">
     <div class="card-header">
-        <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?></h3>
+        <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $drinkDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>    <div class="card-body">
         <?php $form = Html::beginForm(['sales'], 'get', ['data-pjax' => 1]); ?>
@@ -226,7 +282,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <div class="card mb-4">
     <div class="card-header">
-        <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?></h3>
+        <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $comboDataProvider->getTotalCount() ?> combos encontrados</small>
     </div>
     <div class="card-body">
@@ -248,7 +304,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <!-- Barra flotante con botón de guardar siempre visible -->
 <div class="sticky-save-bar">
-    <?= Html::button('Guardar ventas', [
+    <?= Html::button('Guardar ventas de ' . getMonthName($selectedMonth) . ' ' . $selectedYear, [
         'class' => 'btn btn-primary btn-lg',
         'id' => 'btn-save-sales'
     ]) ?>
@@ -263,8 +319,16 @@ $saveUrl = Url::to(['save-monthly-sales']);
 $js = <<< JS
 // Función para actualizar campos ocultos
 function updateHiddenFields() {
-    $('#month-hidden').val($('#month-select').val());
-    $('#year-hidden').val($('#year-select').val());
+    const month = $('#month-select').val();
+    const year = $('#year-select').val();
+    const monthName = $('#month-select option:selected').text();
+    
+    // Actualizar campos ocultos
+    $('#month-hidden').val(month);
+    $('#year-hidden').val(year);
+    
+    // Actualizar texto del botón de guardar
+    $('#btn-save-sales').text('Guardar ventas de ' + monthName + ' ' + year);
 }
 
 // Función para configurar event listeners
@@ -327,7 +391,9 @@ function setupEventListeners() {
                 });
             },
             complete: function() {
-                $('#btn-save-sales').prop('disabled', false).text('Guardar ventas');
+                const monthName = $('#month-select option:selected').text();
+                const year = $('#year-select').val();
+                $('#btn-save-sales').prop('disabled', false).text('Guardar ventas de ' + monthName + ' ' + year);
             }
         });
     });
@@ -337,6 +403,28 @@ function setupEventListeners() {
 $(document).ready(function() {
     setupEventListeners();
     updateHiddenFields(); // Sincronizar valores iniciales
+    
+    // Configurar el formulario de importación de Excel
+    $('#import-form').on('submit', function(e) {
+        const fileInput = $('#excel-file');
+        if (fileInput.val() === '') {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Error',
+                text: 'Debe seleccionar un archivo Excel para importar.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return false;
+        }
+        
+        // Mostrar spinner de carga
+        $('#btn-import-excel').prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importando...'
+        );
+        
+        return true;
+    });
 });
 
 // Reconfigurar event listeners después de actualizaciones PJAX
