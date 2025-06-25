@@ -187,6 +187,8 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 </div>
 
 <?= Html::beginForm(['save-monthly-sales'], 'post', ['id' => 'sales-form']) ?>
+    <?= Html::hiddenInput('month', $selectedMonth, ['id' => 'month-hidden']) ?>
+    <?= Html::hiddenInput('year', $selectedYear, ['id' => 'year-hidden']) ?>
 
 <div class="card mb-4">
     <div class="card-header">
@@ -241,8 +243,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 </div>
 
 <div class="d-flex justify-content-end mb-4">
-    <?= Html::hiddenInput('month', $selectedMonth, ['id' => 'month-hidden']) ?>
-    <?= Html::hiddenInput('year', $selectedYear, ['id' => 'year-hidden']) ?>
+    <!-- Campos ocultos movidos al interior del formulario principal -->
 </div>
 
 <!-- Barra flotante con botón de guardar siempre visible -->
@@ -260,65 +261,88 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <?php
 $saveUrl = Url::to(['save-monthly-sales']);
 $js = <<< JS
-// Al cambiar los selectores, actualizamos los campos ocultos
-$('#month-select, #year-select').on('change', function() {
+// Función para actualizar campos ocultos
+function updateHiddenFields() {
     $('#month-hidden').val($('#month-select').val());
     $('#year-hidden').val($('#year-select').val());
-});
+}
 
-// Acción del botón guardar ventas
-$('#btn-save-sales').on('click', function(e) {
-    e.preventDefault();
+// Función para configurar event listeners
+function setupEventListeners() {
+    // Al cambiar los selectores, actualizamos los campos ocultos
+    $('#month-select, #year-select').off('change.sales').on('change.sales', function() {
+        updateHiddenFields();
+    });
     
-    let formData = $('#sales-form').serialize();
-    
-    $.ajax({
-        url: '$saveUrl',
-        type: 'POST',
-        data: formData,
-        dataType: 'json',
-        beforeSend: function() {
-            $('#btn-save-sales').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...');
-        },
-        success: function(response) {
-            if (response.success) {
-                Swal.fire({
-                    title: 'Éxito',
-                    text: 'Las ventas se han guardado correctamente.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                });
-            } else {
-                // Mostrar errores
-                let errorMsg = 'Ocurrió un problema al guardar las ventas:';
-                if (response.errors && response.errors.length > 0) {
-                    errorMsg += '<ul>';
-                    response.errors.forEach(function(error) {
-                        errorMsg += '<li>' + error + '</li>';
+    // Acción del botón guardar ventas
+    $('#btn-save-sales').off('click.sales').on('click.sales', function(e) {
+        e.preventDefault();
+        
+        // Actualizar campos ocultos antes de enviar
+        updateHiddenFields();
+        
+        let formData = $('#sales-form').serialize();
+        
+        $.ajax({
+            url: '$saveUrl',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            beforeSend: function() {
+                $('#btn-save-sales').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...');
+            },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        title: 'Éxito',
+                        text: 'Las ventas se han guardado correctamente.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
                     });
-                    errorMsg += '</ul>';
+                } else {
+                    // Mostrar errores
+                    let errorMsg = 'Ocurrió un problema al guardar las ventas:';
+                    if (response.errors && response.errors.length > 0) {
+                        errorMsg += '<ul>';
+                        response.errors.forEach(function(error) {
+                            errorMsg += '<li>' + error + '</li>';
+                        });
+                        errorMsg += '</ul>';
+                    }
+                    
+                    Swal.fire({
+                        title: 'Error',
+                        html: errorMsg,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
-                
+            },
+            error: function(xhr, status, error) {
                 Swal.fire({
                     title: 'Error',
-                    html: errorMsg,
+                    text: 'Ocurrió un problema al guardar las ventas: ' + error,
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
+            },
+            complete: function() {
+                $('#btn-save-sales').prop('disabled', false).text('Guardar ventas');
             }
-        },
-        error: function(xhr, status, error) {
-            Swal.fire({
-                title: 'Error',
-                text: 'Ocurrió un problema al guardar las ventas: ' + error,
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        },
-        complete: function() {
-            $('#btn-save-sales').prop('disabled', false).text('Guardar ventas');
-        }
+        });
     });
+}
+
+// Configurar event listeners al cargar la página
+$(document).ready(function() {
+    setupEventListeners();
+    updateHiddenFields(); // Sincronizar valores iniciales
+});
+
+// Reconfigurar event listeners después de actualizaciones PJAX
+$(document).on('pjax:complete', function() {
+    setupEventListeners();
+    updateHiddenFields(); // Sincronizar valores después de PJAX
 });
 JS;
 $this->registerJs($js);
