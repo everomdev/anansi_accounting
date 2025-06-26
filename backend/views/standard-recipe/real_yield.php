@@ -75,7 +75,8 @@ $months = [
                     'year' => $year
                 ]) ?>
                 <span class="ms-3">
-                    <i class="fas fa-chart-bar me-2"></i>                    <?= Yii::t('app', 'Total de ventas: {sales}', ['sales' => formatPrice($totalSales)]) ?>
+                    <i class="fas fa-chart-bar me-2"></i>                    
+                    <?= Yii::t('app', 'Cantidad de ventas totales: {sales}', ['sales' => formatNumber($totalSales)]) ?>
                 </span>
             </p>
         </div>

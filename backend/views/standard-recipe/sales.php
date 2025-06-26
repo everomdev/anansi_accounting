@@ -169,73 +169,89 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtrar por mes y año') ?></h3>
     </div>
     <div class="card-body">
-        <div class="row">
-            <!-- Filtros existentes -->
-            <div class="col-md-8">
-                <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="month-select" class="form-label">Mes</label>
-                        <?= Html::dropDownList('month',
-                            $selectedMonth ?? date('n'), 
-                            [
-                                '1' => 'Enero',
-                                '2' => 'Febrero',
-                                '3' => 'Marzo',
-                                '4' => 'Abril',
-                                '5' => 'Mayo',
-                                '6' => 'Junio',
-                                '7' => 'Julio',
-                                '8' => 'Agosto',
-                                '9' => 'Septiembre',
-                                '10' => 'Octubre',
-                                '11' => 'Noviembre',
-                                '12' => 'Diciembre',
-                            ],
-                            ['class' => 'form-select', 'id' => 'month-select']
-                        ) ?>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <label for="year-select" class="form-label">Año</label>
-                        <?= Html::dropDownList('year',
-                            $selectedYear ?? date('Y'),
-                            $years,
-                            ['class' => 'form-select', 'id' => 'year-select']
-                        ) ?>
-                    </div>
-                    
-                    <div class="col-md-2 d-flex align-items-end">
-                        <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
-                    </div>
-                </div>
-                <?= Html::endForm() ?>
+        <!-- Filtros existentes -->
+        <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
+        <div class="row g-3 mb-4">
+            <div class="col-md-5">
+                <label for="month-select" class="form-label">Mes</label>
+                <?= Html::dropDownList('month',
+                    $selectedMonth ?? date('n'), 
+                    [
+                        '1' => 'Enero',
+                        '2' => 'Febrero',
+                        '3' => 'Marzo',
+                        '4' => 'Abril',
+                        '5' => 'Mayo',
+                        '6' => 'Junio',
+                        '7' => 'Julio',
+                        '8' => 'Agosto',
+                        '9' => 'Septiembre',
+                        '10' => 'Octubre',
+                        '11' => 'Noviembre',
+                        '12' => 'Diciembre',
+                    ],
+                    ['class' => 'form-select', 'id' => 'month-select']
+                ) ?>
             </div>
             
-            <!-- Nueva sección para importar Excel -->
             <div class="col-md-4">
-                <div class="border-start ps-3">
+                <label for="year-select" class="form-label">Año</label>
+                <?= Html::dropDownList('year',
+                    $selectedYear ?? date('Y'),
+                    $years,
+                    ['class' => 'form-select', 'id' => 'year-select']
+                ) ?>
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
+            </div>
+        </div>
+        <?= Html::endForm() ?>
+        
+        <!-- Sección de importar ventas debajo del filtro -->
+        <div class="row">
+            <div class="col-12">
+                <div class="border-top pt-3">
                     <h6 class="mb-3">Importar ventas desde Excel</h6>
-                    <?= Html::beginForm(['import-sales-excel'], 'post', [
-                        'enctype' => 'multipart/form-data',
-                        'id' => 'import-form'
-                    ]) ?>
-                    <div class="mb-3">
-                        <label for="excel-file" class="form-label">Archivo Excel</label>
-                        <?= Html::fileInput('excel_file', '', [
-                            'class' => 'form-control',
-                            'id' => 'excel-file',
-                            'accept' => '.xlsx,.xls'
-                        ]) ?>
-                        <div class="form-text">
-                            Formato: ABC de Ventas con columnas Código, Descripción, Unidades, etc.
+                    
+                    <div class="row g-3 align-items-end">
+                        <!-- Botón para descargar plantilla -->
+                        <div class="col-md-3">
+                            <?= Html::a('Descargar Plantilla', ['download-sales-template'], [
+                                'class' => 'btn btn-outline-primary',
+                                'title' => 'Descargar plantilla Excel para importar ventas'
+                            ]) ?>
                         </div>
+                        
+                        <!-- Formulario de importación -->
+                        <?= Html::beginForm(['import-sales-excel'], 'post', [
+                            'enctype' => 'multipart/form-data',
+                            'id' => 'import-form',
+                            'class' => 'col-md-9'
+                        ]) ?>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <label for="sales-file" class="form-label">Archivo Excel</label>
+                                <?= Html::fileInput('sales_file', '', [
+                                    'class' => 'form-control',
+                                    'id' => 'sales-file',
+                                    'accept' => '.xlsx,.xls'
+                                ]) ?>
+                            </div>
+                            <div class="col-md-4">
+                                <?= Html::submitButton('Importar', [
+                                    'class' => 'btn btn-success',
+                                    'id' => 'btn-import-excel'
+                                ]) ?>
+                            </div>
+                        </div>
+                        <?= Html::endForm() ?>
                     </div>
-                    <?= Html::submitButton('Importar', [
-                        'class' => 'btn btn-success btn-sm',
-                        'id' => 'btn-import-excel'
-                    ]) ?>
-                    <?= Html::endForm() ?>
+                    
+                    <div class="form-text mt-2">
+                        Descargue la plantilla, complete los datos (MES, AÑO, DESCRIPCIÓN, VENTAS) y súbala para importar.
+                    </div>
                 </div>
             </div>
         </div>
@@ -406,7 +422,7 @@ $(document).ready(function() {
     
     // Configurar el formulario de importación de Excel
     $('#import-form').on('submit', function(e) {
-        const fileInput = $('#excel-file');
+        const fileInput = $('#sales-file');
         if (fileInput.val() === '') {
             e.preventDefault();
             Swal.fire({
