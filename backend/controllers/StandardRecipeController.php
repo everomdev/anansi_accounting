@@ -793,7 +793,8 @@ public function actionGetSubStandardRecipes()
         }
 
         return $this->asJson(['error' => true, 'data' => $post]);
-    }    public function actionSales()
+    }    
+    public function actionSales()
     {
         $startDate = Yii::$app->request->get('start_date');
         $endDate = Yii::$app->request->get('end_date');
@@ -862,10 +863,10 @@ public function actionGetSubStandardRecipes()
         ]);        // Apply search filters using different parameter names to avoid conflicts
         $params = Yii::$app->request->queryParams;
         
-        // Food search - usar StandardRecipeSearch como parámetro
-        $foodSearchModel->load($params);
-        if (!empty($foodSearchModel->title)) {
-            $foodDataProvider->query->andFilterWhere(['like', 'title', $foodSearchModel->title]);
+        // Food search - usar parámetro personalizado para evitar conflictos
+        if (isset($params['food_title'])) {
+            $foodSearchModel->title = $params['food_title'];
+            $foodDataProvider->query->andFilterWhere(['like', 'title', $params['food_title']]);
         }
 
         // Drink search - crear parámetros manuales para evitar conflictos
@@ -874,10 +875,10 @@ public function actionGetSubStandardRecipes()
             $drinkDataProvider->query->andFilterWhere(['like', 'title', $params['drink_title']]);
         }
 
-        // Combo search - usar MenuSearch como parámetro
-        $comboSearchModel->load($params);
-        if (!empty($comboSearchModel->name)) {
-            $comboDataProvider->query->andFilterWhere(['like', 'name', $comboSearchModel->name]);
+        // Combo search - usar parámetro personalizado para evitar conflictos
+        if (isset($params['combo_name'])) {
+            $comboSearchModel->name = $params['combo_name'];
+            $comboDataProvider->query->andFilterWhere(['like', 'name', $params['combo_name']]);
         }
 
         // Cargamos las ventas de cada receta desde la tabla mensual para el mes y año seleccionados

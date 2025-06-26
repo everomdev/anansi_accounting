@@ -42,7 +42,19 @@ $foodGridColumns = [
     ['class' => \yii\grid\SerialColumn::class],
     [
         'attribute' => 'title',
-        'filter' => true // Habilitar filtro automático
+        'filter' => '<div class="position-relative">' . 
+            Html::textInput('food_title', 
+                Yii::$app->request->get('food_title', ''), 
+                [
+                    'class' => 'form-control pr-4',
+                    'placeholder' => 'Buscar alimento...',
+                    'onkeypress' => 'if(event.keyCode == 13) { filterFoodSearch(this.value); return false; }',
+                    'onblur' => 'filterFoodSearch(this.value)',
+                    'id' => 'food-search-input'
+                ]
+            ) . 
+            '<button type="button" class="btn btn-link position-absolute clear-search-btn" onclick="clearFoodSearch()" style="right: 5px; top: 50%; transform: translateY(-50%); padding: 2px 4px; border: none; background: none; color: #6c757d; font-size: 16px; line-height: 1; display: ' . (Yii::$app->request->get('food_title', '') ? 'block' : 'none') . '; z-index: 10;">&times;</button>' .
+            '</div>'
     ],
     [
         'attribute' => 'cost',
@@ -79,14 +91,19 @@ $drinkGridColumns = [
     ['class' => \yii\grid\SerialColumn::class],
     [
         'attribute' => 'title',
-        'filter' => Html::textInput('drink_title', 
-            Yii::$app->request->get('drink_title', ''), 
-            [
-                'class' => 'form-control',
-                'placeholder' => 'Buscar bebida...',
-                'onchange' => 'this.form.submit()'
-            ]
-        )
+        'filter' => '<div class="position-relative">' . 
+            Html::textInput('drink_title', 
+                Yii::$app->request->get('drink_title', ''), 
+                [
+                    'class' => 'form-control pr-4',
+                    'placeholder' => 'Buscar bebida...',
+                    'onkeypress' => 'if(event.keyCode == 13) { filterDrinkSearch(this.value); return false; }',
+                    'onblur' => 'filterDrinkSearch(this.value)',
+                    'id' => 'drink-search-input'
+                ]
+            ) . 
+            '<button type="button" class="btn btn-link position-absolute clear-search-btn" onclick="clearDrinkSearch()" style="right: 5px; top: 50%; transform: translateY(-50%); padding: 2px 4px; border: none; background: none; color: #6c757d; font-size: 16px; line-height: 1; display: ' . (Yii::$app->request->get('drink_title', '') ? 'block' : 'none') . '; z-index: 10;">&times;</button>' .
+            '</div>'
     ],    [
         'attribute' => 'cost',
         'label' => "Costo",
@@ -122,7 +139,19 @@ $comboGridColumns = [
     [
         'attribute' => 'name',
         'label' => 'Título',
-        'filter' => true // Habilitar filtro automático
+        'filter' => '<div class="position-relative">' . 
+            Html::textInput('combo_name', 
+                Yii::$app->request->get('combo_name', ''), 
+                [
+                    'class' => 'form-control pr-4',
+                    'placeholder' => 'Buscar combo...',
+                    'onkeypress' => 'if(event.keyCode == 13) { filterComboSearch(this.value); return false; }',
+                    'onblur' => 'filterComboSearch(this.value)',
+                    'id' => 'combo-search-input'
+                ]
+            ) . 
+            '<button type="button" class="btn btn-link position-absolute clear-search-btn" onclick="clearComboSearch()" style="right: 5px; top: 50%; transform: translateY(-50%); padding: 2px 4px; border: none; background: none; color: #6c757d; font-size: 16px; line-height: 1; display: ' . (Yii::$app->request->get('combo_name', '') ? 'block' : 'none') . '; z-index: 10;">&times;</button>' .
+            '</div>'
     ],    [
         'attribute' => 'total_cost',
         'label' => "Costo",
@@ -262,7 +291,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
     <?= Html::hiddenInput('month', $selectedMonth, ['id' => 'month-hidden']) ?>
     <?= Html::hiddenInput('year', $selectedYear, ['id' => 'year-hidden']) ?>
 
-<div class="card mb-4">
+<div class="card mb-4" id="food-section">
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $foodDataProvider->getTotalCount() ?> recetas encontradas</small>
@@ -275,28 +304,31 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
             'filterUrl' => Url::current([
                 'month' => $selectedMonth,
                 'year' => $selectedYear
-            ], true)
+            ], true),
+            'layout' => "{summary}\n{pager}\n{items}\n{pager}"
         ]) ?>
     </div>
 </div>
 
-<div class="card mb-4">
+<div class="card mb-4" id="drink-section">
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $drinkDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>    <div class="card-body">
-        <?php $form = Html::beginForm(['sales'], 'get', ['data-pjax' => 1]); ?>
-        <?= Html::hiddenInput('month', $selectedMonth) ?>
-        <?= Html::hiddenInput('year', $selectedYear) ?>
         <?= \yii\grid\GridView::widget([
             'dataProvider' => $drinkDataProvider,
+            'filterModel' => $drinkSearchModel,
             'columns' => $drinkGridColumns,
+            'filterUrl' => Url::current([
+                'month' => $selectedMonth,
+                'year' => $selectedYear
+            ], true),
+            'layout' => "{summary}\n{pager}\n{items}\n{pager}"
         ]) ?>
-        <?= Html::endForm() ?>
     </div>
 </div>
 
-<div class="card mb-4">
+<div class="card mb-4" id="combo-section">
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $comboDataProvider->getTotalCount() ?> combos encontrados</small>
@@ -309,7 +341,8 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
             'filterUrl' => Url::current([
                 'month' => $selectedMonth,
                 'year' => $selectedYear
-            ], true)
+            ], true),
+            'layout' => "{summary}\n{pager}\n{items}\n{pager}"
         ]) ?>
     </div>
 </div>
@@ -419,6 +452,8 @@ function setupEventListeners() {
 $(document).ready(function() {
     setupEventListeners();
     updateHiddenFields(); // Sincronizar valores iniciales
+    setupSearchFilters(); // Configurar filtros de búsqueda
+    scrollToActiveFilter(); // Desplazarse a la sección con filtro activo
     
     // Configurar el formulario de importación de Excel
     $('#import-form').on('submit', function(e) {
@@ -447,9 +482,156 @@ $(document).ready(function() {
 $(document).on('pjax:complete', function() {
     setupEventListeners();
     updateHiddenFields(); // Sincronizar valores después de PJAX
+    setupSearchFilters(); // Reconfigurar filtros después de PJAX
+    scrollToActiveFilter(); // Desplazarse a la sección con filtro activo después de PJAX
 });
+
+// Función para desplazarse a la sección con filtro activo
+function scrollToActiveFilter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    let targetSection = null;
+    
+    if (urlParams.has('food_title') && urlParams.get('food_title').trim() !== '') {
+        targetSection = 'food-section';
+    } else if (urlParams.has('drink_title') && urlParams.get('drink_title').trim() !== '') {
+        targetSection = 'drink-section';
+    } else if (urlParams.has('combo_name') && urlParams.get('combo_name').trim() !== '') {
+        targetSection = 'combo-section';
+    }
+    
+    if (targetSection) {
+        setTimeout(function() {
+            const element = document.getElementById(targetSection);
+            if (element) {
+                element.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start',
+                    inline: 'nearest'
+                });
+            }
+        }, 500); // Pequeño delay para asegurar que el contenido esté cargado
+    }
+}
+
+// Funciones para manejar los filtros de búsqueda
+function setupSearchFilters() {
+    // Configurar input de búsqueda de alimentos
+    const foodInput = $('#food-search-input');
+    const foodClearBtn = foodInput.siblings('.clear-search-btn');
+    
+    if (foodInput.val().trim() !== '') {
+        foodClearBtn.show();
+    }
+    
+    foodInput.on('input', function() {
+        const clearBtn = $(this).siblings('.clear-search-btn');
+        if ($(this).val().trim() !== '') {
+            clearBtn.show();
+        } else {
+            clearBtn.hide();
+        }
+    });
+    
+    // Configurar input de búsqueda de bebidas
+    const drinkInput = $('#drink-search-input');
+    const drinkClearBtn = drinkInput.siblings('.clear-search-btn');
+    
+    if (drinkInput.val().trim() !== '') {
+        drinkClearBtn.show();
+    }
+    
+    drinkInput.on('input', function() {
+        const clearBtn = $(this).siblings('.clear-search-btn');
+        if ($(this).val().trim() !== '') {
+            clearBtn.show();
+        } else {
+            clearBtn.hide();
+        }
+    });
+    
+    // Configurar input de búsqueda de combos
+    const comboInput = $('#combo-search-input');
+    const comboClearBtn = comboInput.siblings('.clear-search-btn');
+    
+    if (comboInput.val().trim() !== '') {
+        comboClearBtn.show();
+    }
+    
+    comboInput.on('input', function() {
+        const clearBtn = $(this).siblings('.clear-search-btn');
+        if ($(this).val().trim() !== '') {
+            clearBtn.show();
+        } else {
+            clearBtn.hide();
+        }
+    });
+}
 JS;
 $this->registerJs($js);
+
+// Funciones globales para limpiar filtros
+$clearFunctionsJs = <<<JS
+function filterFoodSearch(value) {
+    const currentUrl = new URL(window.location);
+    if (value && value.trim() !== '') {
+        currentUrl.searchParams.set('food_title', value.trim());
+        currentUrl.hash = 'food-section';
+    } else {
+        currentUrl.searchParams.delete('food_title');
+        currentUrl.hash = '';
+    }
+    window.location.href = currentUrl.toString();
+}
+
+function filterDrinkSearch(value) {
+    const currentUrl = new URL(window.location);
+    if (value && value.trim() !== '') {
+        currentUrl.searchParams.set('drink_title', value.trim());
+        currentUrl.hash = 'drink-section';
+    } else {
+        currentUrl.searchParams.delete('drink_title');
+        currentUrl.hash = '';
+    }
+    window.location.href = currentUrl.toString();
+}
+
+function filterComboSearch(value) {
+    const currentUrl = new URL(window.location);
+    if (value && value.trim() !== '') {
+        currentUrl.searchParams.set('combo_name', value.trim());
+        currentUrl.hash = 'combo-section';
+    } else {
+        currentUrl.searchParams.delete('combo_name');
+        currentUrl.hash = '';
+    }
+    window.location.href = currentUrl.toString();
+}
+
+function clearFoodSearch() {
+    // Redirigir a la URL sin el parámetro de filtro
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.delete('food_title');
+    currentUrl.hash = 'food-section';
+    window.location.href = currentUrl.toString();
+}
+
+function clearDrinkSearch() {
+    // Redirigir a la URL sin el parámetro de filtro
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.delete('drink_title');
+    currentUrl.hash = 'drink-section';
+    window.location.href = currentUrl.toString();
+}
+
+function clearComboSearch() {
+    // Redirigir a la URL sin el parámetro de filtro
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.delete('combo_name');
+    currentUrl.hash = 'combo-section';
+    window.location.href = currentUrl.toString();
+}
+JS;
+$this->registerJs($clearFunctionsJs, \yii\web\View::POS_HEAD);
 
 // CSS para la barra flotante de guardar
 $css = <<<CSS
@@ -465,6 +647,33 @@ $css = <<<CSS
 
 .sticky-save-bar .btn {
     box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+}
+
+/* Estilos para los botones de limpiar filtros */
+.clear-search-btn {
+    border: none !important;
+    background: none !important;
+    color: #6c757d !important;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.2s ease;
+    width: 20px;
+    height: 20px;
+}
+
+.clear-search-btn:hover {
+    color: #dc3545 !important;
+    background: none !important;
+}
+
+.clear-search-btn:focus {
+    outline: none;
+    box-shadow: none !important;
+}
+
+.position-relative .form-control {
+    padding-right: 30px !important;
 }
 
 @media (max-width: 768px) {
