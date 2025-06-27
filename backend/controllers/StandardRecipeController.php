@@ -3032,11 +3032,8 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
     public function actionDownloadSalesTemplate()
     {
-        // Deshabilitar layout para evitar cualquier salida HTML
-        $this->layout = false;
-        
-        // Limpiar todos los buffers de salida
-        while (ob_get_level()) {
+        // Limpiar cualquier salida previa de manera agresiva
+        if (ob_get_level()) {
             ob_end_clean();
         }
         
@@ -3071,23 +3068,13 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         // Nombre del archivo con timestamp
         $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        // Configurar headers de respuesta
-        Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
-        Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        Yii::$app->response->headers->add('Content-Disposition', 'attachment; filename="' . $filename . '"');
-        Yii::$app->response->headers->add('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        Yii::$app->response->headers->add('Pragma', 'no-cache');
-        Yii::$app->response->headers->add('Expires', '0');
+        // Configurar headers para descarga (igual que otros métodos que funcionan)
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
         
-        // Limpiar una vez más antes de enviar
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        // Escribir directamente a la salida
+        // Enviar archivo directamente a la salida
         $writer->save('php://output');
-        
-        // Asegurar que no se procese nada más
-        Yii::$app->end();
+        exit;
     }
 }
