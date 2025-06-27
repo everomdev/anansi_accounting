@@ -249,7 +249,10 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                         <div class="col-md-3">
                             <?= Html::a('Descargar Plantilla', ['download-sales-template'], [
                                 'class' => 'btn btn-outline-primary',
-                                'title' => 'Descargar plantilla Excel para importar ventas'
+                                'title' => 'Descargar plantilla Excel para importar ventas',
+                                'download' => '',
+                                'target' => '_blank',
+                                'rel' => 'noopener noreferrer'
                             ]) ?>
                         </div>
                         

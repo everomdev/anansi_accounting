@@ -3060,13 +3060,41 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         // Crear el archivo
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
 
-        // Configurar headers para descarga
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="Plantilla_Importar_Ventas.xlsx"');
-        header('Cache-Control: max-age=0');
+        // Nombre del archivo con timestamp para evitar cache
+        $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        // Guardar el archivo directamente a la salida
+        // Limpiar cualquier salida previa
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // Configurar headers mejorados para compatibilidad móvil
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Transfer-Encoding: binary');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: public');
+        header('Expires: 0');
+        
+        // Detectar si es un dispositivo móvil
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $isMobile = preg_match('/Mobile|Android|iPhone|iPad/', $userAgent);
+        
+        if ($isMobile) {
+            // Para dispositivos móviles, agregar headers adicionales
+            header('Content-Description: File Transfer');
+            header('Accept-Ranges: bytes');
+        }
+
+        // Calcular y establecer el tamaño del contenido
+        ob_start();
         $writer->save('php://output');
+        $content = ob_get_clean();
+        
+        header('Content-Length: ' . strlen($content));
+        
+        // Enviar el contenido
+        echo $content;
         exit;
     }
 }
