@@ -3032,8 +3032,11 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
     public function actionDownloadSalesTemplate()
     {
-        // Limpiar cualquier salida previa de manera agresiva
-        if (ob_get_level()) {
+        // Deshabilitar layout para evitar cualquier salida HTML
+        $this->layout = false;
+        
+        // Limpiar todos los buffers de salida
+        while (ob_get_level()) {
             ob_end_clean();
         }
         
@@ -3068,19 +3071,23 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         // Nombre del archivo con timestamp
         $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        // Enviar headers directamente
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        header('Pragma: no-cache');
+        // Configurar headers de respuesta
+        Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
+        Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        Yii::$app->response->headers->add('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        Yii::$app->response->headers->add('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        Yii::$app->response->headers->add('Pragma', 'no-cache');
+        Yii::$app->response->headers->add('Expires', '0');
         
-        // Limpiar de nuevo antes de enviar
-        if (ob_get_level()) {
+        // Limpiar una vez más antes de enviar
+        while (ob_get_level()) {
             ob_end_clean();
         }
         
-        // Enviar directamente
+        // Escribir directamente a la salida
         $writer->save('php://output');
-        exit;
+        
+        // Asegurar que no se procese nada más
+        Yii::$app->end();
     }
 }
