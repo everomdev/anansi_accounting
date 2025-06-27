@@ -248,11 +248,12 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                         <!-- Botón para descargar plantilla -->
                         <div class="col-md-3">
                             <?= Html::a('Descargar Plantilla', ['download-sales-template'], [
-                                'class' => 'btn btn-outline-primary',
+                                'class' => 'btn btn-outline-primary download-template-btn',
                                 'title' => 'Descargar plantilla Excel para importar ventas',
-                                'download' => '',
+                                'download' => 'Plantilla_Ventas.xlsx',
                                 'target' => '_blank',
-                                'rel' => 'noopener noreferrer'
+                                'rel' => 'noopener noreferrer',
+                                'onclick' => 'downloadTemplate(event, this.href)'
                             ]) ?>
                         </div>
                         
@@ -568,6 +569,34 @@ function setupSearchFilters() {
             clearBtn.hide();
         }
     });
+}
+
+// Función para manejar la descarga de plantilla en dispositivos móviles
+function downloadTemplate(event, url) {
+    // Detectar si es un dispositivo móvil
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        // Para dispositivos móviles, forzar la descarga de manera más robusta
+        event.preventDefault();
+        
+        // Crear un enlace temporal
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'Plantilla_Ventas.xlsx';
+        link.style.display = 'none';
+        
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // También intentar abrir en nueva ventana como respaldo
+        setTimeout(function() {
+            window.open(url, '_blank');
+        }, 100);
+    }
+    // Para desktop, dejar que el navegador maneje la descarga normalmente
 }
 JS;
 $this->registerJs($js);
