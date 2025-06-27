@@ -247,10 +247,9 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     <div class="row g-3 align-items-end">
                         <!-- Botón para descargar plantilla -->
                         <div class="col-md-3">
-                            <?= Html::a('Descargar Plantilla', ['download-sales-template-direct'], [
+                            <?= Html::a('Descargar Plantilla', ['download-sales-template'], [
                                 'class' => 'btn btn-outline-primary',
-                                'title' => 'Descargar plantilla Excel para importar ventas',
-                                'target' => '_blank'
+                                'title' => 'Descargar plantilla Excel para importar ventas'
                             ]) ?>
                         </div>
                         
