@@ -2335,7 +2335,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
         header('Cache-Control: max-age=0');
     
-        // Enviar el archivo al navegador
+        // Enviar el archivo directamente a la salida
         $writer->save('php://output');
         exit;
     }
@@ -2754,7 +2754,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationTimeValue->setErrorTitle('Error de entrada');
      $dataValidationTimeValue->setError('Este campo solo acepta valores numéricos');
      $dataValidationTimeValue->setPromptTitle('Ingrese el valor');
-     $dataValidationTimeValue->setPrompt('Por favor, ingrese un valor numérico.');
+     $dataValidationTimeValue->setPrompt('Por favor, ingrese un valor numérico para el tiempo de preparación');
      $dataValidationTimeValue->setFormula1(0);
      $dataValidationTimeValue->setFormula2(999999);
      
@@ -2768,7 +2768,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationDurationValue->setErrorTitle('Error de entrada');
      $dataValidationDurationValue->setError('Este campo solo acepta valores numéricos');
      $dataValidationDurationValue->setPromptTitle('Ingrese el valor');
-     $dataValidationDurationValue->setPrompt('Por favor, ingrese un valor numérico.');
+     $dataValidationDurationValue->setPrompt('Por favor, ingrese un valor numérico para la duración');
      $dataValidationDurationValue->setFormula1(0);
      $dataValidationDurationValue->setFormula2(999999);
     if ($type !== 'sub'){
@@ -3032,46 +3032,77 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
     public function actionDownloadSalesTemplate()
     {
-        // Crear nuevo libro de Excel
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Plantilla Ventas');
+        // Limpiar completamente cualquier buffer de salida antes de empezar
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        
+        try {
+            // Crear nuevo libro de Excel
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Plantilla Ventas');
 
-        // Configurar encabezados de información
-        $sheet->setCellValue('A1', 'MES:');
-        $sheet->setCellValue('B1', '');
-        $sheet->setCellValue('A2', 'AÑO:');
-        $sheet->setCellValue('B2', '');
+            // Configurar encabezados de información
+            $sheet->setCellValue('A1', 'MES:');
+            $sheet->setCellValue('B1', '');
+            $sheet->setCellValue('A2', 'AÑO:');
+            $sheet->setCellValue('B2', '');
 
-        // Agregar instrucciones
-        $sheet->setCellValue('A4', 'INSTRUCCIONES:');
-        $sheet->setCellValue('A5', '1. Complete el mes (1-12) y año en las celdas B1 y B2');
-        $sheet->setCellValue('A6', '2. Complete los datos de ventas en las columnas de abajo');
-        $sheet->setCellValue('A7', '3. Guarde el archivo y súbalo al sistema');
+            // Agregar instrucciones
+            $sheet->setCellValue('A4', 'INSTRUCCIONES:');
+            $sheet->setCellValue('A5', '1. Complete el mes (1-12) y año en las celdas B1 y B2');
+            $sheet->setCellValue('A6', '2. Complete los datos de ventas en las columnas de abajo');
+            $sheet->setCellValue('A7', '3. Guarde el archivo y súbalo al sistema');
 
-        // Configurar encabezados de datos
-        $sheet->setCellValue('A9', 'DESCRIPCIÓN');
-        $sheet->setCellValue('B9', 'VENTAS');
+            // Configurar encabezados de datos
+            $sheet->setCellValue('A9', 'DESCRIPCIÓN');
+            $sheet->setCellValue('B9', 'VENTAS');
 
-        // Ajustar anchos de columna
-        $sheet->getColumnDimension('A')->setWidth(50);
-        $sheet->getColumnDimension('B')->setWidth(15);
+            // Ajustar anchos de columna
+            $sheet->getColumnDimension('A')->setWidth(50);
+            $sheet->getColumnDimension('B')->setWidth(15);
 
-        // Crear el archivo
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            // Crear el archivo
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
 
-        // Nombre del archivo con timestamp para evitar cache
-        $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
+            // Nombre del archivo con timestamp para evitar cache
+            $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        // Crear archivo temporal
-        $tempFile = tempnam(sys_get_temp_dir(), 'sales_template_');
-        $writer->save($tempFile);
+            // Crear archivo temporal con mejor manejo
+            $tempFile = tempnam(sys_get_temp_dir(), 'sales_template_');
+            if (!$tempFile) {
+                throw new \Exception('No se pudo crear archivo temporal');
+            }
+            
+            $writer->save($tempFile);
+            
+            // Verificar que el archivo se creó correctamente
+            if (!file_exists($tempFile) || filesize($tempFile) == 0) {
+                throw new \Exception('Error al crear el archivo Excel');
+            }
 
-        // Usar Yii::$app->response->sendFile() que es mucho más robusto
-        // y maneja automáticamente todos los headers y compatibilidad móvil
-        return Yii::$app->response->sendFile($tempFile, $filename, [
-            'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'inline' => false // Forzar descarga
-        ]);
+            // Configurar response para descarga forzada
+            Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
+            Yii::$app->response->headers->add('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            Yii::$app->response->headers->add('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            Yii::$app->response->headers->add('Content-Length', filesize($tempFile));
+            Yii::$app->response->headers->add('Cache-Control', 'no-cache, no-store, must-revalidate');
+            Yii::$app->response->headers->add('Pragma', 'no-cache');
+            Yii::$app->response->headers->add('Expires', '0');
+            
+            // Leer el archivo y enviarlo
+            Yii::$app->response->data = file_get_contents($tempFile);
+            
+            // Limpiar archivo temporal
+            unlink($tempFile);
+            
+            return Yii::$app->response;
+            
+        } catch (\Exception $e) {
+            // En caso de error, enviar respuesta JSON
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            return ['error' => 'Error al generar archivo: ' . $e->getMessage()];
+        }
     }
 }
