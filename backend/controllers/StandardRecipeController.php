@@ -3063,69 +3063,15 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         // Nombre del archivo con timestamp para evitar cache
         $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        // Limpiar todos los buffers de salida
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // Crear archivo temporal para evitar problemas de buffering
+        // Crear archivo temporal
         $tempFile = tempnam(sys_get_temp_dir(), 'sales_template_');
         $writer->save($tempFile);
 
-        // Verificar que el archivo se creó correctamente
-        if (!file_exists($tempFile)) {
-            throw new \Exception('Error al crear el archivo temporal');
-        }
-
-        $fileSize = filesize($tempFile);
-        
-        // Detectar si es un dispositivo móvil
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        $isMobile = preg_match('/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i', $userAgent);
-        
-        // Configurar headers optimizados para máxima compatibilidad móvil
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . $fileSize);
-        header('Content-Transfer-Encoding: binary');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0, public');
-        header('Pragma: public');
-        header('Expires: 0');
-        
-        if ($isMobile) {
-            // Headers específicos para dispositivos móviles
-            header('Content-Description: File Transfer');
-            header('Accept-Ranges: bytes');
-            header('Connection: Keep-Alive');
-            header('X-Pad: avoid browser bug');
-            // Header adicional para forzar descarga en móviles
-            header('X-Content-Type-Options: nosniff');
-        }
-
-        // Asegurar que no hay salida adicional
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // Verificar una vez más que el archivo existe antes de enviarlo
-        if (!file_exists($tempFile) || !is_readable($tempFile)) {
-            throw new \Exception('Error: no se puede leer el archivo temporal');
-        }
-
-        // Deshabilitar el límite de tiempo para la descarga
-        set_time_limit(0);
-
-        // Enviar el archivo usando readfile para máxima compatibilidad
-        $result = readfile($tempFile);
-        
-        // Verificar que la lectura fue exitosa
-        if ($result === false) {
-            throw new \Exception('Error al enviar el archivo');
-        }
-        
-        // Limpiar archivo temporal
-        unlink($tempFile);
-        
-        exit;
+        // Usar Yii::$app->response->sendFile() que es mucho más robusto
+        // y maneja automáticamente todos los headers y compatibilidad móvil
+        return Yii::$app->response->sendFile($tempFile, $filename, [
+            'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'inline' => false // Forzar descarga
+        ]);
     }
 }
