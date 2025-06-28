@@ -287,6 +287,29 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
     </div>
 </div>
 
+<!-- Modal para resultados de importación -->
+<div class="modal fade" id="importResultModal" tabindex="-1" aria-labelledby="importResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importResultModalLabel">Resultado de la Importación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="import-result-content">
+                    <!-- El contenido será cargado dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- <button type="button" class="btn btn-success" id="reload-page-btn" style="display: none;">
+                    <i class="fas fa-sync-alt"></i> Recargar página
+                </button> -->
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= Html::beginForm(['save-monthly-sales'], 'post', ['id' => 'sales-form']) ?>
     <?= Html::hiddenInput('month', $selectedMonth, ['id' => 'month-hidden']) ?>
     <?= Html::hiddenInput('year', $selectedYear, ['id' => 'year-hidden']) ?>
@@ -457,9 +480,10 @@ $(document).ready(function() {
     
     // Configurar el formulario de importación de Excel
     $('#import-form').on('submit', function(e) {
+        e.preventDefault(); // Prevenir envío normal del formulario
+        
         const fileInput = $('#sales-file');
         if (fileInput.val() === '') {
-            e.preventDefault();
             Swal.fire({
                 title: 'Error',
                 text: 'Debe seleccionar un archivo Excel para importar.',
@@ -474,7 +498,61 @@ $(document).ready(function() {
             '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importando...'
         );
         
-        return true;
+        // Enviar formulario por AJAX
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                // Mostrar el resultado en el modal
+                $('#import-result-content').html(response);
+                $('#importResultModal').modal('show');
+                
+                // Mostrar botón de recarga si la importación fue exitosa
+                if (response.includes('alert-success') || response.includes('Importación completada')) {
+                    $('#reload-page-btn').show();
+                } else {
+                    $('#reload-page-btn').hide();
+                }
+                
+                // Limpiar el formulario
+                $('#sales-file').val('');
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = 'Error al procesar el archivo: ' + error;
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                
+                const errorHtml = '<div class="alert alert-danger">' +
+                    '<h6><i class="fas fa-exclamation-triangle"></i> Error</h6>' +
+                    '<p>' + errorMessage + '</p>' +
+                    '</div>';
+                
+                $('#import-result-content').html(errorHtml);
+                $('#importResultModal').modal('show');
+            },
+            complete: function() {
+                // Restaurar botón
+                $('#btn-import-excel').prop('disabled', false).text('Importar');
+            }
+        });
+        
+        return false;
+    });
+    
+    // Configurar botón de recarga de página
+    $('#reload-page-btn').on('click', function() {
+        location.reload();
+    });
+    
+    // Ocultar botón de recarga cuando se cierre el modal
+    $('#importResultModal').on('hidden.bs.modal', function() {
+        $('#reload-page-btn').hide();
     });
 });
 
@@ -682,6 +760,93 @@ $css = <<<CSS
         right: 20px;
         text-align: center;
     }
+}
+
+/* Estilos para el modal de resultados de importación */
+#importResultModal .modal-dialog {
+    max-width: 700px;
+}
+
+#importResultModal .modal-body {
+    padding: 1.5rem;
+}
+
+#importResultModal .alert {
+    border: none;
+    border-left: 4px solid;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#importResultModal .alert-success {
+    border-left-color: #28a745;
+    background-color: #d4f6d4;
+    color: #155724;
+}
+
+#importResultModal .alert-warning {
+    border-left-color: #ffc107;
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+#importResultModal .alert-info {
+    border-left-color: #17a2b8;
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+#importResultModal .alert-danger {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#importResultModal .alert h6 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+#importResultModal .alert-content {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    background-color: #ffffff;
+}
+
+#importResultModal .alert-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#importResultModal .alert-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#importResultModal .alert-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+#importResultModal .alert-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+#importResultModal .alert-content .small {
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+#importResultModal .alert-content .small:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
 }
 CSS;
 $this->registerCss($css);

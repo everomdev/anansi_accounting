@@ -18,6 +18,7 @@ use common\models\Category;
 use Da\User\Traits\ContainerAwareTrait;
 use Da\User\Validator\AjaxRequestModelValidator;
 use rico\yii2images\models\Image;
+use yii\helpers\Html;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 use common\models\StandardRecipe;
@@ -2937,6 +2938,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
                     $importedCount = 0;
                     $errors = [];
+                    $warnings = [];
 
                     // Leer datos desde la fila 10 en adelante
                     $row = 10;
@@ -2956,27 +2958,59 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
                             continue;
                         }
 
-                        // Buscar la receta o combo por descripción
+                        // Normalizar el nombre: eliminar espacios extra, dobles y al inicio/final
+                        $normalizedDescription = preg_replace('/\s+/', ' ', trim($description));
+
+                        // Buscar la receta o combo por descripción normalizada (coincidencia exacta)
                         $recipe = StandardRecipe::find()
                             ->where([
                                 'business_id' => $business->id,
-                                'title' => $description,
+                                'title' => $normalizedDescription,
                                 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
                                 'in_construction' => 0
                             ])
                             ->one();
 
+                        $usedFuzzySearch = false;
+                        // Si no se encuentra con coincidencia exacta, buscar con tolerancia a espacios extra
+                        if (!$recipe) {
+                            $recipe = StandardRecipe::find()
+                                ->where(['business_id' => $business->id, 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN, 'in_construction' => 0])
+                                ->andWhere(['like', 'REPLACE(REPLACE(TRIM(title), "  ", " "), "  ", " ")', $normalizedDescription])
+                                ->one();
+                            if ($recipe) {
+                                $usedFuzzySearch = true;
+                            }
+                        }
+
                         $combo = null;
                         if (!$recipe) {
+                            // Buscar combo con coincidencia exacta
                             $combo = \common\models\Menu::find()
                                 ->where([
                                     'business_id' => $business->id,
-                                    'name' => $description
+                                    'name' => $normalizedDescription
                                 ])
                                 ->one();
+                            
+                            // Si no se encuentra con coincidencia exacta, buscar con tolerancia a espacios extra
+                            if (!$combo) {
+                                $combo = \common\models\Menu::find()
+                                    ->where(['business_id' => $business->id])
+                                    ->andWhere(['like', 'REPLACE(REPLACE(TRIM(name), "  ", " "), "  ", " ")', $normalizedDescription])
+                                    ->one();
+                                if ($combo) {
+                                    $usedFuzzySearch = true;
+                                }
+                            }
                         }
 
                         if ($recipe) {
+                            // Generar advertencia si se encontró usando búsqueda tolerante a espacios
+                            if ($usedFuzzySearch) {
+                                $warnings[] = "Fila $row: Se encontró la receta '$description' con coincidencia aproximada. Verifique que el nombre esté correctamente escrito.";
+                            }
+                            
                             // Usar el método estático saveSales para guardar las ventas de la receta
                             if (\common\models\MonthlySales::saveSales(
                                 \common\models\MonthlySales::TYPE_RECIPE,
@@ -2991,6 +3025,11 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
                             }
 
                         } elseif ($combo) {
+                            // Generar advertencia si se encontró usando búsqueda tolerante a espacios
+                            if ($usedFuzzySearch) {
+                                $warnings[] = "Fila $row: Se encontró el combo '$description' con coincidencia aproximada. Verifique que el nombre esté correctamente escrito.";
+                            }
+                            
                             // Usar el método estático saveSales para guardar las ventas del combo
                             if (\common\models\MonthlySales::saveSales(
                                 \common\models\MonthlySales::TYPE_MENU,
@@ -3005,7 +3044,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
                             }
 
                         } else {
-                            $errors[] = "Fila $row: No se encontró receta o combo con el nombre '$description'";
+                            $errors[] = "Fila $row: No se encontró receta o combo con el nombre '$description'. Verifique que el nombre coincida exactamente con los registros existentes.";
                         }
 
                         $row++;
@@ -3013,20 +3052,78 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
                     
                     // Preparar mensaje de resultado
                     $message = "Importación completada. $importedCount registros importados.";
-                    if (!empty($errors)) {
-                        $message .= "\n\nErrores encontrados:\n" . implode("\n", $errors);
+                    $hasWarnings = !empty($warnings);
+                    $hasErrors = !empty($errors);
+                    
+                    // Generar HTML para el modal de forma más simple
+                    $html = '';
+                    
+                    // Resumen principal
+                    $alertType = $hasErrors ? 'alert-warning' : 'alert-success';
+                    $iconClass = $hasErrors ? 'fas fa-exclamation-triangle text-warning' : 'fas fa-check-circle text-success';
+                    
+                    $html .= '<div class="alert ' . $alertType . ' d-flex align-items-center mb-3">';
+                    $html .= '<i class="' . $iconClass . ' me-3 fs-4"></i>';
+                    $html .= '<div>';
+                    $html .= '<h6 class="mb-1 fw-bold">Resultado de la Importación</h6>';
+                    $html .= '<p class="mb-0">' . Html::encode($message) . '</p>';
+                    $html .= '</div>';
+                    $html .= '</div>';
+                    
+                    // Mostrar advertencias si las hay
+                    /*if ($hasWarnings) {
+                        $html .= '<div class="alert alert-info mb-3">';
+                        $html .= '<h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Advertencias (' . count($warnings) . ' encontradas - datos procesados correctamente)</h6>';
+                        $html .= '<div class="alert-content border rounded p-2" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">';
+                        foreach ($warnings as $index => $warning) {
+                            $html .= '<div class="text-muted small mb-1"><strong>' . ($index + 1) . '.</strong> ' . Html::encode($warning) . '</div>';
+                        }
+                        $html .= '</div>';
+                        $html .= '</div>';
+                    }*/
+                    
+                    // Mostrar errores si los hay
+                    if ($hasErrors) {
+                        $html .= '<div class="alert alert-danger mb-3">';
+                        $html .= '<h6 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Errores encontrados (' . count($errors) . ' registros no procesados)</h6>';
+                        $html .= '<div class="alert-content border rounded p-2" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa;">';
+                        foreach ($errors as $index => $error) {
+                            $html .= '<div class="text-muted small mb-1"><strong>' . ($index + 1) . '.</strong> ' . Html::encode($error) . '</div>';
+                        }
+                        $html .= '</div>';
+                        $html .= '</div>';
                     }
-
-                    Yii::$app->session->setFlash('success', $message);
+                    
+                    // Retornar el HTML directamente para AJAX
+                    return $html;
 
                 } catch (\Exception $e) {
-                    Yii::$app->session->setFlash('error', 'Error al procesar el archivo: ' . $e->getMessage());
+                    // Generar HTML de error para el modal
+                    $html = '<div class="alert alert-danger d-flex align-items-center mb-3">';
+                    $html .= '<i class="fas fa-exclamation-triangle text-danger me-3 fs-4"></i>';
+                    $html .= '<div>';
+                    $html .= '<h6 class="mb-1 fw-bold">Error al procesar el archivo</h6>';
+                    $html .= '<p class="mb-0">' . Html::encode($e->getMessage()) . '</p>';
+                    $html .= '</div>';
+                    $html .= '</div>';
+                    
+                    return $html;
                 }
             } else {
-                Yii::$app->session->setFlash('error', 'No se seleccionó ningún archivo');
+                // Error: no se seleccionó archivo
+                $html = '<div class="alert alert-danger d-flex align-items-center mb-3">';
+                $html .= '<i class="fas fa-exclamation-triangle text-danger me-3 fs-4"></i>';
+                $html .= '<div>';
+                $html .= '<h6 class="mb-1 fw-bold">Error</h6>';
+                $html .= '<p class="mb-0">No se seleccionó ningún archivo</p>';
+                $html .= '</div>';
+                $html .= '</div>';
+                
+                return $html;
             }
         }
 
+        // Si no es una solicitud POST, redirigir a la vista de ventas
         return $this->redirect(['sales']);
     }
 
