@@ -2331,14 +2331,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $fileName = $isSubrecipe ? 'Subrecetas_Exportadas.xlsx' : 'Recetas_Exportadas.xlsx';
     
-        // Configurar las cabeceras para forzar la descarga
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $fileName . '"');
-        header('Cache-Control: max-age=0');
-    
-        // Enviar el archivo directamente a la salida
-        $writer->save('php://output');
-        exit;
+        // Crear archivo temporal y enviarlo correctamente
+        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $writer->save($tempFile);
+
+        return Yii::$app->response->sendFile($tempFile, $fileName);
     }
 
  public function actionExportRecipesPlantilla($type)
@@ -2879,13 +2876,12 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
      $writer->setPreCalculateFormulas(true); // Calcular fórmulas antes de guardar
      
-     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . ($type === 'sub' ? 'Plantilla para importar Subrecetas.xlsx' : 'Plantilla para importar Recetas.xlsx') . '"');
-     header('Cache-Control: max-age=0');
-     
-     // Guardar el archivo directamente a la salida
-     $writer->save('php://output');
-     exit;
+     // Crear archivo temporal y enviarlo correctamente
+     $filename = ($type === 'sub') ? 'Plantilla para importar Subrecetas.xlsx' : 'Plantilla para importar Recetas.xlsx';
+     $tempFile = tempnam(sys_get_temp_dir(), $filename);
+     $writer->save($tempFile);
+
+     return Yii::$app->response->sendFile($tempFile, $filename);
  }
  public function actionEditStep()
 {
