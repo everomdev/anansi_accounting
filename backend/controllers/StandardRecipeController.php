@@ -3129,11 +3129,6 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
     public function actionDownloadSalesTemplate()
     {
-        // Limpiar cualquier salida previa de manera agresiva
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
         // Crear nuevo libro de Excel
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -3159,19 +3154,20 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         $sheet->getColumnDimension('A')->setWidth(50);
         $sheet->getColumnDimension('B')->setWidth(15);
 
-        // Crear el archivo
+        // Aplicar estilo a los encabezados
+        $sheet->getStyle('A1:B2')->getFont()->setBold(true);
+        $sheet->getStyle('A4')->getFont()->setBold(true);
+        $sheet->getStyle('A9:B9')->getFont()->setBold(true);
+        $sheet->getStyle('A9:B9')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FFCCCCCC');
+
+        // Crear el archivo en temporal y enviarlo
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-
-        // Nombre del archivo con timestamp
         $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), $filename);
+        $writer->save($tempFile);
 
-        // Configurar headers para descarga (igual que otros métodos que funcionan)
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-        
-        // Enviar archivo directamente a la salida
-        $writer->save('php://output');
-        exit;
+        return Yii::$app->response->sendFile($tempFile, $filename);
     }
 }
