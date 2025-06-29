@@ -79,6 +79,18 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                         ['prompt' => '-- Seleccione --']
                     )->label('Unidad de Compra*') ?>
                 </div>
+                
+                <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
+                    <?= $form->field($model, 'brand')->textInput([
+                        'placeholder' => 'Ej: Nestlé, Coca-Cola'
+                    ])->label('Marca') ?>
+                </div>
+                
+                <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
+                    <?= $form->field($model, 'presentation')->textInput([
+                        'placeholder' => 'Ej: Bolsa 1kg, Botella 500ml'
+                    ])->label('Presentación') ?>
+                </div>
             </div>
             
             <div class="row mb-3">

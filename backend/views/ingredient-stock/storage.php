@@ -26,9 +26,33 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             ['class' => 'yii\grid\SerialColumn'],
 
             'key',
-            'ingredient',
+            [
+                'attribute' => 'ingredient',
+                'label' => 'Insumo',
+                'value' => function ($data) {
+                    $parts = [];
+                    
+                    // Agregar el nombre del insumo
+                    $parts[] = $data->ingredient;
+                    
+                    // Agregar marca si existe
+                    if (!empty($data->brand)) {
+                        $parts[] = $data->brand;
+                    }
+                    
+                    // Agregar presentación si existe
+                    if (!empty($data->presentation)) {
+                        $parts[] = $data->presentation;
+                    }
+                    
+                    // Agregar unidad de medida
+                    $parts[] = $data->um;
+                    
+                    return implode('  ', $parts);
+                },
+            ],
             'quantity',
-            'um',            [
+            [
                 'label' => Yii::t('app', "Value"),
                 'value' => function ($data) {
                     return formatPrice($data->valueInMoney);

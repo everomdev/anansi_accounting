@@ -134,6 +134,24 @@ $this->registerCss('
             'key',
             'ingredient',
             [
+                'attribute' => 'brand',
+                'label' => 'Marca',
+                'value' => function ($data) {
+                    return $data->brand ?: '-';
+                },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'presentation',
+                'label' => 'Presentación',
+                'value' => function ($data) {
+                    return $data->presentation ?: '-';
+                },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
                 'attribute' => 'um',
                 'label' => 'Unidad<br>Compra',
                 'encodeLabel' => false

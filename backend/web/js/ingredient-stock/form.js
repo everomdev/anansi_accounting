@@ -1,3 +1,10 @@
+// Inicializar el formateador de números si está disponible
+$(document).ready(function() {
+    if (window.BusinessNumberFormatter) {
+        window.BusinessNumberFormatter.setupAutoFormatInputs();
+    }
+});
+
 $(document).on('change', "#final-quantity, #initial-quantity", function (event) {
     $("#ingredientstock-yield").val(80);
     event.preventDefault();
@@ -50,11 +57,35 @@ $(document).on('change', '#ingredientstock-category_id', function (event) {
 })
 
 $(document).on('change', '#ingredientstock-price, #ingredientstock-portions_per_unit, #ingredientstock-yield', function (event) {
-    let price = $("#ingredientstock-price").val();
+    // Solo ejecutar si no es el campo de precio (que ya tiene su propio manejo en tiempo real)
+    if (event.target.id === 'ingredientstock-price') {
+        return; // El formateo en tiempo real ya maneja esto
+    }
+    
+    let priceField = $("#ingredientstock-price")[0];
     let portions = $("#ingredientstock-portions_per_unit").val();
-    let yield = $("#ingredientstock-yield").val();
-    if (parseFloat(price) > 0 && parseFloat(portions) > 0 && parseFloat(yield) > 0) {
-        let adjustedPrice = (parseFloat(price) / parseFloat(portions)) / (parseFloat(yield) / 100);
-        $("#ingredientstock-adjustedprice").val(adjustedPrice.toFixed(2));
+    let yieldValue = $("#ingredientstock-yield").val();
+    
+    // Usar el valor raw guardado por el formateador automático si está disponible
+    let price;
+    if (priceField && priceField.hasAttribute('data-raw-value')) {
+        price = parseFloat(priceField.getAttribute('data-raw-value'));
+    } else {
+        let priceValue = $("#ingredientstock-price").val();
+        price = window.BusinessNumberFormatter ? 
+            window.BusinessNumberFormatter.parseNumber(priceValue) : 
+            parseFloat(priceValue);
+    }
+        
+    if (price > 0 && parseFloat(portions) > 0 && parseFloat(yieldValue) > 0) {
+        let adjustedPrice = (price / parseFloat(portions)) / (parseFloat(yieldValue) / 100);
+        
+        // Usar el nuevo formateador para mostrar el resultado
+        if (window.BusinessNumberFormatter) {
+            $("#ingredientstock-adjustedprice").val(window.BusinessNumberFormatter.formatNumber(adjustedPrice, 2));
+            $("#ingredientstock-adjustedprice")[0].setAttribute('data-raw-value', adjustedPrice);
+        } else {
+            $("#ingredientstock-adjustedprice").val(adjustedPrice.toFixed(2));
+        }
     }
 });

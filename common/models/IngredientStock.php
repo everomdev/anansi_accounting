@@ -84,12 +84,12 @@ class IngredientStock extends \yii\db\ActiveRecord
             [['quantity', 'yield', 'portions_per_unit', 'final_quantity'], 'number'],
             [['price', 'adjustedPrice'], 'safe'],
             [['price', 'adjustedPrice'], 'validatePrice'],
-            [['observations', '_category', 'key'], 'string'],
-            [['ingredient', 'um', 'portion_um'], 'string', 'max' => 255],
+            [['observations', '_category', 'key', 'brand', 'presentation'], 'string'],
+            [['ingredient', 'um', 'portion_um', 'brand', 'presentation'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient', 'um', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'um', 'business_id'], 'message' => Yii::t('app', "You already have registered this ingredient ({value})")],
             [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
-            [['ingredient', '_category', 'observations'], 'filter', 'filter' => 'trim'],
+            [['ingredient', '_category', 'observations', 'brand', 'presentation'], 'filter', 'filter' => 'trim'],
             [['key'], 'unique', 'targetAttribute' => ['key', 'business_id'], 'message' => Yii::t('app', "You already have registered this key ({value})")],
             [['providers'], 'each', 'rule' => ['integer']],
         ];
@@ -114,6 +114,8 @@ class IngredientStock extends \yii\db\ActiveRecord
             'price' => Yii::t('app', "Purchase Price"),
             'adjustedPrice' => Yii::t('app', "Adjusted Price"),
             'providers' => Yii::t('app', "Proveedores"),
+            'brand' => Yii::t('app', "Marca"),
+            'presentation' => Yii::t('app', "Presentación"),
         ];
     }
 

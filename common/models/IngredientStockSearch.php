@@ -18,7 +18,7 @@ class IngredientStockSearch extends IngredientStock
     {
         return [
             [['id', 'business_id'], 'integer'],
-            [['ingredient', 'um', 'portion_um', 'observations', 'key'], 'safe'],
+            [['ingredient', 'um', 'portion_um', 'observations', 'key', 'brand', 'presentation'], 'safe'],
             [['quantity', 'yield', 'portions_per_unit'], 'number'],
         ];
     }
@@ -70,6 +70,8 @@ class IngredientStockSearch extends IngredientStock
             ->andFilterWhere(['like', 'um', $this->um])
             ->andFilterWhere(['like', 'portion_um', $this->portion_um])
             ->andFilterWhere(['like', 'key', $this->key])
+            ->andFilterWhere(['like', 'brand', $this->brand])
+            ->andFilterWhere(['like', 'presentation', $this->presentation])
             ->andFilterWhere(['like', 'observations', $this->observations]);
 
         return $dataProvider;
