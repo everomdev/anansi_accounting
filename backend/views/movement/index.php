@@ -94,7 +94,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     return implode('  ', $parts);
                 },
                 'filter' => \kartik\select2\Select2::widget([
-                    'data' => \yii\helpers\ArrayHelper::map(\common\models\IngredientStock::find()->all(), 'id', function($model) {
+                    'data' => \yii\helpers\ArrayHelper::map(\common\models\IngredientStock::find()->where(['business_id' => $business->id])->all(), 'id', function($model) {
                         $parts = [];
                         $parts[] = $model->ingredient;
                         if (!empty($model->brand)) {
