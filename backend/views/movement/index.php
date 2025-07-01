@@ -73,11 +73,41 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             ],
             [
                 'attribute' => 'ingredient_id',
+                'label' => 'Insumo',
                 'value' => function ($model) {
-                    return $model->ingredient->ingredient;
+                    $ingredient = $model->ingredient;
+                    $parts = [];
+                    
+                    // Agregar el nombre del insumo
+                    $parts[] = $ingredient->ingredient;
+                    
+                    // Agregar marca si existe
+                    if (!empty($ingredient->brand)) {
+                        $parts[] = $ingredient->brand;
+                    }
+                    
+                    // Agregar presentación si existe
+                    if (!empty($ingredient->presentation)) {
+                        $parts[] = $ingredient->presentation;
+                    }
+                    if (!empty($ingredient->um)) {
+                        $parts[] = $ingredient->um;
+                    }
+                    
+                    return implode('  ', $parts);
                 },
                 'filter' => \kartik\select2\Select2::widget([
-                    'data' => \yii\helpers\ArrayHelper::map(\common\models\IngredientStock::find()->all(), 'id', 'ingredient'),
+                    'data' => \yii\helpers\ArrayHelper::map(\common\models\IngredientStock::find()->all(), 'id', function($model) {
+                        $parts = [];
+                        $parts[] = $model->ingredient;
+                        if (!empty($model->brand)) {
+                            $parts[] = $model->brand;
+                        }
+                        if (!empty($model->presentation)) {
+                            $parts[] = $model->presentation;
+                        }
+                        return implode(' + ', $parts);
+                    }),
                     'model' => $searchModel,
                     'attribute' => 'ingredient_id',
                     'options' => [

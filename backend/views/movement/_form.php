@@ -24,7 +24,13 @@ $currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($busi
 $stock = (new \yii\db\Query())
     ->select([
         "ingredient_stock.*",
-        "CONCAT(ingredient_stock.ingredient, ' (',ingredient_stock.um,')') as label"
+        "CONCAT(
+            ingredient_stock.ingredient,
+            CASE WHEN ingredient_stock.brand IS NOT NULL AND ingredient_stock.brand != '' THEN CONCAT('  ', ingredient_stock.brand) ELSE '' END,
+            CASE WHEN ingredient_stock.presentation IS NOT NULL AND ingredient_stock.presentation != '' THEN CONCAT('  ', ingredient_stock.presentation) ELSE '' END,
+            '  ', ingredient_stock.um,
+            ' (', ingredient_stock.key, ')'
+        ) as label"
     ])
     ->from('ingredient_stock')
     ->where(['business_id' => $business->id])
