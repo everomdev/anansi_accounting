@@ -27,9 +27,7 @@ $stock = (new \yii\db\Query())
         "CONCAT(
             ingredient_stock.ingredient,
             CASE WHEN ingredient_stock.brand IS NOT NULL AND ingredient_stock.brand != '' THEN CONCAT('  ', ingredient_stock.brand) ELSE '' END,
-            CASE WHEN ingredient_stock.presentation IS NOT NULL AND ingredient_stock.presentation != '' THEN CONCAT('  ', ingredient_stock.presentation) ELSE '' END,
-            '  ', ingredient_stock.um,
-            ' (', ingredient_stock.key, ')'
+            CASE WHEN ingredient_stock.presentation IS NOT NULL AND ingredient_stock.presentation != '' THEN CONCAT('  ', ingredient_stock.presentation) ELSE '' END
         ) as label"
     ])
     ->from('ingredient_stock')

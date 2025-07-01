@@ -154,7 +154,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                             'value' => $model->adjustedPrice ? formatPrice($model->adjustedPrice, 2, false) : ''
                         ]
                     ])->textInput()->label("Precio ajustado*") ?>
-                    <div class="form-text">Calculado: Precio ÷ Factor</div>
+                    <div class="form-text">Calculado: (Precio ÷ Equivalencias) ÷ Factor</div>
                 </div>
             </div>
             
@@ -356,16 +356,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function calculateAdjustedPrice() {
         if (!priceField || !yieldField || !adjustedPriceField) return;
         
-        // Usar el valor raw guardado
+        // Obtener referencias a los campos necesarios
+        const portionsField = document.getElementById('ingredientstock-portions_per_unit');
+        
+        // Usar el valor raw guardado del precio
         let price = parseFloat(priceField.getAttribute('data-raw-value')) || 0;
         let yieldValue = parseFloat(yieldField.value);
+        let portionsPerUnit = parseFloat(portionsField ? portionsField.value : 1) || 1;
         
-        if (!isNaN(price) && !isNaN(yieldValue) && yieldValue > 0 && price > 0) {
+        if (!isNaN(price) && !isNaN(yieldValue) && !isNaN(portionsPerUnit) && yieldValue > 0 && price > 0 && portionsPerUnit > 0) {
             // Convertir porcentaje a decimal (100% = 1.0)
             yieldValue = yieldValue / 100;
             
-            // Calcular precio ajustado: precio ÷ factor de rendimiento
-            const adjustedPrice = price / yieldValue;
+            // Nueva fórmula: (Precio ÷ Equivalencias) ÷ Factor de rendimiento
+            const pricePerPortion = price / portionsPerUnit;
+            const adjustedPrice = pricePerPortion / yieldValue;
             
             // Crear un input temporal para formatear el resultado
             const tempInput = document.createElement('input');
@@ -405,6 +410,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (yieldField) {
         yieldField.addEventListener('input', validateYield);
         yieldField.addEventListener('change', validateYield);
+    }
+    
+    // Agregar evento para recalcular cuando cambien las equivalencias
+    const portionsField = document.getElementById('ingredientstock-portions_per_unit');
+    if (portionsField) {
+        portionsField.addEventListener('input', function() {
+            setTimeout(calculateAdjustedPrice, 10);
+        });
+        portionsField.addEventListener('change', function() {
+            setTimeout(calculateAdjustedPrice, 10);
+        });
     }
     
     // Verificar al cargar la página

@@ -90,9 +90,6 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     if (!empty($ingredient->presentation)) {
                         $parts[] = $ingredient->presentation;
                     }
-                    if (!empty($ingredient->um)) {
-                        $parts[] = $ingredient->um;
-                    }
                     
                     return implode('  ', $parts);
                 },
