@@ -89,8 +89,19 @@ $categories = RecipeCategory::find()
                     },
                 ],
                 [
-                    'class' => \yii\grid\SerialColumn::class,
-                    'header' => '#'
+                    'class' => 'yii\grid\DataColumn',
+                    'header' => '#',
+                    'headerOptions' => ['style' => 'text-align: center;'],
+                    'contentOptions' => ['style' => 'text-align: center;'],
+                    'value' => function ($model, $key, $index, $column) use ($pagination) {
+                        // Asegurarnos de que los valores sean correctos
+                        $pageSize = $pagination->pageSize;
+                        $page = (int)Yii::$app->request->get('page', 0); // Obtenemos la página directamente
+                        $offset = $page * $pageSize;
+                        
+                        // Calcular la posición global
+                        return $index + 1 + $offset;
+                    }
                 ],
                 [
                     'attribute' => 'title',
