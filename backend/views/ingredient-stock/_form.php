@@ -153,8 +153,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                             'data-format' => 'price',
                             'value' => $model->adjustedPrice ? formatPrice($model->adjustedPrice, 2, false) : ''
                         ]
-                    ])->textInput()->label("Precio ajustado*") ?>
-                    <div class="form-text">Calculado: (Precio ÷ Equivalencias) ÷ Factor</div>
+                    ])->textInput()->label("Precio ajustado") ?>
                 </div>
             </div>
             
