@@ -37,12 +37,13 @@ $this->registerCss('
         color: #333;
         text-decoration: none;
     }
-        /* Estilos para encabezados fijos */
+        
+    /* Estilos para encabezados fijos */
     .sticky-header-container {
         position: relative;
         overflow: auto;
         max-height: calc(90vh - 80px); /* Ajusta según tu diseño */
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         border: 1px solid #dee2e6;
         border-radius: 4px;
     }
@@ -59,8 +60,6 @@ $this->registerCss('
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     
-   
-    
     /* Mejorar la apariencia de las columnas ordenables */
     .sortable-column {
         background-color: rgba(0,0,0,0.01);
@@ -70,6 +69,27 @@ $this->registerCss('
     .sticky-header-table th {
         white-space: normal;
         vertical-align: middle;
+    }
+    
+    /* Estilos para filtros activos */
+    .filter-active {
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+        background-color: #f8f9ff !important;
+    }
+    
+    /* Mejorar la apariencia de los campos de filtro */
+    .grid-view .filters input[type="text"] {
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 0.375rem 0.75rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .grid-view .filters input[type="text"]:focus {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
 ');
 ?>
@@ -125,20 +145,58 @@ $this->registerCss('
         'id' => 'ingredient-stock-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
-        'tableOptions' => ['class' => 'table sticky-header-table'],
+        'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
         'options' => ['class' => 'grid-view sticky-header-grid'],
         'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
+        'pager' => [
+            'class' => \yii\bootstrap5\LinkPager::class,
+            'options' => ['class' => 'pagination pagination-sm'],
+            'maxButtonCount' => 10,
+            'firstPageLabel' => '<i class="fas fa-angle-double-left">Primera página</i>',
+            'lastPageLabel' => '<i class="fas fa-angle-double-right">Última página</i>',
+            'prevPageLabel' => '<i class="fas fa-angle-left"></i>',
+            'nextPageLabel' => '<i class="fas fa-angle-right"></i>',
+        ],
         'columns' => [
             ['class' => \yii\grid\CheckboxColumn::class],
-            ['class' => 'yii\grid\SerialColumn'],
-            'key',
-            'ingredient',
+            [
+                'label' => '#',
+                'value' => function ($model, $key, $index, $grid) use ($dataProvider) {
+                    // Calculate overall position based on current page and per page count
+                    $pagination = $dataProvider->getPagination();
+                    $page = $pagination->getPage();
+                    $pageSize = $pagination->getPageSize();
+                    return $page * $pageSize + $index + 1;
+                },
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+            ],
+            [
+                'attribute' => 'key',
+                'label' => 'Clave',
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'key', [
+                    'class' => 'form-control form-control-sm',
+                    'data-trigger-change' => 'true'
+                ]),
+            ],
+            [
+                'attribute' => 'ingredient',
+                'label' => 'Ingrediente',
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'ingredient', [
+                    'class' => 'form-control form-control-sm',
+                    'data-trigger-change' => 'true'
+                ]),
+            ],
             [
                 'attribute' => 'brand',
                 'label' => 'Marca',
                 'value' => function ($data) {
                     return $data->brand ?: '-';
                 },
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'brand', [
+                    'class' => 'form-control form-control-sm',
+                    'data-trigger-change' => 'true'
+                ]),
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],
@@ -148,18 +206,27 @@ $this->registerCss('
                 'value' => function ($data) {
                     return $data->presentation ?: '-';
                 },
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'presentation', [
+                    'class' => 'form-control form-control-sm',
+                    'data-trigger-change' => 'true'
+                ]),
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
                 'attribute' => 'um',
                 'label' => 'Unidad<br>Compra',
-                'encodeLabel' => false
+                'encodeLabel' => false,
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'um', [
+                    'class' => 'form-control form-control-sm',
+                    'data-trigger-change' => 'true'
+                ]),
             ],
             [
                 'attribute' => 'portions_per_unit',
                 'label' => 'EQ. Uni.<br>Cocina',
                 'encodeLabel' => false,
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],
@@ -167,6 +234,10 @@ $this->registerCss('
                 'attribute' => 'portion_um',
                 'label' => 'Unidad<br>de Cocina',
                 'encodeLabel' => false,
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'portion_um', [
+                    'class' => 'form-control form-control-sm',
+                    'data-trigger-change' => 'true'
+                ]),
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],            [
@@ -176,41 +247,48 @@ $this->registerCss('
                     return formatPercentage($data->yield);
                 },
                 'encodeLabel' => false,
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
-            ],            [
+            ],
+            [
                 'attribute' => 'lastUnitPrice',
                 'label' => 'Último<br>precio',
                 'value' => function ($data) {
                     return formatPrice($data->lastUnitPrice);
                 },
                 'encodeLabel' => false,
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
                     'class' => 'sortable-column',
                     'data-sort-by' => 'lastUnitPrice'
                 ],
-            ],            [
+            ],
+            [
                 'attribute' => 'avgUnitPrice',
                 'label' => 'Precio<br>promedio',
                 'value' => function ($data) {
                     return formatPrice($data->avgUnitPrice);
                 },
                 'encodeLabel' => false,
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
                     'class' => 'sortable-column',
                     'data-sort-by' => 'avgUnitPrice'
                 ],
-            ],            [
+            ],
+            [
                 'attribute' => 'higherUnitPrice',
                 'label' => 'Precio<br>más alto',
                 'value' => function ($data) {
                     return formatPrice($data->higherUnitPrice);
                 },
                 'encodeLabel' => false,
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
@@ -224,6 +302,7 @@ $this->registerCss('
                 'value' => function ($model) use ($count) {
                     return $count[$model->id]['recipes'] ?? 0;
                 },
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
@@ -237,6 +316,7 @@ $this->registerCss('
                 'value' => function ($model) use ($count) {
                     return $count[$model->id]['subRecipes'] ?? 0;
                 },
+                'filter' => false, // Columna calculada, no filtrable
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
@@ -371,8 +451,9 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 <?php
 \yii\bootstrap5\Modal::end();
 ?>
-<script>
-    // Detector de cambio en elementos por página
+<?php
+$this->registerJs("
+// Detector de cambio en elementos por página
 document.getElementById('per-page-selector').addEventListener('change', function() {
     const pageSize = this.value;
     
@@ -387,4 +468,104 @@ document.getElementById('per-page-selector').addEventListener('change', function
         timeout: 10000
     });
 });
-</script>
+
+// Destacar la columna al pasar el mouse
+const headerCells = document.querySelectorAll('#ingredient-stock-grid thead th');
+if (headerCells.length) {
+    headerCells.forEach((cell, index) => {
+        cell.addEventListener('mouseenter', () => {
+            highlightColumn(index);
+        });
+        
+        cell.addEventListener('mouseleave', () => {
+            unhighlightColumn(index);
+        });
+    });
+}
+
+function highlightColumn(index) {
+    const table = document.getElementById('ingredient-stock-grid');
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        if (cells[index]) {
+            cells[index].classList.add('bg-light');
+        }
+    });
+}
+
+function unhighlightColumn(index) {
+    const table = document.getElementById('ingredient-stock-grid');
+    const rows = table.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        if (cells[index]) {
+            cells[index].classList.remove('bg-light');
+        }
+    });
+}
+
+// Mejorar la experiencia de filtros
+$(document).ready(function() {
+    // Buscar solo al presionar Enter
+    $(document).on('keypress', '[data-trigger-change]', function(e) {
+        if (e.which === 13) { // Enter key
+            var form = $(this).closest('form');
+            var container = '#ingredient-stock-pjax';
+            
+            // Agregar clase visual de filtro activo
+            if ($(this).val().trim() !== '') {
+                $(this).addClass('filter-active');
+            } else {
+                $(this).removeClass('filter-active');
+            }
+            
+            $.pjax.reload({
+                container: container,
+                data: form.serialize(),
+                timeout: 10000
+            });
+        }
+    });
+    
+    // También buscar cuando el campo pierde el foco (blur)
+    $(document).on('blur', '[data-trigger-change]', function() {
+        var form = $(this).closest('form');
+        var container = '#ingredient-stock-pjax';
+        
+        // Agregar clase visual de filtro activo
+        if ($(this).val().trim() !== '') {
+            $(this).addClass('filter-active');
+        } else {
+            $(this).removeClass('filter-active');
+        }
+        
+        $.pjax.reload({
+            container: container,
+            data: form.serialize(),
+            timeout: 10000
+        });
+    });
+    
+    // Mantener el estado visual de filtros activos después de PJAX
+    $(document).on('pjax:success', function() {
+        $('[data-trigger-change]').each(function() {
+            if ($(this).val().trim() !== '') {
+                $(this).addClass('filter-active');
+            } else {
+                $(this).removeClass('filter-active');
+            }
+        });
+    });
+    
+    // Aplicar estado inicial de filtros activos
+    $('[data-trigger-change]').each(function() {
+        if ($(this).val().trim() !== '') {
+            $(this).addClass('filter-active');
+        }
+    });
+});
+");
+?>
