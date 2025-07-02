@@ -86,7 +86,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']])
                         <tbody>                        
                             <?php foreach ($model->convoyIngredients as $convoyIngredient): ?>
                             <tr>
-                                <td><?= $convoyIngredient->model->name ?></td>
+                                <td>
+                                    <?= $convoyIngredient->model->name ?>
+                                    <?php if ($convoyIngredient->model instanceof \common\models\IngredientStock): ?>
+                                        (<?= $convoyIngredient->model->portion_um ?>)
+                                    <?php elseif ($convoyIngredient->model instanceof \common\models\StandardRecipe): ?>
+                                        (<?= $convoyIngredient->model->yield_um ?>)
+                                    <?php endif; ?>
+                                </td>
                                 <td><?= number_format($convoyIngredient->quantity, 2, $business->decimal_separator ?? '.', $business->thousand_separator ?? ',') ?></td>
                                 <td><?= formatPrice($convoyIngredient->amount) ?></td>
                                 <td>
