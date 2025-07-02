@@ -8,8 +8,26 @@ use yii\helpers\ArrayHelper;
 $business = \backend\helpers\RedisKeys::getBusiness();
 $businessObj = \common\models\Business::findOne(['id' => $business['id']]);
 
-$currencySymbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
-$currencySymbol = preg_replace('/[a-zA-Z]/', '', $currencySymbol);
+// Obtener símbolo de moneda de manera más robusta
+$currencySymbol = '$'; // Valor por defecto
+try {
+    if (!empty($businessObj->currency_code)) {
+        $symbol = \Symfony\Component\Intl\Currencies::getSymbol(strtoupper($businessObj->currency_code));
+        // Limpiar el símbolo si contiene letras (como 'MXN', 'USD', etc.)
+        $cleanSymbol = preg_replace('/[a-zA-Z]/', '', $symbol);
+        if (!empty($cleanSymbol)) {
+            $currencySymbol = $cleanSymbol;
+        }
+    }
+} catch (Exception $e) {
+    // Si hay error, mantener el símbolo por defecto
+    $currencySymbol = '$';
+}
+
+// Si el símbolo está vacío después de la limpieza, usar el símbolo por defecto
+if (empty($currencySymbol)) {
+    $currencySymbol = '$';
+}
 
 // Configuración para formato de números
 $formatConfig = [
@@ -55,7 +73,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                 <tbody>                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): 
                     $counter++; // Incrementamos el contador
                     $cost = (float)($ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity);
-                    $total = (float)($total + $cost);
+                    $total += $cost; // Usar += en lugar de asignación completa
                     ?>
                     <tr>
                         <td><?= $counter ?></td>
@@ -64,8 +82,16 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                         </td>
                         <td>
                             <?= sprintf("%s %s", $ingredientStandardRecipe->quantity, $ingredientStandardRecipe->ingredient->portion_um) ?>
-                        </td>                        <td>
-                            <?= number_format($cost, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="currency-symbol me-1"><?= $currencySymbol ?></span>
+                                <span class="ingredient-cost" 
+                                      id="ingredient-cost-<?= $ingredientStandardRecipe->ingredient_id ?>"
+                                      data-raw-value="<?= $cost ?>">
+                                    <?= number_format($cost, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
+                                </span>
+                            </div>
                         </td>
                         <td>
                             <!-- Checkbox para excluir del costeo -->
@@ -110,7 +136,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                     $counter++; // Incrementamos el contador para las subrecetas
                     $quantity = (float)$subStandardRecipe->getQuantityLinked($model->id);
                     $cost = (float)($subStandardRecipe->custom_cost * $quantity);
-                    $total = (float)($total + $cost);
+                    $total += $cost; // Usar += en lugar de asignación completa
                     ?>
                     <tr>
                         <td><?= $counter ?></td>
@@ -119,8 +145,16 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                         </td>
                         <td>
                             <?= sprintf("%s %s", $quantity, $subStandardRecipe->um); ?>
-                        </td>                        <td>
-                            <?= number_format($cost, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="currency-symbol me-1"><?= $currencySymbol ?></span>
+                                <span class="subrecipe-cost" 
+                                      id="subrecipe-cost-<?= $subStandardRecipe->id ?>"
+                                      data-raw-value="<?= $cost ?>">
+                                    <?= number_format($cost, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
+                                </span>
+                            </div>
                         </td>
                         <td>
                             <!-- Checkbox para excluir del costeo -->
@@ -152,12 +186,17 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                     </tr>
                 <?php endforeach; ?>
                 <tr>
-                    <td colspan="3" class="text-end" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>                    <td>
-                        <span id="ingredients-selection-total-cost"
-                              data-raw-value="<?= $total ?>"
-                              data-format-config='<?= json_encode($formatConfig) ?>'>
-                            <?= number_format($total, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
-                        </span>
+                    <td colspan="3" class="text-end" style="font-weight: bold"><?= Yii::t('app', 'Total') ?></td>
+
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="currency-symbol me-1"><?= $currencySymbol ?></span>
+                            <span id="ingredients-selection-total-cost"
+                                  data-raw-value="<?= $total ?>"
+                                  data-format-config='<?= json_encode($formatConfig) ?>'>
+                                <?= number_format($total, 2, $businessObj->decimal_separator, $businessObj->thousands_separator) ?>
+                            </span>
+                        </div>
                     </td>
                     <td colspan="3"></td>
                 </tr>

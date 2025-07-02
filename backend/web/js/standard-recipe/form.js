@@ -111,7 +111,9 @@ function computeCost() {
     $('table tbody tr').each(function(index) {
         if ($(this).find('.exclude-checkbox').length > 0) {
             let ingredientName = $(this).find('td:nth-child(2)').text().trim();
-            let costText = $(this).find('td:nth-child(4)').text().trim();
+            // Get cost from the ingredient-cost span, not the full td text
+            let costElement = $(this).find('.ingredient-cost, .subrecipe-cost');
+            let costText = costElement.length > 0 ? costElement.text().trim() : $(this).find('td:nth-child(4)').text().trim();
             let cost = parseUserNumber(costText);
             let isExcluded = $(this).find('.exclude-checkbox').is(':checked');
             let discountPercentage = parseInt($(this).find('.cost-percentage').val(), 10);
@@ -125,17 +127,13 @@ function computeCost() {
                   
                 } else {
                     // Si está excluido SIN descuento: no se suma nada
-                    console.log(`- INGREDIENTE EXCLUIDO SIN DESCUENTO (no se suma)`);
                 }
             } else {
                 // Si NO está excluido: sumar costo completo
                 totalCost += cost;
-                console.log(`- Costo incluido (completo): ${cost}`);
             }
         }
     });
-
-    console.log(`Costo total antes de porciones: ${totalCost}`);
 
     // Resto del cálculo (porciones, yield, formato)
     let portions = parseFloat($("#standardrecipe-portions").val()) || 1;
@@ -148,10 +146,11 @@ function computeCost() {
         $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
         
-        // Formatear el costo usando el mismo formato que para el precio
-        let formattedCost = formatNumberWithUserPreferences(costPerPortion);
+        // Formatear el costo solo como número (sin símbolo de moneda) ya que el HTML ya tiene el símbolo
+        let formattedCost = formatUserNumber(costPerPortion);
         
-        $("#ingredients-selection-total-cost").html(formattedCost);
+        // Solo actualizar el contenido de texto, no el HTML completo
+        $("#ingredients-selection-total-cost").text(formattedCost);
         
         if ($("#cost-value").length > 0) {            $("#cost-value").html(formatUserNumber(costPerPortion));
             $("#cost-value").data('price', costPerPortion);
@@ -174,24 +173,6 @@ function formatNumberWithUserPreferences(value) {
         return userFormatConfig.currencySymbol + formatted; // Sin espacio para mantener consistencia
     }
     return formatted;
-    let fixedValue = parseFloat(value).toFixed(decimalPlaces);
-    let parts = fixedValue.split('.');
-    console.log(`Valor fijo: ${fixedValue}`);
-    console.log(`Partes: ${parts}`);
-    // Formatear parte entera con separadores de miles
-    if (thousandSeparator) {
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
-    }
-    
-    // Unir con el separador decimal
-    let formattedNumber = parts.join(decimalSeparator);
-    
-    // Añadir símbolo de moneda según la posición
-    if (currencyPosition === 'before') {
-        return currencySymbol + ' ' + formattedNumber;
-    } else {
-        return formattedNumber + ' ' + currencySymbol;
-    }
 }
 
 // Event listeners para actualización automática
