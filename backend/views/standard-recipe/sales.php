@@ -209,55 +209,63 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-sales']) ?>
 
 <div class="card mb-4">
-    <div class="card-header">
-        <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtrar por mes y año') ?></h3>
-    </div>
-    <div class="card-body">
-        <!-- Filtros existentes -->
-        <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
-        <div class="row g-3 mb-4">
-            <div class="col-md-5">
-                <label for="month-select" class="form-label">Mes</label>
-                <?= Html::dropDownList('month',
-                    $selectedMonth ?? date('n'), 
-                    [
-                        '1' => 'Enero',
-                        '2' => 'Febrero',
-                        '3' => 'Marzo',
-                        '4' => 'Abril',
-                        '5' => 'Mayo',
-                        '6' => 'Junio',
-                        '7' => 'Julio',
-                        '8' => 'Agosto',
-                        '9' => 'Septiembre',
-                        '10' => 'Octubre',
-                        '11' => 'Noviembre',
-                        '12' => 'Diciembre',
-                    ],
-                    ['class' => 'form-select', 'id' => 'month-select']
-                ) ?>
-            </div>
-            
-            <div class="col-md-4">
-                <label for="year-select" class="form-label">Año</label>
-                <?= Html::dropDownList('year',
-                    $selectedYear ?? date('Y'),
-                    $years,
-                    ['class' => 'form-select', 'id' => 'year-select']
-                ) ?>
-            </div>
-            
-            <div class="col-md-3 d-flex align-items-end">
-                <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
-            </div>
+    <div class="card-header filter-header" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse" role="button">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0"><?= Yii::t('app', 'Filtros e Importación') ?></h3>
+            <i class="bx bx-chevron-up filter-icon"></i>
         </div>
-        <?= Html::endForm() ?>
-        
-        <!-- Sección de importar ventas debajo del filtro -->
-        <div class="row">
-            <div class="col-12">
-                <div class="border-top pt-3">
-                    <h6 class="mb-3">Importar ventas desde Excel</h6>
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <!-- Filtros de mes y año -->
+            <?= Html::beginForm(['sales'], 'get', ['data-pjax' => 1]) ?>
+            <div class="row g-3 mb-4">
+                <div class="col-md-5">
+                    <label for="month-select" class="form-label">Mes</label>
+                    <?= Html::dropDownList('month',
+                        $selectedMonth ?? date('n'), 
+                        [
+                            '1' => 'Enero',
+                            '2' => 'Febrero',
+                            '3' => 'Marzo',
+                            '4' => 'Abril',
+                            '5' => 'Mayo',
+                            '6' => 'Junio',
+                            '7' => 'Julio',
+                            '8' => 'Agosto',
+                            '9' => 'Septiembre',
+                            '10' => 'Octubre',
+                            '11' => 'Noviembre',
+                            '12' => 'Diciembre',
+                        ],
+                        ['class' => 'form-select', 'id' => 'month-select']
+                    ) ?>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="year-select" class="form-label">Año</label>
+                    <?= Html::dropDownList('year',
+                        $selectedYear ?? date('Y'),
+                        $years,
+                        ['class' => 'form-select', 'id' => 'year-select']
+                    ) ?>
+                </div>
+                
+                <div class="col-md-3 d-flex align-items-end">
+                    <?= Html::submitButton('Filtrar', ['class' => 'btn btn-primary']) ?>
+                </div>
+            </div>
+            <?= Html::endForm() ?>
+            
+            <!-- Separador visual -->
+            <hr class="my-4">
+            
+            <!-- Sección de importar ventas -->
+            <div class="row">
+                <div class="col-12">
+                    <h6 class="mb-3 text-muted">
+                        <i class="bx bx-upload me-2"></i>Importar ventas desde Excel
+                    </h6>
                     
                     <div class="row g-3 align-items-end">
                         <!-- Botón para descargar plantilla -->
@@ -335,17 +343,21 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $foodDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
-    <div class="card-body">
-        <?= \yii\grid\GridView::widget([
-            'dataProvider' => $foodDataProvider,
-            'filterModel' => $foodSearchModel,
-            'columns' => $foodGridColumns,
-            'filterUrl' => Url::current([
-                'month' => $selectedMonth,
-                'year' => $selectedYear
-            ], true),
-            'layout' => "{summary}\n{pager}\n{items}\n{pager}"
-        ]) ?>
+    <div class="card-body p-2">
+        <div class="table-responsive">
+            <?= \yii\grid\GridView::widget([
+                'dataProvider' => $foodDataProvider,
+                'filterModel' => $foodSearchModel,
+                'columns' => $foodGridColumns,
+                'filterUrl' => Url::current([
+                    'month' => $selectedMonth,
+                    'year' => $selectedYear
+                ], true),
+                'options' => ['class' => 'grid-view'],
+                'tableOptions' => ['class' => 'table table-striped responsive-table'],
+                'layout' => "{summary}\n{pager}\n{items}\n{pager}"
+            ]) ?>
+        </div>
     </div>
 </div>
 
@@ -353,17 +365,22 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
     <div class="card-header">
         <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $drinkDataProvider->getTotalCount() ?> recetas encontradas</small>
-    </div>    <div class="card-body">
-        <?= \yii\grid\GridView::widget([
-            'dataProvider' => $drinkDataProvider,
-            'filterModel' => $drinkSearchModel,
-            'columns' => $drinkGridColumns,
-            'filterUrl' => Url::current([
-                'month' => $selectedMonth,
-                'year' => $selectedYear
-            ], true),
-            'layout' => "{summary}\n{pager}\n{items}\n{pager}"
-        ]) ?>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <?= \yii\grid\GridView::widget([
+                'dataProvider' => $drinkDataProvider,
+                'filterModel' => $drinkSearchModel,
+                'columns' => $drinkGridColumns,
+                'filterUrl' => Url::current([
+                    'month' => $selectedMonth,
+                    'year' => $selectedYear
+                ], true),
+                'options' => ['class' => 'grid-view'],
+                'tableOptions' => ['class' => 'table table-striped table-bordered mb-0 responsive-table'],
+                'layout' => "{summary}\n{pager}\n{items}\n{pager}"
+            ]) ?>
+        </div>
     </div>
 </div>
 
@@ -372,17 +389,21 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $comboDataProvider->getTotalCount() ?> combos encontrados</small>
     </div>
-    <div class="card-body">
-        <?= \yii\grid\GridView::widget([
-            'dataProvider' => $comboDataProvider,
-            'filterModel' => $comboSearchModel,
-            'columns' => $comboGridColumns,
-            'filterUrl' => Url::current([
-                'month' => $selectedMonth,
-                'year' => $selectedYear
-            ], true),
-            'layout' => "{summary}\n{pager}\n{items}\n{pager}"
-        ]) ?>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <?= \yii\grid\GridView::widget([
+                'dataProvider' => $comboDataProvider,
+                'filterModel' => $comboSearchModel,
+                'columns' => $comboGridColumns,
+                'filterUrl' => Url::current([
+                    'month' => $selectedMonth,
+                    'year' => $selectedYear
+                ], true),
+                'options' => ['class' => 'grid-view'],
+                'tableOptions' => ['class' => 'table table-striped table-bordered mb-0 responsive-table'],
+                'layout' => "{summary}\n{pager}\n{items}\n{pager}"
+            ]) ?>
+        </div>
     </div>
 </div>
 
@@ -912,6 +933,53 @@ function setupSearchFilters() {
 JS;
 $this->registerJs($js);
 
+// JavaScript para controlar el colapsable unificado
+$collapseJs = <<<JS
+$(document).ready(function() {
+    // Función para actualizar ícono basado en estado de colapso
+    function updateCollapseIcon(collapseEl, iconSelector) {
+        const isExpanded = $(collapseEl).hasClass('show');
+        $(iconSelector).removeClass('bx-chevron-up bx-chevron-down')
+                       .addClass(isExpanded ? 'bx-chevron-up' : 'bx-chevron-down');
+    }
+
+    // Configurar eventos para el colapsable unificado
+    $('#filterCollapse').on('show.bs.collapse', function() {
+        updateCollapseIcon(this, '.filter-icon');
+        localStorage.setItem('salesFilterExpanded', 'true');
+    });
+
+    $('#filterCollapse').on('hide.bs.collapse', function() {
+        updateCollapseIcon(this, '.filter-icon');
+        localStorage.setItem('salesFilterExpanded', 'false');
+    });
+
+    // Restaurar estado guardado al cargar la página
+    const filterExpanded = localStorage.getItem('salesFilterExpanded');
+
+    // Restaurar estado de filtros (por defecto expandido)
+    if (filterExpanded === 'false') {
+        $('#filterCollapse').removeClass('show');
+        updateCollapseIcon('#filterCollapse', '.filter-icon');
+    }
+});
+
+// Reconfigurar colapsables después de PJAX
+$(document).on('pjax:complete', function() {
+    // Restaurar estado después de PJAX
+    const filterExpanded = localStorage.getItem('salesFilterExpanded');
+
+    if (filterExpanded === 'false') {
+        $('#filterCollapse').removeClass('show');
+        $('.filter-icon').removeClass('bx-chevron-up').addClass('bx-chevron-down');
+    } else {
+        $('#filterCollapse').addClass('show');
+        $('.filter-icon').removeClass('bx-chevron-down').addClass('bx-chevron-up');
+    }
+});
+JS;
+$this->registerJs($collapseJs, \yii\web\View::POS_END);
+
 // Funciones globales para limpiar filtros
 $clearFunctionsJs = <<<JS
 function filterFoodSearch(value) {
@@ -976,7 +1044,7 @@ function clearComboSearch() {
 JS;
 $this->registerJs($clearFunctionsJs, \yii\web\View::POS_HEAD);
 
-// CSS para la barra flotante de guardar
+// CSS para la barra flotante de guardar, colapsables y tablas responsivas
 $css = <<<CSS
 .sticky-save-bar {
     position: fixed;
@@ -990,6 +1058,134 @@ $css = <<<CSS
 
 .sticky-save-bar .btn {
     box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+}
+
+/* Estilos para elementos colapsables */
+.filter-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.filter-header:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.filter-icon {
+    transition: transform 0.3s ease;
+    font-size: 1.25rem;
+    color: #6c757d;
+}
+
+/* Animación para el colapso */
+.collapse, .collapsing {
+    transition: all 0.35s ease;
+}
+
+/* Estilo para hacer más visible que es clickeable */
+[data-bs-toggle="collapse"] {
+    position: relative;
+}
+
+[data-bs-toggle="collapse"]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* Estilos para tablas responsivas */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0;
+}
+
+.responsive-table {
+    table-layout: auto;
+    width: 100%;
+    min-width: 600px; /* Ancho mínimo para evitar compresión excesiva */
+}
+
+.responsive-table th,
+.responsive-table td {
+    white-space: nowrap;
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
+}
+
+/* Ajustes específicos para inputs de ventas en tablas */
+.responsive-table .sales-input {
+    min-width: 80px;
+    max-width: 120px;
+    font-size: 0.875rem;
+}
+
+/* Ajustes para columnas específicas */
+.responsive-table th:first-child,
+.responsive-table td:first-child {
+    min-width: 50px; /* Columna de número */
+}
+
+.responsive-table th:nth-child(2),
+.responsive-table td:nth-child(2) {
+    min-width: 200px; /* Columna de título */
+    max-width: 300px;
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.responsive-table th:nth-child(3),
+.responsive-table td:nth-child(3),
+.responsive-table th:nth-child(4),
+.responsive-table td:nth-child(4) {
+    min-width: 100px; /* Columnas de costo y porcentaje */
+}
+
+.responsive-table th:last-child,
+.responsive-table td:last-child {
+    min-width: 120px; /* Columna de ventas */
+}
+
+/* Optimización para dispositivos móviles */
+@media (max-width: 768px) {
+    .sticky-save-bar {
+        left: 20px;
+        right: 20px;
+        text-align: center;
+    }
+    
+    .filter-header {
+        font-size: 0.9rem;
+    }
+    
+    .responsive-table {
+        min-width: 500px;
+        font-size: 0.8rem;
+    }
+    
+    .responsive-table th,
+    .responsive-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .responsive-table .sales-input {
+        min-width: 70px;
+        max-width: 100px;
+        font-size: 0.8rem;
+    }
+    
+    .card-body.p-0 {
+        padding: 0 !important;
+    }
+    
+    .table-responsive {
+        margin: 0;
+        border-radius: 0;
+    }
 }
 
 /* Estilos para los botones de limpiar filtros */
@@ -1017,14 +1213,6 @@ $css = <<<CSS
 
 .position-relative .form-control {
     padding-right: 30px !important;
-}
-
-@media (max-width: 768px) {
-    .sticky-save-bar {
-        left: 20px;
-        right: 20px;
-        text-align: center;
-    }
 }
 
 /* Estilos para el modal de resultados de importación */
@@ -1112,6 +1300,18 @@ $css = <<<CSS
 #importResultModal .alert-content .small:last-child {
     border-bottom: none;
     margin-bottom: 0;
+}
+
+/* Mejoras visuales para el separador */
+hr.my-4 {
+    border-color: #dee2e6;
+    opacity: 0.7;
+}
+
+/* Estilo para el ícono de importar */
+.bx-upload {
+    color: #28a745;
+    font-size: 1.1rem;
 }
 CSS;
 $this->registerCss($css);
