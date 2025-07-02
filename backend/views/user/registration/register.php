@@ -21,7 +21,7 @@ $plans = \common\models\Plan::find()->all();
         <div class="card m-5">
             <div class="card-header">
                 <div class="text-center">
-                    <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" width="300">
+                    <img src="<?= Yii::getAlias("@web/images/logo1.png") ?>" alt="" width="300">
                 </div>
                 <span class="card-title"><?= Html::encode($this->title) ?></span>
             </div>

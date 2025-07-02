@@ -46,12 +46,12 @@ $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield
 $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-    <div class="app-brand demo" style="width: 200px">
-        <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="app-brand-link">
-            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt=""
-                 style="object-fit: contain;width: 200px;height: 64px;">
+    <div class="app-brand demo" style="width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; position: relative;">
+        <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="app-brand-link" style="display: flex; justify-content: center; align-items: center;">
+            <img src="<?= Yii::getAlias("@web/images/logo1.png") ?>" alt=""
+                 style="object-fit: contain; max-width: 200px; height: 90px;">
         </a>
-        <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+        <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large d-block d-xl-none" style="position: absolute; right: 10px;">
             <i class="bx bx-chevron-left bx-sm align-middle"></i>
         </a>
     </div>
