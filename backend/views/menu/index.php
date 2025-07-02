@@ -54,7 +54,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 //            'totalCostByAvgPrice:currency',
             [
                 'attribute' => 'total_price',
-                'label' => Yii::t('app', 'Total Price'),
+                'label' => Yii::t('app', 'Precio Total'),
                 'value' => function($model) {
                     return formatPrice($model->total_price);
                 },
