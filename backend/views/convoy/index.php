@@ -27,14 +27,25 @@ $totalSales = array_sum(\yii\helpers\ArrayHelper::getColumn($dataProvider->model
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>    <?= GridView::widget([
         'dataProvider' => $dataProvider,
 //        'filterModel' => $searchModel,
+        'tableOptions' => ['class' => 'table table-striped'],
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
-            'name',
+            [
+                'class' => 'yii\grid\SerialColumn',
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
+            ],
+            [
+                'attribute' => 'name',
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
+            ],
             [
                 'label' => "Platillos",
                 'value' => function ($data) {
-                    return count($data->convoyIngredients);
+                    return $data->plates;
                 },
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
             [
                 'attribute' => 'amount',
@@ -42,7 +53,8 @@ $totalSales = array_sum(\yii\helpers\ArrayHelper::getColumn($dataProvider->model
                 'value' => function($model) {
                     return formatPrice($model->amount);
                 },
-                'contentOptions' => ['style' => 'text-align: right;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
             [
                 'attribute' => 'totalAmount',
@@ -50,13 +62,16 @@ $totalSales = array_sum(\yii\helpers\ArrayHelper::getColumn($dataProvider->model
                 'value' => function($model) {
                     return formatCost($model->totalAmount);
                 },
-                'contentOptions' => ['style' => 'text-align: right;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
             [
                 'attribute' => 'observations',
                 'value' => function ($data) {
                     return empty($data->observations) ? "Sin observaciones" : $data->observations;
                 },
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
