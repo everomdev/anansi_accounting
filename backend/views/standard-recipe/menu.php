@@ -94,13 +94,9 @@ $categories = RecipeCategory::find()
                     'headerOptions' => ['style' => 'text-align: center;'],
                     'contentOptions' => ['style' => 'text-align: center;'],
                     'value' => function ($model, $key, $index, $column) use ($pagination) {
-                        // Asegurarnos de que los valores sean correctos
-                        $pageSize = $pagination->pageSize;
-                        $page = (int)Yii::$app->request->get('page', 0); // Obtenemos la página directamente
-                        $offset = $page * $pageSize;
-                        
-                        // Calcular la posición global
-                        return $index + 1 + $offset;
+                        // Usar directamente el offset del objeto de paginación
+                        // Esto es más confiable que calcular basado en el parámetro de página
+                        return $index + 1 + $pagination->offset;
                     }
                 ],
                 [
