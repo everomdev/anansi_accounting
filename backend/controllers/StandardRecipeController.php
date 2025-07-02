@@ -1833,10 +1833,178 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             'tempDir' => Yii::getAlias('@runtime/mpdf'),
             'default_font' => 'dejavusans', // Usar una fuente compatible con UTF-8
         ]);
-    
+        
+        // Añadir CSS personalizado para asegurar que el diseño se mantenga
+        $stylesheet = '
+            body {
+                font-size: 10pt; /* Letra más pequeña para el contenido */
+                line-height: 1.3;
+                font-family: dejavusans, sans-serif;
+                color: #333;
+            }
+            .portada {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                text-align: center;
+                padding: 40px;
+                background-color: #f9f9f9;
+            }
+            .portada h1 {
+                font-size: 48pt;
+                margin-top: 80px;
+                font-weight: bold;
+                color: #333;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            }
+            .portada h2 {
+                font-size: 30pt;
+                margin-top: 50px;
+                color: #444;
+                font-style: italic;
+            }
+            .portada .fecha {
+                font-size: 18pt;
+                margin-top: 60px;
+                color: #555;
+                font-weight: 300;
+            }
+            .portada .logo {
+                text-align: right;
+                margin-top: 80px;
+            }
+            .indice {
+                padding: 20px;
+            }
+            .indice h2 {
+                font-size: 24pt;
+                margin-bottom: 30px;
+                color: #333;
+                text-align: center;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 10px;
+                text-transform: uppercase;
+            }
+            .indice ul {
+                list-style-type: disc;
+                margin-left: 30px;
+            }
+            .indice li {
+                font-size: 13pt;
+                margin-bottom: 10px;
+                color: #333;
+            }
+            h1 {
+                font-size: 16pt;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                color: #222;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 5px;
+            }
+            h2 {
+                font-size: 14pt;
+                color: #333;
+                margin-top: 15px;
+                margin-bottom: 8px;
+            }
+            h3 {
+                font-size: 12pt;
+                color: #444;
+                margin-top: 10px;
+                margin-bottom: 5px;
+            }
+            table {
+                font-size: 10pt;
+                border-collapse: collapse;
+                width: 100%;
+            }
+            table th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                text-align: center;
+                padding: 6px;
+            }
+            table td {
+                padding: 5px;
+                border: 1px solid #ddd;
+            }
+            hr {
+                margin: 15px 0;
+                border: 0;
+                border-top: 1px solid #eee;
+            }
+        ';
+        $mpdf->WriteHTML($stylesheet, \Mpdf\HTMLParserMode::HEADER_CSS);
+        
+        // 1. PORTADA
+        $business = RedisKeys::getBusiness();
         $html = '';
-    
+        $html .= '<div class="portada">';
+        $html .= '<div>';
+        $html .= '<h1>RECETARIO</h1>';
+        $html .= '<h2>' . htmlspecialchars($business->name) . '</h2>';
+        $html .= '<div class="fecha">' . date('d/m/Y') . '</div>';
+        $html .= '</div>';
+        
+        // Logo de Coach Restaurantero en esquina inferior derecha
+        $html .= '<div class="logo">';
+        
+        // Ruta al logo en el sistema de archivos
+        $logoPath = Yii::getAlias('@backend/web/images/logo1.png');
+        $logoFound = false;
+        
+        // Intentar cargar la imagen como base64 si existe en el sistema de archivos
+        if (file_exists($logoPath)) {
+            $imageData = base64_encode(file_get_contents($logoPath));
+            $imageExtension = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
+            $html .= '<div style="display: inline-block; background: white; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">';
+            $html .= '<img src="' . $imageSrc . '" style="max-width: 200px; height: auto;" />';
+            $html .= '</div>';
+            $logoFound = true;
+        }
+        
+        // Si no se encontró ninguna imagen, mostrar el texto
+        if (!$logoFound) {
+            $html .= '<div style="display: inline-block; background: white; border-radius: 20px; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;">';
+            $html .= '<p style="font-size: 18pt; font-weight: bold; margin: 0;">Coach Restaurantero</p>';
+            $html .= '</div>';
+        }
+        $html .= '</div>';
+        $html .= '</div>';
+        
+        $mpdf->WriteHTML($html);
+        $mpdf->AddPage();
+        
+        // 2. ÍNDICE
+        $html = '<div class="indice">';
+        $html .= '<h2>ÍNDICE</h2>';
+        $html .= '<ul>';
+        foreach ($recipes as $index => $recipe) {
+            $html .= '<li>' . htmlspecialchars($recipe->title) . '</li>';
+        }
+        $html .= '</ul>';
+        $html .= '</div>';
+        
+        $mpdf->WriteHTML($html);
+        $mpdf->AddPage();
+        
+        // 3. CONTENIDO DE RECETAS
+        $html = '';
+        $isFirst = true;
+        
         foreach ($recipes as $recipe) {
+            // Añadir salto de página antes de cada receta (excepto la primera)
+            if (!$isFirst) {
+                $mpdf->AddPage();
+            } else {
+                $isFirst = false;
+            }
+            
             // Título de la receta
             $html .= '<h1>' . htmlspecialchars($recipe->title) . '</h1>';
     
@@ -1887,7 +2055,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     
                             // Agregar la imagen principal (a la derecha)
                             $html .= '<div style="height: 100%; display: flex; align-items: center; justify-content: center;">';
-                            $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; max-height: 550px; height: auto;" />';
+                            $html .= '<div style="background: white; border-radius: 12px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; display: inline-block;">';
+                            $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; max-height: 530px; height: auto; border-radius: 8px;" />';
+                            $html .= '</div>';
                             $html .= '</div>';
                             $mainImageFound = true;
                             break; // Solo necesitamos la imagen principal
@@ -1897,7 +2067,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             }
             if (!$mainImageFound) {
                 // Agregar un contenedor vacío para la imagen principal
-                $html .= '<div style="width: 100%; height: 200px; border: 1px solid #ccc;"></div>';
+                $html .= '<div style="background: white; border-radius: 12px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; display: inline-block; width: 90%;">';
+                $html .= '<div style="width: 100%; height: 200px; border: 1px dashed #ccc; border-radius: 8px; display: flex; justify-content: center; align-items: center;">';
+                $html .= '<p style="color: #999; font-style: italic;">Sin imagen</p>';
+                $html .= '</div>';
+                $html .= '</div>';
             }
             $html .= '</td>'; // Cierre de la columna derecha
     
@@ -2017,20 +2191,15 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $html .= '</table>'; // Cierre de la tabla
             $html .= '<h2>Equipo</h2>';
             $html .=  $recipe->equipment;
-    
-            $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+            
+            // Escribir el HTML de esta receta antes de continuar con la siguiente
+            $mpdf->WriteHTML($html);
+            // Reiniciar el HTML para la siguiente receta
+            $html = '';
         }
     
-        // Añadir CSS personalizado para asegurar que el diseño se mantenga
-        $stylesheet = '
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    ';
-        $mpdf->WriteHTML($stylesheet, \Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($html);
-    
+        // Ya no necesitamos escribir $html aquí, porque lo hemos escrito por cada receta
+        
         $fileName = 'Complete_Recipes.pdf';
         $tempFile = tempnam(sys_get_temp_dir(), $fileName);
         $mpdf->Output($tempFile, \Mpdf\Output\Destination::FILE);
