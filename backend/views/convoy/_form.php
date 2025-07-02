@@ -141,7 +141,7 @@ if (!$model->isNewRecord) {
     ]);
     \yii\bootstrap5\Modal::begin([
         'id' => 'modal-add-ingredient',
-        'title' => Yii::t('app', "Add ingredient")
+        'title' => Yii::t('app', "Añadir insumo")
     ]);
 
     $form = \yii\bootstrap5\ActiveForm::begin([
@@ -153,7 +153,7 @@ if (!$model->isNewRecord) {
         'pluginOptions' => [
             'dropdownParent' => '#modal-add-ingredient'
         ]
-    ])->label(Yii::t('app', 'Ingrediente/Subreceta'));echo $form->field($convoyIngredient, 'quantity')->textInput([
+    ])->label(Yii::t('app', 'Insumo/Subreceta'));echo $form->field($convoyIngredient, 'quantity')->textInput([
         'class' => 'form-control',
         'data-format' => 'number',
         'data-decimals' => '2',
