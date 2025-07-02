@@ -78,7 +78,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['category/index']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Catálogo de insumos') ?></div>
+                                <div><?= Yii::t('app', 'Familias de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
@@ -112,7 +112,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'ingredient-stock' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['ingredient-stock/index']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Insumos') ?></div>
+                                <div><?= Yii::t('app', 'Catálogo de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>

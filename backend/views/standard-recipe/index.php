@@ -88,8 +88,30 @@ $this->registerCss('
         </div>
         <div class="row" style="margin-top: 10px; margin-bottom: 10px;">
             <div class="col-md-12">
-            <?= Html::a('Descargar Recetas Completas', ['standard-recipe/download-complete-recipe-pdf'], ['class' => 'btn btn-success', 'id' => 'btn-download-recipes-complete']) ?>
-            <?= Html::a('Exportar Recetas Completas', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
+            <?= Html::a(
+                'Descargar recetario en PDF',
+                ['standard-recipe/download-complete-recipe-pdf'],
+                [
+                    'class' => 'btn btn-success',
+                    'id' => 'btn-download-recipes-complete',
+                    'data-bs-toggle' => 'tooltip',
+                    'data-bs-placement' => 'top',
+                    'title' => '🛈 Ficha detallada de cada receta con ingredientes, procedimiento y alérgenos. Ideal para imprimir o consultar.'
+                ]
+            ) ?>
+            <?php
+            $this->registerJs("$(function () { 
+                $('[data-bs-toggle=\"tooltip\"]').tooltip(); 
+            });");
+            ?>
+            <?= Html::a('Exportar Recetas en Excel', ['#'], 
+            [
+                'class' => 'btn btn-success', 
+                'id' => 'download-recipes-complete-excel',
+                'data-bs-toggle' => 'tooltip',
+                'data-bs-placement' => 'top',
+                'title' => '🛈 Archivo editable con los datos clave de tus recetas. Útil para análisis y respaldo.'
+            ]) ?>
             <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
                 ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'btn-delete-recipes']) ?>
             </div>

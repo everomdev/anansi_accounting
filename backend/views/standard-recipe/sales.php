@@ -77,10 +77,15 @@ $foodGridColumns = [
         'filter' => false,
         'value' => function ($data) use ($selectedMonth, $selectedYear) {
             $inputName = 'food[' . $data->id . ']';
-            return Html::input('number', $inputName, $data->sales, [
+            // Convert sales to integer to remove decimal places
+            $integerValue = intval($data->sales);
+            return Html::input('number', $inputName, $integerValue, [
                 'class' => 'form-control sales-input',
                 'data-id' => $data->id,
                 'data-type' => 'recipe',
+                'min' => '0',
+                'step' => '1',
+                'pattern' => '[0-9]*'
             ]);
         },
     ]
@@ -124,10 +129,15 @@ $drinkGridColumns = [
         'filter' => false,
         'value' => function ($data) use ($selectedMonth, $selectedYear) {
             $inputName = 'drink[' . $data->id . ']';
-            return Html::input('number', $inputName, $data->sales, [
+            // Convert sales to integer to remove decimal places
+            $integerValue = intval($data->sales);
+            return Html::input('number', $inputName, $integerValue, [
                 'class' => 'form-control sales-input',
                 'data-id' => $data->id,
                 'data-type' => 'recipe',
+                'min' => '0',
+                'step' => '1',
+                'pattern' => '[0-9]*'
             ]);
         },
     ]
@@ -174,10 +184,15 @@ $comboGridColumns = [
         'filter' => false,
         'value' => function ($data) use ($selectedMonth, $selectedYear) {
             $inputName = 'combo[' . $data->id . ']';
-            return Html::input('number', $inputName, $data->sales, [
+            // Convert sales to integer to remove decimal places
+            $integerValue = intval($data->sales);
+            return Html::input('number', $inputName, $integerValue, [
                 'class' => 'form-control sales-input',
                 'data-id' => $data->id,
                 'data-type' => 'menu',
+                'min' => '0',
+                'step' => '1',
+                'pattern' => '[0-9]*'
             ]);
         },
     ]
@@ -390,6 +405,246 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <?php
 $saveUrl = Url::to(['save-monthly-sales']);
 $js = <<< JS
+// Variable para rastrear cambios sin guardar
+let hasUnsavedChanges = false;
+
+// Función para marcar que hay cambios sin guardar
+function markAsUnsaved() {
+    hasUnsavedChanges = true;
+}
+
+// Función para marcar que los cambios han sido guardados
+function markAsSaved() {
+    hasUnsavedChanges = false;
+    navigationBlocked = false; // Permitir navegación normal
+}
+
+// Función para detectar cambios en los inputs de ventas
+function setupChangeDetection() {
+    // Forzar valores enteros en todos los inputs de ventas al cargar la página
+    $('.sales-input').each(function() {
+        let value = parseInt($(this).val()) || 0;
+        if (value < 0) value = 0;
+        $(this).val(value); // Asegura que no se muestren decimales
+    });
+    
+    $('.sales-input').off('input.unsaved').on('input.unsaved', function() {
+        // Asegurar que siempre sea un valor entero
+        let value = parseInt($(this).val()) || 0;
+        if (value < 0) value = 0;
+        $(this).val(value);
+        
+        markAsUnsaved();
+        setupNavigationBlock(); // Activar bloqueo de navegación cuando hay cambios
+    });
+    
+    // También verificar cuando el campo pierde el foco
+    $('.sales-input').off('blur.integer').on('blur.integer', function() {
+        // Asegurar que siempre sea un valor entero
+        let value = parseInt($(this).val()) || 0;
+        if (value < 0) value = 0;
+        $(this).val(value);
+    });
+}
+
+// Función para mostrar alerta personalizada antes de salir
+function showUnsavedChangesAlert(callback) {
+    if (hasUnsavedChanges) {
+        Swal.fire({
+            title: '¿Salir sin guardar?',
+            text: 'Tienes cambios sin guardar. ¿Qué deseas hacer?',
+            icon: 'warning',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Guardar y salir',
+            denyButtonText: 'Salir sin guardar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#28a745',
+            denyButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Guardar antes de salir
+                saveAndExit(callback);
+            } else if (result.isDenied) {
+                // Salir sin guardar
+                markAsSaved(); // Evitar la alerta en el beforeunload
+                if (callback) callback();
+            }
+            // Si es cancel, no hacer nada (permanecer en la página)
+        });
+        return false; // Prevenir la acción original
+    }
+    return true; // Permitir la acción si no hay cambios
+}
+
+// Función para guardar y salir
+function saveAndExit(callback) {
+    // Actualizar campos ocultos antes de enviar
+    updateHiddenFields();
+    
+    let formData = $('#sales-form').serialize();
+    
+    $.ajax({
+        url: '$saveUrl',
+        type: 'POST',
+        data: formData,
+        dataType: 'json',
+        beforeSend: function() {
+            Swal.fire({
+                title: 'Guardando...',
+                text: 'Por favor espera mientras se guardan los cambios.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        },
+        success: function(response) {
+            if (response.success) {
+                markAsSaved(); // Marcar como guardado
+                Swal.fire({
+                    title: 'Guardado exitoso',
+                    text: 'Los cambios se han guardado correctamente.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    if (callback) callback();
+                });
+            } else {
+                let errorMsg = 'Ocurrió un problema al guardar las ventas';
+                if (response.errors && response.errors.length > 0) {
+                    errorMsg += ':\\n\\n' + response.errors.join('\\n');
+                }
+                
+                Swal.fire({
+                    title: 'Error al guardar',
+                    text: errorMsg,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Ocurrió un problema al guardar: ' + error,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
+}
+
+// Interceptar navegación con beforeunload
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        // Mensaje estándar del navegador
+        const message = 'Tienes cambios sin guardar. ¿Estás seguro de que quieres salir?';
+        e.preventDefault();
+        e.returnValue = message;
+        return message;
+    }
+});
+
+// Interceptar navegación del navegador (botón atrás/adelante)
+window.addEventListener('popstate', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        // Empujar el estado actual de vuelta para cancelar la navegación
+        history.pushState(null, null, window.location.pathname + window.location.search);
+        
+        showUnsavedChangesAlert(() => {
+            // Si el usuario decide salir, navegamos manualmente
+            markAsSaved();
+            history.back();
+        });
+    }
+});
+
+// Prevenir navegación del navegador y mostrar modal personalizado
+let navigationBlocked = false;
+function setupNavigationBlock() {
+    // Empujar un estado inicial para detectar navegación
+    if (!navigationBlocked) {
+        history.pushState(null, null, window.location.pathname + window.location.search);
+        navigationBlocked = true;
+    }
+}
+
+// Interceptar teclas de navegación (F5, Ctrl+R, etc.)
+document.addEventListener('keydown', function(e) {
+    if (hasUnsavedChanges) {
+        // F5 o Ctrl+R (refresh)
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+            e.preventDefault();
+            showUnsavedChangesAlert(() => {
+                markAsSaved();
+                location.reload();
+            });
+            return false;
+        }
+        
+        // Ctrl+W (cerrar pestaña)
+        if (e.ctrlKey && e.key === 'w') {
+            e.preventDefault();
+            showUnsavedChangesAlert(() => {
+                markAsSaved();
+                window.close();
+            });
+            return false;
+        }
+        
+        // Alt + Flecha izquierda (atrás)
+        if (e.altKey && e.key === 'ArrowLeft') {
+            e.preventDefault();
+            showUnsavedChangesAlert(() => {
+                markAsSaved();
+                history.back();
+            });
+            return false;
+        }
+        
+        // Alt + Flecha derecha (adelante)
+        if (e.altKey && e.key === 'ArrowRight') {
+            e.preventDefault();
+            showUnsavedChangesAlert(() => {
+                markAsSaved();
+                history.forward();
+            });
+            return false;
+        }
+    }
+});
+
+// Interceptar clics en enlaces y botones de navegación
+$(document).on('click', 'a:not([href^="#"]):not([data-method]):not([data-pjax="0"]):not(.btn-save-related)', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        const href = $(this).attr('href');
+        showUnsavedChangesAlert(() => {
+            window.location.href = href;
+        });
+    }
+});
+
+// Interceptar envío de formularios que no sean el de ventas
+$(document).on('submit', 'form:not(#sales-form):not(#import-form)', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        const form = this;
+        showUnsavedChangesAlert(() => {
+            markAsSaved();
+            form.submit();
+        });
+    }
+});
+
 // Función para actualizar campos ocultos
 function updateHiddenFields() {
     const month = $('#month-select').val();
@@ -430,6 +685,7 @@ function setupEventListeners() {
             },
             success: function(response) {
                 if (response.success) {
+                    markAsSaved(); // Marcar como guardado
                     Swal.fire({
                         title: 'Éxito',
                         text: 'Las ventas se han guardado correctamente.',
@@ -478,6 +734,9 @@ $(document).ready(function() {
     updateHiddenFields(); // Sincronizar valores iniciales
     setupSearchFilters(); // Configurar filtros de búsqueda
     scrollToActiveFilter(); // Desplazarse a la sección con filtro activo
+    
+    // Asegurarse de que se inicialicen correctamente todos los campos numéricos
+    setupChangeDetection(); // Configurar detección de cambios
     
     // Configurar el formulario de importación de Excel
     $('#import-form').on('submit', function(e) {
@@ -563,6 +822,11 @@ $(document).on('pjax:complete', function() {
     updateHiddenFields(); // Sincronizar valores después de PJAX
     setupSearchFilters(); // Reconfigurar filtros después de PJAX
     scrollToActiveFilter(); // Desplazarse a la sección con filtro activo después de PJAX
+    
+    // Forzar valores enteros en todos los inputs justo después de completar PJAX
+    setTimeout(function() {
+        setupChangeDetection(); // Reconfigurar detección de cambios después de PJAX
+    }, 100); // Pequeño retraso para asegurar que los elementos del DOM estén listos
 });
 
 // Función para desplazarse a la sección con filtro activo

@@ -25,18 +25,30 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         'rowOptions' => [
             'class' => 'text-center'
         ],
+        'headerRowOptions' => [
+            'class' => 'text-center'
+        ],
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+            [
+                'class' => 'yii\grid\SerialColumn',
+                'headerOptions' => ['style' => 'text-align: center !important;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
+            ],
 
 //            'id',
-            'name',
+            [
+                'attribute' => 'name',
+                'headerOptions' => ['style' => 'text-align: center !important;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
+            ],
             [
                 'attribute' => 'total_cost',
                 'label' => Yii::t('app', 'Total Cost'),
                 'value' => function($model) {
                     return formatCost($model->total_cost);
                 },
-                'contentOptions' => ['style' => 'text-align: right;'],
+                'headerOptions' => ['style' => 'text-align: center !important;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
 //            'totalCostByHigherPrice:currency',
 //            'totalCostByAvgPrice:currency',
@@ -46,7 +58,8 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'value' => function($model) {
                     return formatPrice($model->total_price);
                 },
-                'contentOptions' => ['style' => 'text-align: right;'],
+                'headerOptions' => ['style' => 'text-align: center !important;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
             [
                 'attribute' => 'cost_percent_last_price',
@@ -54,11 +67,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'value' => function ($data) {
                     return formatPercentage($data->cost_percent_last_price*100);
                 },
-                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center !important;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{update} {delete}"
+                'template' => "{update} {delete}",
+                'headerOptions' => ['style' => 'text-align: center !important;'],
+                'contentOptions' => ['style' => 'text-align: center !important;'],
             ],
         ],
     ]); ?>
