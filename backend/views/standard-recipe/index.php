@@ -488,5 +488,23 @@ document.getElementById('export-all').addEventListener('click', function() {
         window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&all=true' + '&type=main';
     }
 });
+
+// Nuevo código para manejo de descarga de recetario en PDF
+document.getElementById('btn-download-recipes-complete').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Obtener IDs de las filas seleccionadas
+    const selectedIds = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    
+    if (selectedIds.length === 0) {
+        // Mostrar modal de error si no hay selección
+        const noSelectionModal = new bootstrap.Modal(document.getElementById('modal-no-export-selection'));
+        noSelectionModal.show();
+        return;
+    }
+    
+    // Si hay selección, proceder con la descarga
+    window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/download-recipes-pdf']) . "?id=' + selectedIds.join(',') + '&type=main';
+});
 ");
 ?>

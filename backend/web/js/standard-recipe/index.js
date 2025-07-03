@@ -34,19 +34,19 @@ $(document).on('click', '#btn-download-recipes', function(event) {
         window.location.href = $(this).attr('href');
     }
 });
-$(document).ready(function() {
-    // Hide the button initially
-    $('#btn-download-recipes-complete').hide();
+ $(document).ready(function() {
+//     // Hide the button initially
+//     $('#btn-download-recipes-complete').hide();
 
-    // Show/hide the button based on checkbox selection
-    $('#standard-recipes-grid').on('change', 'input[type="checkbox"]', function() {
-        var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
-        if (selectedRecipes.length > 0) {
-            $('#btn-download-recipes-complete').show();
-        } else {
-            $('#btn-download-recipes-complete').hide();
-        }
-    });
+//     // Show/hide the button based on checkbox selection
+//     $('#standard-recipes-grid').on('change', 'input[type="checkbox"]', function() {
+//         var selectedRecipes = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+//         if (selectedRecipes.length > 0) {
+//             $('#btn-download-recipes-complete').show();
+//         } else {
+//             $('#btn-download-recipes-complete').hide();
+//         }
+//     });
 
     // Handle the download button click
     $(document).on('click', '#btn-download-recipes-complete', function(event) {
@@ -59,9 +59,6 @@ $(document).ready(function() {
             var baseUrl = $(this).attr('href');
             var url = baseUrl + '?id=' + selectedRecipes.join(',');
             window.location.href = url;
-        } else {
-            // If no recipes are selected, show an alert
-            alert('No se ha seleccionado ninguna receta');
         }
     });
 });
