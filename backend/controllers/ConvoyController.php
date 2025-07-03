@@ -155,6 +155,77 @@ class ConvoyController extends Controller
         return $this->asJson(true);
     }
 
+    public function actionUpdateIngredient($id, $ingredientId)
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        try {
+            $convoy = $this->findModel($id);
+            if (!$convoy) {
+                return ['success' => false, 'message' => 'Convoy not found'];
+            }
+            
+            $convoyIngredient = ConvoyIngredient::findOne(['id' => $ingredientId, 'convoy_id' => $convoy->id]);
+            if (!$convoyIngredient) {
+                return ['success' => false, 'message' => 'Ingredient not found'];
+            }
+
+            $post = Yii::$app->request->post();
+            if (empty($post)) {
+                return ['success' => false, 'message' => 'No POST data received'];
+            }
+
+            $quantity = $post['quantity'] ?? null;
+            $selectedEntity = $post['selectedEntity'] ?? null;
+
+            if ($quantity === null || $selectedEntity === null) {
+                return ['success' => false, 'message' => 'Missing quantity or selectedEntity', 'received' => $post];
+            }
+
+            $convoyIngredient->quantity = (float)$quantity;
+            $convoyIngredient->selectedEntity = $selectedEntity;
+            
+            if ($convoyIngredient->save()) {
+                return ['success' => true, 'message' => 'Ingredient updated successfully'];
+            } else {
+                return ['success' => false, 'message' => 'Validation errors', 'errors' => $convoyIngredient->errors];
+            }
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Server error: ' . $e->getMessage()];
+        }
+    }
+
+    public function actionGetAvailableOptions()
+    {
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        
+        $ingredients = \common\models\IngredientStock::find()
+            ->andWhere(['ingredient_stock.business_id' => $businessData['id']])
+            ->all();
+
+        $recipes = \common\models\StandardRecipe::find()
+            ->andWhere(['standard_recipe.business_id' => $businessData['id']])
+            ->andWhere(['type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB])
+            ->andWhere(['in_construction' => false])
+            ->all();
+
+        $ingredients = array_map(function ($ingredient) {
+            $ingredient->id = "ingredient_" . $ingredient->id;
+            return $ingredient;
+        }, $ingredients);
+
+        $recipes = array_map(function ($recipe) {
+            $recipe->id = "recipe_" . $recipe->id;
+            return $recipe;
+        }, $recipes);
+
+        $data = \yii\helpers\ArrayHelper::map(array_merge($ingredients, $recipes), 'id', function($i){
+            return sprintf("%s (%s)", $i->name, ($i instanceof \common\models\IngredientStock) ? $i->portion_um : $i->yield_um);
+        });
+
+        return $this->asJson($data);
+    }
+
     /**
      * Deletes an existing Convoy model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
