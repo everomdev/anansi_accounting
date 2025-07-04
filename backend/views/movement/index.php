@@ -93,23 +93,9 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     
                     return implode('  ', $parts);
                 },
-                'filter' => \kartik\select2\Select2::widget([
-                    'data' => \yii\helpers\ArrayHelper::map(\common\models\IngredientStock::find()->where(['business_id' => $business->id])->all(), 'id', function($model) {
-                        $parts = [];
-                        $parts[] = $model->ingredient;
-                        if (!empty($model->brand)) {
-                            $parts[] = $model->brand;
-                        }
-                        if (!empty($model->presentation)) {
-                            $parts[] = $model->presentation;
-                        }
-                        return implode(' + ', $parts);
-                    }),
-                    'model' => $searchModel,
-                    'attribute' => 'ingredient_id',
-                    'options' => [
-                        'placeholder' => "----"
-                    ]
+                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'name', [
+                    'class' => 'form-control',
+                    'placeholder' => 'Buscar por nombre del insumo...'
                 ]),
             ],
             'invoice',            [
@@ -258,3 +244,21 @@ echo "<div id='balance-container'></div>";
 
 
 ?>
+
+<script>
+// Debug: Verificar qué valores tienen los campos de filtro al cargar la página
+$(document).ready(function() {
+    console.log("Valores de filtros al cargar la página:");
+    console.log("name:", $("input[name='MovementSearch[name]']").val());
+    console.log("type:", $("select[name='MovementSearch[type]']").val());
+    console.log("quantity:", $("input[name='MovementSearch[quantity]']").val());
+    console.log("total:", $("input[name='MovementSearch[total]']").val());
+    console.log("payment_type:", $("select[name='MovementSearch[payment_type]']").val());
+    console.log("provider:", $("input[name='MovementSearch[provider]']").val());
+    
+    // Evento para monitorear cambios en el filtro de ingrediente
+    $("input[name='MovementSearch[name]']").on('input', function() {
+        console.log("Filtro de ingrediente cambiado a:", $(this).val());
+    });
+});
+</script>

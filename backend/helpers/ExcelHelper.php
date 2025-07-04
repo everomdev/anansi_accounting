@@ -10,6 +10,7 @@ use common\models\IngredientStock;
 use common\models\IngredientStandardRecipe;
 use common\models\StandardRecipe;
 use common\models\Movement;
+use common\models\Provider;
 use common\models\StockPrice;
 use common\models\UnitOfMeasurement;
 use Yii;
@@ -251,54 +252,281 @@ class ExcelHelper
     $writer->save('php://output');
     exit(200);
 }
-    public static function generateMovementTemplate()
+    public static function generateMovementTemplate($businessId = null)
     {
         $spreadsheet = new Spreadsheet();
         $activeWorksheet = $spreadsheet->getActiveSheet();
+        $activeWorksheet->setTitle('Movimientos');
 
-        $activeWorksheet->setCellValue("A1", "Clave");
-        $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia)");
-        $activeWorksheet->setCellValue("C1", "Proveedor");
-        $activeWorksheet->setCellValue("D1", "Tipo de Pago");
-        $activeWorksheet->setCellValue("E1", "Factura");
-        $activeWorksheet->setCellValue("F1", "Cantidad");
-        $activeWorksheet->setCellValue("G1", "Precio de Compra");
-        $activeWorksheet->setCellValue("H1", "Impuesto");
-        $activeWorksheet->setCellValue("I1", "Precio Unitario");
-        $activeWorksheet->setCellValue("J1", "Total");
-        $activeWorksheet->setCellValue("K1", "Observaciones");
+        // Configurar estilos
+        $centerStyle = [
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ];
 
-        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('C')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('D')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
+        // Encabezados principales
+        $activeWorksheet->setCellValue("A1", "Clave*");
+        $activeWorksheet->setCellValue("B1", "Insumo*");
+        $activeWorksheet->setCellValue("C1", "Fecha (año-mes-dia)*");
+        $activeWorksheet->setCellValue("D1", "Proveedor*");
+        $activeWorksheet->setCellValue("E1", "Tipo de Pago*");
+        $activeWorksheet->setCellValue("F1", "Factura");
+        $activeWorksheet->setCellValue("G1", "Cantidad*");
+        $activeWorksheet->setCellValue("H1", "Precio de Compra*");
+        $activeWorksheet->setCellValue("I1", "Impuesto");
+        $activeWorksheet->setCellValue("J1", "Precio Unitario*");
+        $activeWorksheet->setCellValue("K1", "Total*");
+        $activeWorksheet->setCellValue("L1", "Observaciones");
 
-        $activeWorksheet->setCellValue("N1", "Referencia de tipos de pago");
-        $activeWorksheet->setCellValue("N2", "Valor");
-        $activeWorksheet->setCellValue("O2", "Descripción");
+        // Aplicar estilos y configurar anchos
+        $activeWorksheet->getStyle('A1:L1')->applyFromArray($centerStyle);
+        $activeWorksheet->freezePane('D2');
 
-        $activeWorksheet->setCellValue("N3", Movement::PAYMENT_TYPE_CARD);
-        $activeWorksheet->setCellValue("O3", "Tarjeta");
+        // Configurar anchos de columnas
+        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Clave
+        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(35); // Insumo
+        $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(20); // Fecha
+        $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(25); // Proveedor
+        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Tipo de Pago
+        $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(15); // Factura
+        $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(12); // Cantidad
+        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(15); // Precio de Compra
+        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(12); // Impuesto
+        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(15); // Precio Unitario
+        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(15); // Total
+        $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(30); // Observaciones
 
-        $activeWorksheet->setCellValue("N4", Movement::PAYMENT_TYPE_BANK_TRANSFERENCE);
-        $activeWorksheet->setCellValue("O4", "Transferencia Bancaria");
+        // Configurar formato de fecha para la columna C (Fecha)
+        $spreadsheet->getActiveSheet()->getStyle('C2:C5000')
+            ->getNumberFormat()
+            ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
 
-        $activeWorksheet->setCellValue("N5", Movement::PAYMENT_TYPE_CASH);
-        $activeWorksheet->setCellValue("O5", "Efectivo");
+        // Hoja de insumos
+        if ($businessId) {
+            $ingredientsSheet = $spreadsheet->createSheet();
+            $ingredientsSheet->setTitle('Insumos');
+            $ingredientsSheet->setCellValue('A1', 'Clave');
+            $ingredientsSheet->setCellValue('B1', 'Insumo');
+            $ingredientsSheet->setCellValue('C1', 'Unidad');
 
-        $activeWorksheet->setCellValue("N6", Movement::PAYMENT_TYPE_OTHER);
-        $activeWorksheet->setCellValue("O6", "Otro");
+            $ingredients = IngredientStock::find()
+                ->where(['business_id' => $businessId])
+                ->all();
 
-        $spreadsheet->getActiveSheet()->getColumnDimension('N')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('O')->setAutoSize(true);
+            $row = 2;
+            foreach ($ingredients as $ingredient) {
+                $ingredientsSheet->setCellValue("A$row", $ingredient->key);
+                $ingredientsSheet->setCellValue("B$row", $ingredient->ingredient);
+                $ingredientsSheet->setCellValue("C$row", $ingredient->portion_um);
+                $row++;
+            }
 
+            $ingredientsSheet->getColumnDimension('A')->setWidth(15);
+            $ingredientsSheet->getColumnDimension('B')->setWidth(40);
+            $ingredientsSheet->getColumnDimension('C')->setWidth(15);
+
+            // Aplicar validación de datos a la columna de insumo (columna B) en la hoja principal
+            if ($row > 2) {
+                $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
+                $ingredientValidation = $mainSheet->getCell('B2')->getDataValidation();
+                $ingredientValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+                $ingredientValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $ingredientValidation->setAllowBlank(false);
+                $ingredientValidation->setShowInputMessage(true);
+                $ingredientValidation->setShowErrorMessage(true);
+                $ingredientValidation->setShowDropDown(true);
+                $ingredientValidation->setErrorTitle('Error de entrada');
+                $ingredientValidation->setError('Este valor no es admitido. Debe seleccionar un insumo válido.');
+                $ingredientValidation->setPromptTitle('Selecciona un insumo');
+                $ingredientValidation->setPrompt('Por favor, selecciona el nombre de un insumo del desplegable.');
+                $ingredientValidation->setFormula1('Insumos!$B$2:$B$' . ($row - 1));
+
+                // Aplicar validación a múltiples filas
+                for ($i = 2; $i <= 5000; $i++) {
+                    $mainSheet->getCell("B$i")->setDataValidation(clone $ingredientValidation);
+                    
+                    // Ya no se añade fórmula automática para la columna A (Clave)
+                    // La clave ahora se ingresa manualmente por el usuario
+                }
+            }
+        }
+
+        // Hoja de proveedores
+        if ($businessId) {
+            $providersSheet = $spreadsheet->createSheet();
+            $providersSheet->setTitle('Proveedores');
+            $providersSheet->setCellValue('A1', 'Proveedor');
+            $providersSheet->setCellValue('B1', 'Métodos de Pago');
+
+            $providers = Provider::find()
+                ->where(['business_id' => $businessId])
+                ->all();
+
+            $row = 2;
+            $allProviders = [];
+            
+            // Para cada proveedor crear también una hoja con sus métodos de pago
+            foreach ($providers as $providerIndex => $provider) {
+                $providersSheet->setCellValue("A$row", $provider->business_name);
+                $paymentMethods = is_array($provider->payment_method) ? 
+                    $provider->payment_method : 
+                    explode(',', $provider->payment_method);
+                    
+                $paymentMethodStr = is_array($provider->payment_method) ? 
+                    implode(', ', $provider->payment_method) : 
+                    $provider->payment_method;
+                $providersSheet->setCellValue("B$row", $paymentMethodStr);
+                $allProviders[] = $provider->business_name;
+                
+                // Crear una hoja para los métodos de pago de este proveedor
+                $providerName = preg_replace('/[^\w\s]/', '', $provider->business_name);
+                $providerName = substr(str_replace(' ', '_', $providerName), 0, 20); // Limitar longitud
+                $providerSheetName = 'PM_' . ($providerIndex + 1); // Nombre corto para evitar problemas
+                
+                $providerPaymentSheet = $spreadsheet->createSheet();
+                $providerPaymentSheet->setTitle($providerSheetName);
+                $providerPaymentSheet->setCellValue('A1', 'Valor');
+                $providerPaymentSheet->setCellValue('B1', 'Descripción');
+                
+                // Mapear códigos de pago a descripciones
+                $paymentDescriptions = [
+                    Movement::PAYMENT_TYPE_CARD => 'Tarjeta',
+                    Movement::PAYMENT_TYPE_BANK_TRANSFERENCE => 'Transferencia Bancaria',
+                    Movement::PAYMENT_TYPE_CASH => 'Efectivo',
+                    Movement::PAYMENT_TYPE_OTHER => 'Otro'
+                ];
+                
+                // Agregar solo los métodos de pago disponibles para este proveedor
+                $pmRow = 2;
+                foreach ($paymentMethods as $method) {
+                    $method = trim($method);
+                    if (!empty($method)) {
+                        $providerPaymentSheet->setCellValue("A$pmRow", $method);
+                        $providerPaymentSheet->setCellValue("B$pmRow", isset($paymentDescriptions[$method]) ? 
+                            $paymentDescriptions[$method] : $method);
+                        $pmRow++;
+                    }
+                }
+                
+                $providerPaymentSheet->getColumnDimension('A')->setWidth(15);
+                $providerPaymentSheet->getColumnDimension('B')->setWidth(25);
+                
+                // Asociar el nombre de la hoja con el proveedor para uso posterior
+                $providersSheet->setCellValue("C$row", $providerSheetName);
+                
+                $row++;
+            }
+
+            $providersSheet->getColumnDimension('A')->setWidth(30);
+            $providersSheet->getColumnDimension('B')->setWidth(40);
+
+            // Aplicar validación de datos a la columna de proveedor (ahora columna D) en la hoja principal
+            if ($row > 2) {
+                $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
+                $providerValidation = $mainSheet->getCell('D2')->getDataValidation();
+                $providerValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+                $providerValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $providerValidation->setAllowBlank(false);
+                $providerValidation->setShowInputMessage(true);
+                $providerValidation->setShowErrorMessage(true);
+                $providerValidation->setShowDropDown(true);
+                $providerValidation->setErrorTitle('Error de entrada');
+                $providerValidation->setError('Este valor no es admitido. Debe seleccionar un proveedor válido.');
+                $providerValidation->setPromptTitle('Selecciona un proveedor');
+                $providerValidation->setPrompt('Por favor, selecciona un proveedor del desplegable.');
+                $providerValidation->setFormula1('Proveedores!$A$2:$A$' . ($row - 1));
+
+                // Aplicar validación a múltiples filas
+                for ($i = 2; $i <= 5000; $i++) {
+                    $mainSheet->getCell("D$i")->setDataValidation(clone $providerValidation);
+                }
+            }
+        }
+
+        // Hoja de referencia de tipos de pago
+        $paymentTypesSheet = $spreadsheet->createSheet();
+        $paymentTypesSheet->setTitle('Tipos de Pago');
+        $paymentTypesSheet->setCellValue("A1", "Valor");
+        $paymentTypesSheet->setCellValue("B1", "Descripción");
+
+        $paymentTypesSheet->setCellValue("A2", Movement::PAYMENT_TYPE_CARD);
+        $paymentTypesSheet->setCellValue("B2", "Tarjeta");
+
+        $paymentTypesSheet->setCellValue("A3", Movement::PAYMENT_TYPE_BANK_TRANSFERENCE);
+        $paymentTypesSheet->setCellValue("B3", "Transferencia Bancaria");
+
+        $paymentTypesSheet->setCellValue("A4", Movement::PAYMENT_TYPE_CASH);
+        $paymentTypesSheet->setCellValue("B4", "Efectivo");
+
+        $paymentTypesSheet->setCellValue("A5", Movement::PAYMENT_TYPE_OTHER);
+        $paymentTypesSheet->setCellValue("B5", "Otro");
+
+        $paymentTypesSheet->getColumnDimension('A')->setWidth(15);
+        $paymentTypesSheet->getColumnDimension('B')->setWidth(25);
+
+        // Aplicar validación de datos a la columna de tipo de pago (ahora columna E) en la hoja principal
+        // con validación dependiente del proveedor seleccionado
+        $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
+        
+        // Para cada fila, crear una validación dinámica que dependa del proveedor seleccionado
+        for ($i = 2; $i <= 5000; $i++) {
+            $paymentValidation = $mainSheet->getCell("E$i")->getDataValidation();
+            $paymentValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $paymentValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $paymentValidation->setAllowBlank(false);
+            $paymentValidation->setShowInputMessage(true);
+            $paymentValidation->setShowErrorMessage(true);
+            $paymentValidation->setShowDropDown(true);
+            $paymentValidation->setErrorTitle('Error de entrada');
+            $paymentValidation->setError('Este valor no es admitido. Debe seleccionar un tipo de pago válido para este proveedor.');
+            $paymentValidation->setPromptTitle('Selecciona un tipo de pago');
+            $paymentValidation->setPrompt('Selecciona un tipo de pago válido para el proveedor elegido.');
+            
+            // Fórmula que obtiene la referencia a la hoja de métodos de pago del proveedor seleccionado
+            // INDIRECTO busca en la columna C de la hoja Proveedores el nombre de la hoja correspondiente
+            // COINCIDIR busca el nombre del proveedor en la columna A de la hoja Proveedores
+            $paymentValidation->setFormula1('=INDIRECT(CONCATENATE(VLOOKUP(D'.$i.',Proveedores!A:C,3,FALSE),"!$A$2:$A$20"))');
+            
+            $mainSheet->getCell("E$i")->setDataValidation($paymentValidation);
+        }
+        
+        // NO aplicar validaciones numéricas restrictivas para evitar problemas de compatibilidad
+        // Las columnas Clave, Cantidad, Precio de Compra, Precio Unitario y Total 
+        // quedan sin validación para permitir ingreso libre sin errores de Excel
+
+        // Crear hoja de leyenda
+        $legendSheet = $spreadsheet->createSheet();
+        $legendSheet->setTitle('Leyenda');
+        $legendSheet->setCellValue('A1', 'Columna');
+        $legendSheet->setCellValue('B1', 'Descripción');
+        $legendSheet->setCellValue('A2', 'Clave');
+        $legendSheet->setCellValue('B2', 'Ingrese manualmente la clave numérica del insumo (sin validación restrictiva).');
+        $legendSheet->setCellValue('A3', 'Insumo');
+        $legendSheet->setCellValue('B3', 'Seleccione un insumo del desplegable de la hoja Insumos.');
+        $legendSheet->setCellValue('A4', 'Fecha');
+        $legendSheet->setCellValue('B4', 'Formato: año-mes-día (ej: 2025-07-03)');
+        $legendSheet->setCellValue('A5', 'Proveedor');
+        $legendSheet->setCellValue('B5', 'Seleccione un proveedor del desplegable de la hoja Proveedores.');
+        $legendSheet->setCellValue('A6', 'Tipo de Pago');
+        $legendSheet->setCellValue('B6', 'Seleccione un tipo de pago del desplegable. Los tipos disponibles dependen del proveedor seleccionado.');
+        $legendSheet->setCellValue('A7', 'Cantidad');
+        $legendSheet->setCellValue('B7', 'Ingrese un valor numérico (sin validación restrictiva).');
+        $legendSheet->setCellValue('A8', 'Precio de Compra');
+        $legendSheet->setCellValue('B8', 'Ingrese un valor numérico (sin validación restrictiva).');
+        $legendSheet->setCellValue('A9', 'Precio Unitario');
+        $legendSheet->setCellValue('B9', 'Ingrese un valor numérico (sin validación restrictiva).');
+        $legendSheet->setCellValue('A10', 'Total');
+        $legendSheet->setCellValue('B10', 'Ingrese un valor numérico (sin validación restrictiva).');
+        $legendSheet->setCellValue('A11', 'Notas Importantes');
+        $legendSheet->setCellValue('B11', 'Las columnas numéricas permiten cualquier valor sin validación para evitar problemas de compatibilidad con Excel.');
+
+        $legendSheet->getColumnDimension('A')->setWidth(20);
+        $legendSheet->getColumnDimension('B')->setWidth(60);
+
+        // Activar la primera hoja antes de guardar
+        $spreadsheet->setActiveSheetIndex(0);
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Plantilla_para_importar_movimientos_de_entrada.xlsx';
@@ -478,39 +706,79 @@ class ExcelHelper
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
 
         $movementsData = [];
+        $errors = [];
 
         $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
         while (true) {
-            $cellIterator = $rowIterator->current()->getCellIterator('A', 'K');
+            $cellIterator = $rowIterator->current()->getCellIterator('A', 'L');
             if($rowIterator->current()->getRowIndex() != 1) {
                 if (empty($cellIterator->current()->getValue())) {
                     break;
                 }
                 $data = [];
-                $data['key'] = $cellIterator->current()->getValue(); // A - Clave
+                $rowNumber = $rowIterator->current()->getRowIndex();
+                
+                // A - Clave (ahora ingresada manualmente)
+                $data['key'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
-                $createdAt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($cellIterator->current()->getValue());
-                $data['created_at'] = $createdAt->format('Y-m-d'); // B - Fecha
+                
+                // B - Insumo (nombre)
+                $data['ingredient_name'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
-                $data['provider'] = $cellIterator->current()->getValue(); // C - Proveedor
+                
+                // C - Fecha
+                try {
+                    $dateValue = $cellIterator->current()->getValue();
+                    if (is_numeric($dateValue)) {
+                        $createdAt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateValue);
+                        $data['created_at'] = $createdAt->format('Y-m-d');
+                    } else {
+                        // Si no es numérico, intentar parsear como string de fecha
+                        $data['created_at'] = date('Y-m-d', strtotime($dateValue));
+                    }
+                } catch (\Exception $e) {
+                    $errors[] = "Fila $rowNumber: Error en formato de fecha";
+                    $data['created_at'] = date('Y-m-d'); // Fecha por defecto
+                }
                 $cellIterator->next();
-                $data['payment_type'] = $cellIterator->current()->getValue(); // D - Tipo de Pago
+                
+                // D - Proveedor
+                $data['provider'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
-                $data['invoice'] = $cellIterator->current()->getValue(); // E - Factura
+                
+                // E - Tipo de Pago
+                $data['payment_type'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
-                $data['quantity'] = $cellIterator->current()->getValue(); // F - Cantidad
+                
+                // F - Factura
+                $data['invoice'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
-                $data['amount'] = $cellIterator->current()->getValue(); // G - Precio de Compra
+                
+                // G - Cantidad
+                $data['quantity'] = $cellIterator->current()->getValue();
                 $cellIterator->next();
-                $data['tax'] = $cellIterator->current()->getValue(); // H - Impuesto
+                
+                // H - Precio de Compra
+                $data['amount'] = $cellIterator->current()->getValue();
                 $cellIterator->next();
-                $data['unit_price'] = $cellIterator->current()->getValue(); // I - Precio Unitario
+                
+                // I - Impuesto
+                $data['tax'] = $cellIterator->current()->getValue();
                 $cellIterator->next();
-                $data['total'] = $cellIterator->current()->getValue(); // J - Total
+                
+                // J - Precio Unitario
+                $data['unit_price'] = $cellIterator->current()->getValue();
                 $cellIterator->next();
-                $data['observations'] = $cellIterator->current()->getValue(); // K - Observaciones
+                
+                // K - Total
+                $data['total'] = $cellIterator->current()->getValue();
+                $cellIterator->next();
+                
+                // L - Observaciones
+                $data['observations'] = trim($cellIterator->current()->getValue());
 
                 $data['business_id'] = $business->id;
+                $data['row_number'] = $rowNumber; // Para tracking de errores
 
                 $movementsData[] = $data;
             }
@@ -518,39 +786,87 @@ class ExcelHelper
             $rowIterator->next();
         }
 
-        $movementsData = array_map(function($movement){
-            $ingredient = IngredientStock::find()
-                ->where([
-                    'key' => $movement['key'],
-                    'business_id' => $movement['business_id']
-                ])
-                ->select(["id"])
-                ->asArray(true)
-                ->one();
-            unset($movement['key']);
-            if($ingredient){
-                $movement['ingredient_id'] = $ingredient['id'];
-            }else{
-                $movement['ingredient_id'] = null;
+        // Procesar los datos y buscar ingredientes
+        $processedMovements = [];
+        foreach ($movementsData as $movement) {
+            $ingredient = null;
+            $rowNumber = $movement['row_number'];
+            
+            // Estrategia de búsqueda mejorada:
+            // 1. Primero por clave si está disponible
+            if (!empty($movement['key']) && is_numeric($movement['key'])) {
+                $ingredient = IngredientStock::find()
+                    ->where([
+                        'key' => $movement['key'],
+                        'business_id' => $movement['business_id']
+                    ])
+                    ->one();
             }
-
-            return $movement;
-        }, $movementsData);
-
-        $movementsData = array_filter($movementsData, function($movement){
-            return !empty($movement['ingredient_id']);
-        });
-
-        foreach ($movementsData as $movementData){
-            $movement = new Movement($movementData);
-            $movement->type = Movement::TYPE_INPUT;
-            $movement->save();
-            if($movement->hasErrors()){
-                \Yii::error(Yaml::dump($movement->errors));
+                
+            // 2. Si no se encuentra por clave, buscar por nombre exacto
+            if (!$ingredient && !empty($movement['ingredient_name'])) {
+                $ingredient = IngredientStock::find()
+                    ->where([
+                        'ingredient' => $movement['ingredient_name'],
+                        'business_id' => $movement['business_id']
+                    ])
+                    ->one();
+            }
+            
+            // 3. Si aún no se encuentra, buscar por nombre con LIKE (búsqueda parcial)
+            if (!$ingredient && !empty($movement['ingredient_name'])) {
+                $ingredient = IngredientStock::find()
+                    ->where(['like', 'ingredient', $movement['ingredient_name'], false])
+                    ->andWhere(['business_id' => $movement['business_id']])
+                    ->one();
+            }
+            
+            // Limpiar datos innecesarios
+            unset($movement['key']);
+            unset($movement['ingredient_name']);
+            unset($movement['row_number']);
+            
+            if ($ingredient) {
+                $movement['ingredient_id'] = $ingredient->id;
+                $processedMovements[] = $movement;
+            } else {
+                $errors[] = "Fila $rowNumber: No se encontró el insumo especificado";
             }
         }
 
-        return;
+        // Guardar movimientos válidos
+        $savedCount = 0;
+        $transaction = \Yii::$app->db->beginTransaction();
+        try {
+            foreach ($processedMovements as $movementData) {
+                $movement = new Movement($movementData);
+                $movement->type = Movement::TYPE_INPUT;
+                
+                if ($movement->save()) {
+                    $savedCount++;
+                } else {
+                    $errors[] = "Error al guardar movimiento: " . json_encode($movement->errors);
+                }
+            }
+            
+            $transaction->commit();
+            
+            // Log de resultados
+            \Yii::info("Importación de movimientos completada. Guardados: $savedCount");
+            if (!empty($errors)) {
+                \Yii::warning("Errores durante la importación: " . implode(', ', $errors));
+            }
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            throw new HttpException(500, "Error durante la importación: " . $e->getMessage());
+        }
+
+        return [
+            'success' => true,
+            'saved_count' => $savedCount,
+            'errors' => $errors
+        ];
     }
 
     public static function exportIngredients(Business $business){
@@ -804,12 +1120,12 @@ class ExcelHelper
                     $timeUnit = $cellIterator->current()->getValue(); // Time unit (minutes, hours, days)
                     $data['time_of_preparation'] = $timeValue . ' ' . $timeUnit;
                     $cellIterator->next();
-                    $data['yield'] = $cellIterator->current()->getValue(); // D - Rendimiento
+                    $data['yield'] = $cellIterator->current()->getValue(); // E - Rendimiento
                     $cellIterator->next();
-                    $data['yield_um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
+                    $data['yield_um'] = $cellIterator->current()->getValue(); // F - Unidad de medida final
                     $cellIterator->next();
                     $portionsValue = $cellIterator->current();
-                    $data['portions'] = $portionsValue->getCalculatedValue(); // F - Porciones
+                    $data['portions'] = $portionsValue->getCalculatedValue(); // G - Porciones
                     if (!is_numeric($data['portions'])) {
                         // Try to clean/extract numeric value if it's not already numeric
                         $data['portions'] = preg_replace('/[^\d.]/', '', $data['portions']);
@@ -823,7 +1139,7 @@ class ExcelHelper
                     $timeValue = $cellIterator->current()->getValue();
                     $cellIterator->next();
                     $timeUnit = $cellIterator->current()->getValue();
-                    $data['lifetime'] = $timeValue . ' ' . $timeUnit; // G - Duración
+                    $data['lifetime'] = $timeValue . ' ' . $timeUnit; // H-I - Duración
                     $cellIterator->next();
                     $priceRaw = $cellIterator->current()->getValue();
                     if (is_numeric($priceRaw)) {
@@ -832,7 +1148,7 @@ class ExcelHelper
                         $cleanPrice = preg_replace('/[^\d.]/', '', strval($priceRaw));
                         $data['price'] = floatval($cleanPrice);
                     }
-                    $cellIterator->next();
+                    $cellIterator->next();                    
                     $data['is_food'] = $cellIterator->current()->getValue() === 'Alimento'; // K - Alimento o Bebida
                     $cellIterator->next();
                     $convoyName = $cellIterator->current()->getValue(); // L - Convoy
@@ -991,9 +1307,9 @@ class ExcelHelper
                     $timeUnit = $cellIterator->current()->getValue(); // Time unit (minutes, hours, days)
                     $data['time_of_preparation'] = $timeValue . ' ' . $timeUnit;
                     $cellIterator->next();
-                    $data['yield'] = $cellIterator->current()->getValue(); // D - Rendimiento
+                    $data['yield'] = $cellIterator->current()->getValue(); // E - Rendimiento
                     $cellIterator->next();
-                    $data['yield_um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
+                    $data['yield_um'] = $cellIterator->current()->getValue(); // F - Unidad de medida final
                     $cellIterator->next();
                     $portionsValue = $cellIterator->current();
                     $data['portions'] = $portionsValue->getCalculatedValue(); // F - Porciones

@@ -171,7 +171,9 @@ class MovementController extends Controller
 
     public function actionDownloadTemplate()
     {
-        ExcelHelper::generateMovementTemplate();
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $businessId = $businessData['id'];
+        ExcelHelper::generateMovementTemplate($businessId);
     }
 
     public function actionImportMovements()

@@ -46,8 +46,12 @@ class MovementSearch extends Movement
     {
         $query = Movement::find();
         $query->leftJoin('ingredient_stock ingredient', "ingredient.id=movement.ingredient_id");
-        $query->select(["movement.*", "ingredient.ingredient as name"]);
-        // add conditions that should always apply here
+        $query->select([
+            "movement.*", 
+            "ingredient.ingredient as name",
+            "ingredient.brand",
+            "ingredient.presentation"
+        ]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -58,52 +62,52 @@ class MovementSearch extends Movement
                         'desc' => ['name' => SORT_DESC],
                     ],
                     'type' => [
-                        'asc' => ['type' => SORT_ASC],
-                        'desc' => ['type' => SORT_DESC],
+                        'asc' => ['movement.type' => SORT_ASC],
+                        'desc' => ['movement.type' => SORT_DESC],
                     ],
                     'provider' => [
-                        'asc' => ['provider' => SORT_ASC],
-                        'desc' => ['provider' => SORT_DESC],
+                        'asc' => ['movement.provider' => SORT_ASC],
+                        'desc' => ['movement.provider' => SORT_DESC],
                     ],
                     'payment_type' => [
-                        'asc' => ['payment_type' => SORT_ASC],
-                        'desc' => ['payment_type' => SORT_DESC],
+                        'asc' => ['movement.payment_type' => SORT_ASC],
+                        'desc' => ['movement.payment_type' => SORT_DESC],
                     ],
                     'invoice' => [
-                        'asc' => ['invoice' => SORT_ASC],
-                        'desc' => ['invoice' => SORT_DESC],
+                        'asc' => ['movement.invoice' => SORT_ASC],
+                        'desc' => ['movement.invoice' => SORT_DESC],
                     ],
                     'quantity' => [
-                        'asc' => ['quantity' => SORT_ASC],
-                        'desc' => ['quantity' => SORT_DESC],
+                        'asc' => ['movement.quantity' => SORT_ASC],
+                        'desc' => ['movement.quantity' => SORT_DESC],
                     ],
                     'um' => [
-                        'asc' => ['um' => SORT_ASC],
-                        'desc' => ['um' => SORT_DESC],
+                        'asc' => ['movement.um' => SORT_ASC],
+                        'desc' => ['movement.um' => SORT_DESC],
                     ],
                     'amount' => [
-                        'asc' => ['amount' => SORT_ASC],
-                        'desc' => ['amount' => SORT_DESC],
+                        'asc' => ['movement.amount' => SORT_ASC],
+                        'desc' => ['movement.amount' => SORT_DESC],
                     ],
                     'created_at' => [
-                        'asc' => ['created_at' => SORT_ASC],
-                        'desc' => ['created_at' => SORT_DESC]
+                        'asc' => ['movement.created_at' => SORT_ASC],
+                        'desc' => ['movement.created_at' => SORT_DESC]
                     ],
                     'tax' => [
-                        'asc' => ['tax' => SORT_ASC],
-                        'desc' => ['tax' => SORT_DESC]
+                        'asc' => ['movement.tax' => SORT_ASC],
+                        'desc' => ['movement.tax' => SORT_DESC]
                     ],
                     'retention' => [
-                        'asc' => ['retention' => SORT_ASC],
-                        'desc' => ['retention' => SORT_DESC]
+                        'asc' => ['movement.retention' => SORT_ASC],
+                        'desc' => ['movement.retention' => SORT_DESC]
                     ],
                     'unit_price' => [
-                        'asc' => ['unit_price' => SORT_ASC],
-                        'desc' => ['unit_price' => SORT_DESC],
+                        'asc' => ['movement.unit_price' => SORT_ASC],
+                        'desc' => ['movement.unit_price' => SORT_DESC],
                     ],
                     'total' => [
-                        'asc' => ['total' => SORT_ASC],
-                        'desc' => ['total' => SORT_DESC],
+                        'asc' => ['movement.total' => SORT_ASC],
+                        'desc' => ['movement.total' => SORT_DESC],
                     ]
                 ],
                 'defaultOrder' => ['created_at' => SORT_DESC]
@@ -118,26 +122,61 @@ class MovementSearch extends Movement
             return $dataProvider;
         }
 
+        // Debug: verificar qué valores se están cargando
+        \Yii::info("Valores cargados en MovementSearch: " . json_encode([
+            'name' => $this->name,
+            'type' => $this->type,
+            'quantity' => $this->quantity,
+            'total' => $this->total,
+            'payment_type' => $this->payment_type,
+            'provider' => $this->provider,
+            'invoice' => $this->invoice
+        ]), 'movement-search');
+
+        // Aplicar filtro de business_id si está definido
+        if (!empty($this->business_id)) {
+            $query->andWhere(['movement.business_id' => $this->business_id]);
+        }
+
         // grid filtering conditions
         $query->andFilterWhere([
-            'id' => $this->id,
-            'quantity' => $this->quantity,
-            'amount' => $this->amount,
-            'tax' => $this->tax,
-            'retention' => $this->retention,
-            'unit_price' => $this->unit_price,
-            'total' => $this->total,
-            'ingredient_id' => $this->ingredient_id,
-            'movement.business_id' => $this->business_id,
-            'created_at' => $this->created_at,
+            'movement.id' => $this->id,
+            'movement.ingredient_id' => $this->ingredient_id,
+            'movement.created_at' => $this->created_at,
         ]);
+        
+        // Filtros numéricos - solo aplicar si el valor no es 0
+        if (!empty($this->quantity) && $this->quantity != 0) {
+            $query->andFilterWhere(['movement.quantity' => $this->quantity]);
+        }
+        if (!empty($this->amount) && $this->amount != 0) {
+            $query->andFilterWhere(['movement.amount' => $this->amount]);
+        }
+        if (!empty($this->tax) && $this->tax != 0) {
+            $query->andFilterWhere(['movement.tax' => $this->tax]);
+        }
+        if (!empty($this->retention) && $this->retention != 0) {
+            $query->andFilterWhere(['movement.retention' => $this->retention]);
+        }
+        if (!empty($this->unit_price) && $this->unit_price != 0) {
+            $query->andFilterWhere(['movement.unit_price' => $this->unit_price]);
+        }
+        if (!empty($this->total) && $this->total != 0) {
+            $query->andFilterWhere(['movement.total' => $this->total]);
+        }
 
-        $query->andFilterWhere(['like', 'type', $this->type])
-            ->andFilterWhere(['like', 'provider', $this->provider])
-            ->andFilterWhere(['like', 'payment_type', $this->payment_type])
-            ->andFilterWhere(['like', 'invoice', $this->invoice])
+        $query->andFilterWhere(['like', 'movement.type', $this->type])
+            ->andFilterWhere(['like', 'movement.provider', $this->provider])
+            ->andFilterWhere(['like', 'movement.payment_type', $this->payment_type])
+            ->andFilterWhere(['like', 'movement.invoice', $this->invoice])
             ->andFilterWhere(['like', 'movement.um', $this->um])
-            ->andFilterWhere(['like', 'observations', $this->observations]);
+            ->andFilterWhere(['like', 'movement.observations', $this->observations]);
+
+        // Filtro por nombre del ingrediente
+        if (!empty($this->name)) {
+            $query->andWhere(['like', 'ingredient.ingredient', $this->name]);
+            \Yii::info("Aplicando filtro por ingrediente: " . $this->name, 'movement-search');
+        }
 
         return $dataProvider;
     }
