@@ -244,6 +244,9 @@ class ExcelHelper
      }
     // Activar la primera hoja antes de guardar
     $spreadsheet->setActiveSheetIndex(0);
+    
+    // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
+    $spreadsheet->getActiveSheet()->setSelectedCell('A2');
 
     $writer = new Xlsx($spreadsheet);
     $fileName = 'Plantilla_para_importar_insumos.xlsx';
@@ -557,6 +560,9 @@ class ExcelHelper
 
         // Activar la primera hoja antes de guardar
         $spreadsheet->setActiveSheetIndex(0);
+        
+        // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
+        $spreadsheet->getActiveSheet()->setSelectedCell('A2');
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Plantilla_para_importar_movimientos_de_entrada.xlsx';
@@ -1147,6 +1153,9 @@ class ExcelHelper
         for ($i = 2; $i <= 5000; $i++) {
             $spreadsheet->getActiveSheet()->getCell("B$i")->setDataValidation(clone $dataValidation);
         }
+
+        // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
+        $spreadsheet->getActiveSheet()->setSelectedCell('A2');
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Plantilla_para_importar_ingredientes.xlsx';

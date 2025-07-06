@@ -2263,7 +2263,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $col++;
         }
 
-        $recipesSheet->freezePane('D2');
+        $recipesSheet->freezePane('B2');
         // 3. Configurar cabeceras para otras hojas        
         $ingredientsSheet->setCellValue('A1', ($isSubrecipe ? 'SubReceta' : 'Receta'));
         $ingredientsSheet->setCellValue('B1', 'Ingrediente o Subreceta*');
@@ -2353,7 +2353,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $insumosSheet->setCellValue('A' . $insumosRow, $ingredient->ingredient);
             $insumosSheet->setCellValue('B' . $insumosRow, $ingredient->quantity);
             $insumosSheet->setCellValue('C' . $insumosRow, $ingredient->um);
-            $insumosSheet->setCellValue('D' . $insumosRow, $ingredient->lastPrice);
+            $insumosSheet->setCellValue('D' . $insumosRow, number_format($ingredient->lastPrice / $ingredient->portions_per_unit, 2, '.', ''));
             $insumosRow++;
         }
     
