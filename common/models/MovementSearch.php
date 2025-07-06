@@ -122,17 +122,6 @@ class MovementSearch extends Movement
             return $dataProvider;
         }
 
-        // Debug: verificar qué valores se están cargando
-        \Yii::info("Valores cargados en MovementSearch: " . json_encode([
-            'name' => $this->name,
-            'type' => $this->type,
-            'quantity' => $this->quantity,
-            'total' => $this->total,
-            'payment_type' => $this->payment_type,
-            'provider' => $this->provider,
-            'invoice' => $this->invoice
-        ]), 'movement-search');
-
         // Aplicar filtro de business_id si está definido
         if (!empty($this->business_id)) {
             $query->andWhere(['movement.business_id' => $this->business_id]);

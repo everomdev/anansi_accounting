@@ -289,7 +289,7 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(35); // Insumo
         $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(20); // Fecha
         $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(25); // Proveedor
-        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Tipo de Pago
+        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(25); // Tipo de Pago
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(15); // Factura
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(12); // Cantidad
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(15); // Precio de Compra
@@ -390,12 +390,14 @@ class ExcelHelper
                 $providerPaymentSheet->setCellValue('A1', 'Valor');
                 $providerPaymentSheet->setCellValue('B1', 'Descripción');
                 
-                // Mapear códigos de pago a descripciones
+                // Mapear códigos de pago a descripciones en español
                 $paymentDescriptions = [
-                    Movement::PAYMENT_TYPE_CARD => 'Tarjeta',
-                    Movement::PAYMENT_TYPE_BANK_TRANSFERENCE => 'Transferencia Bancaria',
-                    Movement::PAYMENT_TYPE_CASH => 'Efectivo',
-                    Movement::PAYMENT_TYPE_OTHER => 'Otro'
+                    Movement::PAYMENT_METHOD_CASH => 'Efectivo',
+                    Movement::PAYMENT_METHOD_TRANSFER => 'Transferencia Bancaria',
+                    Movement::PAYMENT_METHOD_CHECK => 'Cheque',
+                    Movement::PAYMENT_METHOD_CREDIT_CARD => 'Tarjeta de Crédito',
+                    Movement::PAYMENT_METHOD_DEBIT_CARD => 'Tarjeta de Débito',
+                    Movement::PAYMENT_METHOD_OTHER => 'Otro Método de Pago'
                 ];
                 
                 // Agregar solo los métodos de pago disponibles para este proveedor
@@ -403,15 +405,16 @@ class ExcelHelper
                 foreach ($paymentMethods as $method) {
                     $method = trim($method);
                     if (!empty($method)) {
-                        $providerPaymentSheet->setCellValue("A$pmRow", $method);
-                        $providerPaymentSheet->setCellValue("B$pmRow", isset($paymentDescriptions[$method]) ? 
-                            $paymentDescriptions[$method] : $method);
+                        // Mostrar la descripción en español en lugar del código
+                        $description = isset($paymentDescriptions[$method]) ? $paymentDescriptions[$method] : $method;
+                        $providerPaymentSheet->setCellValue("A$pmRow", $description);
+                        $providerPaymentSheet->setCellValue("B$pmRow", $method); // Código interno para referencia
                         $pmRow++;
                     }
                 }
                 
-                $providerPaymentSheet->getColumnDimension('A')->setWidth(15);
-                $providerPaymentSheet->getColumnDimension('B')->setWidth(25);
+                $providerPaymentSheet->getColumnDimension('A')->setWidth(25);
+                $providerPaymentSheet->getColumnDimension('B')->setWidth(20);
                 
                 // Asociar el nombre de la hoja con el proveedor para uso posterior
                 $providersSheet->setCellValue("C$row", $providerSheetName);
@@ -448,23 +451,29 @@ class ExcelHelper
         // Hoja de referencia de tipos de pago
         $paymentTypesSheet = $spreadsheet->createSheet();
         $paymentTypesSheet->setTitle('Tipos de Pago');
-        $paymentTypesSheet->setCellValue("A1", "Valor");
-        $paymentTypesSheet->setCellValue("B1", "Descripción");
+        $paymentTypesSheet->setCellValue("A1", "Descripción");
+        $paymentTypesSheet->setCellValue("B1", "Código Interno");
 
-        $paymentTypesSheet->setCellValue("A2", Movement::PAYMENT_TYPE_CARD);
-        $paymentTypesSheet->setCellValue("B2", "Tarjeta");
+        $paymentTypesSheet->setCellValue("A2", "Efectivo");
+        $paymentTypesSheet->setCellValue("B2", Movement::PAYMENT_METHOD_CASH);
 
-        $paymentTypesSheet->setCellValue("A3", Movement::PAYMENT_TYPE_BANK_TRANSFERENCE);
-        $paymentTypesSheet->setCellValue("B3", "Transferencia Bancaria");
+        $paymentTypesSheet->setCellValue("A3", "Transferencia Bancaria");
+        $paymentTypesSheet->setCellValue("B3", Movement::PAYMENT_METHOD_TRANSFER);
 
-        $paymentTypesSheet->setCellValue("A4", Movement::PAYMENT_TYPE_CASH);
-        $paymentTypesSheet->setCellValue("B4", "Efectivo");
+        $paymentTypesSheet->setCellValue("A4", "Cheque");
+        $paymentTypesSheet->setCellValue("B4", Movement::PAYMENT_METHOD_CHECK);
 
-        $paymentTypesSheet->setCellValue("A5", Movement::PAYMENT_TYPE_OTHER);
-        $paymentTypesSheet->setCellValue("B5", "Otro");
+        $paymentTypesSheet->setCellValue("A5", "Tarjeta de Crédito");
+        $paymentTypesSheet->setCellValue("B5", Movement::PAYMENT_METHOD_CREDIT_CARD);
 
-        $paymentTypesSheet->getColumnDimension('A')->setWidth(15);
-        $paymentTypesSheet->getColumnDimension('B')->setWidth(25);
+        $paymentTypesSheet->setCellValue("A6", "Tarjeta de Débito");
+        $paymentTypesSheet->setCellValue("B6", Movement::PAYMENT_METHOD_DEBIT_CARD);
+
+        $paymentTypesSheet->setCellValue("A7", "Otro Método de Pago");
+        $paymentTypesSheet->setCellValue("B7", Movement::PAYMENT_METHOD_OTHER);
+
+        $paymentTypesSheet->getColumnDimension('A')->setWidth(25);
+        $paymentTypesSheet->getColumnDimension('B')->setWidth(20);
 
         // Aplicar validación de datos a la columna de tipo de pago (ahora columna E) en la hoja principal
         // con validación dependiente del proveedor seleccionado
@@ -496,6 +505,25 @@ class ExcelHelper
         // Las columnas Clave, Cantidad, Precio de Compra, Precio Unitario y Total 
         // quedan sin validación para permitir ingreso libre sin errores de Excel
 
+        // Agregar fórmulas automáticas para cálculos
+        // Obtener la hoja principal
+        $mainSheet = $spreadsheet->getSheet(0);
+        
+        // Para cada fila de datos (desde la fila 2), agregar las fórmulas de cálculo
+        for ($i = 2; $i <= 5000; $i++) {
+            // Fórmula para Precio Unitario (Columna J): (Precio de compra + Impuesto) / Cantidad
+            // Columna H = Precio de Compra, Columna I = Impuesto, Columna G = Cantidad
+            $mainSheet->setCellValue("J$i", "=IF(AND(G$i<>0,OR(H$i<>\"\",I$i<>\"\")),((H$i+I$i)/G$i),\"\")");
+            
+            // Fórmula para Total (Columna K): Cantidad * Precio Unitario
+            // Columna G = Cantidad, Columna J = Precio Unitario
+            $mainSheet->setCellValue("K$i", "=IF(AND(G$i<>\"\",J$i<>\"\"),G$i*J$i,\"\")");
+        }
+        
+        // Aplicar formato numérico a las columnas de cálculo
+        $mainSheet->getStyle('G2:K5000')->getNumberFormat()->setFormatCode('#,##0.00');
+        $mainSheet->getStyle('J2:K5000')->getNumberFormat()->setFormatCode('#,##0.00');
+
         // Crear hoja de leyenda
         $legendSheet = $spreadsheet->createSheet();
         $legendSheet->setTitle('Leyenda');
@@ -510,20 +538,22 @@ class ExcelHelper
         $legendSheet->setCellValue('A5', 'Proveedor');
         $legendSheet->setCellValue('B5', 'Seleccione un proveedor del desplegable de la hoja Proveedores.');
         $legendSheet->setCellValue('A6', 'Tipo de Pago');
-        $legendSheet->setCellValue('B6', 'Seleccione un tipo de pago del desplegable. Los tipos disponibles dependen del proveedor seleccionado.');
+        $legendSheet->setCellValue('B6', 'Seleccione un tipo de pago del desplegable (en español). Los tipos disponibles dependen del proveedor seleccionado. Opciones: Efectivo, Transferencia Bancaria, Cheque, Tarjeta de Crédito, Tarjeta de Débito, Otro Método de Pago.');
         $legendSheet->setCellValue('A7', 'Cantidad');
         $legendSheet->setCellValue('B7', 'Ingrese un valor numérico (sin validación restrictiva).');
         $legendSheet->setCellValue('A8', 'Precio de Compra');
         $legendSheet->setCellValue('B8', 'Ingrese un valor numérico (sin validación restrictiva).');
-        $legendSheet->setCellValue('A9', 'Precio Unitario');
+        $legendSheet->setCellValue('A9', 'Impuesto');
         $legendSheet->setCellValue('B9', 'Ingrese un valor numérico (sin validación restrictiva).');
-        $legendSheet->setCellValue('A10', 'Total');
-        $legendSheet->setCellValue('B10', 'Ingrese un valor numérico (sin validación restrictiva).');
-        $legendSheet->setCellValue('A11', 'Notas Importantes');
-        $legendSheet->setCellValue('B11', 'Las columnas numéricas permiten cualquier valor sin validación para evitar problemas de compatibilidad con Excel.');
+        $legendSheet->setCellValue('A10', 'Precio Unitario');
+        $legendSheet->setCellValue('B10', 'SE CALCULA AUTOMÁTICAMENTE: (Precio de compra + Impuesto) ÷ Cantidad');
+        $legendSheet->setCellValue('A11', 'Total');
+        $legendSheet->setCellValue('B11', 'SE CALCULA AUTOMÁTICAMENTE: Cantidad × Precio Unitario');
+        $legendSheet->setCellValue('A12', 'Notas Importantes');
+        $legendSheet->setCellValue('B12', 'Las columnas numéricas permiten cualquier valor sin validación. Precio Unitario y Total se calculan automáticamente.');
 
         $legendSheet->getColumnDimension('A')->setWidth(20);
-        $legendSheet->getColumnDimension('B')->setWidth(60);
+        $legendSheet->getColumnDimension('B')->setWidth(80);
 
         // Activar la primera hoja antes de guardar
         $spreadsheet->setActiveSheetIndex(0);
@@ -747,7 +777,20 @@ class ExcelHelper
                 $cellIterator->next();
                 
                 // E - Tipo de Pago
-                $data['payment_type'] = trim($cellIterator->current()->getValue());
+                $paymentTypeValue = trim($cellIterator->current()->getValue());
+                
+                // Convertir descripciones en español a códigos internos
+                $paymentTypeMap = [
+                    'Efectivo' => Movement::PAYMENT_METHOD_CASH,
+                    'Transferencia Bancaria' => Movement::PAYMENT_METHOD_TRANSFER,
+                    'Cheque' => Movement::PAYMENT_METHOD_CHECK,
+                    'Tarjeta de Crédito' => Movement::PAYMENT_METHOD_CREDIT_CARD,
+                    'Tarjeta de Débito' => Movement::PAYMENT_METHOD_DEBIT_CARD,
+                    'Otro Método de Pago' => Movement::PAYMENT_METHOD_OTHER
+                ];
+                
+                $data['payment_type'] = isset($paymentTypeMap[$paymentTypeValue]) ? 
+                    $paymentTypeMap[$paymentTypeValue] : $paymentTypeValue;
                 $cellIterator->next();
                 
                 // F - Factura
@@ -767,15 +810,43 @@ class ExcelHelper
                 $cellIterator->next();
                 
                 // J - Precio Unitario
-                $data['unit_price'] = $cellIterator->current()->getValue();
+                $unitPriceValue = $cellIterator->current()->getValue();
                 $cellIterator->next();
                 
                 // K - Total
-                $data['total'] = $cellIterator->current()->getValue();
+                $totalValue = $cellIterator->current()->getValue();
                 $cellIterator->next();
                 
                 // L - Observaciones
                 $data['observations'] = trim($cellIterator->current()->getValue());
+                
+                // Calcular unit_price y total si son fórmulas o están vacíos
+                $quantity = floatval($data['quantity']);
+                $amount = floatval($data['amount']); // Precio de compra
+                $tax = floatval($data['tax']); // Impuesto
+                
+                // Calcular unit_price: (Precio de compra + Impuesto) / Cantidad
+                if ($quantity > 0) {
+                    $calculatedUnitPrice = ($amount + $tax) / $quantity;
+                } else {
+                    $calculatedUnitPrice = 0;
+                }
+                
+                // Calcular total: Cantidad × Precio Unitario
+                $calculatedTotal = $quantity * $calculatedUnitPrice;
+                
+                // Usar valores calculados si el valor de Excel es una fórmula o está vacío
+                if (is_string($unitPriceValue) && (strpos($unitPriceValue, '=') === 0 || empty($unitPriceValue))) {
+                    $data['unit_price'] = $calculatedUnitPrice;
+                } else {
+                    $data['unit_price'] = floatval($unitPriceValue);
+                }
+                
+                if (is_string($totalValue) && (strpos($totalValue, '=') === 0 || empty($totalValue))) {
+                    $data['total'] = $calculatedTotal;
+                } else {
+                    $data['total'] = floatval($totalValue);
+                }
 
                 $data['business_id'] = $business->id;
                 $data['row_number'] = $rowNumber; // Para tracking de errores
