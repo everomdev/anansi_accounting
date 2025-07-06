@@ -23,7 +23,14 @@ $actions = [
     'matrix-bcg',
     'charts',
     'ingredients',
-    'users'
+    'users',
+    'control-insumos',
+    'planeacion-compras',
+    'comparativa-costo',
+    'eficiencia-uso',
+    'mix-ventas',
+    'factibilidad',
+    'estado-resultados'
 ];
 if (in_array($action, $actions)) {
     $currentControllerId = $action;
@@ -43,6 +50,7 @@ $costeoActive = in_array($currentControllerId, ['sub-standard-recipe', 'standard
 $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center', 'storage', 'movement', 'price-trend']);
 $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
+$kpisControlActive = in_array($currentControllerId, ['control-insumos', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
 $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
@@ -308,6 +316,83 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
+                </ul>
+            </div>
+        </li>
+        <!-- KPI's y Control -->
+        <li class="menu-item <?= $kpisControlActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#kpisControl" role="button" 
+               aria-expanded="<?= $kpisControlActive ? 'true' : 'false' ?>" 
+               aria-controls="kpisControl">
+                <div><?= Yii::t('app', "KPI's y Control") ?></div>
+            </a>
+            <div class="collapse <?= $kpisControlActive ? 'show' : '' ?>" id="kpisControl">
+                <ul class="sub-menu">
+                    <!-- Control de Insumos - HABILITADO -->
+                    <?php if (Yii::$app->user->can('movements_list')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'control-insumos' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/control-insumos']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Control de Insumos') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <!-- Planeación de Compras - HABILITADO -->
+                    <!-- <?php if (Yii::$app->user->can('movements_list')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'planeacion-compras' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/planeacion-compras']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Proyección de Compras Inteligentes') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?> -->
+                    
+                    <!-- SECCIONES FUTURAS - COMENTADAS POR AHORA -->
+                    <?php /* 
+                    // Comparativa de % de Costo - DESHABILITADO
+                    if (Yii::$app->user->can('analytics_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'comparativa-costo' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/comparativa-costo']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Comparativa de % de Costo') ?></div>
+                            </a>
+                        </li>
+                    <?php endif;
+                    
+                    // Eficiencia de Uso de Insumos - DESHABILITADO
+                    if (Yii::$app->user->can('analytics_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'eficiencia-uso' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/eficiencia-uso']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Eficiencia de Uso de Insumos') ?></div>
+                            </a>
+                        </li>
+                    <?php endif;
+                    
+                    // Mix de Ventas por Categoría - DESHABILITADO
+                    if (Yii::$app->user->can('sales_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'mix-ventas' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/mix-ventas']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Mix de Ventas por Categoría') ?></div>
+                            </a>
+                        </li>
+                    <?php endif;
+                    
+                    // Análisis de Factibilidad - DESHABILITADO
+                    if (Yii::$app->user->can('analytics_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'factibilidad' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/factibilidad']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Análisis de Factibilidad') ?></div>
+                            </a>
+                        </li>
+                    <?php endif;
+                    
+                    // Estado de Resultados - DESHABILITADO
+                    if (Yii::$app->user->can('analytics_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'estado-resultados' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['kpi/estado-resultados']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Estado de Resultados') ?></div>
+                            </a>
+                        </li>
+                    <?php endif;
+                    */ ?>
                 </ul>
             </div>
         </li>
