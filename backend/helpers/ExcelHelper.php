@@ -950,9 +950,9 @@ class ExcelHelper
         $activeWorksheet->setCellValue("D1", "Unidad de compra");
         $activeWorksheet->setCellValue("E1", "Unidad de cocina");
         $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
-        $activeWorksheet->setCellValue("G1", "Porciones por unidad");
+        $activeWorksheet->setCellValue("G1", "EQ. Uni. Cocina");
         $activeWorksheet->setCellValue("H1", "Observaciones");
-        $activeWorksheet->setCellValue("I1", "Price");
+        $activeWorksheet->setCellValue("I1", "Precio");
         $activeWorksheet->freezePane("C2");
 
         $ingredients = $business->getIngredientStocks()->all();
@@ -967,7 +967,7 @@ class ExcelHelper
             $activeWorksheet->setCellValue("F$currentRow", $ingredient->yield);
             $activeWorksheet->setCellValue("G$currentRow", $ingredient->portions_per_unit);
             $activeWorksheet->setCellValue("H$currentRow", $ingredient->observations);
-            $activeWorksheet->setCellValue("I$currentRow",$ingredient->lastPrice);
+            $activeWorksheet->setCellValue("I$currentRow",$ingredient->lastPrice/$ingredient->portions_per_unit);
 
             $currentRow++;
         }
