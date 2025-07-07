@@ -1204,6 +1204,8 @@ class ExcelHelper
                     $cellIterator->next();
                     $data['yield_um'] = $cellIterator->current()->getValue(); // F - Unidad de medida final
                     $cellIterator->next();
+                    $data['um'] = $cellIterator->current()->getValue(); // F - Unidad de medida final
+                    $cellIterator->next();
                     $portionsValue = $cellIterator->current();
                     $data['portions'] = $portionsValue->getCalculatedValue(); // G - Porciones
                     if (!is_numeric($data['portions'])) {
@@ -1215,7 +1217,6 @@ class ExcelHelper
                         }
                     }
                     $cellIterator->next();
-                    //var_dump($data['portions']);
                     $timeValue = $cellIterator->current()->getValue();
                     $cellIterator->next();
                     $timeUnit = $cellIterator->current()->getValue();
@@ -1245,7 +1246,6 @@ class ExcelHelper
                 }
                 $rowIterator->next();
             }
-            //var_dump($data);
             // Importar ingredientes agrupados por receta
            $rowIterator = $ingredientsSheet->getRowIterator();
             while (true) {

@@ -2531,11 +2531,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         'Tiempo de preparación', 
         'Unidad de tiempo', 
         'Rendimiento*', 
-        'Rendimiento UM*', 
+        'Rendimiento UM*',
+        'Unidad de medida final*',
         'Porciones*', 
         'Duración', 
-        'Unidad de duración',
-        'Unidad de medida final*'
+        'Unidad de duración'
       ]
     : [
         'Nombre*', 
@@ -2543,14 +2543,15 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         'Tiempo de preparación', 
         'Unidad de tiempo', 
         'Rendimiento*', 
-        'Rendimiento UM*', 
+        'Rendimiento UM*',
+        'Unidad de medida final*', 
         'Porciones*', 
         'Duración', 
         'Unidad de duración', 
         'Precio*', 
         'Alimento o Bebida*', 
-        'Convoy',
-        'Unidad de medida final*'
+        'Convoy'
+        
       ];
      
      $col = 'A';
@@ -2693,7 +2694,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          $insumosSheet->setCellValue('A'.$insumosRow, $ingredient->ingredient);
          $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
          $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->um);
-         $insumosSheet->setCellValue('D'.$insumosRow, $ingredient->lastPrice);
+         $insumosSheet->setCellValue('D'.$insumosRow, number_format($ingredient->lastPrice / $ingredient->portions_per_unit, 2, '.', ''));
          $insumosRow++;
      }
       $subrecetaRow = 2;
@@ -2727,7 +2728,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     $insumosSheet->freezePane('B2');  
      
      // 8. Configurar TODAS las validaciones optimizadas
-     $colFinalUM = ($type === 'sub') ? 'J' : 'M'; // Ajusta estas letras según tu estructura de columnas
+     $colFinalUM = 'G'; // Ajusta estas letras según tu estructura de columnas
 
 $dataValidationFinalUM = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
 $dataValidationFinalUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
@@ -2780,7 +2781,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      }
      
      // b) Validación para Alimento o Bebida
-     $dataValidationFoodOrDrink = $recipesSheet->getCell('K2')->getDataValidation();
+     $dataValidationFoodOrDrink = $recipesSheet->getCell('L2')->getDataValidation();
      $dataValidationFoodOrDrink->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
      $dataValidationFoodOrDrink->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
      $dataValidationFoodOrDrink->setAllowBlank(false);
@@ -2836,7 +2837,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationYield->setFormula2(999999);
      
      // f) Validación para convoy
-     $dataValidationConvoy = $recipesSheet->getCell('L2')->getDataValidation();
+     $dataValidationConvoy = $recipesSheet->getCell('M2')->getDataValidation();
      $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
      $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
      $dataValidationConvoy->setAllowBlank(false);
@@ -2885,12 +2886,12 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
     $ingredientsSheet->setCellValue(
         "F$i", 
         "=IF(B$i=\"INSUMO\",
-            IF(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE)=\"\",\"\",
-                ROUND(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE),2)
+            IF(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE)=\"\",\"\", 
+                TEXT(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE),\"0.00\")
             ),
             IF(B$i=\"SUBRECETA\",
-                IF(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE)=\"\",\"\",
-                    ROUND(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE),2)
+                IF(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE)=\"\",\"\", 
+                    TEXT(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE),\"0.00\")
                 ),
                 \"\"
             )
@@ -2963,14 +2964,14 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
          $recipesSheet->getCell("B$i")->setDataValidation(clone $dataValidationCategory);
          $recipesSheet->getCell("F$i")->setDataValidation(clone $dataValidationUM);
          $recipesSheet->getCell("E$i")->setDataValidation(clone $dataValidationYield);
-         $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationConvoy);
-         $recipesSheet->getCell("K$i")->setDataValidation(clone $dataValidationFoodOrDrink);
+         $recipesSheet->getCell("M$i")->setDataValidation(clone $dataValidationConvoy);
+         $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationFoodOrDrink);
          $recipesSheet->getCell("D$i")->setDataValidation(clone $dataValidationTimeUnits);
-         $recipesSheet->getCell("I$i")->setDataValidation(clone $dataValidationTimeUnits);
+         $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationTimeUnits);
          $recipesSheet->getCell("C$i")->setDataValidation(clone $dataValidationTimeValue);
-         $recipesSheet->getCell("H$i")->setDataValidation(clone $dataValidationDurationValue);
+         $recipesSheet->getCell("I$i")->setDataValidation(clone $dataValidationDurationValue);
          if ($type !== 'sub') {
-             $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationPrice);
+             $recipesSheet->getCell("K$i")->setDataValidation(clone $dataValidationPrice);
          }
      }
      
@@ -2996,15 +2997,15 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      // 11. Añadir fórmula para bloquear el campo de porciones cuando se seleccionan ciertos rendimientos
     for ($i = 2; $i <= 500; $i++) {
         // Determinar qué columna contiene la unidad de medida final según el tipo
-        $finalUnitColumn = ($type === 'sub') ? 'J' : 'M';
-        
+        $finalUnitColumn = 'G';
+
         // Bloquear el campo de porciones hasta que ambas unidades de medida estén completas
         // y luego aplicar la lógica de bloqueo si son iguales (excepto pieza)
         $formulaLockPortions = "=IF(OR(F$i=\"\", $finalUnitColumn$i=\"\"), \"\", IF(AND(F$i=$finalUnitColumn$i, F$i<>\"pieza\", F$i<>\"Pieza\"), 1, \"\"))";
-        $recipesSheet->setCellValue("G$i", $formulaLockPortions);
+        $recipesSheet->setCellValue("H$i", $formulaLockPortions);
         
         // Validación dinámica para el campo Porciones
-        $portionsValidation = $recipesSheet->getCell("G$i")->getDataValidation();
+        $portionsValidation = $recipesSheet->getCell("H$i")->getDataValidation();
         $portionsValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
         $portionsValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
         $portionsValidation->setAllowBlank(false);
@@ -3018,7 +3019,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         // La fórmula valida si puede ser editado (TRUE) o no (FALSE)
         // Solo será editable si ambas unidades están definidas Y no son iguales (excepto "pieza")
         $portionsValidation->setFormula1("=IF(OR(F$i=\"\", $finalUnitColumn$i=\"\"), FALSE, IF(AND(F$i=$finalUnitColumn$i, NOT(OR(LOWER(F$i)=\"pieza\", LOWER(F$i)=\"Pieza\"))), FALSE, TRUE))");
-        $recipesSheet->getCell("G$i")->setDataValidation($portionsValidation);
+        $recipesSheet->getCell("H$i")->setDataValidation($portionsValidation);
     }
      // 12. Nota informativa
     $noteText = ($type === 'sub') 
