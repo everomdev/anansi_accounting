@@ -32,7 +32,53 @@ function getSortableHeader($label, $attribute, $currentSort, $currentOrder) {
     ]);
 }
 
-
+// Registrar los estilos CSS para los botones de limpiar filtros
+$this->registerCss('
+    /* Estilos para botones de limpiar filtros */
+    .filter-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .clear-filter-btn {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    .clear-filter-btn:hover {
+        color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+        border-radius: 50%;
+    }
+    
+    .sort-link {
+        display: block;
+        color: #333;
+        text-decoration: none;
+    }
+    
+    .sort-link:hover {
+        text-decoration: none;
+        color: #23527c;
+    }
+    
+    .sort-link.active {
+        font-weight: bold;
+    }
+');
 
 $this->title = empty($bundle) ? "Menú" : "Menú del " . Yii::$app->formatter->asDate($bundle->date);
 
@@ -106,10 +152,21 @@ $categories = RecipeCategory::find()
                         return get_class($model) == \common\models\StandardRecipe::class ? $model->title : $model->name;
                     },
                     'header' => getSortableHeader('Nombre de la receta', 'title', $sort, $order),
-                    'filter' => \yii\bootstrap5\Html::textInput('title', Yii::$app->request->get('title'), [
-                        'class' => 'form-control',
-                        'placeholder' => 'Buscar por título...'
-                    ])
+                    'filter' => '<div style="position: relative;">' . 
+                        \yii\bootstrap5\Html::textInput('title', Yii::$app->request->get('title'), [
+                            'class' => 'form-control',
+                            'placeholder' => 'Buscar receta...',
+                            'id' => 'title-filter',
+                            'style' => 'padding-right: 30px;'
+                        ]) . 
+                        \yii\bootstrap5\Html::button('×', [
+                            'class' => 'btn btn-sm',
+                            'id' => 'clear-title-btn',
+                            'onclick' => 'clearTitleFilter()',
+                            'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty(Yii::$app->request->get('title')) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                            'title' => 'Limpiar filtro'
+                        ]) . 
+                        '</div>'
                 ],                [
                     'attribute' => 'cost',
                     'value' => function ($model) {
@@ -178,6 +235,74 @@ $categories = RecipeCategory::find()
 
 
 <?php
+// Definir las funciones globales para limpiar filtros al principio del archivo
+$this->registerJs("
+// Funciones globales para limpiar filtros
+window.clearTitleFilter = function() {
+    const titleInput = document.getElementById('title-filter');
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    
+    if (titleInput) {
+        titleInput.value = '';
+    }
+    
+    if (clearTitleBtn) {
+        clearTitleBtn.style.display = 'none';
+    }
+    
+    // Construir URL con filtros actuales, excluyendo el título
+    let url = new URL(window.location);
+    url.searchParams.delete('title');
+    
+    // Recargar la página con la nueva URL
+    window.location.href = url.toString();
+};
+
+// Handlers para los eventos
+window.titleInputHandler = function(event) {
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    if (clearTitleBtn) {
+        // Usar event.target.value en lugar de this.value para mayor seguridad
+        const value = event && event.target ? event.target.value : '';
+        clearTitleBtn.style.display = value ? 'block' : 'none';
+    }
+};
+
+// Función global para configurar botones de filtros
+window.setupFilterButtons = function() {
+    const titleInput = document.getElementById('title-filter');
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    
+    // Verificar si cada elemento existe antes de intentar manipularlo
+    if (titleInput && clearTitleBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearTitleBtn.style.display = titleInput.value ? 'block' : 'none';
+        
+        try {
+            // Remover listeners anteriores y agregar nuevo
+            titleInput.removeEventListener('input', window.titleInputHandler);
+            titleInput.addEventListener('input', window.titleInputHandler);
+        } catch (e) {
+            console.log('Error al configurar event listener para title-filter:', e);
+        }
+    }
+};
+", \yii\web\View::POS_HEAD);
+
+// Código para inicializar los filtros al cargar la página
+$this->registerJs("
+// Configurar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    if(typeof window.setupFilterButtons === 'function') {
+        try {
+            window.setupFilterButtons();
+        } catch(e) {
+            console.error('Error al configurar filtros en DOMContentLoaded:', e);
+        }
+    }
+});
+", \yii\web\View::POS_READY);
+
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-add-recipe',
     'title' => Yii::t('app', "Include recipe in menu")
@@ -337,19 +462,4 @@ JS;
 $this->registerJs($js);
 ?>
 
-<style>
-.sort-link {
-    display: block;
-    color: #333;
-    text-decoration: none;
-}
-
-.sort-link:hover {
-    text-decoration: none;
-    color: #23527c;
-}
-
-.sort-link.active {
-    font-weight: bold;
-}
-</style>
+<!-- Los estilos han sido movidos al registerCss() al inicio del archivo -->

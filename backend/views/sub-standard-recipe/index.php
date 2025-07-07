@@ -3,11 +3,127 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
+use yii\helpers\ArrayHelper;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\StandardRecipeSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 /* @var $ingredientCount array */
+
+// Definir las funciones JavaScript globalmente y de forma temprana
+$this->registerJs("
+console.log('Inicializando funciones globales para sub-standard-recipe');
+// Funciones globales para limpiar filtros
+window.clearTitleFilter = function() {
+    const titleInput = document.getElementById('title-filter');
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    
+    if (titleInput) {
+        titleInput.value = '';
+    }
+    
+    if (clearTitleBtn) {
+        clearTitleBtn.style.display = 'none';
+    }
+    
+    // Construir URL con filtros actuales, excluyendo el título
+    let url = new URL(window.location);
+    url.searchParams.delete('StandardRecipeSearch[title]');
+    
+    // Recargar la tabla
+    $.pjax.reload({
+        container: '#sub-standard-recipes-pjax',
+        url: url.toString(),
+        timeout: 10000
+    }).done(function() {
+        if(typeof window.setupFilterButtons === 'function') {
+            window.setupFilterButtons();
+        }
+    });
+};
+
+window.clearTypeFilter = function() {
+    const typeFilter = document.getElementById('type-filter');
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    
+    if (typeFilter) {
+        typeFilter.value = '';
+    }
+    
+    if (clearTypeBtn) {
+        clearTypeBtn.style.display = 'none';
+    }
+    
+    // Construir URL con filtros actuales, excluyendo el tipo
+    let url = new URL(window.location);
+    url.searchParams.delete('StandardRecipeSearch[type_of_recipe]');
+    
+    // Recargar la tabla
+    $.pjax.reload({
+        container: '#sub-standard-recipes-pjax',
+        url: url.toString(),
+        timeout: 10000
+    }).done(function() {
+        if(typeof window.setupFilterButtons === 'function') {
+            window.setupFilterButtons();
+        }
+    });
+};
+
+// Handlers para los eventos
+window.titleInputHandler = function(event) {
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    if (clearTitleBtn) {
+        // Usar event.target.value en lugar de this.value para mayor seguridad
+        const value = event && event.target ? event.target.value : '';
+        clearTitleBtn.style.display = value ? 'block' : 'none';
+    }
+};
+
+window.typeSelectHandler = function(event) {
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    if (clearTypeBtn) {
+        // Usar event.target.value en lugar de this.value para mayor seguridad
+        const value = event && event.target ? event.target.value : '';
+        clearTypeBtn.style.display = value ? 'block' : 'none';
+    }
+};
+
+// Función global para configurar botones de filtros
+window.setupFilterButtons = function() {
+    const titleInput = document.getElementById('title-filter');
+    const typeSelect = document.getElementById('type-filter');
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    
+    // Verificar si cada elemento existe antes de intentar manipularlo
+    if (titleInput && clearTitleBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearTitleBtn.style.display = titleInput.value ? 'block' : 'none';
+        
+        try {
+            // Remover listeners anteriores y agregar nuevo
+            titleInput.removeEventListener('input', window.titleInputHandler);
+            titleInput.addEventListener('input', window.titleInputHandler);
+        } catch (e) {
+            console.log('Error al configurar event listener para title-filter:', e);
+        }
+    }
+    
+    if (typeSelect && clearTypeBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearTypeBtn.style.display = typeSelect.value ? 'block' : 'none';
+        
+        try {
+            // Remover listeners anteriores y agregar nuevo
+            typeSelect.removeEventListener('change', window.typeSelectHandler);
+            typeSelect.addEventListener('change', window.typeSelectHandler);
+        } catch (e) {
+            console.log('Error al configurar event listener para type-filter:', e);
+        }
+    }
+};
+", \yii\web\View::POS_BEGIN);
 
 $this->title = Yii::t('app', "Subrecetas");
 $this->params['breadcrumbs'][] = $this->title;
@@ -67,6 +183,36 @@ $this->registerCss('
     .sticky-header-table th {
         white-space: normal;
         vertical-align: middle;
+    }
+    
+    /* Estilos para botones de limpiar filtros */
+    .filter-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .clear-filter-btn {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    .clear-filter-btn:hover {
+        color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+        border-radius: 50%;
     }
 ');
 ?>
@@ -134,6 +280,22 @@ $this->registerCss('
                 'value' => function ($model) {
                     return $model->title . ' (' . $model->um . ')';
                 },
+                'headerOptions' => ['style' => 'min-width: 250px; width: 25%;'],
+                'filter' => '<div style="position: relative;">' . 
+                    Html::textInput('StandardRecipeSearch[title]', $searchModel->title, [
+                        'class' => 'form-control',
+                        'placeholder' => 'Buscar por nombre...',
+                        'id' => 'title-filter',
+                        'style' => 'padding-right: 30px;'
+                    ]) . 
+                    Html::button('×', [
+                        'class' => 'btn btn-sm',
+                        'id' => 'clear-title-btn',
+                        'onclick' => 'clearTitleFilter()',
+                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->title) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                        'title' => 'Limpiar filtro'
+                    ]) . 
+                    '</div>',
             ],            [
                 'attribute' => 'custom_cost',
                 'label' => "Costo",
@@ -190,8 +352,33 @@ $this->registerCss('
             [
                 'attribute' => 'type_of_recipe',
                 'label' => 'Familia',
-                'format' => 'text',
-                'enableSorting' => true, // Enable sorting for this column
+                'enableSorting' => true,
+                'encodeLabel' => false,
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center;'],
+                'filter' => '<div style="position: relative;">' . 
+                    Html::dropDownList('StandardRecipeSearch[type_of_recipe]', $searchModel->type_of_recipe, 
+                        ArrayHelper::merge(['' => 'Todas las familias'], [
+                            'Entrada' => 'Entrada',
+                            'Plato Principal' => 'Plato Principal', 
+                            'Postre' => 'Postre',
+                            'Bebida' => 'Bebida',
+                            'Acompañamiento' => 'Acompañamiento',
+                            'Salsa' => 'Salsa',
+                            'Otro' => 'Otro'
+                        ]), [
+                        'class' => 'form-control',
+                        'id' => 'type-filter',
+                        'style' => 'padding-right: 30px;'
+                    ]) . 
+                    Html::button('×', [
+                        'class' => 'btn btn-sm',
+                        'id' => 'clear-type-btn', 
+                        'onclick' => 'clearTypeFilter()',
+                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->type_of_recipe) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                        'title' => 'Limpiar filtro'
+                    ]) . 
+                    '</div>',
             ],
             [
                 'attribute' => 'observation',
@@ -391,7 +578,10 @@ document.getElementById('export-all').addEventListener('click', function() {
         window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&all=true' + '&type=sub';
     }
 });
-");
+", \yii\web\View::POS_HEAD);
+?>
+<?php
+// Aquí había una definición duplicada de las funciones de filtrado que ahora está al inicio del archivo
 ?>
 <style>
     #btn-delete-recipes:disabled {
@@ -399,7 +589,8 @@ document.getElementById('export-all').addEventListener('click', function() {
         cursor: not-allowed;
     }
 </style>
-<script>
+<?php
+$this->registerJs("
     // Detector de cambio en elementos por página
 document.getElementById('per-page-selector').addEventListener('change', function() {
     const pageSize = this.value;
@@ -415,4 +606,30 @@ document.getElementById('per-page-selector').addEventListener('change', function
         timeout: 10000
     });
 });
-</script>
+
+// Configurar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    if(typeof window.setupFilterButtons === 'function') {
+        try {
+            window.setupFilterButtons();
+        } catch(e) {
+            console.error('Error al configurar filtros en DOMContentLoaded:', e);
+        }
+    }
+});
+
+// Reconfigurar después de PJAX
+$(document).on('pjax:complete', '#sub-standard-recipes-pjax', function() {
+    if(typeof window.setupFilterButtons === 'function') {
+        try {
+            window.setupFilterButtons();
+            console.log('Filtros configurados después de pjax:complete');
+        } catch(e) {
+            console.error('Error al configurar filtros después de PJAX:', e);
+        }
+    } else {
+        console.warn('setupFilterButtons no está definido después de PJAX');
+    }
+});
+", \yii\web\View::POS_READY);
+?>
