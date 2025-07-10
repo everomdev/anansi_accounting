@@ -2080,7 +2080,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             //die(var_dump($html));
             $mpdf->WriteHTML($html);
             
-            // PARTE 2: Ingredientes y procedimiento
+            // PARTE 2: Solo ingredientes
             $html = '';
             $html .= '<h2>Ingredientes</h2>';
             $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
@@ -2094,7 +2094,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $html .= '</tr>';
             }
             $html .= '</table>';
+            $mpdf->WriteHTML($html);
     
+            // PARTE 3: Solo procedimiento
+            $html = '';
             // Separar los pasos en procedimientos y cuidados especiales
             $steps = RecipeStep::find()->where(['recipe_id' => $recipe->id])->all();
             $procedureSteps = [];
@@ -2143,7 +2146,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 }
             }
             
-            // Cuidados y medidas especiales
+            // PARTE 5: Solo cuidados especiales
+            $html = '';
             $html .= '<h2>Cuidados y medidas especiales</h2>';
             $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
             $html .= '<tr><th>#</th><th>ACTIVIDAD</th><th>TIEMPO</th><th>INDICADOR</th></tr>';
@@ -2156,8 +2160,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $html .= '</tr>';
             }
             $html .= '</table>';
+            $mpdf->WriteHTML($html);
     
-            // Alergies
+            // PARTE 6: Solo alérgenos
+            $html = '';
             $allergies = Yii::$app->params['allergies'];
             $selectedAllergies = [];
             $html .= '<h2>Alérgenos</h2>';
@@ -2189,10 +2195,12 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             }
     
             $html .= '</table>'; // Cierre de la tabla
-            $html .= '<h2>Equipo</h2>';
-            $html .=  $recipe->equipment;
+            $mpdf->WriteHTML($html);
             
-            // Escribir el HTML de esta receta antes de continuar con la siguiente
+            // PARTE 7: Solo equipo
+            $html = '';
+            $html .= '<h2>Equipo</h2>';
+            $html .= $recipe->equipment;
             $mpdf->WriteHTML($html);
             // Reiniciar el HTML para la siguiente receta
             $html = '';
