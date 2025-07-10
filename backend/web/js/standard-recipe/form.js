@@ -205,21 +205,68 @@ $(document).on('click', '.delete-ingredient, .delete', function (event) {
     return false;
 })
 
-$(document).on('beforeSubmit', "#form_step", function (event) {
+$(document).on('submit', "#form_step", function (event) {
     event.preventDefault();
+    event.stopPropagation();
+    
     const _form = $(this);
-    let data = _form.serializeArray();
+    let formData = new FormData(this);
     let url = _form.attr('action');
     let method = _form.attr('method');
     let pjax = _form.data('pjax');
+    
+    // Determinar qué modal está activo para cerrarlo correctamente
+    var isSpecialStep = $('#modal-add-special-step').hasClass('show');
+    var isNormalStep = $('#modal-add-step').hasClass('show');
+    
+    // Deshabilitar el botón de envío para evitar múltiples envíos
+    const submitBtn = _form.find('button[type="submit"]');
+    submitBtn.prop('disabled', true);
+    
     $.ajax({
-        url,
-        data,
-        type: method
+        url: url,
+        data: formData,
+        type: method,
+        processData: false,
+        contentType: false,
+        dataType: 'json'
     }).done(function (response) {
-        console.log(response);
-        $.pjax.reload({container: pjax});
-    })
+        if (response.success) {
+            // Cerrar el modal correcto según cual esté activo
+            if (isSpecialStep) {
+                $('#modal-add-special-step').modal('hide');
+            } else if (isNormalStep) {
+                $('#modal-add-step').modal('hide');
+            } else {
+                $('.modal').modal('hide');
+            }
+            
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+            $('body').css('padding-right', '');
+            
+            // Pequeño delay antes de recargar PJAX
+            setTimeout(function() {
+                $.pjax.reload({container: pjax});
+            }, 100);
+            
+        } else {
+            console.error('Error:', response);
+            
+            if (response.errors) {
+                console.error('Errores:', response.errors);
+            }
+            
+            if (response.message) {
+                alert('Error: ' + response.message);
+            }
+        }
+    }).fail(function(xhr, status, error) {
+        alert('AJAX failed: ' + error); // Alerta temporal para debug
+    }).always(function() {
+        // Rehabilitar el botón independientemente del resultado
+        submitBtn.prop('disabled', false);
+    });
 
     return false;
 });

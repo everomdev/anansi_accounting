@@ -7,8 +7,8 @@
 <div class="row gap-3">
     <?php $form = \yii\bootstrap5\ActiveForm::begin([
         'id' => 'form_step',
-        'enableClientValidation' => true,
-        'enableAjaxValidation' => true,
+        'enableClientValidation' => false,
+        'enableAjaxValidation' => false,
         'action' => \yii\helpers\Url::to(['standard-recipe/add-step', 'id' => $recipe->id]),
         'method' => 'post',
         'options' => [

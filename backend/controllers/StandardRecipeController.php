@@ -504,9 +504,23 @@ class StandardRecipeController extends Controller
             } else {
                 $model->addUpdateSubRecipe($form->subRecipeId, $form->quantity);
             }
+            
+            if (Yii::$app->request->isAjax) {
+                return $this->asJson([
+                    'success' => true,
+                    'message' => Yii::t('app', 'Ingrediente agregado exitosamente')
+                ]);
+            }
         }
 
-        return $this->asJson(true);
+        if (Yii::$app->request->isAjax) {
+            return $this->asJson([
+                'success' => false,
+                'errors' => $form->errors
+            ]);
+        }
+
+        return $this->asJson(['success' => false]);
     }
 
     public function actionFormSelectIngredient($id = null)
@@ -636,7 +650,14 @@ public function actionGetSubStandardRecipes()
             $model->removeIngredient($ingredientId);
         }
 
-        return $this->asJson(true);
+        if (Yii::$app->request->isAjax) {
+            return $this->asJson([
+                'success' => true,
+                'message' => Yii::t('app', 'Ingrediente eliminado exitosamente')
+            ]);
+        }
+
+        return $this->asJson(['success' => false]);
     }
 
     public function actionFinishRecipeCreation($id)
@@ -666,14 +687,38 @@ public function actionGetSubStandardRecipes()
         ]);
 
         $post = Yii::$app->request->post();
-        if (array_key_exists('ajax', $post)) {
-            $this->make(AjaxRequestModelValidator::class, [$step])->validate();
+
+        if ($step->load($post)) {
+            if ($step->validate()) {
+                if ($step->save()) {
+                    return $this->asJson([
+                        'success' => true,
+                        'message' => Yii::t('app', 'Paso agregado exitosamente'),
+                        'closeModal' => true,
+                        'stepId' => $step->id
+                    ]);
+                } else {
+                    return $this->asJson([
+                        'success' => false,
+                        'errors' => $step->errors,
+                        'message' => 'Error al guardar el paso en la base de datos'
+                    ]);
+                }
+            } else {
+                return $this->asJson([
+                    'success' => false,
+                    'errors' => $step->errors,
+                    'message' => 'Los datos del formulario no son válidos'
+                ]);
+            }
+        } else {
+            return $this->asJson([
+                'success' => false,
+                'errors' => $step->errors,
+                'message' => 'No se pudieron cargar los datos del formulario',
+                'postData' => $post // Para debug
+            ]);
         }
-
-        $step->load($post);
-        $step->save();
-
-        return $this->asJson(true);
     }
 
     public function actionRemoveStep($recipeId, $id)
@@ -683,6 +728,20 @@ public function actionGetSubStandardRecipes()
 
         if (!empty($step)) {
             $step->delete();
+            
+            if (Yii::$app->request->isAjax) {
+                return $this->asJson([
+                    'success' => true,
+                    'message' => Yii::t('app', 'Paso eliminado exitosamente')
+                ]);
+            }
+        }
+
+        if (Yii::$app->request->isAjax) {
+            return $this->asJson([
+                'success' => false,
+                'message' => Yii::t('app', 'No se pudo eliminar el paso')
+            ]);
         }
 
         $previous = '';
@@ -691,7 +750,7 @@ public function actionGetSubStandardRecipes()
         } else {
             $previous = 'update-recipe';
         }
-        return $this->asJson(true);
+        return $this->asJson(['success' => false]);
     }
 
     /**
@@ -2203,8 +2262,48 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             
             // PARTE 7: Solo equipo
             $html = '';
-            $html .= '<h2>Equipo</h2>';
-            $html .= $recipe->equipment;
+            $html .= '<h2>Equipo y Utensilios</h2>';
+            
+            // Procesar el equipo desde JSON
+            if (!empty($recipe->equipment)) {
+                try {
+                    $equipmentData = json_decode($recipe->equipment, true);
+                    
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($equipmentData)) {
+                        $html .= '<table border="1" cellpadding="8" cellspacing="0" width="100%">';
+                        $html .= '<tr style="background-color: #f2f2f2;">';
+                        $html .= '<th style="text-align: left; font-weight: bold;">Sección</th>';
+                        $html .= '<th style="text-align: left; font-weight: bold;">Equipo/Utensilio</th>';
+                        $html .= '<th style="text-align: left; font-weight: bold;">Descripción</th>';
+                        //$html .= '<th style="text-align: center; font-weight: bold;">Esencial</th>';
+                        $html .= '</tr>';
+                        
+                        foreach ($equipmentData as $equipment) {
+                            $html .= '<tr>';
+                            $html .= '<td style="vertical-align: top;">' . htmlspecialchars($equipment['section'] ?? '') . '</td>';
+                            $html .= '<td style="vertical-align: top; font-weight: bold;">' . htmlspecialchars($equipment['name'] ?? '') . '</td>';
+                            $html .= '<td style="vertical-align: top;">' . htmlspecialchars($equipment['description'] ?? '') . '</td>';
+                            
+                            // Mostrar si es esencial con un ícono
+                            //$isEssential = isset($equipment['essential']) && $equipment['essential'];
+                            // $essentialText = $isEssential ? '✓ Sí' : '○ No';
+                            $html .= '<td style="text-align: center; vertical-align: top;">' . $essentialText . '</td>';
+                            $html .= '</tr>';
+                        }
+                        
+                        $html .= '</table>';
+                    } else {
+                        // Si no es JSON válido, mostrar como texto plano
+                        $html .= '<p>' . htmlspecialchars($recipe->equipment) . '</p>';
+                    }
+                } catch (Exception $e) {
+                    // En caso de error, mostrar como texto plano
+                    $html .= '<p>' . htmlspecialchars($recipe->equipment) . '</p>';
+                }
+            } else {
+                $html .= '<p><em>No se ha especificado equipo para esta receta.</em></p>';
+            }
+            
             $mpdf->WriteHTML($html);
             // Reiniciar el HTML para la siguiente receta
             $html = '';
