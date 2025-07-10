@@ -242,7 +242,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                                 <span class="form-control format-percentage"
                                     id="cost-percent"
                                     data-value="<?= $model->costPercent ?? 0 ?>">
-                                    <?= formatPercentage($model->costPercent) ?>
+                                    <?= formatPercentage($model->costPercent*100) ?>
                                 </span>
                                 <small class="form-text text-muted">
                                     <?= Yii::t('app', "Porcentaje del costo en relación al precio de venta") ?>

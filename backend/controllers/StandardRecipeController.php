@@ -2079,7 +2079,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $html .= '</table>'; // Cierre de la tabla
             //die(var_dump($html));
             $mpdf->WriteHTML($html);
-            // Agregar los ingredientes
+            
+            // PARTE 2: Ingredientes y procedimiento
             $html = '';
             $html .= '<h2>Ingredientes</h2>';
             $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
@@ -2120,6 +2121,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             }
             $html .= '</table>';
             $mpdf->WriteHTML($html);
+            
+            // PARTE 3: Imágenes, cuidados especiales, alérgenos y equipo
             $html = '';
             $html .= '<h3>Foto del procedimiento</h3>';
             // Otras imágenes (no principales)
@@ -2136,13 +2139,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                         $html .= '<div style="text-align: center; margin-bottom: 20px;">';
                         $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; height: auto;" />';
                         $html .= '</div>';
-                        $mpdf->WriteHTML($html);
-                        $html = '';
                     }
                 }
             }
-            $mpdf->WriteHTML($html);
-            $html = '';
+            
             // Cuidados y medidas especiales
             $html .= '<h2>Cuidados y medidas especiales</h2>';
             $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
