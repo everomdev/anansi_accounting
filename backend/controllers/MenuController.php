@@ -50,7 +50,8 @@ class MenuController extends Controller
                             'remove-from-menu-in-bulk',
                             'save-menu',
                             'saved-menus',
-                            'compare-menus'
+                            'compare-menus',
+                            'get-recipe-costs'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -496,5 +497,27 @@ public function actionSavedMenus()
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
+    }
+
+    /**
+     * Obtiene los costos de todas las recetas para el cálculo en tiempo real
+     */
+    public function actionGetRecipeCosts()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $businessId = $businessData['id'];
+        
+        $recipes = StandardRecipe::find()
+            ->where(['business_id' => $businessId, 'in_construction' => 0])
+            ->all();
+        
+        $recipeCosts = [];
+        foreach ($recipes as $recipe) {
+            $recipeCosts[$recipe->id] = $recipe->lastPrice ?: 0;
+        }
+        
+        return $recipeCosts;
     }
 }

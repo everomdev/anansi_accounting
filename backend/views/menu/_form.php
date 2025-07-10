@@ -26,7 +26,27 @@ $business = \backend\helpers\RedisKeys::getBusiness();
     <div class="card">
         <div class="card-body">
             <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
-            <?= $form->field($model, 'total_price')->textInput(['maxlength' => true]) ?>
+            <?= $form->field($model, 'total_price')->textInput(['maxlength' => true, 'id' => 'total_price']) ?>
+
+            <div class="row">
+                <!-- Porcentaje de Costo -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label"><?= Yii::t('app', 'Porcentaje de Costo') ?></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="cost-percentage" readonly>
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Costo Total -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label"><?= Yii::t('app', 'Costo Total') ?></label>
+                        <input type="text" class="form-control" id="total-cost-display" readonly>
+                    </div>
+                </div>
+            </div>
             
             <!-- Nueva sección para selección de recetas con duplicados -->
             <div class="row">

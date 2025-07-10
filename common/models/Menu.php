@@ -53,7 +53,10 @@ class Menu extends \yii\db\ActiveRecord
     {
         parent::populateRecord($record, $row);
 
-        $record->_recipes = ArrayHelper::getColumn($record->standardRecipes, 'id');
+        // Solo inicializar _recipes como array vacío
+        // Las recetas se cargarán bajo demanda cuando sea necesario
+        $record->_recipes = [];
+        
         if (empty($record->custom_price)) {
             $record->custom_price = $record->price;
         }
@@ -111,10 +114,19 @@ class Menu extends \yii\db\ActiveRecord
 
     public function afterSave($insert, $changedAttributes)
     {
-        $this->unlinkAll('standardRecipes', true);
+        // Eliminar todas las relaciones existentes
+        \Yii::$app->db->createCommand()
+            ->delete('menu_standard_recipe', ['menu_id' => $this->id])
+            ->execute();
+        
+        // Insertar cada receta incluyendo duplicados
         foreach ($this->_recipes as $recipeId) {
-            $recipe = StandardRecipe::findOne(['id' => $recipeId]);
-            $this->link('standardRecipes', $recipe);
+            \Yii::$app->db->createCommand()
+                ->insert('menu_standard_recipe', [
+                    'menu_id' => $this->id,
+                    'standard_recipe_id' => $recipeId
+                ])
+                ->execute();
         }
 
         $this->updatePrices();
@@ -193,23 +205,74 @@ class Menu extends \yii\db\ActiveRecord
 
     public function getTotalCostByLastPrice()
     {
-        $recipes = $this->standardRecipes;
-
-        return array_sum(ArrayHelper::getColumn($recipes, 'lastPrice'));
+        // Obtener IDs de recetas incluyendo duplicados desde la tabla intermedia
+        $connection = \Yii::$app->db;
+        $command = $connection->createCommand('
+            SELECT standard_recipe_id 
+            FROM menu_standard_recipe 
+            WHERE menu_id = :menu_id
+        ', [':menu_id' => $this->id]);
+        
+        $recipeIds = $command->queryColumn();
+        $totalCost = 0;
+        
+        // Calcular el costo de cada receta (incluyendo duplicados)
+        foreach ($recipeIds as $recipeId) {
+            $recipe = StandardRecipe::findOne($recipeId);
+            if ($recipe) {
+                $totalCost += $recipe->lastPrice;
+            }
+        }
+        
+        return $totalCost;
     }
 
     public function getTotalCostByHigherPrice()
     {
-        $recipes = $this->standardRecipes;
-
-        return array_sum(ArrayHelper::getColumn($recipes, 'higherPrice'));
+        // Obtener IDs de recetas incluyendo duplicados desde la tabla intermedia
+        $connection = \Yii::$app->db;
+        $command = $connection->createCommand('
+            SELECT standard_recipe_id 
+            FROM menu_standard_recipe 
+            WHERE menu_id = :menu_id
+        ', [':menu_id' => $this->id]);
+        
+        $recipeIds = $command->queryColumn();
+        $totalCost = 0;
+        
+        // Calcular el costo de cada receta (incluyendo duplicados)
+        foreach ($recipeIds as $recipeId) {
+            $recipe = StandardRecipe::findOne($recipeId);
+            if ($recipe) {
+                $totalCost += $recipe->higherPrice;
+            }
+        }
+        
+        return $totalCost;
     }
 
     public function getTotalCostByAvgPrice()
     {
-        $recipes = $this->standardRecipes;
-
-        return array_sum(ArrayHelper::getColumn($recipes, 'avgPrice'));
+        // Obtener IDs de recetas incluyendo duplicados desde la tabla intermedia
+        $connection = \Yii::$app->db;
+        $command = $connection->createCommand('
+            SELECT standard_recipe_id 
+            FROM menu_standard_recipe 
+            WHERE menu_id = :menu_id
+        ', [':menu_id' => $this->id]);
+        
+        $recipeIds = $command->queryColumn();
+        $totalCost = 0;
+        
+        // Calcular el costo de cada receta (incluyendo duplicados)
+        foreach ($recipeIds as $recipeId) {
+            $recipe = StandardRecipe::findOne($recipeId);
+            if ($recipe) {
+                $totalCost += $recipe->avgPrice;
+            }
+        }
+        
+        return $totalCost;
     }
 
     public function updatePrices()
