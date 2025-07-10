@@ -1820,6 +1820,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     }
     public function actionDownloadCompleteRecipePdf()
     {
+        // Aumentar el límite de PCRE para manejar HTML con imágenes grandes
+        ini_set('pcre.backtrack_limit', '10000000'); // 10 millones
+        ini_set('memory_limit', '512M'); // También aumentar memoria si es necesario
+        
         $get = Yii::$app->request->get();
         $selectedRecipes = isset($get['id']) ? explode(',', $get['id']) : []; // Obtener los IDs de las recetas seleccionadas
         $business = \backend\helpers\RedisKeys::getBusiness();
