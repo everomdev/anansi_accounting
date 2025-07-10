@@ -116,6 +116,12 @@ class Menu extends \yii\db\ActiveRecord
             $recipe = StandardRecipe::findOne(['id' => $recipeId]);
             $this->link('standardRecipes', $recipe);
         }
+
+        // Asignar por defecto la categoría 1 si no está definida
+        if (empty($this->category_id) || $this->category_id === null) {
+            $this->category_id = 1;
+            $this->updateAttributes(['category_id' => 1]);
+        }
         $this->updatePrices();
         parent::afterSave($insert, $changedAttributes);
     }
