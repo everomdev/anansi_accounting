@@ -234,7 +234,9 @@ class Business extends \yii\db\ActiveRecord
     
     $categories = RecipeCategory::find()
         ->where([
-            'business_id' => $this->id
+            'OR',
+            ['business_id' => $this->id], // Categorías específicas del negocio
+            ['business_id' => null]       // Categorías generales (como Combos)
         ])->all();
 
     $data = [];
@@ -254,11 +256,13 @@ class Business extends \yii\db\ActiveRecord
             'type_of_recipe' => $category->name
         ])->all();
 
-        $combos = Menu::find()->where([
-            'business_id' => $this->id,
-            'in_menu' => true,
-            'category_id' => $category->id
-        ])->all();
+        $combos = [];
+        if ($category->business_id === null) {
+            $combos = Menu::find()->where([
+                'business_id' => $this->id,
+                'in_menu' => true,
+            ])->all();
+        }
 
         if (empty($recipes) && empty($combos)) {
             continue;
@@ -361,7 +365,9 @@ public function getRealYield($month = null, $year = null)
     
     $categories = RecipeCategory::find()
         ->where([
-            'business_id' => $this->id
+            'OR',
+            ['business_id' => $this->id], // Categorías específicas del negocio
+            ['business_id' => null]       // Categorías generales (como Combos)
         ])->all();
 
     $totalSales = 0;
@@ -380,12 +386,16 @@ public function getRealYield($month = null, $year = null)
             'type_of_recipe' => $category->name
         ])->all();
 
-        $combos = Menu::find()->where([
-            'business_id' => $this->id,
-            'in_menu' => true,
-            'category_id' => $category->id
-        ])->all();
-          if (empty($recipes) && empty($combos)) {
+        // Los combos solo se incluyen en la categoría general (business_id = null)
+        $combos = [];
+        if ($category->business_id === null) {
+            $combos = Menu::find()->where([
+                'business_id' => $this->id,
+                'in_menu' => true,
+            ])->all();
+        }
+        
+        if (empty($recipes) && empty($combos)) {
             continue;
         } else {
             $recipesSales = 0;
@@ -423,8 +433,10 @@ public function getRealYield($month = null, $year = null)
                 'recipes' => $recipes,
                 'combos' => $combos,
             ];
-        }    }
-    
+        }
+    }
+    //var_dump($combos);
+
     // Cálculo de rentabilidad real usando la fórmula:
     // Para cada receta/combo: (ventas individuales / total ventas) * porcentaje de costo
     // Luego suma todos los resultados
