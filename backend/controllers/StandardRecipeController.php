@@ -2036,7 +2036,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
                 $html .= '<h3><strong>Costo:</strong> $' . number_format((float)($recipe->lastPrice ?? 0), 2) . '</h3>';
                 $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
-                $html .= '<h3><strong>Costo %:</strong> ' . number_format((float)($recipe->costPercent ?? 0), 2) . '</h3>';
+                $html .= '<h3><strong>Costo %:</strong> ' . number_format((float)($recipe->costPercent*100 ?? 0), 2) . '</h3>';
                 $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
             }
             $html .= '</td>'; // Cierre de la columna izquierda
