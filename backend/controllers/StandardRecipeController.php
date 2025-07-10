@@ -2804,7 +2804,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      foreach ($ingredientStock as $ingredient) {
          $insumosSheet->setCellValue('A'.$insumosRow, $ingredient->ingredient);
          $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
-         $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->um);
+         $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->portion_um);
          $insumosSheet->setCellValue('D'.$insumosRow, number_format($ingredient->lastPrice / $ingredient->portions_per_unit, 2, '.', ''));
          $insumosRow++;
      }
