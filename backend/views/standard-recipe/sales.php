@@ -66,6 +66,7 @@ $foodGridColumns = [
     ],
     [
         'attribute' => 'costPercent',
+        'label' => 'Porcentaje de Costo',
         'value' => function ($data) {
             return formatPercentage($data->costPercent*100);
         },
@@ -116,8 +117,10 @@ $drinkGridColumns = [
             return formatCost($data->cost);
         },
         'filter' => false
-    ],    [
+    ],    
+    [
         'attribute' => 'costPercent',
+        'label' => 'Porcentaje de Costo',
         'value' => function ($data) {
             return formatPercentage($data->costPercent*100);
         },
@@ -172,7 +175,7 @@ $comboGridColumns = [
     ],
     [
         'attribute' => 'cost_precent',
-        'label' => 'Costo %',
+        'label' => ' Porcentaje de Costo',
         'value' => function ($data) {
             return formatPercentage($data->cost_precent*100);
         },
@@ -343,7 +346,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $foodDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
-    <div class="card-body p-2">
+    <div class="card-body">
         <div class="table-responsive">
             <?= \yii\grid\GridView::widget([
                 'dataProvider' => $foodDataProvider,
@@ -366,7 +369,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $drinkDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body ">
         <div class="table-responsive">
             <?= \yii\grid\GridView::widget([
                 'dataProvider' => $drinkDataProvider,
@@ -377,7 +380,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     'year' => $selectedYear
                 ], true),
                 'options' => ['class' => 'grid-view'],
-                'tableOptions' => ['class' => 'table table-striped table-bordered mb-0 responsive-table'],
+                'tableOptions' => ['class' => 'table table-striped mb-0 responsive-table'],
                 'layout' => "{summary}\n{pager}\n{items}\n{pager}"
             ]) ?>
         </div>
@@ -389,7 +392,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
         <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
         <small class="text-muted"><?= $comboDataProvider->getTotalCount() ?> combos encontrados</small>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
         <div class="table-responsive">
             <?= \yii\grid\GridView::widget([
                 'dataProvider' => $comboDataProvider,
@@ -400,7 +403,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     'year' => $selectedYear
                 ], true),
                 'options' => ['class' => 'grid-view'],
-                'tableOptions' => ['class' => 'table table-striped table-bordered mb-0 responsive-table'],
+                'tableOptions' => ['class' => 'table table-striped responsive-table'],
                 'layout' => "{summary}\n{pager}\n{items}\n{pager}"
             ]) ?>
         </div>
