@@ -192,13 +192,6 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $menuVentasActive ? 'show' : '' ?>" id="menuVentas">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('sales_view')): ?>
-                        <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/sales']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Ventas') ?></div>
-                            </a>
-                        </li>
-                    <?php endif; ?>
                     <?php if (Yii::$app->user->can('menu_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu-recipes' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['standard-recipe/menu-recipes']) ?>" class="menu-link">
@@ -213,10 +206,17 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
+                    <?php if (Yii::$app->user->can('sales_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/sales']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Ventas') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </li>
-        
+
         <!-- Almacén y Movimientos -->
         <li class="menu-item <?= $almacenMovimientosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" 
