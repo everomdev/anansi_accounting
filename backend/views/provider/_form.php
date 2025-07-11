@@ -137,12 +137,10 @@ use kartik\select2\Select2;
                 </div>
             </div>
         </div>
-        <div class="card-footer d-flex justify-content-between">
-            <div class="form-group">
-                <?= Html::a(Yii::t('app', 'Cancelar'), ['index'], ['class' => 'btn btn-secondary']) ?>
-            </div>
+        <div class="card-footer">
             <div class="form-group">
                 <?= Html::submitButton(Yii::t('app', 'Guardar'), ['class' => 'btn btn-success']) ?>
+                <?= Html::a(Yii::t('app', 'Cancelar'), ['index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
     </div>
