@@ -183,6 +183,40 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </div>
         </li>
 
+        <!-- Menú y Ventas -->
+        <li class="menu-item <?= $menuVentasActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#menuVentas" role="button" 
+               aria-expanded="<?= $menuVentasActive ? 'true' : 'false' ?>" 
+               aria-controls="menuVentas">
+                <div><?= Yii::t('app', 'Menú y Ventas') ?></div>
+            </a>
+            <div class="collapse <?= $menuVentasActive ? 'show' : '' ?>" id="menuVentas">
+                <ul class="sub-menu">
+                    <?php if (Yii::$app->user->can('sales_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/sales']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Ventas') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <?php if (Yii::$app->user->can('menu_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'menu-recipes' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/menu-recipes']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Menú') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <?php if (Yii::$app->user->can('menu_view')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'saved-menus' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['menu/saved-menus']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Menú histórico') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </li>
+        
         <!-- Almacén y Movimientos -->
         <li class="menu-item <?= $almacenMovimientosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" 
@@ -217,40 +251,6 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         <li class="menu-item <?= $currentControllerId == 'price-trend' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['ingredient-stock/price-trend']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Price Trend') ?></div>
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
-            </div>
-        </li>
-
-        <!-- Menú y Ventas -->
-        <li class="menu-item <?= $menuVentasActive ? 'active open' : '' ?>">
-            <a class="menu-link" data-bs-toggle="collapse" href="#menuVentas" role="button" 
-               aria-expanded="<?= $menuVentasActive ? 'true' : 'false' ?>" 
-               aria-controls="menuVentas">
-                <div><?= Yii::t('app', 'Menú y Ventas') ?></div>
-            </a>
-            <div class="collapse <?= $menuVentasActive ? 'show' : '' ?>" id="menuVentas">
-                <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('sales_view')): ?>
-                        <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/sales']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Ventas') ?></div>
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                    <?php if (Yii::$app->user->can('menu_view')): ?>
-                        <li class="menu-item <?= $currentControllerId == 'menu-recipes' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/menu-recipes']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Menú') ?></div>
-                            </a>
-                        </li>
-                    <?php endif; ?>
-                    <?php if (Yii::$app->user->can('menu_view')): ?>
-                        <li class="menu-item <?= $currentControllerId == 'saved-menus' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['menu/saved-menus']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Menú histórico') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
