@@ -46,7 +46,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     }
                     
                     // Agregar unidad de medida
-                    $parts[] = $data->um;
+                    //$parts[] = $data->um;
                     
                     return implode('  ', $parts);
                 },
