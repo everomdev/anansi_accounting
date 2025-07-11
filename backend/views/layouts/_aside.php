@@ -425,27 +425,155 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
 </aside>
 
 <?php
-// Agregar JavaScript para controlar el comportamiento de los menús desplegables
+// CSS para forzar comportamiento móvil en todas las resoluciones
+$css = <<<CSS
+/* Forzar comportamiento de menú móvil en todas las pantallas */
+.layout-menu {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    z-index: 1045 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+    width: 260px !important;
+}
+
+.layout-menu.show {
+    transform: translateX(0) !important;
+}
+
+/* Overlay cuando el menú está abierto */
+.layout-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.layout-menu-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ajustar el contenido principal para que no tenga margin */
+.layout-page {
+    margin-left: 0 !important;
+}
+
+/* Estilos del botón hamburger */
+.layout-menu-toggle {
+    color: #333 !important;
+    text-decoration: none !important;
+    padding: 8px !important;
+    border-radius: 6px !important;
+    transition: all 0.3s ease !important;
+}
+
+.layout-menu-toggle:hover {
+    color: #666 !important;
+    background: rgba(0,0,0,0.1) !important;
+}
+
+/* Prevenir scroll del body cuando el menú está abierto */
+body.menu-open {
+    overflow: hidden;
+}
+CSS;
+
+$this->registerCss($css);
+
+// JavaScript para controlar el comportamiento del menú móvil en todas las pantallas
 $js = <<<JS
 document.addEventListener('DOMContentLoaded', function() {
-    // Manejar los clics en los encabezados de menú
-    document.querySelectorAll('.menu-link[data-bs-toggle="collapse"]').forEach(function(menuLink) {
-        menuLink.addEventListener('click', function(e) {
-            var menuItem = this.closest('.menu-item');
+    var layoutMenu = document.getElementById('layout-menu');
+    var menuToggle = document.querySelector('.layout-menu-toggle');
+    var menuToggleAside = document.querySelector('.layout-menu-toggle'); // Botón en el aside
+    var menuToggleNavbar = document.querySelector('.layout-menu-toggle a'); // Botón en el navbar
+    var body = document.body;
+    var overlay;
+    
+    // Crear overlay
+    function createOverlay() {
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'layout-menu-overlay';
+            body.appendChild(overlay);
             
-            // Si el elemento ya está abierto y no tiene submenu activo, permitir que se cierre
-            if (this.getAttribute('aria-expanded') === 'true' && !menuItem.classList.contains('active')) {
-                // Bootstrap se encargará de cerrarlo
-            } 
-            // Si estamos abriendo y no es activo, cerrar los otros que no sean activos
-            else if (this.getAttribute('aria-expanded') === 'false' && !menuItem.classList.contains('active')) {
-                document.querySelectorAll('.menu-item:not(.active) .menu-link[data-bs-toggle="collapse"][aria-expanded="true"]').forEach(function(openMenu) {
-                    new bootstrap.Collapse(document.querySelector(openMenu.getAttribute('href'))).hide();
-                    openMenu.setAttribute('aria-expanded', 'false');
-                });
-            }
+            // Cerrar menú al hacer clic en el overlay
+            overlay.addEventListener('click', function() {
+                closeMenu();
+            });
+        }
+    }
+    
+    // Abrir menú
+    function openMenu() {
+        createOverlay();
+        layoutMenu.classList.add('show');
+        overlay.classList.add('show');
+        body.classList.add('menu-open');
+    }
+    
+    // Cerrar menú
+    function closeMenu() {
+        layoutMenu.classList.remove('show');
+        if (overlay) {
+            overlay.classList.remove('show');
+        }
+        body.classList.remove('menu-open');
+    }
+    
+    // Toggle menú
+    function toggleMenu() {
+        if (layoutMenu.classList.contains('show')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    }
+    
+    // Event listener para el botón hamburger del aside
+    if (menuToggleAside) {
+        menuToggleAside.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMenu();
+        });
+    }
+    
+    // Event listener para el botón hamburger del navbar
+    if (menuToggleNavbar) {
+        menuToggleNavbar.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMenu();
+        });
+    }
+    
+    // Cerrar menú al hacer clic en un enlace directo
+    document.querySelectorAll('.menu-item .menu-link:not([data-bs-toggle="collapse"])').forEach(function(link) {
+        link.addEventListener('click', function() {
+            setTimeout(function() {
+                closeMenu();
+            }, 150);
         });
     });
+    
+    // Cerrar menú con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && layoutMenu.classList.contains('show')) {
+            closeMenu();
+        }
+    });
+    
+    // No agregar ningún event listener a los submenús - dejar que Bootstrap maneje todo
 });
 JS;
 
