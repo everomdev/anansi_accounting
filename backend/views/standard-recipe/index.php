@@ -452,6 +452,32 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ?>
 
 <?php
+// Modal para descargar recetario en PDF de recetas seleccionadas
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-download-pdf-recipes',
+    'title' => Yii::t('app', "Descargar recetario en PDF"),
+]);
+?>
+<p>¿Deseas descargar el recetario de todas las recetas seleccionadas o solo las de la página actual?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Descargar las seleccionadas'), [
+        'class' => 'btn btn-success',
+        'id' => 'download-pdf-current-page'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Descargar todas'), [
+        'class' => 'btn btn-success',
+        'id' => 'download-pdf-all'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
 // Modal para mostrar error cuando no hay elementos seleccionados para exportar
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-no-export-selection',
@@ -641,6 +667,19 @@ document.getElementById('export-all').addEventListener('click', function() {
     }
 });
 
+// Manejar la descarga de PDF de las recetas seleccionadas
+document.getElementById('download-pdf-current-page').addEventListener('click', function() {
+    const selectedIds = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/download-complete-recipe-pdf']) . "?id=' + selectedIds.join(',');
+    }
+});
+
+// Manejar la descarga de PDF de todas las recetas (todas las páginas)
+document.getElementById('download-pdf-all').addEventListener('click', function() {
+    window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/download-complete-recipe-pdf']) . "?all=true';
+});
+
 // Nuevo código para manejo de descarga de recetario en PDF
 document.getElementById('btn-download-recipes-complete').addEventListener('click', function(e) {
     e.preventDefault();
@@ -655,8 +694,9 @@ document.getElementById('btn-download-recipes-complete').addEventListener('click
         return;
     }
     
-    // Si hay selección, proceder con la descarga
-    window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/download-recipes-pdf']) . "?id=' + selectedIds.join(',') + '&type=main';
+    // Mostrar el modal de confirmación para descarga de PDF
+    const downloadPdfModal = new bootstrap.Modal(document.getElementById('modal-download-pdf-recipes'));
+    downloadPdfModal.show();
 });
 
 // Configurar al cargar la página

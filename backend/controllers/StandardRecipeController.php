@@ -1884,12 +1884,26 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         ini_set('memory_limit', '512M'); // También aumentar memoria si es necesario
         
         $get = Yii::$app->request->get();
-        $selectedRecipes = isset($get['id']) ? explode(',', $get['id']) : []; // Obtener los IDs de las recetas seleccionadas
         $business = \backend\helpers\RedisKeys::getBusiness();
-        // Buscar todas las recetas seleccionadas
-        $recipes = StandardRecipe::find()->where(['id' => $selectedRecipes])->all();
+        
+        // Verificar si se quiere descargar todas las recetas
+        if (isset($get['all']) && $get['all'] === 'true') {
+            // Buscar todas las recetas del negocio
+            $recipes = StandardRecipe::find()
+                ->where([
+                    'business_id' => $business->id,
+                    'in_construction' => 0,
+                    'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+                ])
+                ->all();
+        } else {
+            // Buscar las recetas seleccionadas por ID
+            $selectedRecipes = isset($get['id']) ? explode(',', $get['id']) : [];
+            $recipes = StandardRecipe::find()->where(['id' => $selectedRecipes])->all();
+        }
+        
         if (empty($recipes)) {
-            throw new \yii\web\NotFoundHttpException('No se encontraron recetas seleccionadas.');
+            throw new \yii\web\NotFoundHttpException('No se encontraron recetas.');
         }
         // Generar PDF
         $mpdf = new \Mpdf\Mpdf([
@@ -2287,7 +2301,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                             // Mostrar si es esencial con un ícono
                             //$isEssential = isset($equipment['essential']) && $equipment['essential'];
                             // $essentialText = $isEssential ? '✓ Sí' : '○ No';
-                            $html .= '<td style="text-align: center; vertical-align: top;">' . $essentialText . '</td>';
+                            //$html .= '<td style="text-align: center; vertical-align: top;">' . $essentialText . '</td>';
                             $html .= '</tr>';
                         }
                         
