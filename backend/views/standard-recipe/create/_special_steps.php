@@ -14,37 +14,39 @@ use yii\helpers\ArrayHelper;
         <h4><?= Yii::t('app', "Cares and special steps") ?></h4>
         <div class="table-responsive">
             <table class="table">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 8%;"><?= Yii::t('app', "#") ?></th>
+                        <th class="text-center" style="width: 40%;"><?= Yii::t('app', "Activity") ?></th>
+                        <th class="text-center" style="width: 15%;"><?= Yii::t('app', "Time") ?></th>
+                        <th class="text-center" style="width: 25%;"><?= Yii::t('app', "Indicator") ?></th>
+                        <th class="text-center" style="width: 12%;">
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#modal-add-special-step">
+                                <?= Yii::t('app', 'Add') ?>
+                            </button>
+                        </th>
+                    </tr>
+                </thead>
                 <tbody>
-                <tr>
-                    <th class="text-center"><?= Yii::t('app', "#") ?></th>
-                    <th class="text-center"><?= Yii::t('app', "Activity") ?></th>
-                    <th class="text-center"><?= Yii::t('app', "Time") ?></th>
-                    <th class="text-center"><?= Yii::t('app', "Indicator") ?></th>
-                    <th>
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#modal-add-special-step">
-                            <?= Yii::t('app', 'Add') ?>
-                        </button>
-                    </th>
-                </tr>
                 <?php foreach ($model->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_SPECIAL])->all() as $step): ?>
                     <tr>
-                        <td>
+                        <td class="text-center align-middle">
                             <?= $step->number ?>
                         </td>
-                        <td>
+                        <td class="text-center align-middle">
                             <?= $step->activity ?>
                         </td>
-                        <td>
+                        <td class="text-center align-middle">
                             <?= $step->time ?>
                         </td>
-                        <td>
+                        <td class="text-center align-middle">
                             <?= $step->indicator ?>
                         </td>
-                        <td>
+                        <!-- <td>
                             <?= $step->getImage()->getUrl() ?>
-                        </td>
-                        <td>
+                        </td> -->
+                        <td class="text-center align-middle">
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/remove-step', 'recipeId' => $model->id, 'id' => $step->id]), [
                                 'class' => "btn btn-sm btn-danger delete",
                                 'data' => [
