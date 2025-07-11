@@ -20,7 +20,7 @@ class MovementSearch extends Movement
     {
         return [
             [['id', 'ingredient_id', 'business_id'], 'integer'],
-            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'created_at'], 'safe'],
+            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations'], 'safe'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['name'], 'string']
         ];
