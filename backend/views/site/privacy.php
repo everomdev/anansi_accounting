@@ -7,7 +7,7 @@ $this->title = 'Aviso de Privacidad';
         <div class="col-lg-8">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">Aviso de Privacidad</h2>
+                    <h2 class="mb-0">Aviso de Privacidad y de Protección de Datos Personales.</h2>
                 </div>
                 <div class="card-body" style="white-space: pre-line;">
 En AIA Consultores (en adelante, "la Empresa"), con domicilio en Cruz Blanca #21 2do piso, Peña Pobre, Tlalpan, CDMX, México, C.P. 14060, estamos comprometidos con la protección de la privacidad de nuestros clientes, prospectos, empleados, proveedores y cualquier otra persona de la que recabemos datos personales. Este Aviso de Privacidad describe cómo recolectamos, utilizamos, compartimos y protegemos tus datos personales.
