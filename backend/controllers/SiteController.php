@@ -31,10 +31,12 @@ class SiteController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['login', 'error', 'comming-soon','enable-subscription','check-coupon','captcha'],
+                        // Acciones públicas
+                        'actions' => ['login', 'error', 'comming-soon','enable-subscription','check-coupon','captcha', 'privacy'],
                         'allow' => true,
                     ],
                     [
+                        // Acciones privadas (requieren autenticación)
                         'actions' => ['logout', 'index', 'enable-subscription','check-coupon','captcha'],
                         'allow' => true,
                         'roles' => ['@'],
@@ -218,4 +220,12 @@ class SiteController extends Controller
      * @throws NotFoundHttpException if the model cannot be found
      */
 
+
+    /**
+     * Página de Aviso de Privacidad
+     */
+    public function actionPrivacy()
+    {
+        return $this->renderPartial('privacy');
+    }
 }
