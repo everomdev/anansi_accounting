@@ -2376,10 +2376,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         // 2. Configurar cabeceras para la hoja principal según el tipo
         $recipesHeaders = $isSubrecipe ? 
             ['Nombre', 'Tipo de Subreceta', 'Tiempo de preparación', 'Unidad de tiempo', 
-             'Rendimiento', 'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 'Unidad de medida final'] :
+             'Rendimiento', 'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 'Unidad de medida final', 'Costo', '% Costo'] :
             ['Nombre', 'Tipo de Receta', 'Tiempo de preparación', 'Unidad de tiempo', 
              'Rendimiento', 'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 
-             'Precio', 'Alimento o Bebida', 'Convoy', 'Unidad de medida final'];
+             'Precio', 'Alimento o Bebida', 'Convoy', 'Unidad de medida final', 'Costo', '% Costo'];
     
         $col = 'A';
         foreach ($recipesHeaders as $header) {
@@ -2556,16 +2556,15 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $recipesSheet->setCellValue($col++.$recipesRow, $recipe->portions);
             $recipesSheet->setCellValue($col++.$recipesRow, $durationValue);
             $recipesSheet->setCellValue($col++.$recipesRow, $durationUnit);
-            
             if (!$isSubrecipe) {
                 $recipesSheet->setCellValue($col++.$recipesRow, $recipe->price);
                 $recipesSheet->setCellValue($col++.$recipesRow, $recipe->is_food ? 'Alimento' : 'Bebida');
                 $recipesSheet->setCellValue($col++.$recipesRow, Convoy::find()->where(['id' => $recipe->convoy_id])->one()->name ?? '');
             }
-            
-            // CORRECCIÓN: Asegurarse de que la unidad de medida final se incluye
             $recipesSheet->setCellValue($col++.$recipesRow, $recipe->um ?: '');
-            
+            // NUEVO: Costo y % Costo
+            $recipesSheet->setCellValue($col++.$recipesRow, $recipe->recipeLastPrice);
+            $recipesSheet->setCellValue($col++.$recipesRow, $recipe->costPercent * 100);
             // Llenar hoja de Ingredientes
             foreach ($recipe->ingredientRelations as $ingredientRelation) {
                 $ingredientsSheet->setCellValue('A'.$ingredientsRow, $recipe->title);
@@ -2588,7 +2587,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         ];
         
         // CORRECCIÓN: Ajustar el rango de estilo para incluir todas las columnas
-        $lastCol = $isSubrecipe ? 'J' : 'M'; // Última columna según el tipo
+        $lastCol = $isSubrecipe ? 'L' : 'O'; // Última columna según el tipo (2 columnas más)
         $recipesSheet->getStyle('A1:' . $lastCol . ($recipesRow-1))->applyFromArray($centerStyle);
         $ingredientsSheet->getStyle('A1:E' . ($ingredientsRow-1))->applyFromArray($centerStyle);
         
@@ -2596,6 +2595,15 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         if (!$isSubrecipe) {
             $recipesSheet->getStyle('J2:J' . ($recipesRow-1))->getNumberFormat()
                 ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+            $recipesSheet->getStyle('N2:N' . ($recipesRow-1))->getNumberFormat()
+                ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+            $recipesSheet->getStyle('O2:O' . ($recipesRow-1))->getNumberFormat()
+                ->setFormatCode('0.00"%"');
+        } else {
+            $recipesSheet->getStyle('K2:K' . ($recipesRow-1))->getNumberFormat()
+                ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+            $recipesSheet->getStyle('L2:L' . ($recipesRow-1))->getNumberFormat()
+                ->setFormatCode('0.00"%"');
         }
         
         // Formato de moneda para costos en la hoja de ingredientes
