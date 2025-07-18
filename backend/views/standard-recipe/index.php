@@ -326,7 +326,7 @@ $this->registerCss('
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{update} {delete}",
+                'template' => "{update}",
                 
                 'headerOptions' => ['class' => 'text-center'],
                 'contentOptions' => ['class' => 'text-center'],
