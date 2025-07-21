@@ -94,13 +94,15 @@ class ExcelHelper
      ];
     $activeWorksheet->setCellValue("A1", "Clave*");
     $activeWorksheet->setCellValue("B1", "Insumo*");
-    $activeWorksheet->setCellValue("C1", "Categoría*");
-    $activeWorksheet->setCellValue("D1", "Unidad de compra*");
-    $activeWorksheet->setCellValue("E1", "Unidad de cocina*");
-    $activeWorksheet->setCellValue("F1", "Factor de Rendimiento*");
-    $activeWorksheet->setCellValue("G1", "Porciones por unidad*");
-    $activeWorksheet->setCellValue("H1", "Observaciones");
-    $activeWorksheet->setCellValue("I1", "Precio*");
+    $activeWorksheet->setCellValue("C1", "Marca*");
+    $activeWorksheet->setCellValue("D1", "Presentación*");
+    $activeWorksheet->setCellValue("E1", "Categoría*");
+    $activeWorksheet->setCellValue("F1", "Unidad de compra*");
+    $activeWorksheet->setCellValue("G1", "Unidad de cocina*");
+    $activeWorksheet->setCellValue("H1", "Factor de Rendimiento*");
+    $activeWorksheet->setCellValue("I1", "Porciones por unidad*");
+    $activeWorksheet->setCellValue("J1", "Observaciones");
+    $activeWorksheet->setCellValue("K1", "Precio*");
     
     $activeWorksheet->getStyle('A1:L100')->applyFromArray($centerStyle);
     $activeWorksheet->freezePane('C2');
@@ -108,13 +110,15 @@ class ExcelHelper
     // Set manual column widths instead of auto-size
     $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Clave
     $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(35); // Insumo
-    $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(18); // Categoría
-    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(18); // Unidad de compra
-    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Unidad de cocina
-    $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(20); // Factor de Rendimiento
-    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(20); // Porciones por unidad
-    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(30); // Observaciones
-    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(10);
+    $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
+    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(35); // Insumo
+    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Categoría
+    $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(18); // Unidad de compra
+    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(18); // Unidad de cocina
+    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(25); // Factor de Rendimiento
+    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(25); // Porciones por unidad
+    $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(30); // Observaciones
+    $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(10);
 
     // Create a named range for categories
     $categorySheet = $spreadsheet->createSheet();
@@ -132,7 +136,7 @@ class ExcelHelper
     );
 
     // Apply data validation to the category column
-    $dataValidation = $spreadsheet->getActiveSheet()->getCell('C2')->getDataValidation();
+    $dataValidation = $spreadsheet->getActiveSheet()->getCell('E2')->getDataValidation();
     $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
     $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $dataValidation->setAllowBlank(false);
@@ -146,7 +150,7 @@ class ExcelHelper
     $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
 
     for ($i = 2; $i <= 5000; $i++) {
-        $spreadsheet->getActiveSheet()->getCell("C$i")->setDataValidation(clone $dataValidation);
+        $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
     }
 
     // Create a named range for unit of measurements
@@ -165,7 +169,7 @@ class ExcelHelper
     );
 
     // Apply data validation to the um column
-    $dataValidation = $spreadsheet->getActiveSheet()->getCell('D1')->getDataValidation();
+    $dataValidation = $spreadsheet->getActiveSheet()->getCell('F1')->getDataValidation();
     $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
     $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $dataValidation->setAllowBlank(false);
@@ -179,13 +183,13 @@ class ExcelHelper
     $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
 
     for ($i = 2; $i <= 5000; $i++) {
-        $spreadsheet->getActiveSheet()->getCell("D$i")->setDataValidation(clone $dataValidation);
-        $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
+        $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $dataValidation);
+        $spreadsheet->getActiveSheet()->getCell("G$i")->setDataValidation(clone $dataValidation);
     }
 
     // Apply data validation to the factor de rendimiento column
     // CAMBIO: Tipo cambiado a DECIMAL para permitir valores con decimales
-    $factorValidation = $spreadsheet->getActiveSheet()->getCell('F2')->getDataValidation();
+    $factorValidation = $spreadsheet->getActiveSheet()->getCell('H2')->getDataValidation();
     $factorValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
     $factorValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $factorValidation->setAllowBlank(false);
@@ -199,11 +203,11 @@ class ExcelHelper
     $factorValidation->setFormula2(100); // Valor máximo
 
     for ($i = 2; $i <= 5000; $i++) {
-        $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $factorValidation);
+        $spreadsheet->getActiveSheet()->getCell("H$i")->setDataValidation(clone $factorValidation);
     }
 
     // Apply data validation to the price column - Permitir cualquier valor numérico
-    $priceValidation = $spreadsheet->getActiveSheet()->getCell('I2')->getDataValidation();
+    $priceValidation = $spreadsheet->getActiveSheet()->getCell('K2')->getDataValidation();
     $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
     $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $priceValidation->setAllowBlank(false);
@@ -217,7 +221,7 @@ class ExcelHelper
     $priceValidation->setFormula2(99999999); // Aumentar el límite máximo
 
     for ($i = 2; $i <= 5000; $i++) {
-        $spreadsheet->getActiveSheet()->getCell("I$i")->setDataValidation(clone $priceValidation);
+        $spreadsheet->getActiveSheet()->getCell("K$i")->setDataValidation(clone $priceValidation);
     }
 
     // Create a legend sheet
@@ -592,6 +596,10 @@ class ExcelHelper
                 $data['key'] = strval($cellIterator->current()->getValue()); // A - Clave
                 $cellIterator->next();
                 $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
+                $cellIterator->next();
+                $data['brand'] = $cellIterator->current()->getValue(); // B - Insumo
+                $cellIterator->next();
+                $data['presentation'] = $cellIterator->current()->getValue(); // B - Insumo
                 $cellIterator->next();
                 $data['category_id'] = $cellIterator->current()->getValue(); // C - Categoría
                 $cellIterator->next();

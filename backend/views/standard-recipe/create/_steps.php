@@ -20,6 +20,7 @@ use yii\helpers\ArrayHelper;
                     <th class="text-center"><?= Yii::t('app', "Activity") ?></th>
                     <th class="text-center"><?= Yii::t('app', "Time") ?></th>
                     <th class="text-center"><?= Yii::t('app', "Indicator") ?></th>
+                    <th class="text-center">Imagen</th>
                     <th>
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
                                 data-bs-target="#modal-add-step">
@@ -29,17 +30,32 @@ use yii\helpers\ArrayHelper;
                 </tr>
                 <?php foreach ($model->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_PROCEDURE])->all() as $step): ?>
                     <tr>
-                        <td>
+                        <td class="text-center">
                             <?= $step->number ?>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <?= $step->activity ?>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <?= $step->time ?>
                         </td>
-                        <td>
+                        <td class="text-center">
                             <?= $step->indicator ?>
+                        </td>
+                        <td class="text-center">
+                            <?php $image = $step->getImage(); ?>
+                            <?php
+                                $imgUrl = $image ? $image->getUrl() : null;
+                                $imgThumb = $image ? $image->getUrl('200x200') : null;
+                                $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false;
+                            ?>
+                            <?php if ($isRealImage): ?>
+                                <a href="#" class="procedure-step-img-link" data-img="<?= $imgUrl ?>">
+                                    <img src="<?= $imgThumb ?>" alt="Imagen" style="max-width: 80px; max-height: 80px; border-radius: 6px; cursor:pointer;" />
+                                </a>
+                            <?php else: ?>
+                                <span class="text-muted">Sin imagen</span>
+                            <?php endif; ?>
                         </td>
                         <td class="text-center">
                             <div class="btn-group" role="group" style="gap: 5px;">
@@ -62,6 +78,34 @@ use yii\helpers\ArrayHelper;
                                 ]) ?>
                             </div>
                         </td>
+<!-- Modal para mostrar imagen grande de procedimiento -->
+<div class="modal fade" id="procedureStepImageModal" tabindex="-1" aria-labelledby="procedureStepImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="procedureStepImageModalLabel">Imagen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="procedure-step-modal-img" src="" alt="Imagen" style="max-width: 100%; max-height: 70vh; border-radius: 8px;" />
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.procedure-step-img-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var imgSrc = this.getAttribute('data-img');
+            var modalImg = document.getElementById('procedure-step-modal-img');
+            modalImg.src = imgSrc;
+            var modal = new bootstrap.Modal(document.getElementById('procedureStepImageModal'));
+            modal.show();
+        });
+    });
+});
+</script>
                         <?php /*
                         <td class="text-center">
                             <?php if ($step->number > 1): ?>
@@ -98,7 +142,7 @@ use yii\helpers\ArrayHelper;
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modal-edit-step-label"><?= Yii::t('app', 'Edit Step') ?></h5>
+                <h5 class="modal-title" id="modal-edit-step-label"><?= Yii::t('app', 'Editar paso') ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -119,8 +163,8 @@ use yii\helpers\ArrayHelper;
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Close') ?></button>
-                <button type="button" class="btn btn-primary" id="save-edit-step"><?= Yii::t('app', 'Save changes') ?></button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cerrar') ?></button>
+                <button type="button" class="btn btn-primary" id="save-edit-step"><?= Yii::t('app', 'Guardar') ?></button>
             </div>
         </div>
     </div>

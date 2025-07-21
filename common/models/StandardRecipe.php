@@ -616,6 +616,17 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
         return $ids;
     }
+    public function getProcedureStepsImages()
+{
+    $images = [];
+    foreach ($this->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_PROCEDURE])->all() as $step) {
+        $img = $step->getImage();
+        if ($img && strpos($img->getUrl(), 'no-image') === false) {
+            $images[] = $img;
+        }
+    }
+    return $images;
+}
 
     public function getMainImageUrl()
     {

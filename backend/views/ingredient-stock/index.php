@@ -182,10 +182,22 @@ $this->registerCss('
             [
                 'attribute' => 'ingredient',
                 'label' => 'Ingrediente',
-                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'ingredient', [
-                    'class' => 'form-control form-control-sm',
-                    'data-trigger-change' => 'true'
-                ]),
+                'headerOptions' => ['style' => 'min-width: 250px; width: 25%;'],
+                'filter' => '<div style="position: relative;">' . 
+                    Html::textInput('IngredientStockSearch[ingredient]', $searchModel->ingredient, [
+                        'class' => 'form-control',
+                        'placeholder' => 'Buscar por nombre...',
+                        'id' => 'title-filter',
+                        'style' => 'padding-right: 30px;'
+                    ]) . 
+                    Html::button('×', [
+                        'class' => 'btn btn-sm',
+                        'id' => 'clear-title-btn',
+                        'onclick' => 'clearTitleFilter()',
+                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->ingredient) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                        'title' => 'Limpiar filtro'
+                    ]) . 
+                    '</div>',
             ],
             [
                 'attribute' => 'brand',
@@ -452,6 +464,86 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 \yii\bootstrap5\Modal::end();
 ?>
 <?php
+$this->registerJs("
+// Definir las funciones globales primero
+// Funciones globales para limpiar filtros
+window.clearTitleFilter = function() {
+    document.getElementById('title-filter').value = '';
+    document.getElementById('clear-title-btn').style.display = 'none';
+    
+    // Construir URL con filtros actuales, excluyendo el título
+    let url = new URL(window.location);
+    url.searchParams.delete('IngredientStockSearch[ingredient]');
+    
+    // Recargar la tabla
+    $.pjax.reload({
+        container: '#ingredient-stock-pjax',
+        url: url.toString(),
+        timeout: 10000
+    }).done(function() {
+        setupFilterButtons(); // Reconfigurar botones después de la recarga
+    });
+};
+
+window.clearTypeFilter = function() {
+    document.getElementById('type-filter').value = '';
+    document.getElementById('clear-type-btn').style.display = 'none';
+    
+    // Construir URL con filtros actuales, excluyendo el tipo
+    let url = new URL(window.location);
+    url.searchParams.delete('IngredientStockSearch[key]');
+    
+    // Recargar la tabla
+    $.pjax.reload({
+        container: '#ingredient-stock-pjax',
+        url: url.toString(),
+        timeout: 10000
+    }).done(function() {
+        setupFilterButtons(); // Reconfigurar botones después de la recarga
+    });
+};
+
+// Handlers para los eventos
+window.titleInputHandler = function() {
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    if (clearTitleBtn) {
+        clearTitleBtn.style.display = this.value ? 'block' : 'none';
+    }
+};
+
+window.typeSelectHandler = function() {
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    if (clearTypeBtn) {
+        clearTypeBtn.style.display = this.value ? 'block' : 'none';
+    }
+};
+
+// Función global para configurar botones de filtros
+window.setupFilterButtons = function() {
+    const titleInput = document.getElementById('title-filter');
+    const typeSelect = document.getElementById('type-filter');
+    const clearTitleBtn = document.getElementById('clear-title-btn');
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    
+    if (titleInput && clearTitleBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearTitleBtn.style.display = titleInput.value ? 'block' : 'none';
+        
+        // Remover listeners anteriores y agregar nuevo
+        titleInput.removeEventListener('input', titleInputHandler);
+        titleInput.addEventListener('input', titleInputHandler);
+    }
+    
+    if (typeSelect && clearTypeBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearTypeBtn.style.display = typeSelect.value ? 'block' : 'none';
+        
+        // Remover listeners anteriores y agregar nuevo
+        typeSelect.removeEventListener('change', typeSelectHandler);
+        typeSelect.addEventListener('change', typeSelectHandler);
+    }
+};
+", \yii\web\View::POS_HEAD);
 $this->registerJs("
 // Detector de cambio en elementos por página
 document.getElementById('per-page-selector').addEventListener('change', function() {

@@ -377,7 +377,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
 
 
             <br>
-            <?= $form->field($model, 'stepsImages')->widget(\kartik\file\FileInput::class, [
+            <!-- <?= $form->field($model, 'stepsImages')->widget(\kartik\file\FileInput::class, [
                 'id' => 'stepsImagesInput',
                 'options' => [
                     'multiple' => true,
@@ -393,7 +393,7 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
                     'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id])
 
                 ],
-            ]) ?>
+            ]) ?> -->
 
         </div>
         <div class="card-footer">

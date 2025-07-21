@@ -2204,26 +2204,42 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             
             // PARTE 3: Imágenes, cuidados especiales, alérgenos y equipo
             $html = '';
-            $html .= '<h3>Foto del procedimiento</h3>';
-            // Otras imágenes (no principales)
-            foreach ($images as $image) {
-                if ($image['isMain'] != 1 && $image['filePath'] !== 'placeholder.svg') {
-                    $imagePath = Yii::getAlias('@web') . $image->getPath('300x300'); // Ruta relativa
-                    $imagePath1 = '/app/backend/web/' . $imagePath; // Ruta absoluta
-    
-                    if (file_exists($imagePath1)) {
-                        $imageExtension = pathinfo($imagePath1, PATHINFO_EXTENSION);
-                        $imageData = base64_encode(file_get_contents($imagePath1));
-                        $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
-    
-                        $html .= '<div style="text-align: center; margin-bottom: 20px;">';
-                        $html .= '<img src="' . $imageSrc . '" style="max-width: 100%; height: auto;" />';
-                        $html .= '</div>';
+            $html .= '<h3>Fotos de los pasos del procedimiento</h3>';
+            $procedureSteps = $recipe->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_PROCEDURE])->all();
+            if (!empty($procedureSteps)) {
+                foreach ($procedureSteps as $step) {
+                    $image = $step->getImage();
+                    $imgUrl = $image ? $image->getUrl() : null;
+                    $imgThumb = $image ? $image->getUrl('200x200') : null;
+                    $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false;
+                    $html .= '<div style="margin-bottom: 18px; text-align: center;">';
+                    $html .= '<div style="font-weight:bold; margin-bottom:4px;">Paso ' . htmlspecialchars($step->number) . ': ' . htmlspecialchars($step->activity) . '</div>';
+                    if ($isRealImage) {
+                        $webroot = Yii::getAlias('@webroot');
+                        $relativePath = $image->getPath('400x400');
+                        $absolutePath = $webroot . '/' . ltrim($relativePath, '/');
+                        // Log para depuración
+                        //echo("[PDF IMG] Paso {$step->number} - Path: $absolutePath - Exists: " . (file_exists($absolutePath) ? 'SI' : 'NO'));
+                        if (file_exists($absolutePath)) {
+                            $imageExtension = pathinfo($absolutePath, PATHINFO_EXTENSION);
+                            $imageData = base64_encode(file_get_contents($absolutePath));
+                            $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
+                            $html .= '<img src="' . $imageSrc . '" style="max-width:220px; max-height:220px; border-radius:8px; border:1px solid #ccc; margin-bottom:4px;" />';
+                        } else {
+                            $html .= '<span style="color:#999; font-style:italic;">Sin imagen</span>';
+                        }
+                    } else {
+                        $html .= '<span style="color:#999; font-style:italic;">Sin imagen</span>';
                     }
+                    $html .= '</div>';
                 }
+            } else {
+                $html .= '<div style="color:#999; font-style:italic;">No hay pasos de procedimiento.</div>';
             }
+            $mpdf->WriteHTML($html);
             
-            // PARTE 5: Solo cuidados especiales
+
+            // PARTE 5: Cuidados y medidas especiales (tabla)
             $html = '';
             $html .= '<h2>Cuidados y medidas especiales</h2>';
             $html .= '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
@@ -2237,6 +2253,39 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $html .= '</tr>';
             }
             $html .= '</table>';
+            $mpdf->WriteHTML($html);
+
+            // PARTE 5b: Fotos de cuidados y medidas especiales
+            $html = '';
+            $html .= '<h3>Fotos de los pasos de cuidados y medidas especiales</h3>';
+            if (!empty($specialSteps)) {
+                foreach ($specialSteps as $step) {
+                    $image = $step->getImage();
+                    $imgUrl = $image ? $image->getUrl() : null;
+                    $imgThumb = $image ? $image->getUrl('200x200') : null;
+                    $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false;
+                    $html .= '<div style="margin-bottom: 18px; text-align: center;">';
+                    $html .= '<div style="font-weight:bold; margin-bottom:4px;">Paso ' . htmlspecialchars($step->number) . ': ' . htmlspecialchars($step->activity) . '</div>';
+                    if ($isRealImage) {
+                        $webroot = Yii::getAlias('@webroot');
+                        $relativePath = $image->getPath('400x400');
+                        $absolutePath = $webroot . '/' . ltrim($relativePath, '/');
+                        if (file_exists($absolutePath)) {
+                            $imageExtension = pathinfo($absolutePath, PATHINFO_EXTENSION);
+                            $imageData = base64_encode(file_get_contents($absolutePath));
+                            $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
+                            $html .= '<img src="' . $imageSrc . '" style="max-width:220px; max-height:220px; border-radius:8px; border:1px solid #ccc; margin-bottom:4px;" />';
+                        } else {
+                            $html .= '<span style="color:#999; font-style:italic;">Sin imagen</span>';
+                        }
+                    } else {
+                        $html .= '<span style="color:#999; font-style:italic;">Sin imagen</span>';
+                    }
+                    $html .= '</div>';
+                }
+            } else {
+                $html .= '<div style="color:#999; font-style:italic;">No hay pasos de cuidados especiales.</div>';
+            }
             $mpdf->WriteHTML($html);
     
             // PARTE 6: Solo alérgenos
@@ -2755,22 +2804,29 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          $col = 'A';
          foreach ($sheetHeaders as $header) {
              $sheet->setCellValue($col.'1', $header);
-             $sheet->getColumnDimension($col)->setAutoSize(true)->setWidth(50);
+             //$sheet->getColumnDimension($col)->setAutoSize(true)->setWidth(50);
              $sheet->getStyle($col)->getAlignment()->setWrapText(true);
              $col++;
          }
          $sheet->freezePane('A2');
      }
-     
-     // Configuración especial para columnas
-     $ingredientsSheet->getColumnDimension('B')->setAutoSize(true)->setWidth(30);
-     $ingredientsSheet->getStyle('B2:B500')->getAlignment()->setWrapText(true);
-     
-     $ingredientsSheet->getColumnDimension('A')->setAutoSize(true)->setWidth(30);
-     $ingredientsSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
-     
-     $recipesSheet->getColumnDimension('A')->setAutoSize(true)->setWidth(30);
-     $recipesSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
+    // Configuración especial para columnas (aplicar después del bucle de cabeceras para que no se sobrescriba)
+    $ingredientsSheet->getColumnDimension('B')->setAutoSize(true)->setWidth(30);
+    $ingredientsSheet->getColumnDimension('C')->setWidth(20);
+    $ingredientsSheet->getColumnDimension('D')->setWidth(15);
+    $ingredientsSheet->getColumnDimension('F')->setWidth(15);
+    // Centrar el header y los datos de la columna F
+    $ingredientsSheet->getStyle('F1:F500')->applyFromArray([
+        'alignment' => [
+            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+        ],
+    ]);
+    $ingredientsSheet->getStyle('B2:B500')->getAlignment()->setWrapText(true);
+    $ingredientsSheet->getColumnDimension('A')->setAutoSize(true)->setWidth(30);
+    $ingredientsSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
+    $recipesSheet->getColumnDimension('A')->setAutoSize(true)->setWidth(30);
+    $recipesSheet->getStyle('A2:A500')->getAlignment()->setWrapText(true);
      
      // 5. Cargar datos con límite para la plantilla
      $batchSize = 350;
@@ -3120,11 +3176,12 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
     // Fórmula para el costo (F)
     // Para INSUMO usa la columna 4 de INSUMOS, para SUBRECETA usa la columna 4 de SUBRECETAS
     $ingredientsSheet->setCellValue("F$i",
-        "=IF(B$i=\"INSUMO\",IF(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE)=\"\",\"\",ROUND(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE),2)),IF(B$i=\"SUBRECETA\",IF(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE)=\"\",\"\",ROUND(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE),2)),\"\"))"
+        "=IF(B$i=\"INSUMO\",IF(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE)=\"\",\"\",D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE)),IF(B$i=\"SUBRECETA\",IF(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE)=\"\",\"\",D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE)),\"\"))"
     );
 
     // Dar formato de moneda a la columna de costo
-    $ingredientsSheet->getStyle("F$i")->getNumberFormat()->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
+    $ingredientsSheet->getStyle("F$i")->getNumberFormat()->setFormatCode('$#,##0.00');
+
      }
      
      // 11. Añadir fórmula para bloquear el campo de porciones cuando se seleccionan ciertos rendimientos
@@ -3169,12 +3226,25 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
          $worksheet->calculateColumnWidths();
      }
-       // 15. Definir la primera hoja como activa al abrir el archivo
+     // 1. Proteger la hoja de ingredientes
+     // Ajustar el ancho de las columnas F y C solo una vez fuera del bucle
+//$ingredientsSheet->getColumnDimension('F')->setWidth(30); // Ancho fijo para evitar #######
+//$ingredientsSheet->getColumnDimension('C')->setWidth(30); // Ancho fijo para columna C también
+    $ingredientsSheet->getProtection()->setSheet(true);
+    $ingredientsSheet->getProtection()->setPassword('anansi'); // Puedes cambiar la contraseña
+
+    // 2. Desbloquear todas las celdas primero (por si acaso)
+    $ingredientsSheet->getStyle('A2:Q500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+
+    // 3. Volver a bloquear columnas E y F (de la 2 a la 500)
+    $ingredientsSheet->getStyle('E2:E1500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+    $ingredientsSheet->getStyle('F2:F1500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+    // 15. Definir la primera hoja como activa al abrir el archivo
      $spreadsheet->setActiveSheetIndex(0);
      
      // Establecer la celda A2 como celda activa al abrir el archivo
      $spreadsheet->getActiveSheet()->setSelectedCell('A2');
-     
+     $ingredientsSheet->setSelectedCell('A2');
      // 16. Generar el archivo
      $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
      $writer->setPreCalculateFormulas(true); // Calcular fórmulas antes de guardar

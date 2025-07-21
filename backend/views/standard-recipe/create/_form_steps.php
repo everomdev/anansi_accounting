@@ -21,7 +21,7 @@
         <?= $form->field($model, 'activity')->textarea() ?>
     </div>
     <div class="col-12">
-        <?= $form->field($model, 'time')->textInput(['type' => 'time']) ?>
+        <?= $form->field($model, 'time')->textInput(['type' => 'time', 'step' => 1]) ?>
     </div>
     <div class="col-12">
         <?= $form->field($model, 'indicator')->textInput() ?>
