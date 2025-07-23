@@ -87,6 +87,13 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     });
+    var specialStepImageModal = document.getElementById('specialStepImageModal');
+    if (specialStepImageModal) {
+        specialStepImageModal.addEventListener('hidden.bs.modal', function () {
+            document.body.classList.remove('modal-open');
+            document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+        });
+    }
 });
 </script>
                 <?php endforeach; ?>
