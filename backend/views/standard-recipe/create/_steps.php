@@ -163,8 +163,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cerrar') ?></button>
-                <button type="button" class="btn btn-primary" id="save-edit-step"><?= Yii::t('app', 'Guardar') ?></button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cancelar') ?></button>
+                <button type="button" class="btn btn-success" id="save-edit-step"><?= Yii::t('app', 'Guardar') ?></button>
             </div>
         </div>
     </div>
@@ -174,3 +174,27 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php
 $this->registerJsFile('@web/js/standard-recipe/index.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modalEditStep = document.getElementById('modal-edit-step');
+    if (modalEditStep) {
+        modalEditStep.addEventListener('hidden.bs.modal', function () {
+            // Elimina cualquier backdrop y la clase modal-open del body
+            document.body.classList.remove('modal-open');
+            document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+        });
+    }
+    // Si el modal se cierra por JS, también forzar limpieza después de guardar
+    var saveBtn = document.getElementById('save-edit-step');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            var modal = bootstrap.Modal.getInstance(modalEditStep);
+            if (modal) modal.hide();
+            setTimeout(function() {
+                document.body.classList.remove('modal-open');
+                document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+            }, 500);
+        });
+    }
+});
+</script>
