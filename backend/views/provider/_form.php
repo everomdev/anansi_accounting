@@ -28,7 +28,7 @@ use kartik\select2\Select2;
                 <div class="col-md-6 mb-3">
                     <?= $form->field($model, 'business_name')
                         ->textInput(['maxlength' => true, 'class' => 'form-control'])
-                        ->label(Yii::t('app', 'Nombre del Negocio')) ?>
+                        ->label(Yii::t('app', 'Nombre del Negocio *')) ?>
                 </div>
                 
                 <!-- RFC en la misma fila -->
@@ -56,7 +56,7 @@ use kartik\select2\Select2;
                 <div class="col-md-6 mb-3">
                     <?= $form->field($model, 'phone')
                         ->textInput(['maxlength' => true, 'placeholder' => '+52 55 1234 5678'])
-                        ->label(Yii::t('app', 'Teléfono del Negocio')) ?>
+                        ->label(Yii::t('app', 'Teléfono del Negocio *')) ?>
                 </div>
                 
                 <!-- Teléfono del contacto -->
@@ -98,7 +98,7 @@ use kartik\select2\Select2;
                                 // Aquí puedes agregar lógica adicional al cambiar la selección
                             }',
                         ],
-                    ])->label(Yii::t('app', 'Métodos de Pago Aceptados')) ?>
+                    ])->label(Yii::t('app', 'Métodos de Pago Aceptados *')) ?>
                 </div>
                 
                 <div class="col-md-4 mb-3">

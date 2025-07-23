@@ -43,7 +43,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             ],
             [
                 'attribute' => 'total_cost',
-                'label' => Yii::t('app', 'Total Cost'),
+                'label' => Yii::t('app', 'Costo Total'),
                 'value' => function($model) {
                     return formatCost($model->total_cost);
                 },
