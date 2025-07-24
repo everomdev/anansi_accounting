@@ -91,8 +91,6 @@ use yii\helpers\ArrayHelper;
       </div>
     </div>
   </div>
-</div>
-<script>
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.procedure-step-img-link').forEach(function(link) {
         link.addEventListener('click', function(e) {
@@ -104,6 +102,51 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     });
+});
+
+<?php /* --- ÚNICO BLOQUE JS AL FINAL --- */ ?>
+<script>
+function cleanModalBackdrop() {
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal imagen
+    document.querySelectorAll('.procedure-step-img-link').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var imgSrc = this.getAttribute('data-img');
+            var modalImg = document.getElementById('procedure-step-modal-img');
+            modalImg.src = imgSrc;
+            var modal = new bootstrap.Modal(document.getElementById('procedureStepImageModal'));
+            modal.show();
+        });
+    });
+    var imgModal = document.getElementById('procedureStepImageModal');
+    if (imgModal) {
+        imgModal.addEventListener('hidden.bs.modal', function () {
+            cleanModalBackdrop();
+        });
+    }
+
+    // Modal edición
+    var modalEditStep = document.getElementById('modal-edit-step');
+    if (modalEditStep) {
+        modalEditStep.addEventListener('hidden.bs.modal', function () {
+            cleanModalBackdrop();
+        });
+    }
+    // Si el modal se cierra por JS, también forzar limpieza después de guardar
+    var saveBtn = document.getElementById('save-edit-step');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            var modal = bootstrap.Modal.getInstance(modalEditStep);
+            if (modal) modal.hide();
+            setTimeout(cleanModalBackdrop, 500);
+        });
+    }
 });
 </script>
                         <?php /*
