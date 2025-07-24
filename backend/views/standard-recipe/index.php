@@ -121,7 +121,7 @@ $this->registerCss('
             <div class="col-md-12">
             <?= Html::a(
                 'Descargar recetario en PDF',
-                ['standard-recipe/download-complete-recipe-pdf'],
+                '#',
                 [
                     'class' => 'btn btn-success',
                     'id' => 'btn-download-recipes-complete',
@@ -683,17 +683,14 @@ document.getElementById('download-pdf-all').addEventListener('click', function()
 // Nuevo código para manejo de descarga de recetario en PDF
 document.getElementById('btn-download-recipes-complete').addEventListener('click', function(e) {
     e.preventDefault();
-    
     // Obtener IDs de las filas seleccionadas
     const selectedIds = $('#standard-recipes-grid').yiiGridView('getSelectedRows');
-    
     if (selectedIds.length === 0) {
         // Mostrar modal de error si no hay selección
         const noSelectionModal = new bootstrap.Modal(document.getElementById('modal-no-export-selection'));
         noSelectionModal.show();
         return;
     }
-    
     // Mostrar el modal de confirmación para descarga de PDF
     const downloadPdfModal = new bootstrap.Modal(document.getElementById('modal-download-pdf-recipes'));
     downloadPdfModal.show();
