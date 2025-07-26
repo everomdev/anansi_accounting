@@ -20,8 +20,22 @@
     <div class="col-12">
         <?= $form->field($model, 'activity')->textarea() ?>
     </div>
-    <div class="col-12">
-        <?= $form->field($model, 'time')->textInput(['type' => 'time', 'step' => 1]) ?>
+
+
+    <div class="col-12 row g-2 align-items-end">
+        <div class="col-4">
+            <label for="input-hours" class="form-label">Horas</label>
+            <input type="number" min="0" max="23" class="form-control" id="input-hours" name="input-hours" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[0] : '00' ?>">
+        </div>
+        <div class="col-4">
+            <label for="input-minutes" class="form-label">Minutos</label>
+            <input type="number" min="0" max="59" class="form-control" id="input-minutes" name="input-minutes" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[1] : '00' ?>">
+        </div>
+        <div class="col-4">
+            <label for="input-seconds" class="form-label">Segundos</label>
+            <input type="number" min="0" max="59" class="form-control" id="input-seconds" name="input-seconds" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[2] : '00' ?>">
+        </div>
+        <div class="form-text">Selecciona la duración: horas, minutos y segundos. Ejemplo: 0 horas, 5 minutos y 40 segundos.</div>
     </div>
     <div class="col-12">
         <?= $form->field($model, 'indicator')->textInput() ?>

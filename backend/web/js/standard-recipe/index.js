@@ -193,6 +193,9 @@ $(document).ready(function () {
         var activity = $('#edit-step-activity').val();
         var time = $('#edit-step-time').val();
         var indicator = $('#edit-step-indicator').val();
+        var _image = $('#edit-step-image')[0].files[0]; // Obtener el archivo de imagen
+        console.log('stepId:', _image);
+        
     
         // Crear un objeto FormData
         var formData = new FormData();
@@ -202,6 +205,8 @@ $(document).ready(function () {
         formData.append('activity', activity);
         formData.append('time', time);
         formData.append('indicator', indicator);
+        formData.append('_image', _image); // Agregar la imagen al FormData
+        console.log(('formData:', _image));
 
         $.ajax({
             url: '/standard-recipe/edit-step',
@@ -211,6 +216,8 @@ $(document).ready(function () {
             contentType: false, // Evitar que jQuery establezca el contentType
             success: function (response) {
                 $('#modal-edit-step').modal('hide');
+                console.log('Cambios guardados exitosamente:', response);
+                
                 $.pjax.reload({container: '#pjax-list-steps'});
             },
             error: function (xhr, status, error) {

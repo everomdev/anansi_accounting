@@ -47,7 +47,7 @@ use yii\helpers\ArrayHelper;
                             <?php
                                 $imgUrl = $image ? $image->getUrl() : null;
                                 $imgThumb = $image ? $image->getUrl('200x200') : null;
-                                $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false;
+                                $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false && strpos($imgThumb, 'placeHolder') === false;
                             ?>
                             <?php if ($isRealImage): ?>
                                 <a href="#" class="procedure-step-img-link" data-img="<?= $imgUrl ?>">
@@ -75,6 +75,7 @@ use yii\helpers\ArrayHelper;
                                     'data-activity' => $step->activity,
                                     'data-time' => $step->time,
                                     'data-indicator' => $step->indicator,
+                                    'data-img' => $isRealImage ? $imgUrl : '',
                                 ]) ?>
                             </div>
                         </td>
@@ -203,6 +204,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label for="edit-step-indicator" class="form-label"><?= Yii::t('app', 'Indicator') ?></label>
                         <input type="text" class="form-control" id="edit-step-indicator" name="indicator">
                     </div>
+                    <div class="mb-3">
+                        <label for="edit-step-image" class="form-label"><?= Yii::t('app', 'Image') ?></label>
+                        <div id="edit-step-image-preview-container" class="mb-2" style="display:none;">
+                            <img id="edit-step-image-preview" src="" alt="Imagen actual" style="max-width: 120px; max-height: 120px; border-radius: 6px; display:block; margin-bottom:8px;" />
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="edit-step-remove-image" name="remove_image">
+                                <label class="form-check-label" for="edit-step-remove-image">
+                                    <?= Yii::t('app', 'Eliminar imagen actual') ?>
+                                </label>
+                            </div>
+                        </div>
+                        <input type="file" class="form-control" id="edit-step-image" name="_image" accept="image/*">
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -225,6 +239,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Elimina cualquier backdrop y la clase modal-open del body
             document.body.classList.remove('modal-open');
             document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+            // Limpiar preview y checkbox al cerrar
+            document.getElementById('edit-step-image-preview-container').style.display = 'none';
+            document.getElementById('edit-step-image-preview').src = '';
+            document.getElementById('edit-step-remove-image').checked = false;
         });
     }
     // Si el modal se cierra por JS, también forzar limpieza después de guardar
@@ -239,5 +257,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500);
         });
     }
+
+    // Mostrar preview y checkbox si hay imagen al abrir modal de edición
+    document.querySelectorAll('.edit-step').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var imgUrl = this.getAttribute('data-img');
+            var previewContainer = document.getElementById('edit-step-image-preview-container');
+            var previewImg = document.getElementById('edit-step-image-preview');
+            var removeCheckbox = document.getElementById('edit-step-remove-image');
+            if (imgUrl) {
+                previewImg.src = imgUrl;
+                previewContainer.style.display = 'block';
+                removeCheckbox.checked = false;
+            } else {
+                previewImg.src = '';
+                previewContainer.style.display = 'none';
+                removeCheckbox.checked = false;
+            }
+        });
+    });
 });
 </script>

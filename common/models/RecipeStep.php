@@ -82,10 +82,12 @@ class RecipeStep extends \yii\db\ActiveRecord
 
     public function beforeSave($insert)
     {
-        if (!parent::beforeSave($insert)) {
-            return false;
+       if (!parent::beforeSave($insert)) {
+        return false;
         }
-        $this->computeNumber();
+        if ($insert) {
+            $this->computeNumber();
+        }
         return true;
     }
 
@@ -99,8 +101,11 @@ class RecipeStep extends \yii\db\ActiveRecord
 
     private function uploadImage()
     {
-        $file = UploadedFile::getInstance($this, '_image');
-        if($file){
+        $file = $this->_image;
+        if (!$file) {
+            $file = UploadedFile::getInstance($this, '_image');
+        }
+        if ($file instanceof UploadedFile) {
             $this->removeImages();
             $this->attachImage($file->tempName, true);
         }

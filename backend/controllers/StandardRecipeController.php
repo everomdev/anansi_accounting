@@ -687,10 +687,24 @@ public function actionGetSubStandardRecipes()
         ]);
 
         $post = Yii::$app->request->post();
+        Yii::info(['POST recibido' => $post], 'debug.step');
 
-        if ($step->load($post)) {
+        // Si los campos de tiempo existen en el POST, combínalos
+        $h = isset($post['input-hours']) ? str_pad($post['input-hours'], 2, '0', STR_PAD_LEFT) : null;
+        $m = isset($post['input-minutes']) ? str_pad($post['input-minutes'], 2, '0', STR_PAD_LEFT) : null;
+        $s = isset($post['input-seconds']) ? str_pad($post['input-seconds'], 2, '0', STR_PAD_LEFT) : null;
+        if ($h !== null && $m !== null && $s !== null) {
+            $post['RecipeStep']['time'] = "$h:$m:$s";
+            Yii::info(['Tiempo combinado' => $post['RecipeStep']['time']], 'debug.step');
+        }
+
+        $okLoad = $step->load($post);
+        Yii::info(['okLoad' => $okLoad, 'step->attributes' => $step->attributes], 'debug.step');
+        if ($okLoad) {
             if ($step->validate()) {
+                Yii::info(['VALIDADO' => true], 'debug.step');
                 if ($step->save()) {
+                    Yii::info(['GUARDADO' => true, 'step->attributes' => $step->attributes], 'debug.step');
                     return $this->asJson([
                         'success' => true,
                         'message' => Yii::t('app', 'Paso agregado exitosamente'),
@@ -698,6 +712,7 @@ public function actionGetSubStandardRecipes()
                         'stepId' => $step->id
                     ]);
                 } else {
+                    Yii::info(['GUARDADO' => false, 'errors' => $step->errors], 'debug.step');
                     return $this->asJson([
                         'success' => false,
                         'errors' => $step->errors,
@@ -705,6 +720,7 @@ public function actionGetSubStandardRecipes()
                     ]);
                 }
             } else {
+                Yii::info(['VALIDADO' => false, 'errors' => $step->errors], 'debug.step');
                 return $this->asJson([
                     'success' => false,
                     'errors' => $step->errors,
@@ -712,6 +728,7 @@ public function actionGetSubStandardRecipes()
                 ]);
             }
         } else {
+            Yii::info(['LOAD' => false, 'step->attributes' => $step->attributes], 'debug.step');
             return $this->asJson([
                 'success' => false,
                 'errors' => $step->errors,
@@ -3256,7 +3273,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
 
      return Yii::$app->response->sendFile($tempFile, $filename);
  }
- public function actionEditStep()
+public function actionEditStep()
 {
     $id = Yii::$app->request->post('id');
     $step = RecipeStep::findOne($id);
@@ -3265,6 +3282,13 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         $step->activity = Yii::$app->request->post('activity');
         $step->time = Yii::$app->request->post('time');
         $step->indicator = Yii::$app->request->post('indicator');
+        $removeImage = Yii::$app->request->post('remove_image', '0');
+        $step->_image = UploadedFile::getInstanceByName('_image');
+
+        if ($removeImage === '1') {
+            $step->removeImages();
+        }
+
         if ($step->save()) {
             return $this->asJson(['success' => true]);
         }
