@@ -194,9 +194,7 @@ $(document).ready(function () {
         var time = $('#edit-step-time').val();
         var indicator = $('#edit-step-indicator').val();
         var _image = $('#edit-step-image')[0].files[0]; // Obtener el archivo de imagen
-        console.log('stepId:', _image);
-        
-    
+        var removeImage = $('#edit-step-remove-image').val(); // Obtener el valor del campo hidden
         // Crear un objeto FormData
         var formData = new FormData();
 
@@ -206,7 +204,9 @@ $(document).ready(function () {
         formData.append('time', time);
         formData.append('indicator', indicator);
         formData.append('_image', _image); // Agregar la imagen al FormData
-        console.log(('formData:', _image));
+        formData.append('remove_image', removeImage); // Agregar el campo remove_image
+        // Depuración
+        console.log('remove_image:', removeImage);
 
         $.ajax({
             url: '/standard-recipe/edit-step',
@@ -217,7 +217,6 @@ $(document).ready(function () {
             success: function (response) {
                 $('#modal-edit-step').modal('hide');
                 console.log('Cambios guardados exitosamente:', response);
-                
                 $.pjax.reload({container: '#pjax-list-steps'});
             },
             error: function (xhr, status, error) {

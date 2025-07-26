@@ -206,14 +206,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="mb-3">
                         <label for="edit-step-image" class="form-label"><?= Yii::t('app', 'Image') ?></label>
-                        <div id="edit-step-image-preview-container" class="mb-2" style="display:none;">
+                        <div id="edit-step-image-preview-container" class="mb-2 position-relative" style="display:none;">
                             <img id="edit-step-image-preview" src="" alt="Imagen actual" style="max-width: 120px; max-height: 120px; border-radius: 6px; display:block; margin-bottom:8px;" />
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="edit-step-remove-image" name="remove_image">
-                                <label class="form-check-label" for="edit-step-remove-image">
-                                    <?= Yii::t('app', 'Eliminar imagen actual') ?>
-                                </label>
-                            </div>
+                            <button type="button" id="edit-step-remove-image-btn" class="btn btn-sm btn-danger position-absolute" style="top:0; right:0; border-radius:50%; width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center; z-index:2;" title="Eliminar imagen actual">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            <input type="hidden" id="edit-step-remove-image" name="remove_image" value="0">
                         </div>
                         <input type="file" class="form-control" id="edit-step-image" name="_image" accept="image/*">
                     </div>
@@ -239,10 +237,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Elimina cualquier backdrop y la clase modal-open del body
             document.body.classList.remove('modal-open');
             document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
-            // Limpiar preview y checkbox al cerrar
+            // Limpiar preview y X al cerrar
             document.getElementById('edit-step-image-preview-container').style.display = 'none';
             document.getElementById('edit-step-image-preview').src = '';
-            document.getElementById('edit-step-remove-image').checked = false;
+            document.getElementById('edit-step-remove-image').value = '0';
         });
     }
     // Si el modal se cierra por JS, también forzar limpieza después de guardar
@@ -258,23 +256,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Mostrar preview y checkbox si hay imagen al abrir modal de edición
+    // Mostrar preview y X si hay imagen al abrir modal de edición
     document.querySelectorAll('.edit-step').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var imgUrl = this.getAttribute('data-img');
             var previewContainer = document.getElementById('edit-step-image-preview-container');
             var previewImg = document.getElementById('edit-step-image-preview');
-            var removeCheckbox = document.getElementById('edit-step-remove-image');
-            if (imgUrl) {
+            var removeInput = document.getElementById('edit-step-remove-image');
+            var removeBtn = document.getElementById('edit-step-remove-image-btn');
+            // Solo resetear a 0 si no se ha eliminado la imagen
+            if (removeInput.value !== '1') {
+                removeInput.value = '0';
+            }
+            if (imgUrl && removeInput.value !== '1') {
                 previewImg.src = imgUrl;
                 previewContainer.style.display = 'block';
-                removeCheckbox.checked = false;
+                removeBtn.style.display = 'flex';
             } else {
                 previewImg.src = '';
                 previewContainer.style.display = 'none';
-                removeCheckbox.checked = false;
+                removeBtn.style.display = 'none';
             }
         });
     });
+
+    // Lógica para eliminar imagen con la X
+    var removeBtn = document.getElementById('edit-step-remove-image-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var previewContainer = document.getElementById('edit-step-image-preview-container');
+            var previewImg = document.getElementById('edit-step-image-preview');
+            var removeInput = document.getElementById('edit-step-remove-image');
+            previewImg.src = '';
+            previewContainer.style.display = 'none';
+            removeInput.value = '1';
+        });
+    }
 });
 </script>

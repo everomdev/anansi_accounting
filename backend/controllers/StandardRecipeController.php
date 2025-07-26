@@ -3282,9 +3282,9 @@ public function actionEditStep()
         $step->activity = Yii::$app->request->post('activity');
         $step->time = Yii::$app->request->post('time');
         $step->indicator = Yii::$app->request->post('indicator');
-        $removeImage = Yii::$app->request->post('remove_image', '0');
+        $removeImage = Yii::$app->request->post('remove_image');
         $step->_image = UploadedFile::getInstanceByName('_image');
-
+        
         if ($removeImage === '1') {
             $step->removeImages();
         }
