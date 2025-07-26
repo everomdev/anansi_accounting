@@ -94,8 +94,8 @@ class ExcelHelper
      ];
     $activeWorksheet->setCellValue("A1", "Clave*");
     $activeWorksheet->setCellValue("B1", "Insumo*");
-    $activeWorksheet->setCellValue("C1", "Marca*");
-    $activeWorksheet->setCellValue("D1", "Presentación*");
+    $activeWorksheet->setCellValue("C1", "Marca");
+    $activeWorksheet->setCellValue("D1", "Presentación");
     $activeWorksheet->setCellValue("E1", "Categoría*");
     $activeWorksheet->setCellValue("F1", "Unidad de compra*");
     $activeWorksheet->setCellValue("G1", "Unidad de cocina*");
