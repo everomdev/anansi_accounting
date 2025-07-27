@@ -175,7 +175,7 @@ $(document).on('click', '#confirm-delete-selected', function() {
     });
 });
 $(document).ready(function () {
-    // Código para cargar datos en el modal
+    // Código para cargar datos en el modal de paso normal
     $(document).on('click', '.edit-step', function () {
         var stepId = $(this).data('id');
         var activity = $(this).data('activity');
@@ -187,33 +187,29 @@ $(document).ready(function () {
         $('#edit-step-time').val(time);
         $('#edit-step-indicator').val(indicator);
     });
-    // Código para guardar los cambios
+    // Código para guardar los cambios de paso normal
     $('#save-edit-step').on('click', function () {
         var stepId = $('#edit-step-id').val();
         var activity = $('#edit-step-activity').val();
         var time = $('#edit-step-time').val();
         var indicator = $('#edit-step-indicator').val();
-        var _image = $('#edit-step-image')[0].files[0]; // Obtener el archivo de imagen
-        var removeImage = $('#edit-step-remove-image').val(); // Obtener el valor del campo hidden
-        // Crear un objeto FormData
+        var _image = $('#edit-step-image')[0].files[0];
+        var removeImage = $('#edit-step-remove-image').val();
         var formData = new FormData();
-
-        // Agregar los valores al FormData
         formData.append('id', stepId);
         formData.append('activity', activity);
         formData.append('time', time);
         formData.append('indicator', indicator);
-        formData.append('_image', _image); // Agregar la imagen al FormData
-        formData.append('remove_image', removeImage); // Agregar el campo remove_image
+        formData.append('_image', _image);
+        formData.append('remove_image', removeImage);
         // Depuración
         console.log('remove_image:', removeImage);
-
         $.ajax({
             url: '/standard-recipe/edit-step',
             type: 'POST',
             data: formData,
-            processData: false, // Evitar que jQuery procese los datos
-            contentType: false, // Evitar que jQuery establezca el contentType
+            processData: false,
+            contentType: false,
             success: function (response) {
                 $('#modal-edit-step').modal('hide');
                 console.log('Cambios guardados exitosamente:', response);
@@ -221,6 +217,43 @@ $(document).ready(function () {
             },
             error: function (xhr, status, error) {
                 console.error('Error al guardar los cambios:', error);
+                alert('Error al guardar los cambios.');
+            }
+        });
+    });
+
+    // Código para guardar los cambios de paso especial
+    $('#save-edit-special-step').on('click', function () {
+        var stepId = $('#edit-special-step-id').val();
+        var activity = $('#edit-special-step-activity').val();
+        var time = $('#edit-special-step-time').val();
+        var indicator = $('#edit-special-step-indicator').val();
+        var fileInput = $('#edit-special-step-image')[0];
+        var _image = (fileInput && fileInput.files.length > 0) ? fileInput.files[0] : null;
+        var removeImage = $('#edit-special-step-remove-image').val();
+        var formData = new FormData();
+        formData.append('id', stepId);
+        formData.append('activity', activity);
+        formData.append('time', time);
+        formData.append('indicator', indicator);
+        if (_image) formData.append('_image', _image);
+        formData.append('remove_image', removeImage);
+        formData.append('type', 'special');
+        // Depuración
+        console.log('remove_image (special):', removeImage);
+        $.ajax({
+            url: '/standard-recipe/edit-step',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $('#modal-edit-special-step').modal('hide');
+                console.log('Cambios guardados exitosamente (special):', response);
+                $.pjax.reload({container: '#pjax-list-special-steps'});
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al guardar los cambios (special):', error);
                 alert('Error al guardar los cambios.');
             }
         });
