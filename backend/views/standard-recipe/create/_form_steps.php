@@ -19,6 +19,13 @@
     <?= $form->field($model, 'type')->hiddenInput()->label(false) ?>
     <div class="col-12">
         <?= $form->field($model, 'activity')->textarea() ?>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-success d-flex align-items-center gap-2" id="add-step-btn">
+            <span class="spinner-border spinner-border-sm me-2" id="add-step-spinner" style="display:none;" role="status" aria-hidden="true"></span>
+            <span id="add-step-btn-text"><?= Yii::t('app', 'Add') ?></span>
+        </button>
+    </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var addBtn = document.getElementById('add-step-btn');
@@ -32,8 +39,11 @@ document.addEventListener('DOMContentLoaded', function() {
             addBtn.disabled = true;
         });
         // Si el formulario se envía por PJAX, recargar la página al completar
-        $(form).on('pjax:end', function() {
-            location.reload();
+        $(document).on('pjax:end', function(e) {
+            // Solo recargar si el evento es para este formulario
+            if (e.target && e.target.id === 'form_step') {
+                location.reload();
+            }
         });
     }
 });
