@@ -211,6 +211,8 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function (response) {
+                // Mover el foco fuera del modal antes de ocultarlo para evitar advertencia aria-hidden
+                $('body').focus();
                 $('#modal-edit-step').modal('hide');
                 console.log('Cambios guardados exitosamente:', response);
                 $.pjax.reload({container: '#pjax-list-steps'});
@@ -248,9 +250,12 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function (response) {
+                // Mover el foco fuera del modal antes de ocultarlo para evitar advertencia aria-hidden
+                $('body').focus();
                 $('#modal-edit-special-step').modal('hide');
                 console.log('Cambios guardados exitosamente (special):', response);
                 $.pjax.reload({container: '#pjax-list-special-steps'});
+                location.reload(); // Recargar la página para reflejar los cambios
             },
             error: function (xhr, status, error) {
                 console.error('Error al guardar los cambios (special):', error);
