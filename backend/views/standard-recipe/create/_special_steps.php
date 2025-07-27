@@ -127,7 +127,10 @@ use yii\helpers\ArrayHelper;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= Yii::t('app', 'Cancelar') ?></button>
-                <button type="button" class="btn btn-success" id="save-edit-special-step"><?= Yii::t('app', 'Guardar') ?></button>
+                <button type="button" class="btn btn-success d-flex align-items-center gap-2" id="save-edit-special-step">
+                    <span class="spinner-border spinner-border-sm me-2" id="save-edit-special-step-spinner" style="display:none;" role="status" aria-hidden="true"></span>
+                    <span id="save-edit-special-step-text"><?= Yii::t('app', 'Guardar') ?></span>
+                </button>
             </div>
         </div>
     </div>
@@ -135,6 +138,19 @@ use yii\helpers\ArrayHelper;
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Loading spinner para el botón de guardar
+    var saveBtn = document.getElementById('save-edit-special-step');
+    var saveSpinner = document.getElementById('save-edit-special-step-spinner');
+    var saveText = document.getElementById('save-edit-special-step-text');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+            if (saveSpinner && saveText) {
+                saveSpinner.style.display = 'inline-block';
+                saveText.textContent = 'Cargando...';
+                saveBtn.disabled = true;
+            }
+        });
+    }
     // Modal imagen grande
     document.querySelectorAll('.special-step-img-link').forEach(function(link) {
         link.addEventListener('click', function(e) {
