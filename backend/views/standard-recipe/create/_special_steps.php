@@ -43,12 +43,19 @@ use yii\helpers\ArrayHelper;
                         <td class="text-center align-middle">
                             <?= $step->indicator ?>
                         </td>
-                        <td class="text-center align-middle">
+                        <td class="text-center">
                             <?php $image = $step->getImage(); ?>
-                            <?php if ($image && $image->getUrl('200x200') && strpos($image->getUrl(), 'no-image') === false): ?>
-                                <a href="#" class="special-step-img-link" data-img="<?= $image->getUrl() ?>">
-                                    <img src="<?= $image->getUrl('200x200') ?>" alt="Imagen" style="max-width: 80px; max-height: 80px; border-radius: 6px; cursor:pointer;" />
+                            <?php
+                                $imgUrl = $image ? $image->getUrl() : null;
+                                $imgThumb = $image ? $image->getUrl('200x200') : null;
+                                $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false && strpos($imgThumb, 'placeHolder') === false;
+                            ?>
+                            <?php if ($isRealImage): ?>
+                                <a href="#" class="procedure-step-img-link" data-img="<?= $imgUrl ?>">
+                                    <img src="<?= $imgThumb ?>" alt="Imagen" style="max-width: 80px; max-height: 80px; border-radius: 6px; cursor:pointer;" />
                                 </a>
+                            <?php else: ?>
+                                <span class="text-muted">Sin imagen</span>
                             <?php endif; ?>
                         </td>
                         <td class="text-center align-middle">
