@@ -235,10 +235,13 @@ $(document).on('submit', "#form_step", function (event) {
             // Cerrar el modal correcto según cual esté activo
             if (isSpecialStep) {
                 $('#modal-add-special-step').modal('hide');
+                location.reload(); // Recargar la página para reflejar los cambios
             } else if (isNormalStep) {
                 $('#modal-add-step').modal('hide');
+                location.reload(); // Recargar la página para reflejar los cambios
             } else {
                 $('.modal').modal('hide');
+                
             }
             
             $('.modal-backdrop').remove();
