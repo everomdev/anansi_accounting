@@ -1,11 +1,7 @@
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var form = document.getElementById('form_step');
-    if (form) {
-        $(form).on('pjax:end', function() {
-            location.reload();
-        });
-    }
+// Cambia el id por el de tu contenedor PJAX de la lista de pasos si es diferente
+$(document).on('pjax:end', '#pjax-list-steps', function() {
+    location.reload();
 });
 </script>
 <?php
