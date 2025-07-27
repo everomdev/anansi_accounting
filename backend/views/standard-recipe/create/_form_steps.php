@@ -19,21 +19,25 @@
     <?= $form->field($model, 'type')->hiddenInput()->label(false) ?>
     <div class="col-12">
         <?= $form->field($model, 'activity')->textarea() ?>
-    </div>
-
-
-    <div class="col-12 row g-2 align-items-end">
-        <div class="col-4">
-            <label for="input-hours" class="form-label">Horas</label>
-            <input type="number" min="0" max="23" class="form-control" id="input-hours" name="input-hours" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[0] : '00' ?>">
-        </div>
-        <div class="col-4">
-            <label for="input-minutes" class="form-label">Minutos</label>
-            <input type="number" min="0" max="59" class="form-control" id="input-minutes" name="input-minutes" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[1] : '00' ?>">
-        </div>
-        <div class="col-4">
-            <label for="input-seconds" class="form-label">Segundos</label>
-            <input type="number" min="0" max="59" class="form-control" id="input-seconds" name="input-seconds" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[2] : '00' ?>">
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var addBtn = document.getElementById('add-step-btn');
+    var addSpinner = document.getElementById('add-step-spinner');
+    var addText = document.getElementById('add-step-btn-text');
+    var form = document.getElementById('form_step');
+    if (form && addBtn && addSpinner && addText) {
+        form.addEventListener('submit', function() {
+            addSpinner.style.display = 'inline-block';
+            addText.textContent = 'Cargando...';
+            addBtn.disabled = true;
+        });
+        // Si el formulario se envía por PJAX, recargar la página al completar
+        $(form).on('pjax:end', function() {
+            location.reload();
+        });
+    }
+});
+</script>
         </div>
         <div class="form-text">Selecciona la duración: horas, minutos y segundos. Ejemplo: 0 horas, 5 minutos y 40 segundos.</div>
     </div>
