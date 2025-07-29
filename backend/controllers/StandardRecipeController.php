@@ -2231,13 +2231,13 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                     $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false;
                     $html .= '<div style="margin-bottom: 18px; text-align: center;">';
                     $html .= '<div style="font-weight:bold; margin-bottom:4px;">Paso ' . htmlspecialchars($step->number) . ': ' . htmlspecialchars($step->activity) . '</div>';
-                    if ($isRealImage) {
+                    if ($isRealImage && $image) {
                         $webroot = Yii::getAlias('@webroot');
                         $relativePath = $image->getPath('400x400');
                         $absolutePath = $webroot . '/' . ltrim($relativePath, '/');
                         // Log para depuración
                         //echo("[PDF IMG] Paso {$step->number} - Path: $absolutePath - Exists: " . (file_exists($absolutePath) ? 'SI' : 'NO'));
-                        if (file_exists($absolutePath)) {
+                        if ($relativePath && file_exists($absolutePath)) {
                             $imageExtension = pathinfo($absolutePath, PATHINFO_EXTENSION);
                             $imageData = base64_encode(file_get_contents($absolutePath));
                             $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
