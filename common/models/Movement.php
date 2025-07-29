@@ -75,7 +75,8 @@ class Movement extends \yii\db\ActiveRecord
      * {@inheritdoc}
      */
     public function rules()
-    {        return [            [['type', 'provider', 'quantity', 'ingredient_id', 'business_id'], 'required'],
+    {        return [            
+            [['type', 'quantity', 'ingredient_id', 'business_id'], 'required'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['ingredient_id', 'business_id'], 'integer'],
             [['created_at'], 'safe'],

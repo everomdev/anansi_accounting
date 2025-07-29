@@ -118,10 +118,120 @@ $providerNames = array_values(
                                 <!-- Campo oculto inicial para edición -->
                                 <?= Html::hiddenInput('Movement[provider]', $model->provider, ['id' => 'movement-provider-real']) ?>
                             <?php endif; ?>
+    <style>
+    .provider-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+        padding: 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        display: none;
+    }
+    .provider-warning .btn {
+        margin-right: 8px;
+    }
+    </style>
+    <div id="provider-warning" class="provider-warning">
+        <strong>Para mejor control debe elegir un proveedor.</strong><br>
+        <div class="mt-2 d-flex flex-row gap-2">
+            <a href="<?= \yii\helpers\Url::to(['provider/create']) ?>" target="_blank" class="btn btn-warning btn-sm">Crear proveedor</a>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="continue-without-provider">Continuar sin proveedor</button>
+        </div>
+    </div>
                         </div>
-                          <script>
-                            // Mapeo para convertir la clave única de vuelta al business_name
-                            window.providerKeyToBusinessName = <?= json_encode($keyToBusinessNameMapping) ?>;
+<script>
+window.providerKeyToBusinessName = <?= json_encode($keyToBusinessNameMapping) ?>;
+document.addEventListener('DOMContentLoaded', function() {
+    var providerSelect = document.getElementById('movement-provider');
+    var paymentTypeSelect = document.getElementById('movement-payment-type');
+    var providerWarning = document.getElementById('provider-warning');
+    var continueBtn = document.getElementById('continue-without-provider');
+    var movementForm = document.getElementById('movement-form');
+    var allowSubmitWithoutProvider = false;
+    var defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.text = 'Por definir';
+    // Limpiar y dejar solo 'Por definir' al cargar
+    if (paymentTypeSelect) {
+        paymentTypeSelect.innerHTML = '';
+        paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
+        paymentTypeSelect.value = '';
+    }
+    function isProviderEmpty() {
+        return !providerSelect.value || providerSelect.value === '' || providerSelect.value === null || typeof providerSelect.value === 'undefined';
+    }
+    function showProviderWarning() {
+        if (providerWarning) providerWarning.style.display = 'block';
+    }
+    function hideProviderWarning() {
+        if (providerWarning) providerWarning.style.display = 'none';
+    }
+    if (continueBtn) {
+        continueBtn.addEventListener('click', function() {
+            hideProviderWarning();
+            allowSubmitWithoutProvider = true;
+            if (providerSelect) {
+                providerSelect.value = '';
+            }
+        });
+    }
+    if (movementForm) {
+        movementForm.addEventListener('submit', function(e) {
+            if (isProviderEmpty() && !allowSubmitWithoutProvider) {
+                e.preventDefault();
+                showProviderWarning();
+            }
+            allowSubmitWithoutProvider = false;
+        });
+    }
+    if (providerSelect && paymentTypeSelect) {
+        // Mostrar advertencia si no hay proveedor al cargar
+        if (isProviderEmpty()) {
+            showProviderWarning();
+        } else {
+            hideProviderWarning();
+        }
+        providerSelect.addEventListener('change', function() {
+            if (isProviderEmpty()) {
+                paymentTypeSelect.innerHTML = '';
+                paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
+                paymentTypeSelect.value = '';
+                showProviderWarning();
+            } else {
+                hideProviderWarning();
+                paymentTypeSelect.innerHTML = '';
+                var loadingOption = document.createElement('option');
+                loadingOption.value = '';
+                loadingOption.text = 'Cargando...';
+                paymentTypeSelect.appendChild(loadingOption);
+                paymentTypeSelect.value = '';
+                fetch(window.getProviderPaymentTypesUrl + '?provider=' + encodeURIComponent(providerSelect.value))
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        paymentTypeSelect.innerHTML = '';
+                        paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
+                        if (Array.isArray(data) && data.length > 0) {
+                            data.forEach(function(item, idx) {
+                                var opt = document.createElement('option');
+                                opt.value = item.value;
+                                opt.text = item.label;
+                                paymentTypeSelect.appendChild(opt);
+                            });
+                            paymentTypeSelect.selectedIndex = 1;
+                        } else {
+                            paymentTypeSelect.value = '';
+                        }
+                    })
+                    .catch(function() {
+                        paymentTypeSelect.innerHTML = '';
+                        paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
+                        paymentTypeSelect.value = '';
+                    });
+            }
+        });
+    }
+});
                         </script>
                     <?php endif; ?>
                 </div>                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
