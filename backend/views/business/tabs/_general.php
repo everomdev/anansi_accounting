@@ -30,7 +30,7 @@
     <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3">
         <?= $form->field($model, 'locale')->widget(\kartik\select2\Select2::class, [
             'data' => $locales
-        ])->label('Zona') ?>
+        ])->label('Idioma') ?>
     </div>
 </div>
 
