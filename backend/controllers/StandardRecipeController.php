@@ -2236,9 +2236,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                         $webroot = Yii::getAlias('@webroot');
                         $relativePath = $image->getPath('400x400');
                         $absolutePath = $webroot . '/' . ltrim($relativePath, '/');
-                        // Log para depuración
-                        //echo("[PDF IMG] Paso {$step->number} - Path: $absolutePath - Exists: " . (file_exists($absolutePath) ? 'SI' : 'NO'));
-                        if ($relativePath && file_exists($absolutePath)) {
+                        // Solo intentar mostrar la imagen si el archivo existe y no es placeholder.svg
+                        if ($relativePath && file_exists($absolutePath) && strpos($relativePath, 'placeholder.svg') === false) {
                             $imageExtension = pathinfo($absolutePath, PATHINFO_EXTENSION);
                             $imageData = base64_encode(file_get_contents($absolutePath));
                             $imageSrc = "data:image/$imageExtension;base64,{$imageData}";
