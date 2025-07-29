@@ -2280,10 +2280,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                     $image = $step->getImage();
                     $imgUrl = $image ? $image->getUrl() : null;
                     $imgThumb = $image ? $image->getUrl('200x200') : null;
-                    $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false;
+                    $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false && strpos($image->filePath, 'placeholder.svg') === false;
                     $html .= '<div style="margin-bottom: 18px; text-align: center;">';
                     $html .= '<div style="font-weight:bold; margin-bottom:4px;">Paso ' . htmlspecialchars($step->number) . ': ' . htmlspecialchars($step->activity) . '</div>';
-                    if ($isRealImage) {
+                    if ($isRealImage && $image) {
                         $webroot = Yii::getAlias('@webroot');
                         $relativePath = $image->getPath('400x400');
                         $absolutePath = $webroot . '/' . ltrim($relativePath, '/');
