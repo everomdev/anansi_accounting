@@ -95,7 +95,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <?php if (Yii::$app->user->identity->canMultiple(['recipe_list', 'subrecipe_list'])): ?>
                         <li class="menu-item <?= $currentControllerId == 'recipe-category' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['recipe-category/index']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Familias de recetas') ?></div>
+                                <div><?= Yii::t('app', 'Categorías de recetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
@@ -134,7 +134,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         </li>
                         <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['provider/ingredients']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Ingredients by Providers') ?></div>
+                                <div><?= Yii::t('app', 'Insumos por Proveedores') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>

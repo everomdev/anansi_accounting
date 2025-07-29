@@ -14,23 +14,23 @@
 <?= $form->field($model, 'password')->textInput(['type' => 'password']) ?>
 <div class="row">
     <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3">
-        <?= $form->field($model, 'currency_code')->textInput() ?>
+        <?= $form->field($model, 'currency_code')->textInput()->label('Moneda') ?>
     </div>
     <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3">
-        <?= $form->field($model, 'decimal_separator')->textInput() ?>
+        <?= $form->field($model, 'decimal_separator')->textInput()->label('Separador Decimal') ?>
     </div>
     <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3">
-        <?= $form->field($model, 'thousands_separator')->textInput() ?>
+        <?= $form->field($model, 'thousands_separator')->textInput()->label('Separador de Miles') ?>
     </div>
     <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3">
         <?= $form->field($model, 'timezone')->widget(\kartik\select2\Select2::class, [
             'data' => $timezones
-        ]) ?>
+        ])->label('Zona Horaria') ?>
     </div>
     <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3">
         <?= $form->field($model, 'locale')->widget(\kartik\select2\Select2::class, [
             'data' => $locales
-        ]) ?>
+        ])->label('Zona') ?>
     </div>
 </div>
 
