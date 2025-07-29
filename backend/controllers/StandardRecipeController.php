@@ -3243,19 +3243,42 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
          $worksheet->calculateColumnWidths();
      }
-     // 1. Proteger la hoja de ingredientes
-     // Ajustar el ancho de las columnas F y C solo una vez fuera del bucle
-//$ingredientsSheet->getColumnDimension('F')->setWidth(30); // Ancho fijo para evitar #######
-//$ingredientsSheet->getColumnDimension('C')->setWidth(30); // Ancho fijo para columna C también
-    $ingredientsSheet->getProtection()->setSheet(true);
-    $ingredientsSheet->getProtection()->setPassword('anansi'); // Puedes cambiar la contraseña
+     // Aplicar formato visual a columnas E y F pero mantener las fórmulas
+     $fillColor = 'e5e5e5';
+     $borderColor = 'bfbfbf';
+     $ingredientsSheet->getStyle('E2:F500')->applyFromArray([
+         'fill' => [
+             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+             'startColor' => ['rgb' => $fillColor],
+         ],
+         'borders' => [
+             'allBorders' => [
+                 'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                 'color' => ['rgb' => $borderColor],
+             ],
+         ],
+     ]);
+     // Las fórmulas permanecen en las celdas para que se recalculen automáticamente
 
-    // 2. Desbloquear todas las celdas primero (por si acaso)
+    // 1. Desbloquear todas las celdas primero (por si acaso)
     $ingredientsSheet->getStyle('A2:Q500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
 
-    // 3. Volver a bloquear columnas E y F (de la 2 a la 500)
-    $ingredientsSheet->getStyle('E2:E1500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
-    $ingredientsSheet->getStyle('F2:F1500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+    // 2. Volver a bloquear y ocultar columnas E y F (de la 2 a la 500)
+    $ingredientsSheet->getStyle('E2:E500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+    $ingredientsSheet->getStyle('E2:E500')->getProtection()->setHidden(true);
+    $ingredientsSheet->getStyle('F2:F500')->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED);
+    $ingredientsSheet->getStyle('F2:F500')->getProtection()->setHidden(true);
+
+    // 3. Proteger la hoja de ingredientes al final, solo si no está protegida
+    if (!$ingredientsSheet->getProtection()->getSheet()) {
+        $ingredientsSheet->getProtection()->setPassword('anansi'); // Puedes cambiar la contraseña
+        $ingredientsSheet->getProtection()->setSheet(true);
+    }
+
+    // 4. Forzar el recálculo de fórmulas antes de guardar
+    $spreadsheet->setActiveSheetIndex(0);
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    $writer->setPreCalculateFormulas(true);
     // 15. Definir la primera hoja como activa al abrir el archivo
      $spreadsheet->setActiveSheetIndex(0);
      
