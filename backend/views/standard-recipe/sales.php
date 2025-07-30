@@ -17,6 +17,9 @@ use yii\bootstrap5\ActiveForm;
  * @return string Nombre del mes en español
  */
 function getMonthName($month) {
+    if ($month == 0) {
+        return 'Todos los meses';
+    }
     $months = [
         1 => 'Enero',
         2 => 'Febrero',
@@ -31,7 +34,6 @@ function getMonthName($month) {
         11 => 'Noviembre',
         12 => 'Diciembre'
     ];
-    
     return isset($months[$month]) ? $months[$month] : '';
 }
 
@@ -227,7 +229,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     <label for="month-select" class="form-label">Mes</label>
                     <?= Html::dropDownList('month',
                         $selectedMonth ?? date('n'), 
-                        [
+                        array_merge(['0' => 'TODOS'], [
                             '1' => 'Enero',
                             '2' => 'Febrero',
                             '3' => 'Marzo',
@@ -240,7 +242,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                             '10' => 'Octubre',
                             '11' => 'Noviembre',
                             '12' => 'Diciembre',
-                        ],
+                        ]),
                         ['class' => 'form-select', 'id' => 'month-select']
                     ) ?>
                 </div>
@@ -249,7 +251,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     <label for="year-select" class="form-label">Año</label>
                     <?= Html::dropDownList('year',
                         $selectedYear ?? date('Y'),
-                        $years,
+                        array_merge(['0' => 'TODOS'], $years),
                         ['class' => 'form-select', 'id' => 'year-select']
                     ) ?>
                 </div>
@@ -343,7 +345,16 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <div class="card mb-4" id="food-section">
     <div class="card-header">
-        <h3 class="card-title"><?= Yii::t('app', 'Food sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
+        <h3 class="card-title">
+            <?php
+            $showAllSales = ($selectedMonth == 0 || $selectedYear == 0);
+            if ($showAllSales) {
+                echo Yii::t('app', 'Todas las ventas de alimentos');
+            } else {
+                echo Yii::t('app', 'Food sales') . ' - ' . getMonthName($selectedMonth) . ' ' . $selectedYear;
+            }
+            ?>
+        </h3>
         <small class="text-muted"><?= $foodDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
     <div class="card-body">
@@ -366,7 +377,16 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <div class="card mb-4" id="drink-section">
     <div class="card-header">
-        <h3 class="card-title"><?= Yii::t('app', 'Drinking sales') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
+        <h3 class="card-title">
+            <?php
+            $showAllSales = ($selectedMonth == 0 || $selectedYear == 0);
+            if ($showAllSales) {
+                echo Yii::t('app', 'Todas las ventas de bebidas');
+            } else {
+                echo Yii::t('app', 'Drinking sales') . ' - ' . getMonthName($selectedMonth) . ' ' . $selectedYear;
+            }
+            ?>
+        </h3>
         <small class="text-muted"><?= $drinkDataProvider->getTotalCount() ?> recetas encontradas</small>
     </div>
     <div class="card-body ">
@@ -389,7 +409,16 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 
 <div class="card mb-4" id="combo-section">
     <div class="card-header">
-        <h3 class="card-title"><?= Yii::t('app', 'Venta de Combos') ?> - <?= getMonthName($selectedMonth) ?> <?= $selectedYear ?></h3>
+        <h3 class="card-title">
+            <?php
+            $showAllSales = ($selectedMonth == 0 || $selectedYear == 0);
+            if ($showAllSales) {
+                echo Yii::t('app', 'Todas las ventas de combos');
+            } else {
+                echo Yii::t('app', 'Venta de Combos') . ' - ' . getMonthName($selectedMonth) . ' ' . $selectedYear;
+            }
+            ?>
+        </h3>
         <small class="text-muted"><?= $comboDataProvider->getTotalCount() ?> combos encontrados</small>
     </div>
     <div class="card-body">

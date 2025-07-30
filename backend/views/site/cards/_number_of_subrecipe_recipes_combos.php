@@ -190,7 +190,7 @@ $this->registerJs("
             <div class="recipe-stat-meta">
                 <div class="recipe-stat-label">
                     <i class="fas fa-hamburger text-purple"></i>
-                    Combos y Menús
+                    Combos
                 </div>
                 <div class="recipe-stat-value">
                     <?= $combosCount ?> <span><?= $combosPercent ?>%</span>

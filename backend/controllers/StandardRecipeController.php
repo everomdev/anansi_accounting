@@ -985,6 +985,32 @@ public function actionGetSubStandardRecipes()
     protected function loadMonthlySalesForDataProvider($dataProvider, $month, $year, $modelType)
     {
         $models = $dataProvider->getModels();
+        die(var_dump($month,$year));
+        if ($month == 0 && $year == 0) {
+            // Buscar ventas de todos los años y todos los meses
+            foreach ($models as $model) {
+                $model->sales = MonthlySales::getSales($modelType, $model->id, null, null);
+                $model->sales_month = null;
+            }
+        } elseif ((int)$month == 0) {
+            // Buscar ventas de todos los meses para el año especificado
+            foreach ($models as $model) {
+                $model->sales = MonthlySales::getSales($modelType, $model->id, null, $year);
+                $model->sales_month = null;
+            }
+        } elseif ((int)$year == 0) {
+            // Buscar ventas de todos los años para el mes especificado
+            foreach ($models as $model) {
+                $model->sales = MonthlySales::getSales($modelType, $model->id, $month, null);
+                $model->sales_month = $month;
+            }
+        } else {
+            // Buscar ventas para el mes y año especificados
+            foreach ($models as $model) {
+                $model->sales = MonthlySales::getSales($modelType, $model->id, $month, $year);
+                $model->sales_month = $month;
+            }
+        }
         foreach ($models as $model) {
             // Cargar ventas desde la tabla historical
             $model->sales = MonthlySales::getSales($modelType, $model->id, $month, $year);
