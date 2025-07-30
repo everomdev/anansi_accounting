@@ -1,7 +1,7 @@
 <?php
 /** @var $this \yii\web\View */
 
-$this->title = "Ingredientes por proveedores"
+$this->title = "Insumos por proveedores"
 ?>
 
 <?= \yii\bootstrap5\Html::dropDownList('provider', $provider, \yii\helpers\ArrayHelper::map($providers, 'name', 'name'), ['class' => 'form-control mb-3', 'prompt' => 'Todos', 'id' => 'provider', 'data-url' => \yii\helpers\Url::to(['provider/ingredients'])]) ?>

@@ -76,13 +76,11 @@ $(document).on('change', '#movement-provider', function() {
     
     if (providerKey && providersData) {
         let providerId = providersData[providerKey];
-        
         if (providerId) {
             // Mostrar indicador de carga
             paymentTypeSelect.empty();
             paymentTypeSelect.append('<option value="">Cargando tipos de pago...</option>');
             paymentTypeSelect.prop('disabled', true);
-            
             // Hacer petición AJAX para obtener los tipos de pago del proveedor
             $.ajax({
                 url: getProviderPaymentTypesUrl,
@@ -92,12 +90,9 @@ $(document).on('change', '#movement-provider', function() {
                 },
                 dataType: 'json',
                 success: function(response) {
-                    // Limpiar las opciones actuales y habilitar el select
                     paymentTypeSelect.empty();
                     paymentTypeSelect.prop('disabled', false);
                     paymentTypeSelect.append('<option value="">Seleccionar Tipo de Pago</option>');
-                    
-                    // Agregar las nuevas opciones
                     if (response.success && response.paymentTypes) {
                         $.each(response.paymentTypes, function(key, value) {
                             paymentTypeSelect.append('<option value="' + key + '">' + value + '</option>');
@@ -108,15 +103,17 @@ $(document).on('change', '#movement-provider', function() {
                 },
                 error: function() {
                     console.error('Error al obtener los tipos de pago del proveedor');
-                    // En caso de error, habilitar el select y mostrar todos los tipos de pago
                     paymentTypeSelect.prop('disabled', false);
-                    resetPaymentTypes();
+                    paymentTypeSelect.empty();
+                    paymentTypeSelect.append('<option value="">Seleccionar Tipo de Pago</option>');
                 }
             });
         }
     } else {
-        // Si no hay proveedor seleccionado, mostrar todos los tipos de pago
-        resetPaymentTypes();
+        // Si no hay proveedor seleccionado, mostrar solo 'Por definir' y deshabilitar el select
+        paymentTypeSelect.empty();
+        paymentTypeSelect.append('<option value="">Por definir</option>');
+        paymentTypeSelect.prop('disabled', true);
     }
 });
 
@@ -124,38 +121,12 @@ $(document).on('change', '#movement-provider', function() {
 function resetPaymentTypes() {
     let paymentTypeSelect = $('#movement-payment-type');
     
-    // Mostrar indicador de carga
+    // Si no hay proveedor, mostrar solo 'Por definir' y deshabilitar el select
     paymentTypeSelect.empty();
-    paymentTypeSelect.append('<option value="">Cargando tipos de pago...</option>');
+    paymentTypeSelect.append('<option value="">Por definir</option>');
     paymentTypeSelect.prop('disabled', true);
-    
-    // Hacer petición AJAX para obtener todos los tipos de pago específicos
-    $.ajax({
-        url: getProviderPaymentTypesUrl,
-        type: 'GET',
-        data: {
-            providerId: null // Sin proveedor para obtener todos los tipos
-        },
-        dataType: 'json',
-        success: function(response) {
-            // Limpiar y habilitar el select
-            paymentTypeSelect.empty();
-            paymentTypeSelect.prop('disabled', false);
-            paymentTypeSelect.append('<option value="">Seleccionar Tipo de Pago</option>');
-            
-            if (response.success && response.paymentTypes) {
-                $.each(response.paymentTypes, function(key, value) {
-                    paymentTypeSelect.append('<option value="' + key + '">' + value + '</option>');
-                });
-            }
-        },
-        error: function() {
-            console.error('Error al obtener todos los tipos de pago');
-            // En caso de error, al menos habilitar el select
-            paymentTypeSelect.empty();
-            paymentTypeSelect.prop('disabled', false);
-            paymentTypeSelect.append('<option value="">Error al cargar tipos de pago</option>');        }
-    });
+    // Si quieres mantener la lógica AJAX para otros casos, puedes agregarla aquí solo si hay proveedor
+    // Por ahora, solo resetea el select a "Por definir" y lo deshabilita.
 }
 
 // Convertir el valor del proveedor antes de enviar el formulario

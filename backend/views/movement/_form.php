@@ -133,7 +133,7 @@ $providerNames = array_values(
     }
     </style>
     <div id="provider-warning" class="provider-warning">
-        <strong>Para mejor control debe elegir un proveedor.</strong><br>
+        <strong>Para mayor control, elija un proveedor.</strong><br>
         <div class="mt-2 d-flex flex-row gap-2">
             <a href="<?= \yii\helpers\Url::to(['provider/create']) ?>" target="_blank" class="btn btn-warning btn-sm">Crear proveedor</a>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="continue-without-provider">Continuar sin proveedor</button>
@@ -157,15 +157,65 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentTypeSelect.innerHTML = '';
         paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
         paymentTypeSelect.value = '';
+        console.log('[INIT] paymentTypeSelect solo Por definir');
     }
     function isProviderEmpty() {
         return !providerSelect.value || providerSelect.value === '' || providerSelect.value === null || typeof providerSelect.value === 'undefined';
     }
+    function logPaymentTypeSelectState(context) {
+        if (paymentTypeSelect) {
+            var opts = [];
+            for (var i = 0; i < paymentTypeSelect.options.length; i++) {
+                opts.push(paymentTypeSelect.options[i].text + ':' + paymentTypeSelect.options[i].value);
+            }
+            console.log(`[${context}] Opciones paymentTypeSelect:`, opts);
+            console.log(`[${context}] paymentTypeSelect.disabled:`, paymentTypeSelect.disabled);
+            console.log(`[${context}] paymentTypeSelect.value:`, paymentTypeSelect.value);
+        } else {
+            console.log(`[${context}] paymentTypeSelect NO ENCONTRADO`);
+        }
+    }
+    function resetPaymentTypeToDefault() {
+        logPaymentTypeSelectState('ANTES resetPaymentTypeToDefault');
+        if (paymentTypeSelect) {
+            // Si es Select2, usar su API
+            if ($(paymentTypeSelect).data('select2')) {
+                $(paymentTypeSelect).empty();
+                $(paymentTypeSelect).append('<option value="">Por definir</option>');
+                $(paymentTypeSelect).val('').trigger('change');
+                $(paymentTypeSelect).prop('disabled', true);
+                console.log('[resetPaymentTypeToDefault] paymentTypeSelect (Select2) solo Por definir y deshabilitado');
+            } else {
+                // Select normal
+                while (paymentTypeSelect.options.length > 0) {
+                    paymentTypeSelect.remove(0);
+                }
+                var defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.text = 'Por definir';
+                paymentTypeSelect.appendChild(defaultOption);
+                paymentTypeSelect.value = '';
+                paymentTypeSelect.selectedIndex = 0;
+                paymentTypeSelect.disabled = true;
+                console.log('[resetPaymentTypeToDefault] paymentTypeSelect solo Por definir y deshabilitado');
+            }
+            logPaymentTypeSelectState('DESPUES resetPaymentTypeToDefault');
+        }
+        // Si hay input oculto, también limpiarlo
+        var paymentTypeHidden = document.querySelector('input[name="Movement[payment_type]"]');
+        if (paymentTypeHidden) {
+            paymentTypeHidden.value = '';
+            console.log('[resetPaymentTypeToDefault] input oculto Movement[payment_type] limpiado');
+        }
+    }
     function showProviderWarning() {
         if (providerWarning) providerWarning.style.display = 'block';
+        console.log('[showProviderWarning] Mostrando advertencia');
+        resetPaymentTypeToDefault();
     }
     function hideProviderWarning() {
         if (providerWarning) providerWarning.style.display = 'none';
+        console.log('[hideProviderWarning] Ocultando advertencia');
     }
     if (continueBtn) {
         continueBtn.addEventListener('click', function() {
@@ -173,7 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
             allowSubmitWithoutProvider = true;
             if (providerSelect) {
                 providerSelect.value = '';
+                console.log('[continueBtn] Se presionó continuar sin proveedor, providerSelect.value = ""');
             }
+            resetPaymentTypeToDefault();
         });
     }
     if (movementForm) {
@@ -181,54 +233,58 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isProviderEmpty() && !allowSubmitWithoutProvider) {
                 e.preventDefault();
                 showProviderWarning();
+                console.log('[movementForm submit] No hay proveedor, mostrando advertencia y bloqueando submit');
             }
             allowSubmitWithoutProvider = false;
         });
     }
     if (providerSelect && paymentTypeSelect) {
         // Mostrar advertencia si no hay proveedor al cargar
+        logPaymentTypeSelectState('LOAD INICIAL');
         if (isProviderEmpty()) {
             showProviderWarning();
+            console.log('[LOAD] No hay proveedor al cargar, mostrando advertencia');
         } else {
             hideProviderWarning();
+            console.log('[LOAD] Hay proveedor al cargar, ocultando advertencia');
         }
         providerSelect.addEventListener('change', function() {
+            console.log('[providerSelect change] Nuevo valor:', providerSelect.value);
+            logPaymentTypeSelectState('ANTES providerSelect change');
             if (isProviderEmpty()) {
-                paymentTypeSelect.innerHTML = '';
-                paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
-                paymentTypeSelect.value = '';
                 showProviderWarning();
+                resetPaymentTypeToDefault();
+                console.log('[providerSelect change] No hay proveedor, mostrando advertencia y limpiando paymentTypeSelect');
             } else {
                 hideProviderWarning();
-                paymentTypeSelect.innerHTML = '';
-                var loadingOption = document.createElement('option');
-                loadingOption.value = '';
-                loadingOption.text = 'Cargando...';
-                paymentTypeSelect.appendChild(loadingOption);
-                paymentTypeSelect.value = '';
-                fetch(window.getProviderPaymentTypesUrl + '?provider=' + encodeURIComponent(providerSelect.value))
-                    .then(function(response) { return response.json(); })
-                    .then(function(data) {
-                        paymentTypeSelect.innerHTML = '';
-                        paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
-                        if (Array.isArray(data) && data.length > 0) {
-                            data.forEach(function(item, idx) {
-                                var opt = document.createElement('option');
-                                opt.value = item.value;
-                                opt.text = item.label;
-                                paymentTypeSelect.appendChild(opt);
-                            });
-                            paymentTypeSelect.selectedIndex = 1;
-                        } else {
-                            paymentTypeSelect.value = '';
-                        }
-                    })
-                    .catch(function() {
-                        paymentTypeSelect.innerHTML = '';
-                        paymentTypeSelect.appendChild(defaultOption.cloneNode(true));
-                        paymentTypeSelect.value = '';
-                    });
+                // Si selecciona proveedor, limpiar y dejar solo el prompt
+                if ($(paymentTypeSelect).data('select2')) {
+                    $(paymentTypeSelect).empty();
+                    $(paymentTypeSelect).append('<option value="">Seleccionar tipo de pago</option>');
+                    $(paymentTypeSelect).val('').trigger('change');
+                    $(paymentTypeSelect).prop('disabled', false);
+                    console.log('[providerSelect change] Hay proveedor, mostrando solo prompt y habilitando paymentTypeSelect (Select2)');
+                } else {
+                    while (paymentTypeSelect.options.length > 0) {
+                        paymentTypeSelect.remove(0);
+                    }
+                    var promptOption = document.createElement('option');
+                    promptOption.value = '';
+                    promptOption.text = 'Seleccionar tipo de pago';
+                    paymentTypeSelect.appendChild(promptOption);
+                    paymentTypeSelect.value = '';
+                    paymentTypeSelect.selectedIndex = 0;
+                    paymentTypeSelect.disabled = false;
+                    console.log('[providerSelect change] Hay proveedor, mostrando solo prompt y habilitando paymentTypeSelect');
+                }
+                // Limpiar input oculto
+                var paymentTypeHidden = document.querySelector('input[name="Movement[payment_type]"]');
+                if (paymentTypeHidden) {
+                    paymentTypeHidden.value = '';
+                    console.log('[providerSelect change] input oculto Movement[payment_type] limpiado');
+                }
             }
+            logPaymentTypeSelectState('DESPUES providerSelect change');
         });
     }
 });
