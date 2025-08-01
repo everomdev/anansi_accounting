@@ -251,7 +251,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                     <label for="year-select" class="form-label">Año</label>
                     <?= Html::dropDownList('year',
                         $selectedYear ?? date('Y'),
-                        array_merge(['0' => 'TODOS'], $years),
+                        ['0' => 'TODOS'] + $years,
                         ['class' => 'form-select', 'id' => 'year-select']
                     ) ?>
                 </div>

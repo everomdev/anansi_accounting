@@ -985,12 +985,10 @@ public function actionGetSubStandardRecipes()
     protected function loadMonthlySalesForDataProvider($dataProvider, $month, $year, $modelType)
     {
         $models = $dataProvider->getModels();
-        //die(var_dump($month,$year));
         if ($month == 0 && $year == 0) {
             // Buscar ventas de todos los años y todos los meses
             foreach ($models as $model) {
                 $model->sales = MonthlySales::getSales($modelType, $model->id, null, null);
-                //var_dump($model->sales);
                 $model->sales_month = null;
             }
             
@@ -1005,7 +1003,6 @@ public function actionGetSubStandardRecipes()
             foreach ($models as $model) {
                 $model->sales = MonthlySales::getSales($modelType, $model->id, $month, null);
                 $model->sales_month = $month;
-            //var_dump($model->sales);
 
             }
         } else {
@@ -1015,12 +1012,6 @@ public function actionGetSubStandardRecipes()
                 $model->sales_month = $month;
             }
         }
-        // foreach ($models as $model) {
-        //     // Cargar ventas desde la tabla historical
-        //     $model->sales = MonthlySales::getSales($modelType, $model->id, $month, $year);
-        //     $model->sales_month = $month; // Establecer el mes actual para la UI
-            
-        // }
         $dataProvider->setModels($models);
     }
 
@@ -3369,16 +3360,38 @@ public function actionEditStep()
                     $spreadsheet = $reader->load($uploadedFile->tempName);
                     $sheet = $spreadsheet->getActiveSheet();
 
+
                     // Leer mes y año de las celdas B1 y B2
-                    $month = (int)$sheet->getCell('B1')->getValue();
+                    $monthCell = trim($sheet->getCell('B1')->getValue());
                     $year = (int)$sheet->getCell('B2')->getValue();
-                    //var_dump($month, $year);
+
+                    // Permitir tanto número como nombre de mes
+                    $monthsMap = [
+                        'enero' => 1,
+                        'febrero' => 2,
+                        'marzo' => 3,
+                        'abril' => 4,
+                        'mayo' => 5,
+                        'junio' => 6,
+                        'julio' => 7,
+                        'agosto' => 8,
+                        'septiembre' => 9,
+                        'setiembre' => 9,
+                        'octubre' => 10,
+                        'noviembre' => 11,
+                        'diciembre' => 12
+                    ];
+                    if (is_numeric($monthCell)) {
+                        $month = (int)$monthCell;
+                    } else {
+                        $monthLower = mb_strtolower($monthCell, 'UTF-8');
+                        $month = isset($monthsMap[$monthLower]) ? $monthsMap[$monthLower] : 0;
+                    }
 
                     // Validar mes y año
                     if ($month < 1 || $month > 12) {
-                        throw new \Exception('El mes debe estar entre 1 y 12');
+                        throw new \Exception('El mes debe estar entre 1 y 12 o ser un nombre de mes válido');
                     }
-
                     if ($year < 2000 || $year > 2100) {
                         throw new \Exception('El año debe estar entre 2000 y 2100');
                     }
@@ -3582,10 +3595,25 @@ public function actionEditStep()
         $sheet->setTitle('Plantilla Ventas');
 
         // Configurar encabezados de información
+
         $sheet->setCellValue('A1', 'MES:');
         $sheet->setCellValue('B1', '');
         $sheet->setCellValue('A2', 'AÑO:');
         $sheet->setCellValue('B2', '');
+
+        // Agregar validación de datos tipo lista para la celda B1 (mes)
+        $validation = $sheet->getCell('B1')->getDataValidation();
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $validation->setAllowBlank(false);
+        $validation->setShowInputMessage(true);
+        $validation->setShowErrorMessage(true);
+        $validation->setShowDropDown(true);
+        $validation->setErrorTitle('Mes inválido');
+        $validation->setError('Seleccione un mes de la lista');
+        $validation->setPromptTitle('Seleccionar mes');
+        $validation->setPrompt('Seleccione el mes de la lista desplegable');
+        $validation->setFormula1('"Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"');
 
         // Agregar instrucciones
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
