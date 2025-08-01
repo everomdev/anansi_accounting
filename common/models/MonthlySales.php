@@ -166,12 +166,31 @@ class MonthlySales extends ActiveRecord
      */
     public static function getSales($modelType, $modelId, $month, $year)
     {
-        $model = static::findOne([
+        // Permitir valores null para mes o año para obtener ventas agregadas
+        //die(var_dump($modelType, $modelId, $month, $year));
+        $conditions = [
             'model_type' => $modelType,
             'model_id' => $modelId,
-            'month' => $month,
-            'year' => $year,
-        ]);
+        ];
+        if ($month !== null) {
+            $conditions['month'] = $month;
+        }
+        if ($year !== null) {
+            $conditions['year'] = $year;
+        }
+        //die(var_dump(static::find()->where($conditions)->sum('sales')));
+        // Si ambos son null, devolver suma total de ventas para ese modelo
+        if (!isset($conditions['month']) && !isset($conditions['year'])) {
+            return static::find()->where($conditions)->sum('sales') ?: 0;
+        }
+
+        // Si solo uno es null, devolver suma para ese filtro
+        if (!isset($conditions['month']) || !isset($conditions['year'])) {
+            return static::find()->where($conditions)->sum('sales') ?: 0;
+        }
+
+        // Si ambos están presentes, buscar el registro específico
+        $model = static::findOne($conditions);
 
         return $model ? $model->sales : 0;
     }

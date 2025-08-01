@@ -444,12 +444,14 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 </div>
 
 <!-- Barra flotante con botón de guardar siempre visible -->
+<?php if ((int)$selectedMonth != 0 && (int)$selectedYear != 0): ?>
 <div class="sticky-save-bar">
     <?= Html::button('Guardar ventas de ' . getMonthName($selectedMonth) . ' ' . $selectedYear, [
         'class' => 'btn btn-primary btn-lg',
         'id' => 'btn-save-sales'
     ]) ?>
 </div>
+<?php endif; ?>
 
 <?= Html::endForm() ?>
 
@@ -709,7 +711,7 @@ function updateHiddenFields() {
     $('#year-hidden').val(year);
     
     // Actualizar texto del botón de guardar
-    $('#btn-save-sales').text('Guardar ventas de ' + monthName + ' ' + year);
+    $('#btn-save-sales').text('Guardar ventas');
 }
 
 // Función para configurar event listeners
