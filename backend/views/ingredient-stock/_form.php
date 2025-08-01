@@ -1,3 +1,12 @@
+
+<style>
+/* Solo el asterisco de campos obligatorios en rojo */
+.ingredient-stock-form label .asterisk,
+.ingredient-stock-form label .required {
+    color: #dc3545 !important;
+    font-weight: bold;
+}
+</style>
 <?php
 
 use common\models\Category;
@@ -59,25 +68,25 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                                 'limit' => 10,
                             ]
                         ],
-                    ])->label('Nombre del Insumo*') ?>
+                    ])->label('Nombre del Insumo <span class="asterisk">*</span>') ?>
                 </div>
                 
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4 mb-3">
                     <?= $form->field($model, 'category_id')->dropDownList(
                         \yii\helpers\ArrayHelper::map(Category::all(), 'id', 'name'), 
                         ['prompt' => '-- Seleccione una categoría --', 'data-url' => Url::to(['ingredient-stock/generate-key'])]
-                    )->label('Categoría*') ?>
+                    )->label('Categoría <span class="asterisk">*</span>') ?>
                 </div>
                 
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">
-                    <?= $form->field($model, 'key')->textInput(['placeholder' => 'Ej: FRT-001'])->label('Clave*') ?>
+                    <?= $form->field($model, 'key')->textInput(['placeholder' => 'Ej: FRT-001'])->label('Clave <span class="asterisk">*</span>') ?>
                 </div>
                 
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">
                     <?= $form->field($model, 'um')->dropDownList(
                         \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
                         ['prompt' => '-- Seleccione --']
-                    )->label('Unidad de Compra*') ?>
+                    )->label('Unidad de Compra <span class="asterisk">*</span>') ?>
                 </div>
                 
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
@@ -97,7 +106,8 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 <h5 class="card-title mb-3">Porciones</h5>
                 
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
-                    <?= $form->field($model, 'portions_per_unit')->widget(\kartik\typeahead\Typeahead::class, [
+                    <?php
+                    $portionField = $form->field($model, 'portions_per_unit')->widget(\kartik\typeahead\Typeahead::class, [
                         'scrollable' => true,
                         'defaultSuggestions' => $autocompletePortions,
                         'dataset' => [
@@ -106,19 +116,23 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                                 'limit' => 10,
                             ]
                         ],
-                    ])->label('Equivalencia a unidades de cocina') ?>
+                    ])->label('Equivalencia a unidades de cocina <span class="asterisk">*</span>');
+                    echo preg_replace('/(<\/div>\s*)$/', '<div class="form-text" id="question-portion-um"></div>$1', $portionField);
+                    ?>
                 </div>
 
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
                     <?= $form->field($model, 'portion_um')->dropDownList(
                         \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
                         ['prompt' => '-- Seleccione --']
-                    )->label('Unidades de cocina') ?>
+                    )->label('Unidades de cocina <span class="asterisk">*</span>') ?>
                 </div>
             </div>
             
             <div class="row mb-3">
-                <h5 class="card-title mb-3">Precios y Rendimiento</h5>                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">                    <?= $form->field($model, 'price')->textInput([
+                <h5 class="card-title mb-3">Precios y Rendimiento</h5>                
+                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">                    
+                    <?= $form->field($model, 'price')->textInput([
                         'class' => 'form-control format-price',
                         'id' => 'ingredientstock-price',
                         'required' => true,
@@ -126,7 +140,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                         'data-format' => 'price',
                         'data-decimals' => '2',
                         'value' => $model->price ? formatPrice($model->price, 2, false) : ''
-                    ])->label("Precio de compra*") ?>
+                    ])->label("Precio de compra <span class='asterisk'>*</span>") ?>
                     <div class="form-text">Ingrese el precio de compra del insumo</div>
                 </div>
                   <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
@@ -140,7 +154,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                             'data-format' => 'percentage',
                             'value' => $model->yield ? formatNumber($model->yield, 0) : ''
                         ]
-                    ])->textInput()->label("Factor de rendimiento*") ?>
+                    ])->textInput()->label("Factor de rendimiento <span class='asterisk'>*</span>") ?>
                     <div class="form-text">Entre 1% y 100%</div>
                 </div>
                   <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3 workflow-step mb-3">
@@ -229,6 +243,29 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
 
 ?>
 <script>
+// Pregunta dinámica de equivalencia de unidades
+// Esperar a que jQuery esté disponible antes de ejecutar el script
+(function waitForJQuery() {
+    if (typeof window.jQuery === 'undefined') {
+        setTimeout(waitForJQuery, 50);
+        return;
+    }
+    var $ = window.jQuery;
+    function updatePortionUmQuestion() {
+        var portionUm = $('#ingredientstock-portion_um').val();
+        var um = $('#ingredientstock-um').val();
+        if (!portionUm || portionUm === '') portionUm = 'unidad de cocina';
+        if (!um || um === '') um = 'unidad de compra';
+        var pregunta = `¿Cuántos <b>${portionUm}</b> hay en un <b>${um}</b>?`;
+        $('#question-portion-um').html(pregunta);
+    }
+    $(function() {
+        updatePortionUmQuestion();
+        $('#ingredientstock-portion_um, #ingredientstock-um').on('change', updatePortionUmQuestion);
+        // Si usan select2, escuchar el evento select2:select
+        $('#ingredientstock-portion_um, #ingredientstock-um').on('select2:select', updatePortionUmQuestion);
+    });
+})();
 // Funcionalidad adicional para el formateo de números
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar el formateador automático para todos los campos

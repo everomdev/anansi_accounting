@@ -79,7 +79,7 @@ class IngredientStock extends \yii\db\ActiveRecord
     }    public function rules()
     {
         return [
-            [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key'], 'required'],
+            [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key', 'portions_per_unit', 'portion_um', 'yield'], 'required'],
             [['business_id', 'category_id'], 'integer'],
             [['quantity', 'yield', 'portions_per_unit', 'final_quantity'], 'number'],
             [['price', 'adjustedPrice'], 'safe'],
