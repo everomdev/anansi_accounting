@@ -29,7 +29,7 @@ class BackupController extends Controller
                 WHERE show_backup_reminder = 0 
                 AND (
                     last_backup_reminder IS NULL 
-                    OR last_backup_reminder < DATE_SUB(NOW(), INTERVAL 15 DAY)
+                    OR last_backup_reminder < DATE_SUB(NOW(), INTERVAL 1 DAY)
                 )
             ")->execute();
             
