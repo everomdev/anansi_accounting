@@ -25,13 +25,27 @@ $stock = (new \yii\db\Query())
     ->select([
         "ingredient_stock.*",
         "CONCAT(
-            ingredient_stock.ingredient,
-            CASE WHEN ingredient_stock.brand IS NOT NULL AND ingredient_stock.brand != '' THEN CONCAT('  ', ingredient_stock.brand) ELSE '' END,
-            CASE WHEN ingredient_stock.presentation IS NOT NULL AND ingredient_stock.presentation != '' THEN CONCAT('  ', ingredient_stock.presentation) ELSE '' END
+            COALESCE(ingredient_stock.ingredient, ''),
+            CASE 
+                WHEN ingredient_stock.brand IS NOT NULL AND TRIM(ingredient_stock.brand) != '' 
+                THEN CONCAT('  ', ingredient_stock.brand) 
+                ELSE '' 
+            END,
+            CASE 
+                WHEN ingredient_stock.presentation IS NOT NULL AND TRIM(ingredient_stock.presentation) != '' 
+                THEN CONCAT('  ', ingredient_stock.presentation) 
+                ELSE '' 
+            END,
+            CASE 
+                WHEN ingredient_stock.um IS NOT NULL AND TRIM(ingredient_stock.um) != '' 
+                THEN CONCAT(' (', ingredient_stock.um, ')') 
+                ELSE '' 
+            END
         ) as label"
     ])
     ->from('ingredient_stock')
     ->where(['business_id' => $business->id])
+    ->orderBy('ingredient_stock.ingredient ASC')
     ->all();
 $providerNames = \common\models\Provider::find()
     ->select(['business_name'])
@@ -63,17 +77,22 @@ $providerNames = array_values(
             ) ?>
         </div>
         <div class="card-body">
-            <div class="row gap-1">
-
-                <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+            <div class="row g-3">
+                <!-- Primera fila: Solo Insumo -->
+                <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
                     <?= $form->field($model, 'ingredient_id')->widget(\kartik\select2\Select2::class, [
                         'data' => \yii\helpers\ArrayHelper::map($stock, 'id', 'label'),
                         'options' => [
-                            'data-setting' => 'all'
+                            'data-setting' => 'all',
+                        ],
+                        'pluginOptions' => [
+                            'width' => '60%',
                         ]
                     ]) ?>
-                </div>                
-                <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
+                </div>
+
+                <!-- Segunda fila: Proveedor, Tipo de pago y Cantidad -->
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                     <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
                         <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>                    <?php else: ?>                        <?php 
                             // Obtener todos los proveedores del negocio
@@ -106,7 +125,8 @@ $providerNames = array_values(
                                     }
                                 }
                             }
-                        ?>                        <div class="form-group">
+                        ?>                        
+                        <div class="form-group field-movement-provider">
                             <?= Html::activeLabel($model, 'provider', ['class' => 'form-label']) ?>
                             <?= Html::dropDownList('movement-provider-temp', $selectedKey, $providerOptions, [
                                 'id' => 'movement-provider',
@@ -118,6 +138,7 @@ $providerNames = array_values(
                                 <!-- Campo oculto inicial para edición -->
                                 <?= Html::hiddenInput('Movement[provider]', $model->provider, ['id' => 'movement-provider-real']) ?>
                             <?php endif; ?>
+                        </div>
     <style>
     .provider-warning {
         background: #fff3cd;
@@ -131,6 +152,16 @@ $providerNames = array_values(
     .provider-warning .btn {
         margin-right: 8px;
     }
+    
+    /* Ajustar el espaciado del campo proveedor para que coincida con los demás campos */
+    .field-movement-provider {
+        margin-bottom: 1rem;
+    }
+    .field-movement-provider .form-label {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--bs-body-color);
+    }
     </style>
     <div id="provider-warning" class="provider-warning">
         <strong>Para mayor control, elija un proveedor.</strong><br>
@@ -139,7 +170,6 @@ $providerNames = array_values(
             <button type="button" class="btn btn-outline-secondary btn-sm" id="continue-without-provider">Continuar sin proveedor</button>
         </div>
     </div>
-                        </div>
 <script>
 window.providerKeyToBusinessName = <?= json_encode($keyToBusinessNameMapping) ?>;
 document.addEventListener('DOMContentLoaded', function() {
@@ -290,8 +320,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
                         </script>
                     <?php endif; ?>
-                </div>                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
-                    <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
+                </div>
+
+                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
+                    <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                         <?= $form->field($model, 'payment_type')->dropDownList(
                             \common\models\Movement::getFormattedPaymentTypes(),
                             [
@@ -302,46 +334,43 @@ document.addEventListener('DOMContentLoaded', function() {
                         ) ?>
                     </div>
                 <?php endif; ?>
-                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
-                    <div class="col-sm-12 col-md-4 col-lg-3 col-xl-3">
-                        <?= $form->field($model, 'invoice')->textInput(['maxlength' => true, 'data-setting' => 'input']) ?>
-                    </div>
-                <?php endif; ?>
-                <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                     <?= $form->field($model, 'quantity')->textInput(['data-setting' => 'all']) ?>
                 </div>
+
+                <!-- Tercera fila: Los campos financieros (5 elementos) -->  
                 <?php if ($model->type != $model::TYPE_OUTPUT): ?>
-                    <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-2">
+                        <?= $form->field($model, 'invoice')->textInput(['maxlength' => true, 'data-setting' => 'input']) ?>
+                    </div>
+                    
+                    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-2">
                         <?= $form->field($model, 'amount',
                             [
                                 'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
                             ]
                         )->textInput(['data-setting' => 'input']) ?>
                     </div>
-                <?php endif; ?>
-                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
-                    <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    
+                    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-2">
                         <?= $form->field($model, 'tax')->textInput(['data-setting' => 'input'])->label('Impuesto') ?>
                     </div>
-                <?php endif; ?>
-                <!--                <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">-->
-                <!--                    --><?php //= $form->field($model, 'retention')->textInput(['data-setting' => 'input']) ?>
-                <!--                </div>-->
-                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
-                    <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    
+                    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3">
                         <?= $form->field($model, 'unit_price', [
                             'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
                         ])->textInput(['data-setting' => 'input']) ?>
                     </div>
-                <?php endif; ?>
-                <?php if ($model->type != $model::TYPE_OUTPUT): ?>
-                    <div class="col-sm-12 col-md-3 col-lg-2 col-xl-2">
+                    
+                    <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3">
                         <?= $form->field($model, 'total', [
                             'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
                         ])->textInput(['data-setting' => 'input']) ?>
                     </div>
                 <?php endif; ?>
 
+                <!-- Observaciones al final -->
                 <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
                     <?= $form->field($model, 'observations')->textarea(['data-setting' => 'all']) ?>
                 </div>
