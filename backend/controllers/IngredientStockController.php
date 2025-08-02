@@ -216,9 +216,57 @@ class IngredientStockController extends Controller
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            $url = \yii\helpers\Url::previous('register-movement');
             Yii::$app->session->setFlash('success', Yii::t('app', "Ingredient has been added to storage"));
-            return empty($url) ? $this->redirect(['index']) : $this->redirect($url);
+            
+            // Verificar si hay un returnUrl específico (desde formulario de movimientos)
+            $returnUrl = Yii::$app->request->get('returnUrl');
+            
+            if (!empty($returnUrl) && strpos($returnUrl, 'movement/create') !== false) {
+                // Parsear la URL para asegurar que tenga el parámetro type
+                $urlParts = parse_url($returnUrl);
+                
+                if (isset($urlParts['query'])) {
+                    parse_str($urlParts['query'], $queryParams);
+                    // Si no tiene parámetro type, agregarlo
+                    if (!isset($queryParams['type']) || empty($queryParams['type'])) {
+                        $queryParams['type'] = 'input';
+                        $urlParts['query'] = http_build_query($queryParams);
+                        $returnUrl = $urlParts['path'] . '?' . $urlParts['query'];
+                    }
+                } else {
+                    // Si no tiene query string, agregar el parámetro type
+                    $returnUrl .= '?type=input';
+                }
+                
+                // Redirigir a la URL de movimiento
+                return $this->redirect($returnUrl);
+            }
+            
+            // Si no hay returnUrl específico pero viene de un movimiento (verificar referer)
+            $referer = Yii::$app->request->referrer;
+            if (!empty($referer) && strpos($referer, 'movement/create') !== false) {
+                // Solo redirigir si el referer contiene un tipo válido
+                if (strpos($referer, 'type=') !== false) {
+                    // Verificar que tenga el parámetro type, agregarlo si no lo tiene
+                    $urlParts = parse_url($referer);
+                    
+                    if (isset($urlParts['query'])) {
+                        parse_str($urlParts['query'], $queryParams);
+                        if (!isset($queryParams['type']) || empty($queryParams['type'])) {
+                            $queryParams['type'] = 'input';
+                            $urlParts['query'] = http_build_query($queryParams);
+                            $referer = $urlParts['path'] . '?' . $urlParts['query'];
+                        }
+                    } else {
+                        $referer .= '?type=input';
+                    }
+                    
+                    return $this->redirect($referer);
+                }
+            }
+            
+            // En cualquier otro caso, ir al index
+            return $this->redirect(['index']);
         }
 
         return $this->render('create', [

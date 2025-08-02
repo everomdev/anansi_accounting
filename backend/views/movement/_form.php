@@ -70,7 +70,7 @@ $providerNames = array_values(
         <div class="card-header">
             <?= \yii\bootstrap5\Html::a(
                 Yii::t('app', "Can't find the input? add it"),
-                \yii\helpers\Url::to(['ingredient-stock/create']),
+                \yii\helpers\Url::to(['ingredient-stock/create', 'returnUrl' => Yii::$app->request->url]),
                 [
                     'class' => 'btn btn-sm btn-success'
                 ]
