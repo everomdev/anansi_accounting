@@ -100,9 +100,9 @@ class ExcelHelper
     $activeWorksheet->setCellValue("F1", "Unidad de compra*");
     $activeWorksheet->setCellValue("G1", "Unidad de cocina*");
     $activeWorksheet->setCellValue("H1", "Factor de Rendimiento*");
-    $activeWorksheet->setCellValue("I1", "Porciones por unidad*");
-    $activeWorksheet->setCellValue("J1", "Observaciones");
-    $activeWorksheet->setCellValue("K1", "Precio*");
+    $activeWorksheet->setCellValue("I1", "EQ. UNI. Cocina*");
+    $activeWorksheet->setCellValue("J1", "Precio*");
+    $activeWorksheet->setCellValue("K1", "Observaciones");
     
     $activeWorksheet->getStyle('A1:L100')->applyFromArray($centerStyle);
     $activeWorksheet->freezePane('C2');
@@ -117,8 +117,8 @@ class ExcelHelper
     $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(18); // Unidad de cocina
     $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(25); // Factor de Rendimiento
     $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(25); // Porciones por unidad
-    $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(30); // Observaciones
-    $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(10);
+    $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(10); // Observaciones
+    $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(30);
 
     // Create a named range for categories
     $categorySheet = $spreadsheet->createSheet();
@@ -207,7 +207,7 @@ class ExcelHelper
     }
 
     // Apply data validation to the price column - Permitir cualquier valor numérico
-    $priceValidation = $spreadsheet->getActiveSheet()->getCell('K2')->getDataValidation();
+    $priceValidation = $spreadsheet->getActiveSheet()->getCell('J2')->getDataValidation();
     $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
     $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $priceValidation->setAllowBlank(false);
@@ -374,6 +374,13 @@ class ExcelHelper
             $row = 2;
             $allProviders = [];
             
+            // Agregar siempre "Por definir" como primera opción
+            $providersSheet->setCellValue("A$row", "Por definir");
+            $providersSheet->setCellValue("B$row", "Todos los métodos disponibles");
+            $providersSheet->setCellValue("C$row", "PM_PorDefinir");
+            $allProviders[] = "Por definir";
+            $row++;
+            
             // Para cada proveedor crear también una hoja con sus métodos de pago
             foreach ($providers as $providerIndex => $provider) {
                 $providersSheet->setCellValue("A$row", $provider->business_name);
@@ -428,6 +435,37 @@ class ExcelHelper
                 
                 $row++;
             }
+            
+            // Crear hoja especial para "Por definir" con todos los tipos de pago
+            $porDefinirSheet = $spreadsheet->createSheet();
+            $porDefinirSheet->setTitle('PM_PorDefinir');
+            $porDefinirSheet->setCellValue('A1', 'Valor');
+            $porDefinirSheet->setCellValue('B1', 'Descripción');
+            
+            // Mapear códigos de pago a descripciones en español
+            $paymentDescriptions = [
+                Movement::PAYMENT_METHOD_CASH => 'Efectivo',
+                Movement::PAYMENT_METHOD_TRANSFER => 'Transferencia Bancaria',
+                Movement::PAYMENT_METHOD_CHECK => 'Cheque',
+                Movement::PAYMENT_METHOD_CREDIT_CARD => 'Tarjeta de Crédito',
+                Movement::PAYMENT_METHOD_DEBIT_CARD => 'Tarjeta de Débito',
+                Movement::PAYMENT_METHOD_OTHER => 'Otro Método de Pago'
+            ];
+            
+            // Agregar "Por definir" primero
+            $porDefinirSheet->setCellValue('A2', 'Por definir');
+            $porDefinirSheet->setCellValue('B2', 'Por definir');
+            
+            // Agregar todos los métodos de pago disponibles
+            $pmRow = 3;
+            foreach ($paymentDescriptions as $code => $description) {
+                $porDefinirSheet->setCellValue("A$pmRow", $description);
+                $porDefinirSheet->setCellValue("B$pmRow", $code);
+                $pmRow++;
+            }
+            
+            $porDefinirSheet->getColumnDimension('A')->setWidth(25);
+            $porDefinirSheet->getColumnDimension('B')->setWidth(20);
 
             $providersSheet->getColumnDimension('A')->setWidth(30);
             $providersSheet->getColumnDimension('B')->setWidth(40);
@@ -537,15 +575,15 @@ class ExcelHelper
         $legendSheet->setCellValue('A1', 'Columna');
         $legendSheet->setCellValue('B1', 'Descripción');
         $legendSheet->setCellValue('A2', 'Clave');
-        $legendSheet->setCellValue('B2', 'Ingrese manualmente la clave numérica del insumo (sin validación restrictiva).');
+        $legendSheet->setCellValue('B2', 'Seleccione una clave del desplegable y deje la columna Insumo VACÍA. El sistema detectará el cambio y mostrará las instrucciones de sincronización.');
         $legendSheet->setCellValue('A3', 'Insumo');
-        $legendSheet->setCellValue('B3', 'Seleccione un insumo del desplegable de la hoja Insumos.');
+        $legendSheet->setCellValue('B3', 'Seleccione un insumo del desplegable y deje la columna Clave VACÍA. El sistema detectará el cambio y mostrará las instrucciones de sincronización.');
         $legendSheet->setCellValue('A4', 'Fecha');
         $legendSheet->setCellValue('B4', 'Formato: año-mes-día (ej: 2025-07-03)');
         $legendSheet->setCellValue('A5', 'Proveedor');
-        $legendSheet->setCellValue('B5', 'Seleccione un proveedor del desplegable de la hoja Proveedores.');
+        $legendSheet->setCellValue('B5', 'Seleccione un proveedor del desplegable. Si no tiene proveedores cargados o no está definido, puede seleccionar "Por definir".');
         $legendSheet->setCellValue('A6', 'Tipo de Pago');
-        $legendSheet->setCellValue('B6', 'Seleccione un tipo de pago del desplegable (en español). Los tipos disponibles dependen del proveedor seleccionado. Opciones: Efectivo, Transferencia Bancaria, Cheque, Tarjeta de Crédito, Tarjeta de Débito, Otro Método de Pago.');
+        $legendSheet->setCellValue('B6', 'Seleccione un tipo de pago del desplegable (en español). Los tipos disponibles dependen del proveedor seleccionado. Si seleccionó "Por definir" como proveedor, tendrá acceso a todos los tipos de pago. Opciones: Por definir, Efectivo, Transferencia Bancaria, Cheque, Tarjeta de Crédito, Tarjeta de Débito, Otro Método de Pago.');
         $legendSheet->setCellValue('A7', 'Cantidad');
         $legendSheet->setCellValue('B7', 'Ingrese un valor numérico (sin validación restrictiva).');
         $legendSheet->setCellValue('A8', 'Precio de Compra');
@@ -556,8 +594,10 @@ class ExcelHelper
         $legendSheet->setCellValue('B10', 'SE CALCULA AUTOMÁTICAMENTE: (Precio de compra + Impuesto) ÷ Cantidad');
         $legendSheet->setCellValue('A11', 'Total');
         $legendSheet->setCellValue('B11', 'SE CALCULA AUTOMÁTICAMENTE: Cantidad × Precio Unitario');
-        $legendSheet->setCellValue('A12', 'Notas Importantes');
-        $legendSheet->setCellValue('B12', 'Las columnas numéricas permiten cualquier valor sin validación. Precio Unitario y Total se calculan automáticamente.');
+        $legendSheet->setCellValue('A12', 'Sincronización Insumos');
+        $legendSheet->setCellValue('B12', 'SINCRONIZACIÓN ASISTIDA: Las columnas ocultas M y N contienen fórmulas que buscan automáticamente la clave o insumo correspondiente. Para sincronizar: 1) Seleccione una opción en A o B, 2) Vea el resultado en la columna oculta correspondiente (M o N), 3) Copie manualmente el valor a la otra columna. Para mostrar columnas ocultas: seleccione columnas L y O, clic derecho, "Mostrar".');
+        $legendSheet->setCellValue('A13', 'Notas Importantes');
+        $legendSheet->setCellValue('B13', 'La sincronización entre Clave e Insumo requiere copia manual desde las columnas auxiliares ocultas M y N. Las columnas numéricas permiten cualquier valor sin validación. Precio Unitario y Total se calculan automáticamente. La opción "Por definir" está disponible para Proveedor y Tipo de Pago cuando no se tienen datos específicos cargados.');
 
         $legendSheet->getColumnDimension('A')->setWidth(20);
         $legendSheet->getColumnDimension('B')->setWidth(80);

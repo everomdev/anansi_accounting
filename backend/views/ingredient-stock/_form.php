@@ -91,7 +91,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
                     <?= $form->field($model, 'brand')->textInput([
-                        'placeholder' => 'Ej: Nestlé, Coca-Cola'
+                        'placeholder' => 'Ej: Nestlé, Kirkland'
                     ])->label('Marca') ?>
                 </div>
                 
@@ -103,8 +103,13 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
             </div>
             
             <div class="row mb-3">
-                <h5 class="card-title mb-3">Porciones</h5>
-                
+                <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
+                    <?= $form->field($model, 'portion_um')->dropDownList(
+                        \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
+                        ['prompt' => '-- Seleccione --']
+                    )->label('Unidades de cocina <span class="asterisk">*</span>') ?>
+                </div>
+
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
                     <?php
                     $portionField = $form->field($model, 'portions_per_unit')->widget(\kartik\typeahead\Typeahead::class, [
@@ -120,13 +125,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                     echo preg_replace('/(<\/div>\s*)$/', '<div class="form-text" id="question-portion-um"></div>$1', $portionField);
                     ?>
                 </div>
-
-                <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
-                    <?= $form->field($model, 'portion_um')->dropDownList(
-                        \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
-                        ['prompt' => '-- Seleccione --']
-                    )->label('Unidades de cocina <span class="asterisk">*</span>') ?>
-                </div>
+                
             </div>
             
             <div class="row mb-3">
@@ -150,7 +149,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                             'class' => 'form-control format-percentage', 
                             'id' => 'ingredientstock-yield', 
                             'required' => true, 
-                            'placeholder' => formatPercentage(85, 0, false),
+                            'placeholder' => '85',
                             'data-format' => 'percentage',
                             'value' => $model->yield ? formatNumber($model->yield, 0) : ''
                         ]
