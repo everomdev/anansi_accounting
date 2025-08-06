@@ -288,6 +288,85 @@ class ExcelHelper
         $activeWorksheet->setCellValue("L1", "Total*");
         $activeWorksheet->setCellValue("M1", "Observaciones");
 
+        // Agregar comentarios descriptivos a los encabezados
+        $comment = $activeWorksheet->getComment('A1');
+        $textRun = $comment->getText()->createTextRun('Selecciona si el movimiento es una Entrada (compra o ingreso al almacén) o una Salida (requisición, consumo, merma o traspaso).');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('100px');
+        
+        $comment = $activeWorksheet->getComment('B1');
+        $textRun = $comment->getText()->createTextRun('(Opcional) Código único del insumo. Si ya está registrado en el sistema, se puede usar para identificarlo automáticamente.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('C1');
+        $textRun = $comment->getText()->createTextRun('Nombre del insumo tal como aparece en tu listado. Asegúrate de que coincida exactamente con el registrado en el sistema.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('D1');
+        $textRun = $comment->getText()->createTextRun('Fecha en que se realizó la entrada o salida del insumo. Usa el formato AAAA-MM-DD (ej. 2025-08-06).');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('E1');
+        $textRun = $comment->getText()->createTextRun('Nombre del proveedor o empresa a quien se compró el insumo. Si no tienes proveedor fijo, escribe o selecciona "Por definir".');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('F1');
+        $textRun = $comment->getText()->createTextRun('Forma en que se realizó el pago. Ejemplos: Efectivo, Transferencia, etc.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('60px');
+        
+        $comment = $activeWorksheet->getComment('G1');
+        $textRun = $comment->getText()->createTextRun('(Opcional) Número de factura o comprobante de la compra. Si no aplica, puedes dejarlo en blanco.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('H1');
+        $textRun = $comment->getText()->createTextRun('Número de unidades compradas. Debe coincidir con la unidad de compra registrada (kg, litros, piezas, etc.).');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('I1');
+        $textRun = $comment->getText()->createTextRun('Precio total pagado por el insumo, antes de impuestos. Este dato se usa para calcular el precio unitario.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('J1');
+        $textRun = $comment->getText()->createTextRun('Monto del impuesto aplicado (ej. IVA). Si no hubo impuestos, deja en blanco o coloca 0.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('K1');
+        $textRun = $comment->getText()->createTextRun('Se calcula automáticamente si no lo llenas. Es el precio por unidad del insumo ((Precio de Compra + Impuesto) ÷ Cantidad).');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('450px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('L1');
+        $textRun = $comment->getText()->createTextRun('Monto total de la compra incluyendo impuestos. Se usa para validar los datos. Si no lo llenas, el sistema lo calculará.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('400px');
+        $comment->setHeight('80px');
+        
+        $comment = $activeWorksheet->getComment('M1');
+        $textRun = $comment->getText()->createTextRun('(Opcional) Notas adicionales como promociones, aclaraciones, devoluciones, detalles del insumo o cualquier información útil.');
+        $textRun->getFont()->setSize(12);
+        $comment->setWidth('450px');
+        $comment->setHeight('80px');
+
         // Aplicar estilos y configurar anchos
         $activeWorksheet->getStyle('A1:M1')->applyFromArray($centerStyle);
         $activeWorksheet->freezePane('E2');
