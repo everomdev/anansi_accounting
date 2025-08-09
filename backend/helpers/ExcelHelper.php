@@ -822,12 +822,16 @@ class ExcelHelper
         for ($i = 2; $i <= 5000; $i++) {
             // Fórmula para Precio Unitario (Columna L): (Precio de compra + Impuesto) / Cantidad - solo si es Entrada
             // Columna J = Precio de Compra, Columna K = Impuesto, Columna I = Cantidad
-            $mainSheet->setCellValue("L$i", "=IF(AND(A$i=\"Entrada\",I$i<>0,OR(J$i<>\"\",K$i<>\"\")),((J$i+K$i)/I$i),\"\")");
+            $mainSheet->setCellValue("L$i", "=IF(AND(A$i=\"Entrada\",I$i>0,OR(J$i>0,K$i>0)),((IFERROR(J$i,0)+IFERROR(K$i,0))/I$i),\"\")");
             
             // Fórmula para Total (Columna M): Cantidad * Precio Unitario - solo si es Entrada
             // Columna I = Cantidad, Columna L = Precio Unitario
-            $mainSheet->setCellValue("M$i", "=IF(AND(A$i=\"Entrada\",I$i<>\"\",L$i<>\"\"),I$i*L$i,\"\")");
+            $mainSheet->setCellValue("M$i", "=IF(AND(A$i=\"Entrada\",I$i>0,L$i>0),I$i*L$i,\"\")");
         }
+        
+        // Proteger las celdas de fórmulas (L y M) para que no se puedan editar
+        $mainSheet->getStyle('L2:L5000')->getProtection()->setLocked(true);
+        $mainSheet->getStyle('M2:M5000')->getProtection()->setLocked(true);
         
         // Aplicar formato numérico a las columnas de cálculo
         $mainSheet->getStyle('I2:M5000')->getNumberFormat()->setFormatCode('#,##0.00');
@@ -861,9 +865,9 @@ class ExcelHelper
         $legendSheet->setCellValue('A12', 'Impuesto');
         $legendSheet->setCellValue('B12', 'SOLO PARA ENTRADAS: Ingrese un valor numérico. Se vuelve gris automáticamente si selecciona "Salida".');
         $legendSheet->setCellValue('A13', 'Precio Unitario');
-        $legendSheet->setCellValue('B13', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: (Precio de compra + Impuesto) ÷ Cantidad. Se vuelve gris automáticamente si selecciona "Salida".');
+        $legendSheet->setCellValue('B13', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: (Precio de compra + Impuesto) ÷ Cantidad. CELDA PROTEGIDA: No se puede editar manualmente. Se vuelve gris automáticamente si selecciona "Salida".');
         $legendSheet->setCellValue('A14', 'Total');
-        $legendSheet->setCellValue('B14', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: Cantidad × Precio Unitario. Se vuelve gris automáticamente si selecciona "Salida".');
+        $legendSheet->setCellValue('B14', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: Cantidad × Precio Unitario. CELDA PROTEGIDA: No se puede editar manualmente. Se vuelve gris automáticamente si selecciona "Salida".');
         $legendSheet->setCellValue('A15', 'Observaciones');
         $legendSheet->setCellValue('B15', '(Opcional) Notas adicionales. Aplica tanto para entradas como para salidas.');
         $legendSheet->setCellValue('A16', 'Autocompletado con BUSCARV');
@@ -872,6 +876,8 @@ class ExcelHelper
         $legendSheet->setCellValue('B17', 'ALERTA VISUAL: Las columnas se vuelven grises automáticamente según el tipo de movimiento. Si selecciona "Entrada", solo las columnas relevantes para entrada permanecen activas. Si selecciona "Salida", solo las columnas relevantes para salida permanecen activas.');
         $legendSheet->setCellValue('A18', 'Instrucciones de Uso');
         $legendSheet->setCellValue('B18', 'PASOS: 1) Seleccione tipo de movimiento (Entrada/Salida) - esto determinará qué columnas usar, 2) Seleccione una clave O un insumo, 3) Complete solo las columnas que no estén en gris. FLEXIBILIDAD: El sistema se adapta automáticamente al tipo de movimiento seleccionado.');
+        $legendSheet->setCellValue('A19', 'Protección de Celdas');
+        $legendSheet->setCellValue('B19', 'CELDAS PROTEGIDAS: Las columnas Precio Unitario (L) y Total (M) están protegidas y no se pueden editar manualmente ya que se calculan automáticamente. El resto de celdas sí se pueden editar libremente.');
         
         // Configurar estilo de título para la leyenda
         $titleStyle = [
@@ -893,13 +899,26 @@ class ExcelHelper
         
         // Aplicar estilos
         $legendSheet->getStyle('A1:B1')->applyFromArray($titleStyle);
-        $legendSheet->getStyle('A2:A18')->applyFromArray($headerStyle);
+        $legendSheet->getStyle('A2:A19')->applyFromArray($headerStyle);
 
         $legendSheet->getColumnDimension('A')->setWidth(20);
         $legendSheet->getColumnDimension('B')->setWidth(80);
 
         // Activar la primera hoja antes de guardar
         $spreadsheet->setActiveSheetIndex(0);
+        
+        // Configurar protección de celdas
+        $mainSheet = $spreadsheet->getActiveSheet();
+        
+        // Desbloquear las celdas que sí se pueden editar (todas excepto L y M que ya están bloqueadas)
+        $mainSheet->getStyle('A2:K5000')->getProtection()->setLocked(false);
+        $mainSheet->getStyle('N2:N5000')->getProtection()->setLocked(false);
+        
+        // Habilitar protección de la hoja (las celdas L y M ya están bloqueadas)
+        $mainSheet->getProtection()->setSheet(true);
+        $mainSheet->getProtection()->setSort(false);
+        $mainSheet->getProtection()->setInsertRows(false);
+        $mainSheet->getProtection()->setFormatCells(false);
         
         // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
         $spreadsheet->getActiveSheet()->setSelectedCell('A2');
