@@ -170,7 +170,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'created_at',
                 'label' => Yii::t('app', 'Fecha de creación'),
                 'value' => function($model) {
-                    return Yii::$app->formatter->asDatetime($model->created_at, 'php:d/m/Y H:i');
+                    return Yii::$app->formatter->asDatetime($model->created_at, 'php:d/m/Y');
                 },
                 'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
             ],

@@ -276,9 +276,9 @@ class ExcelHelper
 
         // Encabezados principales
         $activeWorksheet->setCellValue("A1", "Movimiento*");
-        $activeWorksheet->setCellValue("B1", "Clave*");
+        $activeWorksheet->setCellValue("D1", "Clave");
         $activeWorksheet->setCellValue("C1", "Insumo*");
-        $activeWorksheet->setCellValue("D1", "Fecha (año-mes-dia)*");
+        $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia)*");
         $activeWorksheet->setCellValue("E1", "Proveedor*");
         $activeWorksheet->setCellValue("F1", "Tipo de Pago*");
         $activeWorksheet->setCellValue("G1", "Factura");
@@ -297,8 +297,8 @@ class ExcelHelper
         $comment->setWidth('400px');
         $comment->setHeight('100px');
         
-        $comment = $activeWorksheet->getComment('B1');
-        $textRun = $comment->getText()->createTextRun('(Opcional) Código único del insumo. Si ya está registrado en el sistema, se puede usar para identificarlo automáticamente.');
+        $comment = $activeWorksheet->getComment('D1');
+        $textRun = $comment->getText()->createTextRun('(Opcional) Clave única del insumo. Si ya está registrado en el sistema, se llenará automáticamente al seleccionarla. Si no lo conoces, déjalo en blanco.');
         $textRun->getFont()->setSize(12);
         $comment->setWidth('400px');
         $comment->setHeight('80px');
@@ -309,7 +309,7 @@ class ExcelHelper
         $comment->setWidth('400px');
         $comment->setHeight('80px');
         
-        $comment = $activeWorksheet->getComment('D1');
+        $comment = $activeWorksheet->getComment('B1');
         $textRun = $comment->getText()->createTextRun('Fecha en que se realizó la entrada o salida del insumo. Usa el formato AAAA-MM-DD (ej. 2025-08-06).');
         $textRun->getFont()->setSize(12);
         $comment->setWidth('400px');
@@ -334,7 +334,7 @@ class ExcelHelper
         $comment->setHeight('80px');
         
         $comment = $activeWorksheet->getComment('H1');
-        $textRun = $comment->getText()->createTextRun('(Solo para SALIDAS) Centro de consumo donde se utilizó el insumo. Selecciona del desplegable si el movimiento es una Salida.');
+        $textRun = $comment->getText()->createTextRun('Solo para SALIDAS: indica en qué área se utilizó el insumo. No llenar si el movimiento es una Entrada.');
         $textRun->getFont()->setSize(12);
         $comment->setWidth('400px');
         $comment->setHeight('80px');
@@ -364,7 +364,7 @@ class ExcelHelper
         $comment->setHeight('80px');
         
         $comment = $activeWorksheet->getComment('M1');
-        $textRun = $comment->getText()->createTextRun('Monto total de la compra incluyendo impuestos. Se usa para validar los datos. Si no lo llenas, el sistema lo calculará.');
+        $textRun = $comment->getText()->createTextRun('Total con impuestos. Se usa para validar los datos. Si no lo llenas, el sistema lo calcula automáticamente.');
         $textRun->getFont()->setSize(12);
         $comment->setWidth('400px');
         $comment->setHeight('80px');
@@ -382,24 +382,35 @@ class ExcelHelper
         // Aplicar estilo centrado a todas las celdas de datos
         $activeWorksheet->getStyle('A2:N5000')->applyFromArray($centerStyle);
 
+        // Agregar bordes finos blancos a toda la tabla para mejor visualización
+        $borderStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'E0E0E0']
+                ]
+            ]
+        ];
+        $activeWorksheet->getStyle('A1:N5000')->applyFromArray($borderStyle);
+
         // Configurar anchos de columnas
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Movimiento
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(15); // Clave
+        $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(15); // Clave
         $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
-        $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(20); // Fecha
+        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(20); // Fecha
         $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(25); // Proveedor
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(25); // Tipo de Pago
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(15); // Factura
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(25); // Centro de Consumo
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(12); // Cantidad
-        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(15); // Precio de Compra
+        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(20); // Precio de Compra
         $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(12); // Impuesto
         $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(15); // Precio Unitario
         $spreadsheet->getActiveSheet()->getColumnDimension('M')->setWidth(15); // Total
         $spreadsheet->getActiveSheet()->getColumnDimension('N')->setWidth(30); // Observaciones
 
-        // Configurar formato de fecha para la columna D (Fecha)
-        $spreadsheet->getActiveSheet()->getStyle('D2:D5000')
+        // Configurar formato de fecha para la columna B (Fecha)
+        $spreadsheet->getActiveSheet()->getStyle('B2:B5000')
             ->getNumberFormat()
             ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
 
@@ -446,7 +457,7 @@ class ExcelHelper
                 $movementValidation->setFormula1('"Entrada,Salida"');
                 
                 // Validación para columna B (Clave) - desplegable con todas las claves
-                $keyValidation = $mainSheet->getCell('B2')->getDataValidation();
+                $keyValidation = $mainSheet->getCell('D2')->getDataValidation();
                 $keyValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
                 $keyValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
                 $keyValidation->setAllowBlank(true); // Permitir vacío
@@ -456,7 +467,7 @@ class ExcelHelper
                 $keyValidation->setErrorTitle('Error de entrada');
                 $keyValidation->setError('Este valor no es admitido. Debe seleccionar una clave válida.');
                 $keyValidation->setPromptTitle('Selecciona una clave');
-                $keyValidation->setPrompt('Selecciona una clave del desplegable. El insumo se completará automáticamente en la columna C.');
+                $keyValidation->setPrompt('Selecciona una clave del desplegable. El insumo se completará automáticamente.');
                 $keyValidation->setFormula1('Insumos!$A$2:$A$' . ($row - 1));
                 
                 // Validación para columna C (Insumo) - desplegable con todos los nombres de insumos
@@ -479,24 +490,24 @@ class ExcelHelper
                     $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
                     
                     // Aplicar validación a columna B (Clave)
-                    $mainSheet->getCell("B$i")->setDataValidation(clone $keyValidation);
+                    $mainSheet->getCell("D$i")->setDataValidation(clone $keyValidation);
                     
                     // Aplicar validación a columna C (Insumo)
                     $mainSheet->getCell("C$i")->setDataValidation(clone $ingredientValidation);
                     
                     // Fórmula BUSCARV en columna C (Insumo) como solicitó el usuario
-                    $mainSheet->setCellValue("C$i", "=IF(B$i<>\"\",VLOOKUP(B$i,Insumos!\$A\$2:\$B\$1000,2,FALSE),\"\")");
+                    $mainSheet->setCellValue("C$i", "=IF(D$i<>\"\",VLOOKUP(D$i,Insumos!\$A\$2:\$B\$1000,2,FALSE),\"\")");
                 }
                 
                 // Aplicar formato condicional a la columna B (Clave)
                 // Condición: Si C (Insumo) no está vacía Y B (Clave) está vacía, poner en gris
                 $conditionalFormatting = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
                 $conditionalFormatting->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-                $conditionalFormatting->addCondition('AND($C2<>"",$B2="")');
+                $conditionalFormatting->addCondition('AND($C2<>"",$D2="")');
                 $conditionalFormatting->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
                 $conditionalFormatting->getStyle()->getFill()->getStartColor()->setRGB('D3D3D3'); // Gris claro
-                
-                $mainSheet->getStyle('B2:B5000')->setConditionalStyles([$conditionalFormatting]);
+
+                $mainSheet->getStyle('D2:D5000')->setConditionalStyles([$conditionalFormatting]);
             }
         }
 
@@ -1099,15 +1110,6 @@ class ExcelHelper
                 $data['type'] = isset($movementTypeMap[$movementTypeValue]) ? 
                     $movementTypeMap[$movementTypeValue] : Movement::TYPE_INPUT; // Por defecto entrada
                 $cellIterator->next();
-                
-                // B - Clave
-                $data['key'] = trim($cellIterator->current()->getValue());
-                $cellIterator->next();
-                
-                // C - Insumo (nombre)
-                $data['ingredient_name'] = trim($cellIterator->current()->getValue());
-                $cellIterator->next();
-                
                 // D - Fecha
                 try {
                     $dateValue = $cellIterator->current()->getValue();
@@ -1123,12 +1125,29 @@ class ExcelHelper
                     $data['created_at'] = date('Y-m-d'); // Fecha por defecto
                 }
                 $cellIterator->next();
+               
+                
+                // C - Insumo (nombre)
+                $data['ingredient_name'] = trim($cellIterator->current()->getValue());
+                $cellIterator->next();
+                
+                 // B - Clave
+                $data['key'] = trim($cellIterator->current()->getValue());
+                $cellIterator->next();
                 
                 // E - Proveedor (solo para entradas)
                 $providerValue = trim($cellIterator->current()->getValue());
                 // Solo asignar proveedor si es entrada
                 if ($data['type'] === Movement::TYPE_INPUT) {
-                    $data['provider'] = ($providerValue === 'Por definir' || empty($providerValue)) ? null : $providerValue;
+                    // Para entradas, convertir "Por definir" y valores vacíos a null
+                    if ($providerValue === 'Por definir' || empty($providerValue)) {
+                        $data['provider'] = null;
+                    } else {
+                        $data['provider'] = $providerValue;
+                    }
+                } else {
+                    // Para otros tipos, no asignar provider field en esta sección
+                    $data['provider'] = null;
                 }
                 $cellIterator->next();
                 
@@ -1233,7 +1252,7 @@ class ExcelHelper
             
             // Estrategia de búsqueda mejorada:
             // 1. Primero por clave si está disponible
-            if (!empty($movement['key']) && is_numeric($movement['key'])) {
+            if (!empty($movement['key'])) {
                 $ingredient = IngredientStock::find()
                     ->where([
                         'key' => $movement['key'],
@@ -1267,6 +1286,9 @@ class ExcelHelper
             
             if ($ingredient) {
                 $movement['ingredient_id'] = $ingredient->id;
+                
+                // Asegurarse de que um esté definido desde el ingrediente
+                $movement['um'] = $ingredient->portion_um;
                 
                 // Validar que los movimientos de salida tengan centro de consumo
                 if ($movement['type'] === Movement::TYPE_OUTPUT && empty($movement['provider'])) {
