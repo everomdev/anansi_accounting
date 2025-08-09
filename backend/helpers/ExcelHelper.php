@@ -304,7 +304,7 @@ class ExcelHelper
         $comment->setHeight('80px');
         
         $comment = $activeWorksheet->getComment('C1');
-        $textRun = $comment->getText()->createTextRun('Nombre del insumo tal como aparece en tu listado. Asegúrate de que coincida exactamente con el registrado en el sistema.');
+        $textRun = $comment->getText()->createTextRun('Selecciona un insumo de la lista desplegable. También se completará automáticamente al seleccionar una clave.');
         $textRun->getFont()->setSize(12);
         $comment->setWidth('400px');
         $comment->setHeight('80px');
@@ -322,7 +322,7 @@ class ExcelHelper
         $comment->setHeight('80px');
         
         $comment = $activeWorksheet->getComment('F1');
-        $textRun = $comment->getText()->createTextRun('Forma en que se realizó el pago. Ejemplos: Efectivo, Transferencia, etc.');
+        $textRun = $comment->getText()->createTextRun('Selecciona la forma en que se realizó el pago. Ejemplos: Efectivo, Transferencia, etc.');
         $textRun->getFont()->setSize(12);
         $comment->setWidth('400px');
         $comment->setHeight('60px');
@@ -634,7 +634,7 @@ class ExcelHelper
                 $providerValidation->setErrorTitle('Error de entrada');
                 $providerValidation->setError('Este valor no es admitido. Debe seleccionar un proveedor válido.');
                 $providerValidation->setPromptTitle('Selecciona un proveedor');
-                $providerValidation->setPrompt('Por favor, selecciona un proveedor del desplegable.');
+                $providerValidation->setPrompt('Por favor, selecciona un proveedor de la lista desplegable.');
                 $providerValidation->setFormula1('Proveedores!$A$2:$A$' . ($row - 1));
 
                 // Aplicar validación a múltiples filas
@@ -675,7 +675,7 @@ class ExcelHelper
                 $consumptionCenterValidation->setErrorTitle('Error de entrada');
                 $consumptionCenterValidation->setError('Este valor no es admitido. Debe seleccionar un centro de consumo válido.');
                 $consumptionCenterValidation->setPromptTitle('Selecciona un centro de consumo');
-                $consumptionCenterValidation->setPrompt('Por favor, selecciona un centro de consumo del desplegable.');
+                $consumptionCenterValidation->setPrompt('Por favor, selecciona un centro de consumo del desplegable. Sólo aplica si el movimiento es una salida.');
                 $consumptionCenterValidation->setFormula1('\'Centros de Consumo\'!$A$2:$A$' . ($ccRow - 1));
 
                 // Aplicar validación a múltiples filas
@@ -728,7 +728,7 @@ class ExcelHelper
             $paymentValidation->setErrorTitle('Error de entrada');
             $paymentValidation->setError('Este valor no es admitido. Debe seleccionar un tipo de pago válido para este proveedor.');
             $paymentValidation->setPromptTitle('Selecciona un tipo de pago');
-            $paymentValidation->setPrompt('Selecciona un tipo de pago válido para el proveedor elegido.');
+            $paymentValidation->setPrompt('Selecciona cómo se pagó este insumo: efectivo, transferencia, etc.');
             
             // Fórmula que obtiene la referencia a la hoja de métodos de pago del proveedor seleccionado
             // INDIRECTO busca en la columna C de la hoja Proveedores el nombre de la hoja correspondiente
