@@ -16,6 +16,11 @@ $profile = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::PROF
         </a>
     </div>
 
+    <!-- Logo de Coach Restaurantero (aparece cuando el menú está contraído) -->
+    <div class="navbar-logo">
+        <img src="<?= Yii::getAlias("@web/images/logo1.png") ?>" alt="Coach Restaurantero" />
+    </div>
+
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <!-- Search -->
         <div class="navbar-nav align-items-center">

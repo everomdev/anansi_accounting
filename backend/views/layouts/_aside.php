@@ -425,46 +425,107 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
 </aside>
 
 <?php
-// CSS para forzar comportamiento móvil en todas las resoluciones
+// CSS simplificado para evitar problemas de focus/blur
 $css = <<<CSS
-/* Forzar comportamiento de menú móvil en todas las pantallas */
+/* Resetear cualquier transformación problemática */
+* {
+    -webkit-transform: none !important;
+    -moz-transform: none !important;
+    -ms-transform: none !important;
+    transform: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: text !important;
+}
+
+/* Permitir selección de texto donde sea necesario */
+input, textarea, [contenteditable] {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+/* Menú lateral - usando left en lugar de transform */
 .layout-menu {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     height: 100vh !important;
     z-index: 1045 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease !important;
     width: 260px !important;
+    transition: left 0.3s ease !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1) !important;
 }
 
-.layout-menu.show {
-    transform: translateX(0) !important;
+/* Estado contraído del menú - movemos con left */
+.layout-menu.collapsed {
+    left: -260px !important;
 }
 
-/* Overlay cuando el menú está abierto */
-.layout-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1040;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-}
-
-.layout-menu-overlay.show {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Ajustar el contenido principal para que no tenga margin */
+/* Ajustar el contenido principal */
 .layout-page {
+    margin-left: 260px !important;
+    transition: margin-left 0.3s ease !important;
+    min-height: 100vh !important;
+    position: relative !important;
+}
+
+/* Cuando el menú está contraído, quitar el margen */
+body.menu-collapsed .layout-page {
     margin-left: 0 !important;
+}
+
+/* Logo en navbar - oculto por defecto */
+.navbar-logo {
+    display: none !important;
+    align-items: center !important;
+    margin-left: 15px !important;
+    opacity: 1 !important;
+    transition: all 0.3s ease !important;
+}
+
+.navbar-logo img {
+    max-height: 40px !important;
+    object-fit: contain !important;
+    width: auto !important;
+}
+
+/* Mostrar logo centrado cuando el menú está contraído */
+body.menu-collapsed .navbar-logo {
+    display: flex !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    z-index: 10 !important;
+}
+
+/* Ajustar el navbar para permitir el centrado del logo */
+body.menu-collapsed .layout-navbar {
+    position: relative !important;
+}
+
+/* En móvil, mantener el logo a la izquierda */
+@media (max-width: 1199px) {
+    .navbar-logo {
+        display: flex !important;
+        position: static !important;
+        transform: none !important;
+        margin-left: 15px !important;
+    }
+    
+    body.menu-collapsed .navbar-logo {
+        position: static !important;
+        transform: none !important;
+        left: auto !important;
+        top: auto !important;
+        margin-left: 15px !important;
+    }
 }
 
 /* Estilos del botón hamburger */
@@ -473,56 +534,141 @@ $css = <<<CSS
     text-decoration: none !important;
     padding: 8px !important;
     border-radius: 6px !important;
-    transition: all 0.3s ease !important;
+    cursor: pointer !important;
 }
 
 .layout-menu-toggle:hover {
-    color: #666 !important;
-    background: rgba(0,0,0,0.1) !important;
+    color: #333 !important;
+    background: rgba(0,0,0,0.05) !important;
+    text-decoration: none !important;
 }
 
-/* Prevenir scroll del body cuando el menú está abierto */
-body.menu-open {
-    overflow: hidden;
+.layout-menu-toggle:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Asegurar que el navbar mantenga su tamaño */
+.layout-navbar {
+    min-height: 60px !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Asegurar que el contenido mantenga su tamaño */
+html, body {
+    overflow-x: hidden !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Responsive: en pantallas pequeñas */
+@media (max-width: 1199px) {
+    .layout-menu {
+        left: -260px !important;
+    }
+    
+    .layout-menu.show {
+        left: 0 !important;
+    }
+    
+    .layout-page {
+        margin-left: 0 !important;
+    }
+    
+    /* Overlay para móvil */
+    .layout-menu-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        z-index: 1040 !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transition: opacity 0.3s ease, visibility 0.3s ease !important;
+    }
+    
+    .layout-menu-overlay.show {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    body.menu-open {
+        overflow: hidden !important;
+    }
+    
+    .navbar-logo {
+        display: flex !important;
+    }
+}
+
+/* Prevenir cualquier zoom o escala */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    html {
+        zoom: 1 !important;
+        -webkit-text-size-adjust: 100% !important;
+    }
 }
 CSS;
 
 $this->registerCss($css);
 
-// JavaScript para controlar el comportamiento del menú móvil en todas las pantallas
+// JavaScript simplificado sin eventos problemáticos
 $js = <<<JS
 document.addEventListener('DOMContentLoaded', function() {
     var layoutMenu = document.getElementById('layout-menu');
-    var menuToggle = document.querySelector('.layout-menu-toggle');
-    var menuToggleAside = document.querySelector('.layout-menu-toggle'); // Botón en el aside
-    var menuToggleNavbar = document.querySelector('.layout-menu-toggle a'); // Botón en el navbar
+    var menuToggleNavbar = document.querySelector('.layout-menu-toggle a');
     var body = document.body;
     var overlay;
     
-    // Crear overlay
+    // Verificar tamaño de pantalla
+    function isMobile() {
+        return window.innerWidth < 1200;
+    }
+    
+    // Crear overlay para móvil
     function createOverlay() {
-        if (!overlay) {
+        if (!overlay && isMobile()) {
             overlay = document.createElement('div');
             overlay.className = 'layout-menu-overlay';
             body.appendChild(overlay);
             
-            // Cerrar menú al hacer clic en el overlay
             overlay.addEventListener('click', function() {
-                closeMenu();
+                closeMobileMenu();
             });
         }
     }
     
-    // Abrir menú
-    function openMenu() {
+    // Comportamiento para escritorio
+    function toggleDesktopMenu() {
+        var isCollapsed = layoutMenu.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            layoutMenu.classList.remove('collapsed');
+            body.classList.remove('menu-collapsed');
+            localStorage.setItem('menuCollapsed', 'false');
+        } else {
+            layoutMenu.classList.add('collapsed');
+            body.classList.add('menu-collapsed');
+            localStorage.setItem('menuCollapsed', 'true');
+        }
+    }
+    
+    // Comportamiento para móvil
+    function openMobileMenu() {
         createOverlay();
         layoutMenu.classList.add('show');
-        overlay.classList.add('show');
+        if (overlay) {
+            overlay.classList.add('show');
+        }
         body.classList.add('menu-open');
     }
     
-    // Cerrar menú
-    function closeMenu() {
+    function closeMobileMenu() {
         layoutMenu.classList.remove('show');
         if (overlay) {
             overlay.classList.remove('show');
@@ -530,25 +676,41 @@ document.addEventListener('DOMContentLoaded', function() {
         body.classList.remove('menu-open');
     }
     
-    // Toggle menú
-    function toggleMenu() {
+    function toggleMobileMenu() {
         if (layoutMenu.classList.contains('show')) {
-            closeMenu();
+            closeMobileMenu();
         } else {
-            openMenu();
+            openMobileMenu();
         }
     }
     
-    // Event listener para el botón hamburger del aside
-    if (menuToggleAside) {
-        menuToggleAside.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleMenu();
-        });
+    // Función principal de toggle
+    function toggleMenu() {
+        if (isMobile()) {
+            toggleMobileMenu();
+        } else {
+            toggleDesktopMenu();
+        }
     }
     
-    // Event listener para el botón hamburger del navbar
+    // Restaurar estado del menú
+    function restoreMenuState() {
+        if (!isMobile()) {
+            var isCollapsed = localStorage.getItem('menuCollapsed') === 'true';
+            if (isCollapsed) {
+                layoutMenu.classList.add('collapsed');
+                body.classList.add('menu-collapsed');
+            } else {
+                layoutMenu.classList.remove('collapsed');
+                body.classList.remove('menu-collapsed');
+            }
+        } else {
+            layoutMenu.classList.remove('collapsed');
+            body.classList.remove('menu-collapsed');
+        }
+    }
+    
+    // Solo event listener esencial
     if (menuToggleNavbar) {
         menuToggleNavbar.addEventListener('click', function(e) {
             e.preventDefault();
@@ -557,23 +719,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Cerrar menú al hacer clic en un enlace directo
+    // Cerrar menú móvil al hacer clic en enlaces
     document.querySelectorAll('.menu-item .menu-link:not([data-bs-toggle="collapse"])').forEach(function(link) {
         link.addEventListener('click', function() {
-            setTimeout(function() {
-                closeMenu();
-            }, 150);
+            if (isMobile()) {
+                setTimeout(closeMobileMenu, 150);
+            }
         });
     });
     
-    // Cerrar menú con tecla Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && layoutMenu.classList.contains('show')) {
-            closeMenu();
-        }
+    // Manejar resize con timeout
+    var resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(restoreMenuState, 250);
     });
     
-    // No agregar ningún event listener a los submenús - dejar que Bootstrap maneje todo
+    // Inicializar
+    restoreMenuState();
 });
 JS;
 
