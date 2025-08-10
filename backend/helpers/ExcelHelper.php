@@ -18,6 +18,8 @@ use Yii;
 use PhpOffice\PhpSpreadsheet\Calculation\DateTimeExcel\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\CellIterator;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\Yaml\Yaml;
@@ -274,20 +276,101 @@ class ExcelHelper
             ],
         ];
 
-        // Encabezados principales
-        $activeWorksheet->setCellValue("A1", "Movimiento*");
+        // Configurar bordes ANTES de cualquier otro estilo para no sobrescribir RichText
+        $borderStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'E0E0E0']
+                ]
+            ]
+        ];
+        $activeWorksheet->getStyle('A1:N5000')->applyFromArray($borderStyle);
+
+        // Aplicar estilo centrado ANTES de configurar RichText para no sobrescribir
+        $activeWorksheet->getStyle('A1:N1')->applyFromArray($centerStyle);
+
+        // Encabezados principales con asteriscos rojos para campos obligatorios
+        // Movimiento* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Movimiento');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("A1", $richText);
+        
+        // Clave - opcional
         $activeWorksheet->setCellValue("D1", "Clave");
-        $activeWorksheet->setCellValue("C1", "Insumo*");
-        $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia)*");
-        $activeWorksheet->setCellValue("E1", "Proveedor*");
-        $activeWorksheet->setCellValue("F1", "Tipo de Pago*");
+        
+        // Insumo* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Insumo');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("C1", $richText);
+        
+        // Fecha* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Fecha (año-mes-dia)');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("B1", $richText);
+        
+        // Proveedor* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Proveedor');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("E1", $richText);
+        
+        // Tipo de Pago* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Tipo de Pago');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("F1", $richText);
+        
+        // Factura - opcional
         $activeWorksheet->setCellValue("G1", "Factura");
-        $activeWorksheet->setCellValue("H1", "Centro de Consumo*");
-        $activeWorksheet->setCellValue("I1", "Cantidad*");
-        $activeWorksheet->setCellValue("J1", "Precio de Compra*");
+        
+        // Centro de Consumo* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Centro de Consumo');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("H1", $richText);
+        
+        // Cantidad* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Cantidad');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("I1", $richText);
+        
+        // Precio de Compra* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Precio de Compra');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("J1", $richText);
+        
+        // Impuesto - opcional
         $activeWorksheet->setCellValue("K1", "Impuesto");
-        $activeWorksheet->setCellValue("L1", "Precio Unitario*");
-        $activeWorksheet->setCellValue("M1", "Total*");
+        
+        // Precio Unitario* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Precio Unitario');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("L1", $richText);
+        
+        // Total* - obligatorio (solo el asterisco en rojo)
+        $richText = new RichText();
+        $richText->createText('Total');
+        $asterisk = $richText->createTextRun('*');
+        $asterisk->getFont()->setColor(new Color('#FF0000'));
+        $activeWorksheet->setCellValue("M1", $richText);
+        
+        // Observaciones - opcional
         $activeWorksheet->setCellValue("N1", "Observaciones");
 
         // Agregar comentarios descriptivos a los encabezados
@@ -375,23 +458,11 @@ class ExcelHelper
         $comment->setWidth('450px');
         $comment->setHeight('80px');
 
-        // Aplicar estilos y configurar anchos
-        $activeWorksheet->getStyle('A1:N1')->applyFromArray($centerStyle);
-        $activeWorksheet->freezePane('E2');
+        // Aplicar estilo centrado a todas las celdas de datos (sin incluir encabezados que ya tienen RichText)
+        $activeWorksheet->freezePane('C2');
 
         // Aplicar estilo centrado a todas las celdas de datos
         $activeWorksheet->getStyle('A2:N5000')->applyFromArray($centerStyle);
-
-        // Agregar bordes finos blancos a toda la tabla para mejor visualización
-        $borderStyle = [
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['rgb' => 'E0E0E0']
-                ]
-            ]
-        ];
-        $activeWorksheet->getStyle('A1:N5000')->applyFromArray($borderStyle);
 
         // Configurar anchos de columnas
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Movimiento
@@ -665,22 +736,21 @@ class ExcelHelper
             // Aplicar validación de datos a la columna de centro de consumo (columna H) en la hoja principal
             if ($ccRow > 2) {
                 $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
-                $consumptionCenterValidation = $mainSheet->getCell('H2')->getDataValidation();
-                $consumptionCenterValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-                $consumptionCenterValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $consumptionCenterValidation->setAllowBlank(true);
-                $consumptionCenterValidation->setShowInputMessage(true);
-                $consumptionCenterValidation->setShowErrorMessage(true);
-                $consumptionCenterValidation->setShowDropDown(true);
-                $consumptionCenterValidation->setErrorTitle('Error de entrada');
-                $consumptionCenterValidation->setError('Este valor no es admitido. Debe seleccionar un centro de consumo válido.');
-                $consumptionCenterValidation->setPromptTitle('Selecciona un centro de consumo');
-                $consumptionCenterValidation->setPrompt('Por favor, selecciona un centro de consumo del desplegable. Sólo aplica si el movimiento es una salida.');
-                $consumptionCenterValidation->setFormula1('\'Centros de Consumo\'!$A$2:$A$' . ($ccRow - 1));
-
-                // Aplicar validación a múltiples filas
+                // Validación personalizada: solo permite capturar datos si el movimiento es "Salida"
                 for ($i = 2; $i <= 5000; $i++) {
-                    $mainSheet->getCell("H$i")->setDataValidation(clone $consumptionCenterValidation);
+                    $validation = $mainSheet->getCell("H$i")->getDataValidation();
+                    $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
+                    $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                    $validation->setAllowBlank(false);
+                    $validation->setShowInputMessage(true);
+                    $validation->setShowErrorMessage(true);
+                    $validation->setErrorTitle('Solo para SALIDAS');
+                    $validation->setError('Solo puedes llenar esta celda si el movimiento es una SALIDA.');
+                    $validation->setPromptTitle('Centro de Consumo');
+                    $validation->setPrompt('Solo puedes llenar esta celda si el movimiento es una SALIDA.');
+                    // Fórmula que valida: SI la celda H está vacía O el movimiento es "Salida", entonces es válido
+                    $validation->setFormula1('=O(H'.$i.'="",A'.$i.'="Salida")');
+                    $mainSheet->getCell("H$i")->setDataValidation($validation);
                 }
             }
         }
