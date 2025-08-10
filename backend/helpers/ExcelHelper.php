@@ -488,16 +488,67 @@ class ExcelHelper
                 $ingredientValidation->setPrompt('Selecciona un insumo del desplegable. También se completa automáticamente al seleccionar una clave.');
                 $ingredientValidation->setFormula1('Insumos!$B$2:$B$' . ($row - 1));
 
+                // Validación para columna I (Cantidad) - solo números decimales positivos
+                $quantityValidation = $mainSheet->getCell('I2')->getDataValidation();
+                $quantityValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+                $quantityValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $quantityValidation->setAllowBlank(true);
+                $quantityValidation->setShowInputMessage(true);
+                $quantityValidation->setShowErrorMessage(true);
+                $quantityValidation->setErrorTitle('Error de entrada');
+                $quantityValidation->setError('Solo se permiten números decimales positivos (ej: 5, 2.5, 10.75).');
+                $quantityValidation->setPromptTitle('Cantidad');
+                $quantityValidation->setPrompt('Ingrese la cantidad como número decimal positivo.');
+                $quantityValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHAN);
+                $quantityValidation->setFormula1(0);
+
+                // Validación para columna J (Precio de Compra) - solo números decimales positivos
+                $priceValidation = $mainSheet->getCell('J2')->getDataValidation();
+                $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+                $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $priceValidation->setAllowBlank(true);
+                $priceValidation->setShowInputMessage(true);
+                $priceValidation->setShowErrorMessage(true);
+                $priceValidation->setErrorTitle('Error de entrada');
+                $priceValidation->setError('Solo se permiten números decimales positivos (ej: 25.50, 100, 15.99).');
+                $priceValidation->setPromptTitle('Precio de Compra');
+                $priceValidation->setPrompt('Ingrese el precio como número decimal positivo.');
+                $priceValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
+                $priceValidation->setFormula1(0);
+
+                // Validación para columna K (Impuesto) - solo números decimales positivos o cero
+                $taxValidation = $mainSheet->getCell('K2')->getDataValidation();
+                $taxValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+                $taxValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $taxValidation->setAllowBlank(true);
+                $taxValidation->setShowInputMessage(true);
+                $taxValidation->setShowErrorMessage(true);
+                $taxValidation->setErrorTitle('Error de entrada');
+                $taxValidation->setError('Solo se permiten números decimales positivos o cero (ej: 0, 16.5, 25.00).');
+                $taxValidation->setPromptTitle('Impuesto');
+                $taxValidation->setPrompt('Ingrese el impuesto como número decimal positivo o cero.');
+                $taxValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
+                $taxValidation->setFormula1(0);
+
                 // Aplicar validaciones y fórmulas a todas las filas
                 for ($i = 2; $i <= 5000; $i++) {
                     // Aplicar validación a columna A (Movimiento)
                     $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
                     
-                    // Aplicar validación a columna B (Clave)
+                    // Aplicar validación a columna D (Clave)
                     $mainSheet->getCell("D$i")->setDataValidation(clone $keyValidation);
                     
                     // Aplicar validación a columna C (Insumo)
                     $mainSheet->getCell("C$i")->setDataValidation(clone $ingredientValidation);
+                    
+                    // Aplicar validación a columna I (Cantidad) - solo números
+                    $mainSheet->getCell("I$i")->setDataValidation(clone $quantityValidation);
+                    
+                    // Aplicar validación a columna J (Precio de Compra) - solo números
+                    $mainSheet->getCell("J$i")->setDataValidation(clone $priceValidation);
+                    
+                    // Aplicar validación a columna K (Impuesto) - solo números
+                    $mainSheet->getCell("K$i")->setDataValidation(clone $taxValidation);
                     
                     // Fórmula BUSCARV en columna C (Insumo) como solicitó el usuario
                     $mainSheet->setCellValue("C$i", "=IF(D$i<>\"\",VLOOKUP(D$i,Insumos!\$A\$2:\$B\$1000,2,FALSE),\"\")");
@@ -851,11 +902,12 @@ if ($ccRow > 2) {
         for ($i = 2; $i <= 5000; $i++) {
             // Fórmula para Precio Unitario (Columna L): (Precio de compra + Impuesto) / Cantidad - solo si es Entrada
             // Columna J = Precio de Compra, Columna K = Impuesto, Columna I = Cantidad
-            $mainSheet->setCellValue("L$i", "=IF(AND(A$i=\"Entrada\",I$i>0,OR(J$i>0,K$i>0)),((IFERROR(J$i,0)+IFERROR(K$i,0))/I$i),\"\")");
+            // Mejorada para evitar #¡VALOR! cuando no hay precio de compra
+            $mainSheet->setCellValue("L$i", "=IF(AND(A$i=\"Entrada\",ISNUMBER(I$i),I$i>0,OR(ISNUMBER(J$i),ISNUMBER(K$i))),IFERROR((IFERROR(J$i,0)+IFERROR(K$i,0))/I$i,\"\"),\"\")");
             
             // Fórmula para Total (Columna M): Cantidad * Precio Unitario - solo si es Entrada
             // Columna I = Cantidad, Columna L = Precio Unitario
-            $mainSheet->setCellValue("M$i", "=IF(AND(A$i=\"Entrada\",I$i>0,L$i>0),I$i*L$i,\"\")");
+            $mainSheet->setCellValue("M$i", "=IF(AND(A$i=\"Entrada\",ISNUMBER(I$i),I$i>0,ISNUMBER(L$i),L$i>0),IFERROR(I$i*L$i,\"\"),\"\")");
         }
         
         // Proteger las celdas de fórmulas (L y M) para que no se puedan editar
