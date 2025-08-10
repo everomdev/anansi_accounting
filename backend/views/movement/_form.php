@@ -78,8 +78,8 @@ $providerNames = array_values(
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <!-- Primera fila: Solo Insumo -->
-                <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                <!-- Primera fila: Insumo y Fecha -->
+                <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8">
                     <?= $form->field($model, 'ingredient_id')->widget(\kartik\select2\Select2::class, [
                         'data' => \yii\helpers\ArrayHelper::map($stock, 'id', 'label'),
                         'options' => [
@@ -89,6 +89,22 @@ $providerNames = array_values(
                             'width' => '60%',
                         ]
                     ]) ?>
+                </div>
+
+                <!-- Campo para seleccionar fecha de creación -->
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
+                    <?= $form->field($model, 'created_at')->widget(\kartik\date\DatePicker::class, [
+                        'options' => [
+                            'placeholder' => 'Seleccionar fecha...',
+                            'data-setting' => 'all'
+                        ],
+                        'pluginOptions' => [
+                            'autoclose' => true,
+                            'format' => 'yyyy-mm-dd',
+                            'todayHighlight' => true,
+                            'orientation' => 'bottom left'
+                        ]
+                    ])->label('Fecha del movimiento') ?>
                 </div>
 
                 <!-- Segunda fila: Proveedor, Tipo de pago y Cantidad -->
