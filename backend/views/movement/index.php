@@ -37,7 +37,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
         </div>
         <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Export Movements'), ['movement/export-movements'], ['class' => 'btn btn-warning']) ?>
+            <?= Html::a(Yii::t('app', 'Exportar movimientos'), ['movement/export-movements'], ['class' => 'btn btn-warning']) ?>
         </div>
         <div class="p-2">
             <?= Html::a(Yii::t('app', 'Balance'), "#", ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-balance']) ?>
