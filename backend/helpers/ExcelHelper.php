@@ -414,7 +414,7 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('N')->setWidth(30); // Observaciones
 
         // Configurar formato de fecha para la columna B (Fecha)
-        $spreadsheet->getActiveSheet()->getStyle('B2:B5000')
+        $spreadsheet->getActiveSheet()->getStyle('B2:B500')
             ->getNumberFormat()
             ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
 
@@ -432,9 +432,15 @@ class ExcelHelper
 
             $row = 2;
             foreach ($ingredients as $ingredient) {
+                // Concatenar el nombre del insumo con la unidad de medida entre paréntesis
+                $ingredientWithUnit = $ingredient->ingredient;
+                if (!empty($ingredient->um)) {
+                    $ingredientWithUnit .= ' (' . $ingredient->um . ')';
+                }
+                
                 $ingredientsSheet->setCellValue("A$row", $ingredient->key);
-                $ingredientsSheet->setCellValue("B$row", $ingredient->ingredient);
-                $ingredientsSheet->setCellValue("C$row", $ingredient->portion_um);
+                $ingredientsSheet->setCellValue("B$row", $ingredientWithUnit);
+                $ingredientsSheet->setCellValue("C$row", $ingredient->um);
                 $row++;
             }
 
@@ -485,7 +491,7 @@ class ExcelHelper
                 $ingredientValidation->setErrorTitle('Error de entrada');
                 $ingredientValidation->setError('Este valor no es admitido. Debe seleccionar un insumo válido.');
                 $ingredientValidation->setPromptTitle('Selecciona un insumo');
-                $ingredientValidation->setPrompt('Selecciona un insumo del desplegable. También se completa automáticamente al seleccionar una clave.');
+                $ingredientValidation->setPrompt('Selecciona un insumo de la lista desplegable. También se completa automáticamente al seleccionar una clave.');
                 $ingredientValidation->setFormula1('Insumos!$B$2:$B$' . ($row - 1));
 
                 // Validación para columna I (Cantidad) - solo números decimales positivos
@@ -531,7 +537,7 @@ class ExcelHelper
                 $taxValidation->setFormula1(0);
 
                 // Aplicar validaciones y fórmulas a todas las filas
-                for ($i = 2; $i <= 5000; $i++) {
+                for ($i = 2; $i <= 500; $i++) {
                     // Aplicar validación a columna A (Movimiento)
                     $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
                     
@@ -562,7 +568,7 @@ class ExcelHelper
                 $conditionalFormatting->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
                 $conditionalFormatting->getStyle()->getFill()->getStartColor()->setRGB('D3D3D3'); // Gris claro
 
-                $mainSheet->getStyle('D2:D5000')->setConditionalStyles([$conditionalFormatting]);
+                $mainSheet->getStyle('D2:D500')->setConditionalStyles([$conditionalFormatting]);
             }
         }
 
@@ -693,7 +699,7 @@ class ExcelHelper
                 $providerValidation->setFormula1('Proveedores!$A$2:$A$' . ($row - 1));
 
                 // Aplicar validación a múltiples filas
-                for ($i = 2; $i <= 5000; $i++) {
+                for ($i = 2; $i <= 500; $i++) {
                     $mainSheet->getCell("E$i")->setDataValidation(clone $providerValidation);
                 }
             }
@@ -755,7 +761,7 @@ if ($ccRow > 2) {
     $baseValidation->setPrompt('Selecciona el centro de consumo solo cuando el movimiento es SALIDA.');
 
     // 4️⃣ Aplicar la validación a cada fila con fórmula condicional
-    for ($i = 2; $i <= 5000; $i++) {
+    for ($i = 2; $i <= 500; $i++) {
         $validation = clone $baseValidation;
         // En español: SI — en inglés: IF
         $validation->setFormula1("=SI(\$A{$i}=\"Salida\",ListaCC,ListaVacia)");
@@ -797,7 +803,7 @@ if ($ccRow > 2) {
         $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
         
         // Para cada fila, crear una validación dinámica que dependa del proveedor seleccionado
-        for ($i = 2; $i <= 5000; $i++) {
+        for ($i = 2; $i <= 500; $i++) {
             $paymentValidation = $mainSheet->getCell("F$i")->getDataValidation();
             $paymentValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
             $paymentValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -829,7 +835,7 @@ if ($ccRow > 2) {
         $providerConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $providerConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $providerConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('E2:E5000')->setConditionalStyles([$providerConditional]);
+        $mainSheet->getStyle('E2:E500')->setConditionalStyles([$providerConditional]);
 
         // Columna F (Tipo de Pago) - gris si es Salida
         $paymentConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -838,7 +844,7 @@ if ($ccRow > 2) {
         $paymentConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $paymentConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $paymentConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('F2:F5000')->setConditionalStyles([$paymentConditional]);
+        $mainSheet->getStyle('F2:F500')->setConditionalStyles([$paymentConditional]);
 
         // Columna G (Factura) - gris si es Salida
         $invoiceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -847,7 +853,7 @@ if ($ccRow > 2) {
         $invoiceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $invoiceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $invoiceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('G2:G5000')->setConditionalStyles([$invoiceConditional]);
+        $mainSheet->getStyle('G2:G500')->setConditionalStyles([$invoiceConditional]);
 
         // Columna H (Centro de Consumo) - gris si es Entrada
         $consumptionCenterConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -856,7 +862,7 @@ if ($ccRow > 2) {
         $consumptionCenterConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $consumptionCenterConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $consumptionCenterConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('H2:H5000')->setConditionalStyles([$consumptionCenterConditional]);
+        $mainSheet->getStyle('H2:H500')->setConditionalStyles([$consumptionCenterConditional]);
 
         // Columna J (Precio de Compra) - gris si es Salida
         $priceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -865,7 +871,7 @@ if ($ccRow > 2) {
         $priceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $priceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $priceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('J2:J5000')->setConditionalStyles([$priceConditional]);
+        $mainSheet->getStyle('J2:J500')->setConditionalStyles([$priceConditional]);
 
         // Columna K (Impuesto) - gris si es Salida
         $taxConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -874,7 +880,7 @@ if ($ccRow > 2) {
         $taxConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $taxConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $taxConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('K2:K5000')->setConditionalStyles([$taxConditional]);
+        $mainSheet->getStyle('K2:K500')->setConditionalStyles([$taxConditional]);
 
         // Columna L (Precio Unitario) - gris si es Salida
         $unitPriceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -883,7 +889,7 @@ if ($ccRow > 2) {
         $unitPriceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $unitPriceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $unitPriceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('L2:L5000')->setConditionalStyles([$unitPriceConditional]);
+        $mainSheet->getStyle('L2:L500')->setConditionalStyles([$unitPriceConditional]);
 
         // Columna M (Total) - gris si es Salida
         $totalConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -892,14 +898,14 @@ if ($ccRow > 2) {
         $totalConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $totalConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $totalConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('M2:M5000')->setConditionalStyles([$totalConditional]);
+        $mainSheet->getStyle('M2:M500')->setConditionalStyles([$totalConditional]);
 
         // Agregar fórmulas automáticas para cálculos
         // Obtener la hoja principal
         $mainSheet = $spreadsheet->getSheet(0);
         
         // Para cada fila de datos (desde la fila 2), agregar las fórmulas de cálculo
-        for ($i = 2; $i <= 5000; $i++) {
+        for ($i = 2; $i <= 500; $i++) {
             // Fórmula para Precio Unitario (Columna L): (Precio de compra + Impuesto) / Cantidad - solo si es Entrada
             // Columna J = Precio de Compra, Columna K = Impuesto, Columna I = Cantidad
             // Mejorada para evitar #¡VALOR! cuando no hay precio de compra
@@ -911,12 +917,12 @@ if ($ccRow > 2) {
         }
         
         // Proteger las celdas de fórmulas (L y M) para que no se puedan editar
-        $mainSheet->getStyle('L2:L5000')->getProtection()->setLocked(true);
-        $mainSheet->getStyle('M2:M5000')->getProtection()->setLocked(true);
-        
+        $mainSheet->getStyle('L2:L500')->getProtection()->setLocked(true);
+        $mainSheet->getStyle('M2:M500')->getProtection()->setLocked(true);
+
         // Aplicar formato numérico a las columnas de cálculo
-        $mainSheet->getStyle('I2:M5000')->getNumberFormat()->setFormatCode('#,##0.00');
-        $mainSheet->getStyle('L2:M5000')->getNumberFormat()->setFormatCode('#,##0.00');
+        $mainSheet->getStyle('I2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
+        $mainSheet->getStyle('L2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
 
         // Crear hoja de leyenda
         $legendSheet = $spreadsheet->createSheet();
@@ -992,9 +998,9 @@ if ($ccRow > 2) {
         $mainSheet = $spreadsheet->getActiveSheet();
         
         // Desbloquear las celdas que sí se pueden editar (todas excepto L y M que ya están bloqueadas)
-        $mainSheet->getStyle('A2:K5000')->getProtection()->setLocked(false);
-        $mainSheet->getStyle('N2:N5000')->getProtection()->setLocked(false);
-        
+        $mainSheet->getStyle('A2:K500')->getProtection()->setLocked(false);
+        $mainSheet->getStyle('N2:N500')->getProtection()->setLocked(false);
+
         // Habilitar protección de la hoja (las celdas L y M ya están bloqueadas)
         $mainSheet->getProtection()->setSheet(true);
         $mainSheet->getProtection()->setSort(false);
@@ -1451,6 +1457,39 @@ if ($ccRow > 2) {
                     ->where(['like', 'ingredient', $movement['ingredient_name'], false])
                     ->andWhere(['business_id' => $movement['business_id']])
                     ->one();
+            }
+            
+            // 4. Para movimientos de salida, búsqueda más flexible - remover paréntesis y unidades
+            if (!$ingredient && !empty($movement['ingredient_name']) && $movement['type'] === Movement::TYPE_OUTPUT) {
+                // Limpiar el nombre: remover contenido entre paréntesis y espacios extra
+                $cleanIngredientName = trim(preg_replace('/\s*\([^)]*\)\s*/', '', $movement['ingredient_name']));
+                
+                if (!empty($cleanIngredientName)) {
+                    // Buscar con el nombre limpio
+                    $ingredient = IngredientStock::find()
+                        ->where(['like', 'ingredient', $cleanIngredientName, false])
+                        ->andWhere(['business_id' => $movement['business_id']])
+                        ->one();
+                }
+                
+                // Si aún no se encuentra, buscar por palabras clave
+                if (!$ingredient) {
+                    $words = explode(' ', $cleanIngredientName);
+                    if (count($words) > 1) {
+                        // Buscar por la primera palabra significativa (más de 2 caracteres)
+                        foreach ($words as $word) {
+                            if (strlen(trim($word)) > 2) {
+                                $ingredient = IngredientStock::find()
+                                    ->where(['like', 'ingredient', trim($word), false])
+                                    ->andWhere(['business_id' => $movement['business_id']])
+                                    ->one();
+                                if ($ingredient) {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             
             // Limpiar datos innecesarios
