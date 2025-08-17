@@ -181,7 +181,7 @@ $this->title = Yii::t('app', "Menu Analysis");
                                  ($salesPosition <= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
                 ?>                <tr>
                     <td><?= $item['name'] ?></td>
-                    <td><?= formatPercentage($item['cost_percent']) ?></td>
+                    <td><?= formatPercentage($item['cost_percent'] * 100) ?></td>
                     <td style="background-color: <?= $colorCostPercent ?>"><strong class="text-white"><?= $costPercentPosition ?></strong></td>
                     <td><?= number_format($item['sales'], 0) ?></td>
                     <td style="background-color: <?= $colorPopularity ?>"><strong class="text-white"><?= $popularityPosition ?></strong></td>

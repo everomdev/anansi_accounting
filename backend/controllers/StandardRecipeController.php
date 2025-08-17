@@ -1463,102 +1463,83 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     $currentYear = $year ?: date('Y');
     $selectedMonth = $month;
     
-    // Agregar filtros de business_id a las consultas
-    $businessFilter = [
-        'business_id' => $business->id
-    ];    // Crear subquery para ventas de recetas desde monthly_sales
-    $recipesSalesSubquery = (new \yii\db\Query())
-        ->select([
-            'model_id',
-            'total_sales' => 'SUM(sales)'
-        ])
-        ->from('monthly_sales')
+    // Obtener recetas con ActiveRecord para poder usar los métodos del modelo
+    $recipesQuery = StandardRecipe::find()
         ->where([
-            'model_type' => MonthlySales::TYPE_RECIPE,
-            'year' => $currentYear
-        ]);
-    
-    // Agregar filtro por mes si está especificado
-    if ($selectedMonth !== null) {
-        $recipesSalesSubquery->andWhere(['month' => $selectedMonth]);
-    }
-    
-    $recipesSalesSubquery->groupBy('model_id');
-
-    // Obtener recetas con ventas desde monthly_sales
-    $query = (new \yii\db\Query())
-        ->select([
-            'id' => 'sr.id',
-            'name' => 'sr.title',
-            'type' => new \yii\db\Expression("'recipe'"),
-            'type_of_recipe' => 'sr.type_of_recipe',
-            'price' => 'sr.price',
-            'cost' => 'sr.custom_cost',
-            'sales' => new \yii\db\Expression('COALESCE(ms.total_sales, 0)'),
-            'cost_percent' => new \yii\db\Expression('(sr.custom_cost / NULLIF(sr.price, 0)) * 100'),
-            'sales_value' => new \yii\db\Expression('sr.price * COALESCE(ms.total_sales, 0)')
-        ])
-        ->from(['sr' => 'standard_recipe'])
-        ->leftJoin(['ms' => $recipesSalesSubquery], 'sr.id = ms.model_id')
-        ->where([
-            'sr.business_id' => $business->id,
-            'sr.in_menu' => true,
-            'sr.in_construction' => 0,
-            'sr.type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+            'business_id' => $business->id,
+            'in_menu' => true,
+            'in_construction' => 0,
+            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
         ]);
 
     if ($family != 'all') {
-        $query->andWhere(['sr.type_of_recipe' => $family]);
-    }    // Crear subquery para ventas de combos desde monthly_sales
-    $combosSalesSubquery = (new \yii\db\Query())
-        ->select([
-            'model_id',
-            'total_sales' => 'SUM(sales)'
-        ])
-        ->from('monthly_sales')
-        ->where([
-            'model_type' => MonthlySales::TYPE_MENU,
-            'year' => $currentYear
-        ]);
-    
-    // Agregar filtro por mes si está especificado
-    if ($selectedMonth !== null) {
-        $combosSalesSubquery->andWhere(['month' => $selectedMonth]);
+        $recipesQuery->andWhere(['type_of_recipe' => $family]);
     }
     
-    $combosSalesSubquery->groupBy('model_id');
+    $recipes = $recipesQuery->all();
 
-    // Obtener combos con ventas desde monthly_sales
-    $combosQuery = (new \yii\db\Query())
-        ->select([
-            'id' => 'm.id',
-            'name' => 'm.name',
-            'type' => new \yii\db\Expression("'combo'"),
-            'type_of_recipe' => 'rc.name',
-            'price' => 'm.total_price',
-            'cost' => 'm.total_cost',
-            'sales' => new \yii\db\Expression('COALESCE(ms.total_sales, 0)'),
-            'cost_percent' => new \yii\db\Expression('(m.total_cost / NULLIF(m.total_price, 0)) * 100'),
-            'sales_value' => new \yii\db\Expression('m.total_price * COALESCE(ms.total_sales, 0)')
-        ])
-        ->from(['m' => 'menu'])
-        ->innerJoin(['rc' => 'recipe_category'], 'rc.id = m.category_id')
-        ->leftJoin(['ms' => $combosSalesSubquery], 'm.id = ms.model_id')
+    // Obtener combos con ActiveRecord
+    $combosQuery = Menu::find()
+        ->innerJoin('recipe_category', 'recipe_category.id = menu.category_id')
         ->where([
-            'm.business_id' => $business->id,
-            'm.in_menu' => true,
+            'menu.business_id' => $business->id,
+            'in_menu' => true,
         ]);
 
     if ($family != 'all') {
-        $combosQuery->andWhere(['rc.name' => $family]);
+        $combosQuery->andWhere(['recipe_category.name' => $family]);
     }
+    
+    $combos = $combosQuery->all();
 
-    // Unir ambas consultas y ejecutar una sola query
-    $combinedQuery = (new \yii\db\Query())
-        ->from(['combined' => $query->union($combosQuery)]);
-
-    // Obtener todos los datos en un solo fetch
-    $data = $combinedQuery->all();
+    // Convertir a formato array para la vista, pero calculando correctamente
+    $data = [];
+    
+    // Procesar recetas
+    foreach ($recipes as $recipe) {
+        // Obtener ventas desde monthly_sales
+        $sales = 0;
+        if ($selectedMonth !== null) {
+            $sales = MonthlySales::getSales(MonthlySales::TYPE_RECIPE, $recipe->id, $selectedMonth, $currentYear);
+        } else {
+            $sales = MonthlySales::getSales(MonthlySales::TYPE_RECIPE, $recipe->id, null, $currentYear);
+        }
+        
+        $data[] = [
+            'id' => $recipe->id,
+            'name' => $recipe->title,
+            'type' => 'recipe',
+            'type_of_recipe' => $recipe->type_of_recipe,
+            'price' => $recipe->price,
+            'cost' => $recipe->recipeLastPrice,  // Usar el método del modelo que calcula correctamente
+            'sales' => $sales,
+            'cost_percent' => $recipe->getCostPercent(),  // Usar el método del modelo
+            'sales_value' => $recipe->price * $sales
+        ];
+    }
+    
+    // Procesar combos
+    foreach ($combos as $combo) {
+        // Obtener ventas desde monthly_sales
+        $sales = 0;
+        if ($selectedMonth !== null) {
+            $sales = MonthlySales::getSales(MonthlySales::TYPE_MENU, $combo->id, $selectedMonth, $currentYear);
+        } else {
+            $sales = MonthlySales::getSales(MonthlySales::TYPE_MENU, $combo->id, null, $currentYear);
+        }
+        
+        $data[] = [
+            'id' => $combo->id,
+            'name' => $combo->name,
+            'type' => 'combo',
+            'type_of_recipe' => $combo->category->name ?? '',
+            'price' => $combo->total_price,
+            'cost' => $combo->total_cost,
+            'sales' => $sales,
+            'cost_percent' => $combo->getCostPercent(),  // Usar el método del modelo
+            'sales_value' => $combo->total_price * $sales
+        ];
+    }
 
     // Calcular total de ventas para Pareto
     $totalSales = array_sum(array_column($data, 'sales'));
