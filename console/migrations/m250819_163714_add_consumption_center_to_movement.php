@@ -2,10 +2,7 @@
 
 use yii\db\Migration;
 
-/**
- * Handles adding consumption_center_id to table `{{%movement}}`.
- */
-class m20250819_000001_add_consumption_center_to_movement extends Migration
+class m250819_163714_add_consumption_center_to_movement extends Migration
 {
     /**
      * {@inheritdoc}
@@ -43,5 +40,22 @@ class m20250819_000001_add_consumption_center_to_movement extends Migration
         
         // Eliminar columna
         $this->dropColumn('{{%movement}}', 'consumption_center_id');
+        
+        return true;
     }
+
+    /*
+    // Use up()/down() to run migration code without a transaction.
+    public function up()
+    {
+
+    }
+
+    public function down()
+    {
+        echo "m250819_163714_add_consumption_center_to_movement cannot be reverted.\n";
+
+        return false;
+    }
+    */
 }
