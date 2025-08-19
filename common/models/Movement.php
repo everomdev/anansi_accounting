@@ -24,10 +24,12 @@ use common\behaviors\NumberFormatterBehavior;
  * @property string|null $observations
  * @property int $ingredient_id
  * @property int $business_id
+ * @property int|null $consumption_center_id
  * @property string $created_at
  *
  * @property Business $business
  * @property IngredientStock $ingredient
+ * @property ConsumptionCenter $consumptionCenter
  */
 class Movement extends \yii\db\ActiveRecord
 {
@@ -78,14 +80,16 @@ class Movement extends \yii\db\ActiveRecord
     {        return [            
             [['type', 'quantity', 'ingredient_id', 'business_id'], 'required'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
-            [['ingredient_id', 'business_id'], 'integer'],
+            [['ingredient_id', 'business_id', 'consumption_center_id'], 'integer'],
             [['created_at'], 'safe'],
             [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
+            [['consumption_center_id'], 'exist', 'skipOnError' => true, 'targetClass' => ConsumptionCenter::className(), 'targetAttribute' => ['consumption_center_id' => 'id']],
             [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())],
             [['payment_type'], 'in', 'range' => array_keys(self::getFormattedPaymentMethods()), 'skipOnEmpty' => true],
-            [['provider'], 'validateProvider']
+            [['provider'], 'validateProvider'],
+            [['consumption_center_id'], 'validateConsumptionCenter']
         ];
     }
 
@@ -110,6 +114,7 @@ class Movement extends \yii\db\ActiveRecord
             'observations' => Yii::t('app', 'Observations'),
             'ingredient_id' => Yii::t('app', 'Resource'),
             'business_id' => Yii::t('app', 'Business ID'),
+            'consumption_center_id' => Yii::t('app', 'Centro de Consumo'),
             'created_at' => Yii::t('app', 'Created At'),
         ];
     }
@@ -198,6 +203,16 @@ class Movement extends \yii\db\ActiveRecord
     public function getIngredient()
     {
         return $this->hasOne(IngredientStock::className(), ['id' => 'ingredient_id']);
+    }
+
+    /**
+     * Gets query for [[ConsumptionCenter]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getConsumptionCenter()
+    {
+        return $this->hasOne(ConsumptionCenter::className(), ['id' => 'consumption_center_id']);
     }
 
     public static function getFormattedTypes()
@@ -332,6 +347,17 @@ class Movement extends \yii\db\ActiveRecord
                 ['name' => $this->provider]
             ])
             ->one();
+    }
+
+    /**
+     * Validar que el centro de consumo sea requerido para movimientos de salida
+     */
+    public function validateConsumptionCenter($attribute, $params)
+    {
+        // Solo validar para movimientos de salida
+        if ($this->type === self::TYPE_OUTPUT && empty($this->$attribute)) {
+            $this->addError($attribute, 'El centro de consumo es requerido para movimientos de salida.');
+        }
     }
 
 

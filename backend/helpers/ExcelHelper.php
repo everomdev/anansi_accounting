@@ -466,7 +466,22 @@ class ExcelHelper
                 $movementValidation->setPrompt('Seleccione el tipo de movimiento: Entrada o Salida.');
                 $movementValidation->setFormula1('"Entrada,Salida"');
                 
-                // Validación para columna B (Clave) - desplegable con todas las claves
+                // Validación para columna B (Fecha) - solo fechas desde 2025 usando validación custom
+                $dateValidation = $mainSheet->getCell('B2')->getDataValidation();
+                $dateValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
+                $dateValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+                $dateValidation->setAllowBlank(true);
+                $dateValidation->setShowInputMessage(true);
+                $dateValidation->setShowErrorMessage(true);
+                $dateValidation->setShowDropDown(false);
+                $dateValidation->setErrorTitle('Error de fecha');
+                $dateValidation->setError('Solo se permiten fechas desde el 1 de enero de 2025 en adelante. Formato: año-mes-día (ej: 2025-08-19)');
+                $dateValidation->setPromptTitle('Fecha del movimiento');
+                $dateValidation->setPrompt('Ingrese una fecha desde 2025 en adelante en formato año-mes-día (ej: 2025-08-19)');
+                // Fórmula personalizada que verifica que el año sea >= 2025
+                $dateValidation->setFormula1('AND(ISNUMBER(B2),YEAR(B2)>=2025)');
+                
+                // Validación para columna D (Clave) - desplegable con todas las claves
                 $keyValidation = $mainSheet->getCell('D2')->getDataValidation();
                 $keyValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
                 $keyValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -540,6 +555,11 @@ class ExcelHelper
                 for ($i = 2; $i <= 50; $i++) {
                     // Aplicar validación a columna A (Movimiento)
                     $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
+                    
+                    // Aplicar validación a columna B (Fecha) - crear validación específica para cada fila
+                    $rowDateValidation = clone $dateValidation;
+                    $rowDateValidation->setFormula1("AND(ISNUMBER(B$i),YEAR(B$i)>=2025)");
+                    $mainSheet->getCell("B$i")->setDataValidation($rowDateValidation);
                     
                     // Aplicar validación a columna D (Clave)
                     $mainSheet->getCell("D$i")->setDataValidation(clone $keyValidation);
@@ -764,6 +784,7 @@ if ($ccRow > 2) {
     for ($i = 2; $i <= 50; $i++) {
         $validation = clone $baseValidation;
         // Las fórmulas en Excel siempre deben estar en inglés: IF en lugar de SI
+        //revisar aqui
         $validation->setFormula1("=IF(\$A{$i}=\"Salida\",ListaCC,ListaVacia)");
         $mainSheet->getCell("H{$i}")->setDataValidation($validation);
     }
@@ -1085,7 +1106,7 @@ if ($ccRow > 2) {
         }
 
         $writer = new Xlsx($spreadsheet);
-        $fileName = 'Plantilla_para_importar_movimientos_de_entrada.xlsx';
+        $fileName = 'Plantilla_para_importar_movimientos.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
         $writer->save('php://output');
@@ -1317,16 +1338,22 @@ if ($ccRow > 2) {
                 // B - Fecha
                 try {
                     $dateValue = $cellIterator->current()->getValue();
+                    $currentTime = date('H:i:s'); // Hora actual del momento de importación
+                    
                     if (is_numeric($dateValue)) {
                         $createdAt = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateValue);
-                        $data['created_at'] = $createdAt->format('Y-m-d');
-                    } else {
+                        $data['created_at'] = $createdAt->format('Y-m-d') . ' ' . $currentTime;
+                    } else if (!empty($dateValue)) {
                         // Si no es numérico, intentar parsear como string de fecha
-                        $data['created_at'] = date('Y-m-d', strtotime($dateValue));
+                        $parsedDate = date('Y-m-d', strtotime($dateValue));
+                        $data['created_at'] = $parsedDate . ' ' . $currentTime;
+                    } else {
+                        // Si está vacío, usar fecha y hora actuales
+                        $data['created_at'] = date('Y-m-d H:i:s');
                     }
                 } catch (\Exception $e) {
                     $errors[] = "Fila $rowNumber: Error en formato de fecha";
-                    $data['created_at'] = date('Y-m-d'); // Fecha por defecto
+                    $data['created_at'] = date('Y-m-d H:i:s'); // Fecha y hora actuales por defecto
                 }
                 $cellIterator->next();
                
@@ -1392,9 +1419,31 @@ if ($ccRow > 2) {
                 
                 // H - Centro de Consumo (solo para salidas)
                 $consumptionCenterValue = trim($cellIterator->current()->getValue());
-                // Para movimientos de salida, el centro de consumo se guarda en el campo provider
+                
+                // Para movimientos de salida, buscar el centro de consumo por nombre
                 if ($data['type'] === Movement::TYPE_OUTPUT && !empty($consumptionCenterValue)) {
-                    $data['provider'] = $consumptionCenterValue;
+                    // Buscar el centro de consumo por nombre
+                    $consumptionCenter = ConsumptionCenter::find()
+                        ->where(['business_id' => $business->id])
+                        ->andWhere(['name' => $consumptionCenterValue])
+                        ->one();
+                    
+                    if ($consumptionCenter) {
+                        $data['consumption_center_id'] = $consumptionCenter->id;
+                    } else {
+                        // Si no existe, crear el centro de consumo automáticamente
+                        $newConsumptionCenter = new ConsumptionCenter();
+                        $newConsumptionCenter->name = $consumptionCenterValue;
+                        $newConsumptionCenter->business_id = $business->id;
+                        if ($newConsumptionCenter->save()) {
+                            $data['consumption_center_id'] = $newConsumptionCenter->id;
+                        } else {
+                            $data['consumption_center_id'] = null;
+                        }
+                    }
+                } else {
+                    // Para entradas, no usar centro de consumo
+                    $data['consumption_center_id'] = null;
                 }
                 $cellIterator->next();
                 
@@ -1490,14 +1539,14 @@ if ($ccRow > 2) {
             
             // Estrategia de búsqueda mejorada:
             // 1. Primero por clave si está disponible
-            if (!empty($movement['key'])) {
-                $ingredient = IngredientStock::find()
-                    ->where([
-                        'key' => $movement['key'],
-                        'business_id' => $movement['business_id']
-                    ])
-                    ->one();
-            }
+            // if (!empty($movement['key'])) {
+            //     $ingredient = IngredientStock::find()
+            //         ->where([
+            //             'key' => $movement['key'],
+            //             'business_id' => $movement['business_id']
+            //         ])
+            //         ->one();
+            // }
                 
             // 2. Si no se encuentra por clave, buscar por nombre limpio (sin paréntesis) exacto
             if (!$ingredient && !empty($cleanIngredientName)) {
@@ -1556,7 +1605,7 @@ if ($ccRow > 2) {
                 $movement['um'] = $ingredient->portion_um;
                 
                 // Validar que los movimientos de salida tengan centro de consumo
-                if ($movement['type'] === Movement::TYPE_OUTPUT && empty($movement['provider'])) {
+                if ($movement['type'] === Movement::TYPE_OUTPUT && empty($movement['consumption_center_id'])) {
                     $errors[] = "Fila $rowNumber: Los movimientos de salida deben tener un centro de consumo especificado en la columna H";
                     continue;
                 }

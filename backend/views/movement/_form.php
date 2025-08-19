@@ -107,10 +107,22 @@ $providerNames = array_values(
                     ])->label('Fecha del movimiento') ?>
                 </div>
 
-                <!-- Segunda fila: Proveedor, Tipo de pago y Cantidad -->
+                <!-- Segunda fila: Proveedor/Centro de Consumo, Tipo de pago y Cantidad -->
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
                     <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
-                        <?= $form->field($model, 'provider')->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\ConsumptionCenter::find()->all(), 'name', 'name'))->label(Yii::t('app', "Consumption Center")) ?>                    <?php else: ?>                        <?php 
+                        <?= $form->field($model, 'consumption_center_id')->dropDownList(
+                            \yii\helpers\ArrayHelper::map(
+                                \common\models\ConsumptionCenter::find()->where(['business_id' => $businessData['id']])->all(), 
+                                'id', 
+                                'name'
+                            ), 
+                            [
+                                'prompt' => 'Seleccionar centro de consumo',
+                                'class' => 'form-control'
+                            ]
+                        )->label(Yii::t('app', "Centro de Consumo")) ?>
+                    <?php else: ?>
+                        <?php 
                             // Obtener todos los proveedores del negocio
                             // IMPORTANTE: Desde esta refactorización, el campo 'provider' almacena el business_name
                             // ya que es obligatorio, mientras que 'name' es opcional y puede estar vacío

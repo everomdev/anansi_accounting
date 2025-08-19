@@ -19,7 +19,7 @@ class MovementSearch extends Movement
     public function rules()
     {
         return [
-            [['id', 'ingredient_id', 'business_id'], 'integer'],
+            [['id', 'ingredient_id', 'business_id', 'consumption_center_id'], 'integer'],
             [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations'], 'safe'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['name'], 'string']
@@ -131,6 +131,7 @@ class MovementSearch extends Movement
         $query->andFilterWhere([
             'movement.id' => $this->id,
             'movement.ingredient_id' => $this->ingredient_id,
+            'movement.consumption_center_id' => $this->consumption_center_id,
             'movement.created_at' => $this->created_at,
         ]);
         

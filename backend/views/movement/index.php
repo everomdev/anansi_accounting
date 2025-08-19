@@ -101,22 +101,27 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'invoice',            [
                 'attribute' => 'provider',
                 'value' => function ($data) {
-                    // Buscar el proveedor por nombre para mostrar el business_name
-                    $provider = \common\models\Provider::find()
-                        ->where(['name' => $data->provider, 'business_id' => $data->business_id])
-                        ->one();
-                    
-                    if ($provider) {
-                        return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                    // Solo mostrar proveedor para movimientos de entrada
+                    if ($data->type === \common\models\Movement::TYPE_INPUT) {
+                        // Buscar el proveedor por nombre para mostrar el business_name
+                        $provider = \common\models\Provider::find()
+                            ->where(['name' => $data->provider, 'business_id' => $data->business_id])
+                            ->one();
+                        
+                        if ($provider) {
+                            return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                        }
+                        
+                        return $data->provider;
                     }
                     
-                    return $data->provider;
+                    return '-'; // No mostrar proveedor para salidas
                 },
                 'filter' => \kartik\typeahead\Typeahead::widget([
                     'scrollable' => true,
                     'dataset' => [
                         [
-                            'local' => \yii\helpers\ArrayHelper::getColumn(\common\models\Movement::find()->all(), 'provider'),
+                            'local' => \yii\helpers\ArrayHelper::getColumn(\common\models\Movement::find()->where(['type' => \common\models\Movement::TYPE_INPUT])->all(), 'provider'),
                             'limit' => 10,
 
                         ]
@@ -124,6 +129,26 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     'model' => $searchModel,
                     'attribute' => 'provider'
                 ])
+            ],
+            [
+                'attribute' => 'consumption_center_id',
+                'label' => 'Centro de Consumo',
+                'value' => function ($data) {
+                    // Solo mostrar centro de consumo para movimientos de salida
+                    if ($data->type === \common\models\Movement::TYPE_OUTPUT && $data->consumptionCenter) {
+                        return $data->consumptionCenter->name;
+                    }
+                    
+                    return '-'; // No mostrar centro de consumo para entradas
+                },
+                'filter' => \yii\helpers\Html::activeDropDownList($searchModel, 'consumption_center_id', 
+                    \yii\helpers\ArrayHelper::map(
+                        \common\models\ConsumptionCenter::find()->where(['business_id' => $business->id])->all(), 
+                        'id', 
+                        'name'
+                    ), 
+                    ['class' => 'form-control', 'prompt' => 'Todos']
+                ),
             ],
             [
                 'attribute' => 'payment_type',
@@ -170,7 +195,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'created_at',
                 'label' => Yii::t('app', 'Fecha de creación'),
                 'value' => function($model) {
-                    return Yii::$app->formatter->asDatetime($model->created_at, 'php:d/m/Y');
+                    return Yii::$app->formatter->asDatetime($model->created_at, 'php:d/m/Y H:i');
                 },
                 'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
             ],
