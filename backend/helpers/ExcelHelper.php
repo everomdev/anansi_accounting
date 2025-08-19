@@ -285,7 +285,7 @@ class ExcelHelper
                 ]
             ]
         ];
-        $activeWorksheet->getStyle('A1:N5000')->applyFromArray($borderStyle);
+        $activeWorksheet->getStyle('A1:N50')->applyFromArray($borderStyle);
 
         // Aplicar estilo centrado ANTES de configurar RichText para no sobrescribir
         $activeWorksheet->getStyle('A1:N1')->applyFromArray($centerStyle);
@@ -395,7 +395,7 @@ class ExcelHelper
         $activeWorksheet->freezePane('D2');
 
         // Aplicar estilo centrado a todas las celdas de datos
-        $activeWorksheet->getStyle('A2:N5000')->applyFromArray($centerStyle);
+        $activeWorksheet->getStyle('A2:N50')->applyFromArray($centerStyle);
 
         // Configurar anchos de columnas
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Movimiento
@@ -414,7 +414,7 @@ class ExcelHelper
         $spreadsheet->getActiveSheet()->getColumnDimension('N')->setWidth(30); // Observaciones
 
         // Configurar formato de fecha para la columna B (Fecha)
-        $spreadsheet->getActiveSheet()->getStyle('B2:B500')
+        $spreadsheet->getActiveSheet()->getStyle('B2:B50')
             ->getNumberFormat()
             ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
 
@@ -537,7 +537,7 @@ class ExcelHelper
                 $taxValidation->setFormula1(0);
 
                 // Aplicar validaciones y fórmulas a todas las filas
-                for ($i = 2; $i <= 500; $i++) {
+                for ($i = 2; $i <= 50; $i++) {
                     // Aplicar validación a columna A (Movimiento)
                     $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
                     
@@ -568,7 +568,7 @@ class ExcelHelper
                 $conditionalFormatting->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
                 $conditionalFormatting->getStyle()->getFill()->getStartColor()->setRGB('D3D3D3'); // Gris claro
 
-                $mainSheet->getStyle('D2:D500')->setConditionalStyles([$conditionalFormatting]);
+                $mainSheet->getStyle('D2:D50')->setConditionalStyles([$conditionalFormatting]);
             }
         }
 
@@ -699,7 +699,7 @@ class ExcelHelper
                 $providerValidation->setFormula1('Proveedores!$A$2:$A$' . ($row - 1));
 
                 // Aplicar validación a múltiples filas
-                for ($i = 2; $i <= 500; $i++) {
+                for ($i = 2; $i <= 50; $i++) {
                     $mainSheet->getCell("E$i")->setDataValidation(clone $providerValidation);
                 }
             }
@@ -761,7 +761,7 @@ if ($ccRow > 2) {
     $baseValidation->setPrompt('Selecciona el centro de consumo solo cuando el movimiento es SALIDA.');
 
     // 4️⃣ Aplicar la validación a cada fila con fórmula condicional
-    for ($i = 2; $i <= 500; $i++) {
+    for ($i = 2; $i <= 50; $i++) {
         $validation = clone $baseValidation;
         // En español: SI — en inglés: IF
         $validation->setFormula1("=SI(\$A{$i}=\"Salida\",ListaCC,ListaVacia)");
@@ -803,7 +803,7 @@ if ($ccRow > 2) {
         $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
         
         // Para cada fila, crear una validación dinámica que dependa del proveedor seleccionado
-        for ($i = 2; $i <= 500; $i++) {
+        for ($i = 2; $i <= 50; $i++) {
             $paymentValidation = $mainSheet->getCell("F$i")->getDataValidation();
             $paymentValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
             $paymentValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -835,7 +835,7 @@ if ($ccRow > 2) {
         $providerConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $providerConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $providerConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('E2:E500')->setConditionalStyles([$providerConditional]);
+        $mainSheet->getStyle('E2:E50')->setConditionalStyles([$providerConditional]);
 
         // Columna F (Tipo de Pago) - gris si es Salida
         $paymentConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -844,7 +844,7 @@ if ($ccRow > 2) {
         $paymentConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $paymentConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $paymentConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('F2:F500')->setConditionalStyles([$paymentConditional]);
+        $mainSheet->getStyle('F2:F50')->setConditionalStyles([$paymentConditional]);
 
         // Columna G (Factura) - gris si es Salida
         $invoiceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -853,7 +853,7 @@ if ($ccRow > 2) {
         $invoiceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $invoiceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $invoiceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('G2:G500')->setConditionalStyles([$invoiceConditional]);
+        $mainSheet->getStyle('G2:G50')->setConditionalStyles([$invoiceConditional]);
 
         // Columna H (Centro de Consumo) - gris si es Entrada
         $consumptionCenterConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -862,7 +862,7 @@ if ($ccRow > 2) {
         $consumptionCenterConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $consumptionCenterConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $consumptionCenterConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('H2:H500')->setConditionalStyles([$consumptionCenterConditional]);
+        $mainSheet->getStyle('H2:H50')->setConditionalStyles([$consumptionCenterConditional]);
 
         // Columna J (Precio de Compra) - gris si es Salida
         $priceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -871,7 +871,7 @@ if ($ccRow > 2) {
         $priceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $priceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $priceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('J2:J500')->setConditionalStyles([$priceConditional]);
+        $mainSheet->getStyle('J2:J50')->setConditionalStyles([$priceConditional]);
 
         // Columna K (Impuesto) - gris si es Salida
         $taxConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -880,7 +880,7 @@ if ($ccRow > 2) {
         $taxConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $taxConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $taxConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('K2:K500')->setConditionalStyles([$taxConditional]);
+        $mainSheet->getStyle('K2:K50')->setConditionalStyles([$taxConditional]);
 
         // Columna L (Precio Unitario) - gris si es Salida
         $unitPriceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -889,7 +889,7 @@ if ($ccRow > 2) {
         $unitPriceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $unitPriceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $unitPriceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('L2:L500')->setConditionalStyles([$unitPriceConditional]);
+        $mainSheet->getStyle('L2:L50')->setConditionalStyles([$unitPriceConditional]);
 
         // Columna M (Total) - gris si es Salida
         $totalConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
@@ -898,14 +898,14 @@ if ($ccRow > 2) {
         $totalConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $totalConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
         $totalConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('M2:M500')->setConditionalStyles([$totalConditional]);
+        $mainSheet->getStyle('M2:M50')->setConditionalStyles([$totalConditional]);
 
         // Agregar fórmulas automáticas para cálculos
         // Obtener la hoja principal
         $mainSheet = $spreadsheet->getSheet(0);
         
         // Para cada fila de datos (desde la fila 2), agregar las fórmulas de cálculo
-        for ($i = 2; $i <= 500; $i++) {
+        for ($i = 2; $i <= 50; $i++) {
             // Fórmula para Precio Unitario (Columna L): (Precio de compra + Impuesto) / Cantidad - solo si es Entrada
             // Columna J = Precio de Compra, Columna K = Impuesto, Columna I = Cantidad
             // Mejorada para evitar #¡VALOR! cuando no hay precio de compra
@@ -917,12 +917,12 @@ if ($ccRow > 2) {
         }
         
         // Proteger las celdas de fórmulas (L y M) para que no se puedan editar
-        $mainSheet->getStyle('L2:L500')->getProtection()->setLocked(true);
-        $mainSheet->getStyle('M2:M500')->getProtection()->setLocked(true);
+        $mainSheet->getStyle('L2:L50')->getProtection()->setLocked(true);
+        $mainSheet->getStyle('M2:M50')->getProtection()->setLocked(true);
 
         // Aplicar formato numérico a las columnas de cálculo
-        $mainSheet->getStyle('I2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
-        $mainSheet->getStyle('L2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
+        $mainSheet->getStyle('I2:M50')->getNumberFormat()->setFormatCode('#,##0.00');
+        $mainSheet->getStyle('L2:M50')->getNumberFormat()->setFormatCode('#,##0.00');
 
         // Crear hoja de leyenda
         $legendSheet = $spreadsheet->createSheet();
@@ -998,8 +998,8 @@ if ($ccRow > 2) {
         $mainSheet = $spreadsheet->getActiveSheet();
         
         // Desbloquear las celdas que sí se pueden editar (todas excepto L y M que ya están bloqueadas)
-        $mainSheet->getStyle('A2:K500')->getProtection()->setLocked(false);
-        $mainSheet->getStyle('N2:N500')->getProtection()->setLocked(false);
+        $mainSheet->getStyle('A2:K50')->getProtection()->setLocked(false);
+        $mainSheet->getStyle('N2:N50')->getProtection()->setLocked(false);
 
         // Habilitar protección de la hoja (las celdas L y M ya están bloqueadas)
         $mainSheet->getProtection()->setSheet(true);
