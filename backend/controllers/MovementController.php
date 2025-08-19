@@ -184,7 +184,20 @@ class MovementController extends Controller
         $file = UploadedFile::getInstanceByName('movement-file');
 
         if ($file) {
-            ExcelHelper::importMovements($business, $file->tempName);
+            try {
+                $result = ExcelHelper::importMovements($business, $file->tempName);
+                
+                if ($result['success']) {
+                    //Yii::$app->session->setFlash('success', 
+                     //   "Importación completada. Se guardaron {$result['saved_count']} movimientos.");
+                } else {
+                    Yii::$app->session->setFlash('error', 'Error en la importación.');
+                }
+            } catch (\Exception $e) {
+                Yii::$app->session->setFlash('error', 'Error durante la importación: ' . $e->getMessage());
+            }
+        } else {
+            Yii::$app->session->setFlash('error', 'No se seleccionó ningún archivo.');
         }
 
         return $this->redirect(['movement/index']);

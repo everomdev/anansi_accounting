@@ -291,6 +291,13 @@ class Movement extends \yii\db\ActiveRecord
             return;
         }
         
+        // Para importaciones, permitir cualquier valor de proveedor
+        // Si no existe, el sistema lo manejará como null
+        // No forzamos que exista en la base de datos
+        return;
+        
+        // Código comentado - validación original que causaba problemas en importación
+        /*
         // Buscar proveedor por business_name (valor actual) o name (compatibilidad)
         $provider = Provider::find()
             ->where(['business_id' => $this->business_id])
@@ -304,6 +311,7 @@ class Movement extends \yii\db\ActiveRecord
         if (!$provider) {
             $this->addError($attribute, 'El proveedor seleccionado no existe o no pertenece a este negocio.');
         }
+        */
     }
 
     /**

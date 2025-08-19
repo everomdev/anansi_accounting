@@ -763,8 +763,8 @@ if ($ccRow > 2) {
     // 4️⃣ Aplicar la validación a cada fila con fórmula condicional
     for ($i = 2; $i <= 50; $i++) {
         $validation = clone $baseValidation;
-        // En español: SI — en inglés: IF
-        $validation->setFormula1("=SI(\$A{$i}=\"Salida\",ListaCC,ListaVacia)");
+        // Las fórmulas en Excel siempre deben estar en inglés: IF en lugar de SI
+        $validation->setFormula1("=IF(\$A{$i}=\"Salida\",ListaCC,ListaVacia)");
         $mainSheet->getCell("H{$i}")->setDataValidation($validation);
     }
 }
@@ -1268,29 +1268,53 @@ if ($ccRow > 2) {
         $movementsData = [];
         $errors = [];
 
-        $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
-        while (true) {
-            $cellIterator = $rowIterator->current()->getCellIterator('A', 'N');
-            if($rowIterator->current()->getRowIndex() != 1) {
-                if (empty($cellIterator->current()->getValue())) {
-                    break;
-                }
-                $data = [];
-                $rowNumber = $rowIterator->current()->getRowIndex();
+        $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator(2); // Empezar desde la fila 2 (datos)
+        
+        foreach ($rowIterator as $row) {
+            $cellIterator = $row->getCellIterator('A', 'N');
+            $rowNumber = $row->getRowIndex();
+            
+            // Obtener valores de las columnas principales para verificar si la fila tiene datos
+            $cells = [];
+            foreach ($cellIterator as $cell) {
+                $cells[] = trim($cell->getValue());
+            }
+            
+            $tipoMovimiento = $cells[0]; // Columna A
+            $fecha = $cells[1]; // Columna B  
+            $insumo = $cells[2]; // Columna C
+            $clave = $cells[3]; // Columna D
+            $cantidad = $cells[8]; // Columna I
+            
+            // Verificar si la fila tiene datos mínimos necesarios
+            $hasMinimumData = !empty($tipoMovimiento) && 
+                             (!empty($insumo) || !empty($clave)) && 
+                             !empty($cantidad);
+            
+            if (!$hasMinimumData) {
+                // Si no tiene los datos mínimos, salir del bucle (fin de datos)
+                break;
+            }
+            
+            $data = [];
+            
+            // Resetear el iterador a la primera columna
+            $cellIterator = $row->getCellIterator('A', 'N');
                 
-                // A - Movimiento (Entrada/Salida)
-                $movementTypeValue = trim($cellIterator->current()->getValue());
-                
-                // Convertir descripciones en español a códigos internos
-                $movementTypeMap = [
-                    'Entrada' => Movement::TYPE_INPUT,
-                    'Salida' => Movement::TYPE_OUTPUT
-                ];
-                
-                $data['type'] = isset($movementTypeMap[$movementTypeValue]) ? 
-                    $movementTypeMap[$movementTypeValue] : Movement::TYPE_INPUT; // Por defecto entrada
+            // A - Movimiento (Entrada/Salida)
+            $movementTypeValue = trim($cellIterator->current()->getValue());
+            
+            // Convertir descripciones en español a códigos internos
+            $movementTypeMap = [
+                'Entrada' => Movement::TYPE_INPUT,
+                'Salida' => Movement::TYPE_OUTPUT
+            ];
+            
+            $data['type'] = isset($movementTypeMap[$movementTypeValue]) ? 
+                $movementTypeMap[$movementTypeValue] : Movement::TYPE_INPUT; // Por defecto entrada
                 $cellIterator->next();
-                // D - Fecha
+                
+                // B - Fecha
                 try {
                     $dateValue = $cellIterator->current()->getValue();
                     if (is_numeric($dateValue)) {
@@ -1306,12 +1330,11 @@ if ($ccRow > 2) {
                 }
                 $cellIterator->next();
                
-                
                 // C - Insumo (nombre)
                 $data['ingredient_name'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
                 
-                 // B - Clave
+                // D - Clave
                 $data['key'] = trim($cellIterator->current()->getValue());
                 $cellIterator->next();
                 
@@ -1326,34 +1349,45 @@ if ($ccRow > 2) {
                         $data['provider'] = $providerValue;
                     }
                 } else {
-                    // Para otros tipos, no asignar provider field en esta sección
+                    // Para salidas, ignorar este campo (está en gris en la plantilla)
                     $data['provider'] = null;
                 }
                 $cellIterator->next();
                 
-                // F - Tipo de Pago
+                // F - Tipo de Pago (solo para entradas)
                 $paymentTypeValue = trim($cellIterator->current()->getValue());
                 
-                // Convertir descripciones en español a códigos internos
-                $paymentTypeMap = [
-                    'Efectivo' => Movement::PAYMENT_METHOD_CASH,
-                    'Transferencia Bancaria' => Movement::PAYMENT_METHOD_TRANSFER,
-                    'Cheque' => Movement::PAYMENT_METHOD_CHECK,
-                    'Tarjeta de Crédito' => Movement::PAYMENT_METHOD_CREDIT_CARD,
-                    'Tarjeta de Débito' => Movement::PAYMENT_METHOD_DEBIT_CARD,
-                    'Otro Método de Pago' => Movement::PAYMENT_METHOD_OTHER
-                ];
-                
-                if ($paymentTypeValue === 'Por definir') {
-                    $data['payment_type'] = null;
+                if ($data['type'] === Movement::TYPE_INPUT) {
+                    // Convertir descripciones en español a códigos internos solo para entradas
+                    $paymentTypeMap = [
+                        'Efectivo' => Movement::PAYMENT_METHOD_CASH,
+                        'Transferencia Bancaria' => Movement::PAYMENT_METHOD_TRANSFER,
+                        'Cheque' => Movement::PAYMENT_METHOD_CHECK,
+                        'Tarjeta de Crédito' => Movement::PAYMENT_METHOD_CREDIT_CARD,
+                        'Tarjeta de Débito' => Movement::PAYMENT_METHOD_DEBIT_CARD,
+                        'Otro Método de Pago' => Movement::PAYMENT_METHOD_OTHER
+                    ];
+                    
+                    if ($paymentTypeValue === 'Por definir') {
+                        $data['payment_type'] = null;
+                    } else {
+                        $data['payment_type'] = isset($paymentTypeMap[$paymentTypeValue]) ? 
+                            $paymentTypeMap[$paymentTypeValue] : $paymentTypeValue;
+                    }
                 } else {
-                    $data['payment_type'] = isset($paymentTypeMap[$paymentTypeValue]) ? 
-                        $paymentTypeMap[$paymentTypeValue] : $paymentTypeValue;
+                    // Para salidas, ignorar este campo (está en gris en la plantilla)
+                    $data['payment_type'] = null;
                 }
                 $cellIterator->next();
                 
-                // G - Factura
-                $data['invoice'] = trim($cellIterator->current()->getValue());
+                // G - Factura (solo para entradas)
+                $invoiceValue = trim($cellIterator->current()->getValue());
+                if ($data['type'] === Movement::TYPE_INPUT) {
+                    $data['invoice'] = $invoiceValue;
+                } else {
+                    // Para salidas, ignorar este campo (está en gris en la plantilla)
+                    $data['invoice'] = null;
+                }
                 $cellIterator->next();
                 
                 // H - Centro de Consumo (solo para salidas)
@@ -1364,64 +1398,80 @@ if ($ccRow > 2) {
                 }
                 $cellIterator->next();
                 
-                // I - Cantidad
+                // I - Cantidad (para ambos tipos)
                 $data['quantity'] = $cellIterator->current()->getValue();
                 $cellIterator->next();
                 
-                // J - Precio de Compra
-                $data['amount'] = $cellIterator->current()->getValue();
+                // J - Precio de Compra (solo para entradas)
+                $amountValue = $cellIterator->current()->getValue();
+                if ($data['type'] === Movement::TYPE_INPUT) {
+                    $data['amount'] = $amountValue;
+                } else {
+                    // Para salidas, ignorar este campo (está en gris en la plantilla)
+                    $data['amount'] = 0;
+                }
                 $cellIterator->next();
                 
-                // K - Impuesto
-                $data['tax'] = $cellIterator->current()->getValue();
+                // K - Impuesto (solo para entradas)
+                $taxValue = $cellIterator->current()->getValue();
+                if ($data['type'] === Movement::TYPE_INPUT) {
+                    $data['tax'] = $taxValue;
+                } else {
+                    // Para salidas, ignorar este campo (está en gris en la plantilla)
+                    $data['tax'] = 0;
+                }
                 $cellIterator->next();
                 
-                // L - Precio Unitario
+                // L - Precio Unitario (solo para entradas)
                 $unitPriceValue = $cellIterator->current()->getValue();
                 $cellIterator->next();
                 
-                // M - Total
+                // M - Total (solo para entradas)
                 $totalValue = $cellIterator->current()->getValue();
                 $cellIterator->next();
                 
-                // N - Observaciones
+                // N - Observaciones (para ambos tipos)
                 $data['observations'] = trim($cellIterator->current()->getValue());
                 
-                // Calcular unit_price y total si son fórmulas o están vacíos
-                $quantity = floatval($data['quantity']);
-                $amount = floatval($data['amount']); // Precio de compra
-                $tax = floatval($data['tax']); // Impuesto
-                
-                // Calcular unit_price: (Precio de compra + Impuesto) / Cantidad
-                if ($quantity > 0) {
-                    $calculatedUnitPrice = ($amount + $tax) / $quantity;
+                // Procesar precios solo para entradas
+                if ($data['type'] === Movement::TYPE_INPUT) {
+                    // Calcular unit_price y total si son fórmulas o están vacíos
+                    $quantity = floatval($data['quantity']);
+                    $amount = floatval($data['amount']); // Precio de compra
+                    $tax = floatval($data['tax']); // Impuesto
+                    
+                    // Calcular unit_price: (Precio de compra + Impuesto) / Cantidad
+                    if ($quantity > 0) {
+                        $calculatedUnitPrice = ($amount + $tax) / $quantity;
+                    } else {
+                        $calculatedUnitPrice = 0;
+                    }
+                    
+                    // Calcular total: Cantidad × Precio Unitario
+                    $calculatedTotal = $quantity * $calculatedUnitPrice;
+                    
+                    // Usar valores calculados si el valor de Excel es una fórmula o está vacío
+                    if (is_string($unitPriceValue) && (strpos($unitPriceValue, '=') === 0 || empty($unitPriceValue))) {
+                        $data['unit_price'] = $calculatedUnitPrice;
+                    } else {
+                        $data['unit_price'] = floatval($unitPriceValue);
+                    }
+                    
+                    if (is_string($totalValue) && (strpos($totalValue, '=') === 0 || empty($totalValue))) {
+                        $data['total'] = $calculatedTotal;
+                    } else {
+                        $data['total'] = floatval($totalValue);
+                    }
                 } else {
-                    $calculatedUnitPrice = 0;
-                }
-                
-                // Calcular total: Cantidad × Precio Unitario
-                $calculatedTotal = $quantity * $calculatedUnitPrice;
-                
-                // Usar valores calculados si el valor de Excel es una fórmula o está vacío
-                if (is_string($unitPriceValue) && (strpos($unitPriceValue, '=') === 0 || empty($unitPriceValue))) {
-                    $data['unit_price'] = $calculatedUnitPrice;
-                } else {
-                    $data['unit_price'] = floatval($unitPriceValue);
-                }
-                
-                if (is_string($totalValue) && (strpos($totalValue, '=') === 0 || empty($totalValue))) {
-                    $data['total'] = $calculatedTotal;
-                } else {
-                    $data['total'] = floatval($totalValue);
+                    // Para salidas, establecer valores por defecto para los campos de precio
+                    $data['unit_price'] = 0;
+                    $data['total'] = 0;
                 }
 
                 $data['business_id'] = $business->id;
                 $data['row_number'] = $rowNumber; // Para tracking de errores
 
                 $movementsData[] = $data;
-            }
-
-            $rowIterator->next();
         }
 
         // Procesar los datos y buscar ingredientes
@@ -1429,6 +1479,14 @@ if ($ccRow > 2) {
         foreach ($movementsData as $movement) {
             $ingredient = null;
             $rowNumber = $movement['row_number'];
+            
+            // Limpiar el nombre del ingrediente removiendo contenido entre paréntesis
+            $originalIngredientName = $movement['ingredient_name'];
+            $cleanIngredientName = '';
+            if (!empty($originalIngredientName)) {
+                // Remover contenido entre paréntesis y espacios extra
+                $cleanIngredientName = trim(preg_replace('/\s*\([^)]*\)\s*/', '', $originalIngredientName));
+            }
             
             // Estrategia de búsqueda mejorada:
             // 1. Primero por clave si está disponible
@@ -1441,55 +1499,49 @@ if ($ccRow > 2) {
                     ->one();
             }
                 
-            // 2. Si no se encuentra por clave, buscar por nombre exacto
-            if (!$ingredient && !empty($movement['ingredient_name'])) {
+            // 2. Si no se encuentra por clave, buscar por nombre limpio (sin paréntesis) exacto
+            if (!$ingredient && !empty($cleanIngredientName)) {
                 $ingredient = IngredientStock::find()
                     ->where([
-                        'ingredient' => $movement['ingredient_name'],
+                        'ingredient' => $cleanIngredientName,
                         'business_id' => $movement['business_id']
                     ])
                     ->one();
             }
             
-            // 3. Si aún no se encuentra, buscar por nombre con LIKE (búsqueda parcial)
-            if (!$ingredient && !empty($movement['ingredient_name'])) {
+            // 3. Si aún no se encuentra, buscar por nombre limpio con LIKE (búsqueda parcial)
+            if (!$ingredient && !empty($cleanIngredientName)) {
                 $ingredient = IngredientStock::find()
-                    ->where(['like', 'ingredient', $movement['ingredient_name'], false])
+                    ->where(['like', 'ingredient', $cleanIngredientName, false])
                     ->andWhere(['business_id' => $movement['business_id']])
                     ->one();
             }
             
-            // 4. Para movimientos de salida, búsqueda más flexible - remover paréntesis y unidades
-            if (!$ingredient && !empty($movement['ingredient_name']) && $movement['type'] === Movement::TYPE_OUTPUT) {
-                // Limpiar el nombre: remover contenido entre paréntesis y espacios extra
-                $cleanIngredientName = trim(preg_replace('/\s*\([^)]*\)\s*/', '', $movement['ingredient_name']));
-                
-                if (!empty($cleanIngredientName)) {
-                    // Buscar con el nombre limpio
-                    $ingredient = IngredientStock::find()
-                        ->where(['like', 'ingredient', $cleanIngredientName, false])
-                        ->andWhere(['business_id' => $movement['business_id']])
-                        ->one();
-                }
-                
-                // Si aún no se encuentra, buscar por palabras clave
-                if (!$ingredient) {
-                    $words = explode(' ', $cleanIngredientName);
-                    if (count($words) > 1) {
-                        // Buscar por la primera palabra significativa (más de 2 caracteres)
-                        foreach ($words as $word) {
-                            if (strlen(trim($word)) > 2) {
-                                $ingredient = IngredientStock::find()
-                                    ->where(['like', 'ingredient', trim($word), false])
-                                    ->andWhere(['business_id' => $movement['business_id']])
-                                    ->one();
-                                if ($ingredient) {
-                                    break;
-                                }
+            // 4. Búsqueda por palabras clave del nombre limpio
+            if (!$ingredient && !empty($cleanIngredientName)) {
+                $words = explode(' ', $cleanIngredientName);
+                if (count($words) > 1) {
+                    // Buscar por la primera palabra significativa (más de 2 caracteres)
+                    foreach ($words as $word) {
+                        if (strlen(trim($word)) > 2) {
+                            $ingredient = IngredientStock::find()
+                                ->where(['like', 'ingredient', trim($word), false])
+                                ->andWhere(['business_id' => $movement['business_id']])
+                                ->one();
+                            if ($ingredient) {
+                                break;
                             }
                         }
                     }
                 }
+            }
+            
+            // 5. Como último recurso, buscar por el nombre original (con paréntesis)
+            if (!$ingredient && !empty($originalIngredientName)) {
+                $ingredient = IngredientStock::find()
+                    ->where(['like', 'ingredient', $originalIngredientName, false])
+                    ->andWhere(['business_id' => $movement['business_id']])
+                    ->one();
             }
             
             // Limpiar datos innecesarios
@@ -1545,7 +1597,21 @@ if ($ccRow > 2) {
                     foreach ($movement->errors as $field => $fieldErrors) {
                         $validationErrors[] = "$field: " . implode(', ', $fieldErrors);
                     }
-                    $errors[] = "Error al guardar movimiento (datos: " . json_encode($movementData) . "): " . implode('; ', $validationErrors);
+                    
+                    // Log más detallado para debugging
+                    $movementDetails = json_encode([
+                        'type' => $movementData['type'] ?? 'undefined',
+                        'ingredient_id' => $movementData['ingredient_id'] ?? 'undefined',
+                        'quantity' => $movementData['quantity'] ?? 'undefined',
+                        'provider' => $movementData['provider'] ?? 'null',
+                        'amount' => $movementData['amount'] ?? 'undefined',
+                        'business_id' => $movementData['business_id'] ?? 'undefined'
+                    ]);
+                    
+                    $errors[] = "Error al guardar movimiento (datos clave: $movementDetails): " . implode('; ', $validationErrors);
+                    
+                    // También log para Yii
+                    \Yii::error("Error validación movimiento: " . implode('; ', $validationErrors) . " - Datos: " . $movementDetails);
                 }
             }
             
