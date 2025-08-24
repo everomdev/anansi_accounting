@@ -158,6 +158,13 @@ class Business extends \yii\db\ActiveRecord
             ["Bases", $this->id, RecipeCategory::TYPE_SUB],
             ["Guarnición", $this->id, RecipeCategory::TYPE_SUB],
             ["Masas", $this->id, RecipeCategory::TYPE_SUB],
+            ["Mezcladores", $this->id, RecipeCategory::TYPE_SUB],
+            ["Preparados", $this->id, RecipeCategory::TYPE_SUB],
+            ["Conservados", $this->id, RecipeCategory::TYPE_SUB],
+            ["Mezcla simples", $this->id, RecipeCategory::TYPE_SUB],
+            ["Coberturas", $this->id, RecipeCategory::TYPE_SUB],
+            ["Bebidas base", $this->id, RecipeCategory::TYPE_SUB],
+            ["Decoraciones comestibles", $this->id, RecipeCategory::TYPE_SUB],
             ["Sopas", $this->id, RecipeCategory::TYPE_MAIN],
             ["Ensaladas", $this->id, RecipeCategory::TYPE_MAIN],
             ["Aves", $this->id, RecipeCategory::TYPE_MAIN],
@@ -176,7 +183,6 @@ class Business extends \yii\db\ActiveRecord
             ["Destilados", $this->id, RecipeCategory::TYPE_MAIN],
             ["Cócteles", $this->id, RecipeCategory::TYPE_MAIN],
             ["Mezcladores", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Mezcladores", $this->id, RecipeCategory::TYPE_SUB],
         ];
 
         Yii::$app->db->createCommand()

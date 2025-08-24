@@ -11,6 +11,7 @@ use yii\helpers\ArrayHelper;
  * @property int $id
  * @property string $name
  * @property int|null $business_id
+ * @property int $custom
  *
  * @property Business $business
  * @property string $type [varchar(255)]
@@ -35,8 +36,9 @@ class RecipeCategory extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
-            [['business_id'], 'integer'],
+            [['business_id', 'custom'], 'integer'],
             [['name', 'type'], 'string', 'max' => 255],
+            [['custom'], 'default', 'value' => 0],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['type'], 'in', 'range' => [self::TYPE_MAIN, self::TYPE_SUB]],
             [['name', 'type'], 'unique', 'targetAttribute' => ['name', 'business_id', 'type'], 'message' => "Ya existe una categoría con este nombre"],
@@ -53,6 +55,7 @@ class RecipeCategory extends \yii\db\ActiveRecord
             'name' => Yii::t('app', 'Name'),
             'type' => Yii::t('app', 'Type'),
             'business_id' => Yii::t('app', 'Business ID'),
+            'custom' => Yii::t('app', 'Categoría personalizada'),
         ];
     }
 

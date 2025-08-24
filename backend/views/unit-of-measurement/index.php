@@ -104,6 +104,22 @@ $this->registerCss('
                 'columns' => [
                 ['class' => 'yii\grid\SerialColumn'],
                 'name',
+                [
+                    'attribute' => 'custom',
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        if ($model->custom == 1) {
+                            return '<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Personalizada</span>';
+                        } else {
+                            return '<span class="badge bg-success"><i class="fas fa-check"></i> Estándar</span>';
+                        }
+                    },
+                    'filter' => [
+                        0 => 'Estándar',
+                        1 => 'Personalizada'
+                    ],
+                    'headerOptions' => ['style' => 'width: 150px;'],
+                ],
 
                 [
                     'class' => 'yii\grid\ActionColumn',

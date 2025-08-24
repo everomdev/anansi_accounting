@@ -17,7 +17,7 @@ class RecipeCategorySearch extends RecipeCategory
     public function rules()
     {
         return [
-            [['id', 'business_id'], 'integer'],
+            [['id', 'business_id', 'custom'], 'integer'],
             [['name'], 'safe'],
             [['type'], 'string'],
         ];
@@ -61,7 +61,8 @@ class RecipeCategorySearch extends RecipeCategory
         $query->andFilterWhere([
             'id' => $this->id,
             'business_id' => $this->business_id,
-            'type' => $this->type
+            'type' => $this->type,
+            'custom' => $this->custom,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name]);

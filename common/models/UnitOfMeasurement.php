@@ -11,6 +11,7 @@ use Yii;
  * @property int $id
  * @property string $name
  * @property int|null $business_id
+ * @property int $custom
  *
  * @property Business $business
  */
@@ -31,8 +32,9 @@ class UnitOfMeasurement extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
-            [['business_id'], 'integer'],
+            [['business_id', 'custom'], 'integer'],
             [['name'], 'string', 'max' => 255],
+            [['custom'], 'default', 'value' => 0],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
         ];
     }
@@ -46,6 +48,7 @@ class UnitOfMeasurement extends \yii\db\ActiveRecord
             'id' => Yii::t('app', 'ID'),
             'name' => Yii::t('app', 'Name'),
             'business_id' => Yii::t('app', 'Business ID'),
+            'custom' => Yii::t('app', 'Unidad personalizada'),
         ];
     }
 
