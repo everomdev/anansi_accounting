@@ -42,7 +42,12 @@ $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUS
 // Use global number formatter configuration
 $formatConfig = \common\helpers\NumberFormatter::getJsConfig();
 $this->registerJsVar('userFormatConfig', $formatConfig);
-$ums = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
+
+// Obtener unidades separadas por tipo
+$allUms = \common\models\UnitOfMeasurement::find()->where(['business_id' => $business['id']])->all();
+$purchaseUms = array_filter($allUms, function($um) { return $um->type === \common\models\UnitOfMeasurement::TYPE_PURCHASE; });
+$kitchenUms = array_filter($allUms, function($um) { return $um->type === \common\models\UnitOfMeasurement::TYPE_KITCHEN; });
+
 $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id' => $business['id']])->all(), 'id', 'name');
 ?>
 <div class="ingredient-stock-form">
@@ -84,7 +89,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">
                     <?= $form->field($model, 'um')->dropDownList(
-                        \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
+                        \yii\helpers\ArrayHelper::map($purchaseUms, 'name', 'name'),
                         ['prompt' => '-- Seleccione --']
                     )->label('Unidad de Compra <span class="asterisk">*</span>') ?>
                 </div>
@@ -105,7 +110,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
             <div class="row mb-3">
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
                     <?= $form->field($model, 'portion_um')->dropDownList(
-                        \yii\helpers\ArrayHelper::map($ums, 'name', 'name'),
+                        \yii\helpers\ArrayHelper::map($kitchenUms, 'name', 'name'),
                         ['prompt' => '-- Seleccione --']
                     )->label('Unidades de cocina <span class="asterisk">*</span>') ?>
                 </div>

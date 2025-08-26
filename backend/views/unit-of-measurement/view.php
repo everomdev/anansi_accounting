@@ -31,6 +31,28 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'name',
+            [
+                'attribute' => 'type',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    if ($model->type === \common\models\UnitOfMeasurement::TYPE_PURCHASE) {
+                        return '<span class="badge bg-primary"><i class="fas fa-shopping-cart"></i> Unidad de compra</span>';
+                    } else {
+                        return '<span class="badge bg-info"><i class="fas fa-utensils"></i> Unidad de cocina</span>';
+                    }
+                },
+            ],
+            [
+                'attribute' => 'custom',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    if ($model->custom == 1) {
+                        return '<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> Personalizada</span>';
+                    } else {
+                        return '<span class="badge bg-success"><i class="fas fa-check"></i> Estándar</span>';
+                    }
+                },
+            ],
             'business_id',
         ],
     ]) ?>

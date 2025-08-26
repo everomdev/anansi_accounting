@@ -105,6 +105,22 @@ $this->registerCss('
                 ['class' => 'yii\grid\SerialColumn'],
                 'name',
                 [
+                    'attribute' => 'type',
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        if ($model->type === \common\models\UnitOfMeasurement::TYPE_PURCHASE) {
+                            return '<span class="badge bg-primary"><i class="fas fa-shopping-cart"></i> Compra</span>';
+                        } else {
+                            return '<span class="badge bg-info"><i class="fas fa-utensils"></i> Cocina</span>';
+                        }
+                    },
+                    'filter' => [
+                        \common\models\UnitOfMeasurement::TYPE_KITCHEN => 'Cocina',
+                        \common\models\UnitOfMeasurement::TYPE_PURCHASE => 'Compra'
+                    ],
+                    'headerOptions' => ['style' => 'width: 120px;']
+                ],
+                [
                     'attribute' => 'custom',
                     'format' => 'raw',
                     'value' => function ($model) {

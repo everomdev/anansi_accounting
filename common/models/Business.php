@@ -125,28 +125,33 @@ class Business extends \yii\db\ActiveRecord
 
     private function initUm()
     {
-        $data = [
-            ["Kilogramo", $this->id],
-            ["Litro", $this->id],
-            ["Pieza", $this->id],
-            //["Paquete", $this->id],
-            ["Rebanada", $this->id],
-            ["Porción", $this->id],
-            //["Onza", $this->id],
-            //["Libra", $this->id],
-            //["Gramo", $this->id],
-            //["Taza", $this->id],
-            //["Cucharadita", $this->id],
-            //["Cucharada", $this->id],
-            //["Mililitro", $this->id],
-            //["Pizca", $this->id],
-            //["Botella", $this->id],
-            //["Gota", $this->id],
-            //["Lata", $this->id],
-            //["Bote", $this->id],
+        // Unidades estándar de compra
+        $purchaseUnits = [
+            ["Litro", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+            ["Kilogramo", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+            ["Pieza", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+            ["Botella", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+            ["Lata", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+            ["Caja", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+            ["Paquete", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
         ];
+        
+        // Unidades estándar de cocina
+        $kitchenUnits = [
+            ["Kilogramo", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+            ["Litro", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+            ["Pieza", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+            ["Rebanada", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+            ["Porción", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+            ["Botella", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+            ["Lata", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
+        ];
+        
+        // Combinar todas las unidades
+        $allUnits = array_merge($purchaseUnits, $kitchenUnits);
+        
         Yii::$app->db->createCommand()
-            ->batchInsert('unit_of_measurement', ['name', 'business_id'], $data)
+            ->batchInsert('unit_of_measurement', ['name', 'business_id', 'type'], $allUnits)
             ->execute();
     }
 

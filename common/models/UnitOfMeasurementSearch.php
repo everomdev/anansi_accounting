@@ -18,7 +18,7 @@ class UnitOfMeasurementSearch extends UnitOfMeasurement
     {
         return [
             [['id', 'business_id', 'custom'], 'integer'],
-            [['name'], 'safe'],
+            [['name', 'type'], 'safe'],
         ];
     }
 
@@ -61,6 +61,7 @@ class UnitOfMeasurementSearch extends UnitOfMeasurement
             'id' => $this->id,
             'business_id' => $this->business_id,
             'custom' => $this->custom,
+            'type' => $this->type,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name]);

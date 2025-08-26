@@ -32,6 +32,11 @@ $controller = $model->isNewRecord
 
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
 
+    <?= $form->field($model, 'type')->dropDownList(
+        \common\models\UnitOfMeasurement::getTypeOptions(),
+        ['prompt' => 'Selecciona el tipo de unidad...']
+    ) ?>
+
     <?php if ($model->isNewRecord): ?>
         <?= $form->field($model, 'custom')->hiddenInput(['value' => 1])->label(false) ?>
     <?php endif; ?>
