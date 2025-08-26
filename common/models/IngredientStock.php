@@ -87,10 +87,9 @@ class IngredientStock extends \yii\db\ActiveRecord
             [['observations', '_category', 'key', 'brand', 'presentation'], 'string'],
             [['ingredient', 'um', 'portion_um', 'brand', 'presentation'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
-            [['ingredient', 'um', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'um', 'business_id'], 'message' => Yii::t('app', "You already have registered this ingredient ({value})")],
             [['category_id'], 'exist', 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
             [['ingredient', '_category', 'observations', 'brand', 'presentation'], 'filter', 'filter' => 'trim'],
-            [['key'], 'unique', 'targetAttribute' => ['key', 'business_id'], 'message' => Yii::t('app', "You already have registered this key ({value})")],
+            [['key'], 'validateUniqueKey'],
             [['providers'], 'each', 'rule' => ['integer']],
         ];
     }
@@ -181,6 +180,27 @@ class IngredientStock extends \yii\db\ActiveRecord
             }
         } else {
             $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número.', ['attribute' => $this->getAttributeLabel($attribute)]));
+        }
+    }
+
+    /**
+     * Validación personalizada para verificar unicidad de clave
+     */
+    public function validateUniqueKey($attribute, $params)
+    {
+        $query = self::find()
+            ->where([
+                'key' => $this->key,
+                'business_id' => $this->business_id
+            ]);
+
+        // Si estamos editando un registro existente, excluirlo de la búsqueda
+        if (!$this->isNewRecord) {
+            $query->andWhere(['!=', 'id', $this->id]);
+        }
+
+        if ($query->exists()) {
+            $this->addError('key', Yii::t('app', "You already have registered this key ({value})", ['value' => $this->key]));
         }
     }
 

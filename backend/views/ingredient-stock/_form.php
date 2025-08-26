@@ -6,6 +6,48 @@
     color: #dc3545 !important;
     font-weight: bold;
 }
+
+/* Estilos para el modal de advertencia */
+#unit-change-warning-modal .modal-body .alert {
+    margin-bottom: 0;
+    border: none;
+    background-color: #fff3cd;
+}
+
+#unit-change-warning-modal .modal-title {
+    color: #f39c12;
+}
+
+#unit-change-warning-modal .btn-warning {
+    background-color: #f39c12;
+    border-color: #e08e0b;
+}
+
+#unit-change-warning-modal .btn-warning:hover {
+    background-color: #e08e0b;
+    border-color: #ca7a0b;
+}
+
+/* Estilos para el modal de advertencia de unidades de cocina */
+#kitchen-unit-change-warning-modal .modal-body .alert {
+    margin-bottom: 0;
+    border: none;
+    background-color: #fff3cd;
+}
+
+#kitchen-unit-change-warning-modal .modal-title {
+    color: #f39c12;
+}
+
+#kitchen-unit-change-warning-modal .btn-warning {
+    background-color: #f39c12;
+    border-color: #e08e0b;
+}
+
+#kitchen-unit-change-warning-modal .btn-warning:hover {
+    background-color: #e08e0b;
+    border-color: #ca7a0b;
+}
 </style>
 <?php
 
@@ -38,6 +80,9 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/form.js"), [
 ]);
 
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+
+// Registrar meta tag CSRF para JavaScript
+$this->registerMetaTag(['name' => 'csrf-token', 'content' => Yii::$app->request->getCsrfToken()]);
 
 // Use global number formatter configuration
 $formatConfig = \common\helpers\NumberFormatter::getJsConfig();
@@ -90,7 +135,11 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">
                     <?= $form->field($model, 'um')->dropDownList(
                         \yii\helpers\ArrayHelper::map($purchaseUms, 'name', 'name'),
-                        ['prompt' => '-- Seleccione --']
+                        [
+                            'prompt' => '-- Seleccione --',
+                            'id' => 'ingredientstock-um',
+                            'data-original-value' => $model->um ?? ''
+                        ]
                     )->label('Unidad de Compra <span class="asterisk">*</span>') ?>
                 </div>
                 
@@ -111,7 +160,11 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
                     <?= $form->field($model, 'portion_um')->dropDownList(
                         \yii\helpers\ArrayHelper::map($kitchenUms, 'name', 'name'),
-                        ['prompt' => '-- Seleccione --']
+                        [
+                            'prompt' => '-- Seleccione --',
+                            'id' => 'ingredientstock-portion_um',
+                            'data-original-value' => $model->portion_um ?? ''
+                        ]
                     )->label('Unidades de cocina <span class="asterisk">*</span>') ?>
                 </div>
 
@@ -246,7 +299,259 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
 \yii\bootstrap5\Modal::end();
 
 ?>
+
+<!-- Modal de advertencia para cambio de unidad de compra -->
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'unit-change-warning-modal',
+    'title' => '<i class="fas fa-exclamation-triangle text-warning"></i> Advertencia de cambio de unidad',
+    'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT,
+    'options' => [
+        'data-bs-backdrop' => 'static',
+        'data-bs-keyboard' => 'false'
+    ]
+]);
+?>
+
+<div class="modal-body">
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <div>
+            <strong>⚠️ Cambiar la unidad de compra de este insumo modificará todas las subrecetas y recetas que lo utilizan.</strong>
+            <br><br>
+            Esta acción puede generar inconsistencias en costos e inventarios.
+            <br><br>
+            <strong>¿Desea continuar?</strong>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <?= Html::button('Cancelar', [
+        'class' => 'btn btn-warning',
+        'id' => 'cancel-unit-change',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= Html::button('Aceptar y cambiar la unidad', [
+        'class' => 'btn btn-secondary',
+        'id' => 'confirm-unit-change'
+    ]) ?>
+</div>
+
+<?php
+\yii\bootstrap5\Modal::end();
+
+?>
+
+<!-- Modal de advertencia para cambio de unidad de cocina -->
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'kitchen-unit-change-warning-modal',
+    'title' => '<i class="fas fa-exclamation-triangle text-warning"></i> Advertencia de cambio de unidad de cocina',
+    'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT,
+    'options' => [
+        'data-bs-backdrop' => 'static',
+        'data-bs-keyboard' => 'false'
+    ]
+]);
+?>
+
+<div class="modal-body">
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+        <div>
+            <strong>⚠️ Cambiar la unidad de cocina de este insumo modificará todas las subrecetas y recetas que lo utilizan.</strong>
+            <br><br>
+            Esta acción puede generar inconsistencias en las equivalencias y proporciones de las recetas.
+            <br><br>
+            <strong>¿Desea continuar?</strong>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <?= Html::button('Cancelar', [
+        'class' => 'btn btn-warning',
+        'id' => 'cancel-kitchen-unit-change',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= Html::button('Aceptar y cambiar la unidad', [
+        'class' => 'btn btn-secondary',
+        'id' => 'confirm-kitchen-unit-change'
+    ]) ?>
+</div>
+
+<?php
+\yii\bootstrap5\Modal::end();
+
+?>
 <script>
+// Control de cambio de unidad de compra
+(function() {
+    let originalUmValue = '';
+    let pendingUmChange = '';
+    let isExistingIngredient = false;
+    
+    // Variables para unidades de cocina
+    let originalKitchenUmValue = '';
+    let pendingKitchenUmChange = '';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const umField = document.getElementById('ingredientstock-um');
+        const ingredientId = <?= $model->isNewRecord ? 'null' : $model->id ?>;
+        
+        console.log('DOM loaded - umField:', umField);
+        console.log('ingredientId:', ingredientId);
+        
+        if (umField) {
+            // Guardar valor original al cargar
+            originalUmValue = umField.getAttribute('data-original-value') || '';
+            isExistingIngredient = ingredientId !== null;
+            
+            console.log('originalUmValue:', originalUmValue);
+            console.log('isExistingIngredient:', isExistingIngredient);
+            
+            // Solo verificar cambios si es un ingrediente existente
+            if (isExistingIngredient) {
+                umField.addEventListener('change', function(e) {
+                    const newValue = e.target.value;
+                    
+                    console.log('UM field changed - original:', originalUmValue, 'new:', newValue);
+                    
+                    // Solo mostrar advertencia si realmente cambió la unidad
+                    if (originalUmValue && newValue && newValue !== originalUmValue) {
+                        console.log('Showing warning modal directly');
+                        // Mostrar advertencia directamente
+                        showUnitChangeWarning(newValue, e.target);
+                    }
+                });
+            }
+        } else {
+            console.error('No se encontró el campo ingredientstock-um');
+        }
+        
+        // Control para unidades de cocina
+        const kitchenUmField = document.getElementById('ingredientstock-portion_um');
+        
+        console.log('DOM loaded - kitchenUmField:', kitchenUmField);
+        
+        if (kitchenUmField) {
+            // Guardar valor original al cargar
+            originalKitchenUmValue = kitchenUmField.getAttribute('data-original-value') || '';
+            
+            console.log('originalKitchenUmValue:', originalKitchenUmValue);
+            
+            // Solo verificar cambios si es un ingrediente existente
+            if (isExistingIngredient) {
+                kitchenUmField.addEventListener('change', function(e) {
+                    const newValue = e.target.value;
+                    
+                    console.log('Kitchen UM field changed - original:', originalKitchenUmValue, 'new:', newValue);
+                    
+                    // Solo mostrar advertencia si realmente cambió la unidad
+                    if (originalKitchenUmValue && newValue && newValue !== originalKitchenUmValue) {
+                        console.log('Showing kitchen unit warning modal directly');
+                        // Mostrar advertencia directamente
+                        showKitchenUnitChangeWarning(newValue, e.target);
+                    }
+                });
+            }
+        } else {
+            console.error('No se encontró el campo ingredientstock-portion_um');
+        }
+        
+        // Manejar botones del modal
+        const cancelBtn = document.getElementById('cancel-unit-change');
+        const confirmBtn = document.getElementById('confirm-unit-change');
+        
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                // Restaurar valor original
+                const umField = document.getElementById('ingredientstock-um');
+                if (umField) {
+                    umField.value = originalUmValue;
+                    pendingUmChange = '';
+                }
+            });
+        }
+        
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                // Confirmar el cambio
+                const umField = document.getElementById('ingredientstock-um');
+                if (umField && pendingUmChange) {
+                    umField.value = pendingUmChange;
+                    originalUmValue = pendingUmChange; // Actualizar valor original
+                    pendingUmChange = '';
+                }
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('unit-change-warning-modal'));
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        }
+        
+        // Manejar botones del modal de unidades de cocina
+        const cancelKitchenBtn = document.getElementById('cancel-kitchen-unit-change');
+        const confirmKitchenBtn = document.getElementById('confirm-kitchen-unit-change');
+        
+        if (cancelKitchenBtn) {
+            cancelKitchenBtn.addEventListener('click', function() {
+                // Restaurar valor original
+                const kitchenUmField = document.getElementById('ingredientstock-portion_um');
+                if (kitchenUmField) {
+                    kitchenUmField.value = originalKitchenUmValue;
+                    pendingKitchenUmChange = '';
+                }
+            });
+        }
+        
+        if (confirmKitchenBtn) {
+            confirmKitchenBtn.addEventListener('click', function() {
+                // Confirmar el cambio
+                const kitchenUmField = document.getElementById('ingredientstock-portion_um');
+                if (kitchenUmField && pendingKitchenUmChange) {
+                    kitchenUmField.value = pendingKitchenUmChange;
+                    originalKitchenUmValue = pendingKitchenUmChange; // Actualizar valor original
+                    pendingKitchenUmChange = '';
+                }
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('kitchen-unit-change-warning-modal'));
+                if (modal) {
+                    modal.hide();
+                }
+            });
+        }
+    });
+    
+    function showUnitChangeWarning(newUmValue, selectElement) {
+        console.log('showUnitChangeWarning called with:', {newUmValue});
+        
+        // Mostrar advertencia directamente
+        pendingUmChange = newUmValue;
+        selectElement.value = originalUmValue; // Restaurar temporalmente
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('unit-change-warning-modal'));
+        modal.show();
+        console.log('Modal should be visible now');
+    }
+    
+    function showKitchenUnitChangeWarning(newUmValue, selectElement) {
+        console.log('showKitchenUnitChangeWarning called with:', {newUmValue});
+        
+        // Mostrar advertencia directamente
+        pendingKitchenUmChange = newUmValue;
+        selectElement.value = originalKitchenUmValue; // Restaurar temporalmente
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('kitchen-unit-change-warning-modal'));
+        modal.show();
+        console.log('Kitchen unit modal should be visible now');
+    }
+})();
+
 // Pregunta dinámica de equivalencia de unidades
 // Esperar a que jQuery esté disponible antes de ejecutar el script
 (function waitForJQuery() {

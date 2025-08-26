@@ -77,7 +77,8 @@ class IngredientStockController extends Controller
                             'export',
                             'import-ingredients',
                             'duplicate-insumos',
-                            'view'
+                            'view',
+                            'check-usage'
                         ],
                         'allow' => true,
                         'roles' => ['ingredients_list','ingredients_view'],
@@ -449,5 +450,49 @@ class IngredientStockController extends Controller
         }
 
         return $this->redirect(['index']);
+    }
+    
+    /**
+     * Verificar si un ingrediente está siendo usado en recetas
+     * Usado para advertir sobre cambios de unidad de compra
+     */
+    public function actionCheckUsage()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        if (!\Yii::$app->request->isPost) {
+            return ['error' => 'Método no permitido'];
+        }
+        
+        $data = json_decode(\Yii::$app->request->getRawBody(), true);
+        $ingredientId = $data['ingredientId'] ?? null;
+        $ingredientName = $data['ingredientName'] ?? '';
+        
+        if (!$ingredientId) {
+            return ['isUsed' => false];
+        }
+        
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        
+        // Verificar si el ingrediente está siendo usado en recetas estándar
+        $usedInRecipes = \common\models\StandardRecipe::find()
+            ->where(['business_id' => $business['id']])
+            ->andWhere(['like', 'ingredients', '"' . $ingredientName . '"'])
+            ->exists();
+        
+        // Verificar si está siendo usado en sub-recetas
+        $usedInSubRecipes = \common\models\StandardRecipe::find()
+            ->where([
+                'business_id' => $business['id'],
+                'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+            ])
+            ->andWhere(['like', 'ingredients', '"' . $ingredientName . '"'])
+            ->exists();
+        
+        return [
+            'isUsed' => $usedInRecipes || $usedInSubRecipes,
+            'usedInRecipes' => $usedInRecipes,
+            'usedInSubRecipes' => $usedInSubRecipes
+        ];
     }
 }
