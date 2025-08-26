@@ -43,7 +43,8 @@ class RecipeCategoryController extends Controller
                             'delete',
                             'index',
                             'update',
-                            'view'
+                            'view',
+                            'autocomplete'
                         ],
                         'allow' => true,
                         'roles' => ['recipe_list', 'subrecipe_list'],
@@ -138,6 +139,47 @@ class RecipeCategoryController extends Controller
         return $this->renderAjax('update', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Provides autocomplete suggestions for recipe categories
+     * Used to prevent duplicate category creation
+     * @return array JSON response with category suggestions
+     */
+    public function actionAutocomplete()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $term = \Yii::$app->request->get('term', '');
+        $type = \Yii::$app->request->get('type', '');
+        
+        if (empty($term)) {
+            return [];
+        }
+        
+        $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        
+        $query = RecipeCategory::find()
+            ->where(['business_id' => $business['id']])
+            ->andWhere(['like', 'name', $term]);
+            
+        if (!empty($type)) {
+            $query->andWhere(['type' => $type]);
+        }
+        
+        $categories = $query->limit(10)->all();
+        
+        $suggestions = [];
+        foreach ($categories as $category) {
+            $suggestions[] = [
+                'id' => $category->id,
+                'label' => $category->name,
+                'value' => $category->name,
+                'type' => $category->type
+            ];
+        }
+        
+        return $suggestions;
     }
 
     /**
