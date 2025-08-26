@@ -24,7 +24,7 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="vh-100 d-flex justify-content-center align-items-center">
     <div style="max-width: 500px; min-width: 350px">
         <div class="text-center">
-            <img src="<?= Yii::getAlias("@web/images/logo1.png") ?>" alt="" width="300">
+            <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" width="300">
         </div>
         <?php $form = ActiveForm::begin(
             [

@@ -2051,7 +2051,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $html .= '<div class="logo">';
         
         // Ruta al logo en el sistema de archivos
-        $logoPath = Yii::getAlias('@backend/web/images/logo1.png');
+        $logoPath = Yii::getAlias('@backend/web/images/logo.png');
         $logoFound = false;
         
         // Intentar cargar la imagen como base64 si existe en el sistema de archivos

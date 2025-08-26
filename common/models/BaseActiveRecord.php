@@ -39,7 +39,7 @@ class BaseActiveRecord extends \yii\db\ActiveRecord
 
         foreach ($toRemove as $relationToRemove){
             $modelToRemove = ($this->getRelation($relationName)->modelClass)::findOne($relationToRemove);
-            $this->
+            //$this->
         }
     }
 }

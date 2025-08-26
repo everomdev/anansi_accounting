@@ -57,7 +57,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
     <div class="app-brand demo" style="width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; position: relative;">
         <div style="background: #fff; border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
             <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="app-brand-link" style="display: flex; justify-content: center; align-items: center;">
-                <img src="<?= Yii::getAlias("@web/images/logo1.png") ?>" alt=""
+                <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt=""
                      style="object-fit: contain; max-width: 200px; height: 60px;">
             </a>
         </div>

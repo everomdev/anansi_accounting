@@ -154,11 +154,14 @@ class Business extends \yii\db\ActiveRecord
     {
         $data = [
             ["Salsas", $this->id, RecipeCategory::TYPE_SUB],
+            ["Transformados", $this->id, RecipeCategory::TYPE_SUB],
+            ["Porcionados", $this->id, RecipeCategory::TYPE_SUB],
             ["Fondos", $this->id, RecipeCategory::TYPE_SUB],
             ["Bases", $this->id, RecipeCategory::TYPE_SUB],
             ["Guarnición", $this->id, RecipeCategory::TYPE_SUB],
             ["Masas", $this->id, RecipeCategory::TYPE_SUB],
             ["Mezcladores", $this->id, RecipeCategory::TYPE_SUB],
+            ["Mezclas simples", $this->id, RecipeCategory::TYPE_SUB],
             ["Preparados", $this->id, RecipeCategory::TYPE_SUB],
             ["Conservados", $this->id, RecipeCategory::TYPE_SUB],
             ["Mezcla simples", $this->id, RecipeCategory::TYPE_SUB],
