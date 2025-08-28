@@ -466,33 +466,27 @@ class IngredientStockController extends Controller
         
         $data = json_decode(\Yii::$app->request->getRawBody(), true);
         $ingredientId = $data['ingredientId'] ?? null;
-        $ingredientName = $data['ingredientName'] ?? '';
         
         if (!$ingredientId) {
             return ['isUsed' => false];
         }
         
-        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        // Buscar el ingrediente
+        $ingredient = IngredientStock::findOne($ingredientId);
+        if (!$ingredient) {
+            return ['isUsed' => false];
+        }
         
-        // Verificar si el ingrediente está siendo usado en recetas estándar
-        $usedInRecipes = \common\models\StandardRecipe::find()
-            ->where(['business_id' => $business['id']])
-            ->andWhere(['like', 'ingredients', '"' . $ingredientName . '"'])
-            ->exists();
-        
-        // Verificar si está siendo usado en sub-recetas
-        $usedInSubRecipes = \common\models\StandardRecipe::find()
-            ->where([
-                'business_id' => $business['id'],
-                'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
-            ])
-            ->andWhere(['like', 'ingredients', '"' . $ingredientName . '"'])
-            ->exists();
+        // Usar la misma lógica que en el índice
+        $recipesCount = $ingredient->getRecipes()->count();
+        $subRecipesCount = $ingredient->getSubRecipes()->count();
         
         return [
-            'isUsed' => $usedInRecipes || $usedInSubRecipes,
-            'usedInRecipes' => $usedInRecipes,
-            'usedInSubRecipes' => $usedInSubRecipes
+            'isUsed' => ($recipesCount > 0 || $subRecipesCount > 0),
+            'usedInRecipes' => $recipesCount > 0,
+            'usedInSubRecipes' => $subRecipesCount > 0,
+            'recipesCount' => $recipesCount,
+            'subRecipesCount' => $subRecipesCount
         ];
     }
 }

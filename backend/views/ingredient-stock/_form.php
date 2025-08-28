@@ -418,9 +418,9 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
                     
                     // Solo mostrar advertencia si realmente cambió la unidad
                     if (originalUmValue && newValue && newValue !== originalUmValue) {
-                        console.log('Showing warning modal directly');
-                        // Mostrar advertencia directamente
-                        showUnitChangeWarning(newValue, e.target);
+                        console.log('Checking ingredient usage...');
+                        // Verificar si el ingrediente está siendo usado en recetas
+                        checkIngredientUsage(ingredientId, newValue, e.target, 'purchase');
                     }
                 });
             }
@@ -448,9 +448,9 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
                     
                     // Solo mostrar advertencia si realmente cambió la unidad
                     if (originalKitchenUmValue && newValue && newValue !== originalKitchenUmValue) {
-                        console.log('Showing kitchen unit warning modal directly');
-                        // Mostrar advertencia directamente
-                        showKitchenUnitChangeWarning(newValue, e.target);
+                        console.log('Checking kitchen unit ingredient usage...');
+                        // Verificar si el ingrediente está siendo usado en recetas
+                        checkIngredientUsage(ingredientId, newValue, e.target, 'kitchen');
                     }
                 });
             }
@@ -525,10 +525,63 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
         }
     });
     
-    function showUnitChangeWarning(newUmValue, selectElement) {
-        console.log('showUnitChangeWarning called with:', {newUmValue});
+    function checkIngredientUsage(ingredientId, newUmValue, selectElement, unitType) {
+        console.log('checkIngredientUsage called with:', {ingredientId, newUmValue, unitType});
         
-        // Mostrar advertencia directamente
+        // Verificar si el ingrediente está siendo usado
+        fetch('<?= \yii\helpers\Url::to(['ingredient-stock/check-usage']) ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({
+                ingredientId: ingredientId
+            })
+        })
+        .then(response => {
+            console.log('Response received:', response);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Data received:', data);
+            if (data.isUsed) {
+                console.log('Ingredient is used in', data.recipesCount, 'recipes and', data.subRecipesCount, 'subrecipes - showing warning');
+                // El ingrediente está siendo usado, mostrar advertencia
+                if (unitType === 'purchase') {
+                    showUnitChangeWarning(newUmValue, selectElement, data);
+                } else if (unitType === 'kitchen') {
+                    showKitchenUnitChangeWarning(newUmValue, selectElement, data);
+                }
+            } else {
+                console.log('Ingredient is not used, allowing change directly');
+                // No está siendo usado, permitir el cambio directamente
+                if (unitType === 'purchase') {
+                    originalUmValue = newUmValue;
+                } else if (unitType === 'kitchen') {
+                    originalKitchenUmValue = newUmValue;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error verificando uso del ingrediente:', error);
+            // En caso de error, permitir el cambio pero mostrar una advertencia en consola
+            if (unitType === 'purchase') {
+                originalUmValue = newUmValue;
+            } else if (unitType === 'kitchen') {
+                originalKitchenUmValue = newUmValue;
+            }
+        });
+    }
+    
+    function showUnitChangeWarning(newUmValue, selectElement, usageData) {
+        console.log('showUnitChangeWarning called with:', {newUmValue, usageData});
+        
+        // Actualizar el modal con información específica sobre el uso
+        updateModalMessage('unit-change-warning-modal', usageData);
+        
+        // Mostrar advertencia
         pendingUmChange = newUmValue;
         selectElement.value = originalUmValue; // Restaurar temporalmente
         
@@ -538,10 +591,13 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
         console.log('Modal should be visible now');
     }
     
-    function showKitchenUnitChangeWarning(newUmValue, selectElement) {
-        console.log('showKitchenUnitChangeWarning called with:', {newUmValue});
+    function showKitchenUnitChangeWarning(newUmValue, selectElement, usageData) {
+        console.log('showKitchenUnitChangeWarning called with:', {newUmValue, usageData});
         
-        // Mostrar advertencia directamente
+        // Actualizar el modal con información específica sobre el uso
+        updateModalMessage('kitchen-unit-change-warning-modal', usageData);
+        
+        // Mostrar advertencia
         pendingKitchenUmChange = newUmValue;
         selectElement.value = originalKitchenUmValue; // Restaurar temporalmente
         
@@ -549,6 +605,35 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
         const modal = new bootstrap.Modal(document.getElementById('kitchen-unit-change-warning-modal'));
         modal.show();
         console.log('Kitchen unit modal should be visible now');
+    }
+    
+    function updateModalMessage(modalId, usageData) {
+        const modal = document.getElementById(modalId);
+        if (modal && usageData) {
+            const alertDiv = modal.querySelector('.alert div');
+            if (alertDiv) {
+                let message = '';
+                if (modalId.includes('kitchen')) {
+                    message = '<strong>⚠️ Cambiar la unidad de cocina de este insumo modificará ';
+                } else {
+                    message = '<strong>⚠️ Cambiar la unidad de compra de este insumo modificará ';
+                }
+                
+                const details = [];
+                if (usageData.recipesCount > 0) {
+                    details.push(`${usageData.recipesCount} receta${usageData.recipesCount > 1 ? 's' : ''}`);
+                }
+                if (usageData.subRecipesCount > 0) {
+                    details.push(`${usageData.subRecipesCount} subreceta${usageData.subRecipesCount > 1 ? 's' : ''}`);
+                }
+                
+                message += details.join(' y ') + ' que lo utilizan.</strong>';
+                message += '<br><br>Esta acción puede generar inconsistencias en costos e inventarios.';
+                message += '<br><br><strong>¿Desea continuar?</strong>';
+                
+                alertDiv.innerHTML = message;
+            }
+        }
     }
 })();
 

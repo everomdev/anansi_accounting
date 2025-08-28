@@ -67,9 +67,9 @@ use yii\bootstrap5\Modal;
 ]); ?>
 
 <div class="modal-body">
-    <p><strong>Estás a punto de crear una nueva categoría de receta personalizada.</strong></p>
-    <p>Ten en cuenta que agregar categorías fuera del estándar puede generar inconsistencias en reportes y organización de recetas.</p>
-    <p><strong>El uso de categorías personalizadas es bajo tu propio riesgo.</strong></p>
+    <p><strong>Está a punto de crear una nueva categoría de <span id="modal-type-text">receta</span> personalizada.</strong></p>
+    <p>Ten en cuenta que agregar categorías fuera del estándar puede generar inconsistencias en reportes y organización de <span id="modal-type-plural">recetas</span>.</p>
+    <p><strong>El uso de categorías personalizadas es bajo su propio riesgo.</strong></p>
     <p>Para garantizar el correcto funcionamiento del sistema, recomendamos trabajar con las categorías estándar.</p>
 </div>
 
@@ -109,10 +109,32 @@ $(document).ready(function() {
         } else {
             warning.slideUp();
         }
+        
+        // También actualizar el modal dinámicamente
+        updateModalContent();
+    }
+    
+    // Función para actualizar el contenido del modal según el tipo seleccionado
+    function updateModalContent() {
+        var selectedType = typeSelect.val();
+        var modalTypeText = $('#modal-type-text');
+        var modalTypePlural = $('#modal-type-plural');
+        var confirmButton = $('#confirm-custom-category-btn');
+        
+        if (selectedType === 'sub') {
+            modalTypeText.text('subreceta');
+            modalTypePlural.text('subrecetas');
+            confirmButton.text('Aceptar y crear categoría personalizada');
+        } else {
+            modalTypeText.text('receta');
+            modalTypePlural.text('recetas');
+            confirmButton.text('Aceptar y crear categoría personalizada');
+        }
     }
     
     // Verificar tipo inicial al cargar la página
     toggleWarning();
+    updateModalContent(); // Configurar modal inicial
     
     // Actualizar advertencia cuando cambie el tipo
     typeSelect.on('change', function() {
@@ -266,9 +288,18 @@ $(document).ready(function() {
             return;
         }
         
-        // Mostrar el modal de advertencia
-        var modal = new bootstrap.Modal(document.getElementById('custom-category-warning-modal'));
-        modal.show();
+        // Verificar el tipo seleccionado
+        var selectedType = typeSelect.val();
+        
+        if (selectedType === 'sub') {
+            // Solo para subrecetas: actualizar el contenido del modal y mostrarlo
+            updateModalContent();
+            var modal = new bootstrap.Modal(document.getElementById('custom-category-warning-modal'));
+            modal.show();
+        } else {
+            // Para recetas normales: guardar directamente sin advertencia
+            form.submit();
+        }
     });
     
     // Evento del botón "Aceptar y crear categoría personalizada"
