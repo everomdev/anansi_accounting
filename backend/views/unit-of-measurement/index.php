@@ -140,13 +140,34 @@ $this->registerCss('
                 [
                     'class' => 'yii\grid\ActionColumn',
                     'template' => "{update} {delete}",
+                    'visibleButtons' => [
+                        'delete' => function ($model, $key, $index) {
+                            // Solo mostrar botón delete para unidades personalizadas
+                            return $model->custom == 1;
+                        }
+                    ],
                     'buttons' => [
                         'update' => function ($url, $model, $key) {
                             return \yii\bootstrap5\Html::a(
                                 "<i class='bx bx-edit'></i>",
                                 $url,
                                 [
-                                    'class' => 'update-um text-warning'
+                                    'class' => 'update-um text-warning',
+                                    'data-bs-toggle' => 'tooltip',
+                                    'title' => 'Editar unidad de medida'
+                                ]
+                            );
+                        },
+                        'delete' => function ($url, $model, $key) {
+                            return \yii\bootstrap5\Html::a(
+                                "<i class='bx bx-trash'></i>",
+                                $url,
+                                [
+                                    'class' => 'text-danger',
+                                    'data-confirm' => '¿Está seguro de que desea eliminar esta unidad personalizada?',
+                                    'data-method' => 'post',
+                                    'data-bs-toggle' => 'tooltip',
+                                    'title' => 'Eliminar unidad personalizada'
                                 ]
                             );
                         },
