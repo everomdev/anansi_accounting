@@ -138,13 +138,21 @@ $this->registerCss('
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}",
+                'visibleButtons' => [
+                    'delete' => function ($model, $key, $index) {
+                        // Solo mostrar botón delete para categorías personalizadas
+                        return $model->custom == 1;
+                    }
+                ],
                 'buttons' => [
                     'update' => function ($url, $model, $key) {
                         return \yii\bootstrap5\Html::a(
                             "<i class='bx bx-edit'></i>",
                             $url,
                             [
-                                'class' => 'update-recipe-category text-warning'
+                                'class' => 'update-recipe-category text-warning',
+                                'data-bs-toggle' => 'tooltip',
+                                'title' => 'Editar categoría de receta'
                             ]
                         );
                     },
@@ -153,12 +161,11 @@ $this->registerCss('
                             "<i class='bx bx-trash'></i>",
                             $url,
                             [
-                                'class' => 'delete-recipe-category text-warning',
+                                'class' => 'delete-recipe-category text-danger',
                                 'data' => [
-                                    'confirm' => Yii::t('app', "Are you sure you want to delete this category?"),
+                                    'confirm' => '¿Está seguro de que desea eliminar esta categoría personalizada?',
                                     'method' => 'post'
-
-                                ]
+                                ],
                             ]
                         );
                     }

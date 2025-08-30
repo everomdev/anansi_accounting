@@ -166,8 +166,6 @@ $this->registerCss('
                                     'class' => 'text-danger',
                                     'data-confirm' => '¿Está seguro de que desea eliminar esta unidad personalizada?',
                                     'data-method' => 'post',
-                                    'data-bs-toggle' => 'tooltip',
-                                    'title' => 'Eliminar unidad personalizada'
                                 ]
                             );
                         },
