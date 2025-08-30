@@ -7,8 +7,35 @@ use yii\helpers\Url;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ArrayDataProvider */
-/* @var $fechaDesde string */
-/* @var $fechaHasta string */
+/* @var $selectedMonth int */
+/* @var $selectedYear int */
+/* @var $years array */
+
+/**
+ * Función auxiliar que devuelve el nombre del mes en español
+ * @param int $month Número del mes (1-12)
+ * @return string Nombre del mes en español
+ */
+function getMonthName($month) {
+    if ($month == 0) {
+        return 'Todos los meses';
+    }
+    $months = [
+        1 => 'Enero',
+        2 => 'Febrero',
+        3 => 'Marzo',
+        4 => 'Abril',
+        5 => 'Mayo',
+        6 => 'Junio',
+        7 => 'Julio',
+        8 => 'Agosto',
+        9 => 'Septiembre',
+        10 => 'Octubre',
+        11 => 'Noviembre',
+        12 => 'Diciembre'
+    ];
+    return isset($months[$month]) ? $months[$month] : '';
+}
 
 $this->title = 'Control de Insumos';
 $this->params['breadcrumbs'][] = ['label' => 'KPI\'s y Control', 'url' => ['#']];
@@ -47,52 +74,80 @@ $this->params['breadcrumbs'][] = $this->title;
                         <!-- Pestaña Control de Insumos -->
                         <div class="tab-pane fade show active" id="control-pane" role="tabpanel" aria-labelledby="control-tab">
                     
-                    <!-- Filtros de fecha -->
-                    <!-- <div class="row mb-3">
+                    <!-- Filtros de mes y año -->
+                    <div class="row mb-3">
                         <div class="col-md-12">
-                            <?php $form = ActiveForm::begin([
-                                'method' => 'get',
-                                'options' => ['class' => 'form-inline'],
-                            ]); ?>
-                            
-                            <div class="form-group mr-3">
-                                <?= Html::label('Fecha Desde:', null, ['class' => 'mr-2']) ?>
-                                <?= Html::input('date', 'fecha_desde', $fechaDesde, [
-                                    'class' => 'form-control',
-                                    'id' => 'fecha_desde'
-                                ]) ?>
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-filter"></i> Filtros de Período
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <?= Html::beginForm(['control-insumos'], 'get') ?>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="month-select" class="form-label">Mes</label>
+                                            <?= Html::dropDownList('month',
+                                                $selectedMonth ?? date('n'), 
+                                                array_merge(['0' => 'TODOS'], [
+                                                    '1' => 'Enero',
+                                                    '2' => 'Febrero',
+                                                    '3' => 'Marzo',
+                                                    '4' => 'Abril',
+                                                    '5' => 'Mayo',
+                                                    '6' => 'Junio',
+                                                    '7' => 'Julio',
+                                                    '8' => 'Agosto',
+                                                    '9' => 'Septiembre',
+                                                    '10' => 'Octubre',
+                                                    '11' => 'Noviembre',
+                                                    '12' => 'Diciembre',
+                                                ]),
+                                                ['class' => 'form-select', 'id' => 'month-select']
+                                            ) ?>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <label for="year-select" class="form-label">Año</label>
+                                            <?= Html::dropDownList('year',
+                                                $selectedYear ?? date('Y'),
+                                                ['0' => 'TODOS'] + $years,
+                                                ['class' => 'form-select', 'id' => 'year-select']
+                                            ) ?>
+                                        </div>
+                                        
+                                        <div class="col-md-4 d-flex align-items-end">
+                                            <?= Html::submitButton('<i class="fas fa-filter"></i> Filtrar', [
+                                                'class' => 'btn btn-primary'
+                                            ]) ?>
+                                            <?= Html::a('<i class="fas fa-times"></i> Limpiar', ['control-insumos'], [
+                                                'class' => 'btn btn-secondary ms-2'
+                                            ]) ?>
+                                        </div>
+                                    </div>
+                                    <?= Html::endForm() ?>
+                                </div>
                             </div>
-                            
-                            <div class="form-group mr-3">
-                                <?= Html::label('Fecha Hasta:', null, ['class' => 'mr-2']) ?>
-                                <?= Html::input('date', 'fecha_hasta', $fechaHasta, [
-                                    'class' => 'form-control',
-                                    'id' => 'fecha_hasta'
-                                ]) ?>
-                            </div>
-                            
-                            <div class="form-group">
-                                <?= Html::submitButton('<i class="fas fa-filter"></i> Filtrar', [
-                                    'class' => 'btn btn-primary'
-                                ]) ?>
-                                <?= Html::a('<i class="fas fa-times"></i> Limpiar', ['control-insumos'], [
-                                    'class' => 'btn btn-secondary ml-2'
-                                ]) ?>
-                            </div>
-                            
-                            <?php ActiveForm::end(); ?>
                         </div>
-                    </div> -->
+                    </div>
                     
                     <!-- Información del período -->
-                    <!-- <div class="alert alert-info">
+                    <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Análisis Histórico Completo:</strong> Mostrando TODOS los datos históricos (sin filtro de fecha)
-                        <br>
-                        <small>Este reporte compara el consumo teórico basado en TODAS las ventas históricas vs. TODAS las compras registradas.</small>
+                        <?php
+                        $showAllData = ($selectedMonth == 0 || $selectedYear == 0);
+                        if ($showAllData) {
+                            echo '<strong>Análisis Histórico Completo:</strong> Mostrando TODOS los datos históricos (sin filtro de fecha)';
+                            echo '<br><small>Este reporte compara el consumo teórico basado en TODAS las ventas históricas vs. TODAS las compras registradas.</small>';
+                        } else {
+                            echo '<strong>Período Seleccionado:</strong> ' . getMonthName($selectedMonth) . ' ' . $selectedYear;
+                            echo '<br><small>Este reporte compara el consumo teórico basado en las ventas de ' . getMonthName($selectedMonth) . ' ' . $selectedYear . ' vs. las compras del mismo período.</small>';
+                        }
+                        ?>
                         <br>
                         <small><strong>Total de ingredientes:</strong> <?= count($dataProvider->allModels) ?></small>
-                    </div> -->
+                    </div>
                     
                     <!-- Resumen estadístico -->
                     <?php

@@ -55,8 +55,18 @@ class KpiController extends Controller
     public function actionControlInsumos()
     {
         $business = RedisKeys::getBusiness();
-        $fechaDesde = Yii::$app->request->get('fecha_desde', date('Y-m-01')); // Primer día del mes actual
-        $fechaHasta = Yii::$app->request->get('fecha_hasta', date('Y-m-t')); // Último día del mes actual
+        
+        // Obtener parámetros de filtro
+        $selectedMonth = Yii::$app->request->get('month', date('n'));
+        $selectedYear = Yii::$app->request->get('year', date('Y'));
+        
+        // Generar array de años disponibles
+        $years = [];
+        for ($i = 2020; $i <= date('Y'); $i++) {
+            $years[$i] = $i;
+        }
+        
+        $debug = Yii::$app->request->get('debug', false);
         
         // Obtener todos los ingredientes activos del negocio
         $ingredientes = IngredientStock::find()
@@ -67,7 +77,7 @@ class KpiController extends Controller
         $datosControl = [];
         
         foreach ($ingredientes as $ingrediente) {
-            $datos = $this->calcularDatosInsumo($ingrediente, $fechaDesde, $fechaHasta);
+            $datos = $this->calcularDatosInsumo($ingrediente, $selectedMonth, $selectedYear, $debug);
             $datosControl[] = $datos;
         }
         
@@ -91,43 +101,54 @@ class KpiController extends Controller
         
         return $this->render('control-insumos', [
             'dataProvider' => $dataProvider,
-            'fechaDesde' => $fechaDesde,
-            'fechaHasta' => $fechaHasta,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'years' => $years,
         ]);
     }
     
     /**
      * Calcula los datos de control para un insumo específico
      */
-    private function calcularDatosInsumo($ingrediente, $fechaDesde, $fechaHasta)
+    private function calcularDatosInsumo($ingrediente, $selectedMonth, $selectedYear, $debug = false)
     {
         $unidad = $ingrediente->um ?: 'und';
         $rendimiento = $ingrediente->yield ?: 1;
+        $portionsPorUnidad = $ingrediente->portions_per_unit ?: 1; // Cuántas porciones de cocina por unidad de compra
+        $unidadPorcion = $ingrediente->portion_um ?: 'und'; // Unidad de cocina
         
-        // 1. Calcular consumo por ventas (usando recetas)
-        $consumoVentas = $this->calcularConsumoVentas($ingrediente->id, $fechaDesde, $fechaHasta);
+        // 1. Calcular consumo por ventas (en unidad de cocina: litros)
+        $consumoVentasEnCocina = $this->calcularConsumoVentas($ingrediente->id, $selectedMonth, $selectedYear, $debug);
         
-        // 2. Calcular compras (movimientos de entrada)
-        $compras = $this->calcularCompras($ingrediente->id, $fechaDesde, $fechaHasta);
+        // 2. Convertir consumo de unidad de cocina a unidad de compra
+        // Si consumo = 10 litros y portions_per_unit = 12 litros/caja
+        // Entonces: 10 litros ÷ 12 litros/caja = 0.83 cajas
+        $consumoVentasEnCompra = $portionsPorUnidad > 0 ? $consumoVentasEnCocina / $portionsPorUnidad : $consumoVentasEnCocina;
         
-        // 3. Obtener inventario actual
+        // 3. Calcular compras (movimientos de entrada en unidad de compra)
+        $compras = $this->calcularCompras($ingrediente->id, $selectedMonth, $selectedYear, $debug);
+        
+        // 4. Obtener inventario actual (en unidad de compra)
         $inventario = $ingrediente->quantity ?: 0;
         
-        // 4. Aplicar rendimiento al consumo
-        $consumoReal = $rendimiento > 0 ? $consumoVentas / ($rendimiento/100) : $consumoVentas;
+        // 5. Aplicar rendimiento al consumo (solo si es necesario)
+        $consumoReal = $rendimiento > 0 ? $consumoVentasEnCompra / ($rendimiento/100) : $consumoVentasEnCompra;
 
-        // 5. Calcular diferencia (comprado - consumido)
+        // 6. Calcular diferencia (comprado - consumido)
         $diferencia = $compras - $consumoReal;
         
-        // 6. Determinar estado
+        // 7. Determinar estado
         $estado = $this->determinarEstado($diferencia, $inventario);
         
         return [
             'id' => $ingrediente->id,
             'nombre' => $ingrediente->ingredient,
             'unidad' => $unidad,
+            'unidad_cocina' => $unidadPorcion,
+            'porciones_por_unidad' => $portionsPorUnidad,
             'rendimiento' => $rendimiento,
-            'consumido' => $consumoVentas,
+            'consumido' => $consumoVentasEnCompra, // Consumo teórico en unidad de compra
+            'consumido_cocina' => $consumoVentasEnCocina, // Consumo en unidad de cocina para referencia
             'consumido_real' => $consumoReal,
             'comprado' => $compras,
             'inventario' => $inventario,
@@ -137,85 +158,103 @@ class KpiController extends Controller
     }
     
     /**
-     * Calcula el consumo por ventas usando las recetas
+     * Calcula el consumo por ventas usando las recetas y filtros de período
      */
-    private function calcularConsumoVentas($ingredienteId, $fechaDesde, $fechaHasta)
+    private function calcularConsumoVentas($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
     {
         $business = RedisKeys::getBusiness();
-        
         $consumoTotal = 0;
         
-        // Buscar TODAS las ventas históricas de recetas que usan este ingrediente (sin filtro de fecha)
-        $query = new Query();
-        $query->select([
-            'ms.sales',
-            'isr.quantity',
-            'sr.title as receta_nombre'
-        ])
-        ->from('monthly_sales ms')
-        ->innerJoin('ingredient_standard_recipe isr', 'isr.standard_recipe_id = ms.model_id')
-        ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
-        ->where([
-            'ms.model_type' => MonthlySales::TYPE_RECIPE,
-            'isr.ingredient_id' => $ingredienteId,
-            'sr.business_id' => $business->id
-        ]);
-        
-        $ventasRecetas = $query->all();
-        
-        foreach ($ventasRecetas as $venta) {
-            $consumoPorVenta = $venta['sales'] * $venta['quantity'];
-            $consumoTotal += $consumoPorVenta;
+        try {
+            // Construir filtros según el período seleccionado
+            $whereConditions = [
+                'ms.model_type' => 'standard_recipe',
+                'isr.ingredient_id' => $ingredienteId,
+                'sr.business_id' => $business->id
+            ];
+            
+            // Si se selecciona "TODOS" (0), no agregar filtros de período
+            if ($selectedYear != 0) {
+                $whereConditions['ms.year'] = $selectedYear;
+            }
+            if ($selectedMonth != 0) {
+                $whereConditions['ms.month'] = $selectedMonth;
+            }
+            
+            // Buscar ventas del período específico
+            $query = new Query();
+            $query->select([
+                'ms.sales',
+                'isr.quantity',
+                'sr.title as receta_nombre',
+                'ms.month',
+                'ms.year'
+            ])
+            ->from('monthly_sales ms')
+            ->innerJoin('ingredient_standard_recipe isr', 'isr.standard_recipe_id = ms.model_id')
+            ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
+            ->where($whereConditions);
+            
+            $ventasRecetas = $query->all();
+            
+            foreach ($ventasRecetas as $venta) {
+                $cantidadVendida = floatval($venta['sales'] ?: 0);
+                $cantidadIngrediente = floatval($venta['quantity'] ?: 0);
+                $consumoPorVenta = $cantidadVendida * $cantidadIngrediente;
+                $consumoTotal += $consumoPorVenta;
+            }
+            
+            return $consumoTotal;
+            
+        } catch (\Exception $e) {
+            Yii::error("Error calculando consumo de ventas para ingrediente {$ingredienteId}: " . $e->getMessage());
+            return 0;
         }
-        
-        // Buscar ventas de menús
-        $query2 = new Query();
-        $query2->select([
-            'ms.sales',
-            'isr.quantity',
-            'm.name as menu_nombre'
-        ])
-        ->from('monthly_sales ms')
-        ->innerJoin('menu_standard_recipe msr', 'msr.menu_id = ms.model_id')
-        ->innerJoin('ingredient_standard_recipe isr', 'isr.standard_recipe_id = msr.standard_recipe_id')
-        ->innerJoin('menu m', 'm.id = ms.model_id')
-        ->where([
-            'ms.model_type' => MonthlySales::TYPE_MENU,
-            'isr.ingredient_id' => $ingredienteId,
-            'm.business_id' => $business->id
-        ]);
-        
-        $ventasMenus = $query2->all();
-        
-        foreach ($ventasMenus as $venta) {
-            $consumoPorVenta = $venta['sales'] * $venta['quantity'];
-            $consumoTotal += $consumoPorVenta;
-        }
-        
-        return $consumoTotal;
     }
     
     /**
-     * Calcula las compras (movimientos de entrada)
+     * Calcula las compras (movimientos de entrada) para el período seleccionado
      */
-    private function calcularCompras($ingredienteId, $fechaDesde, $fechaHasta)
+    private function calcularCompras($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
     {
         $business = RedisKeys::getBusiness();
         
-        // Obtener TODOS los movimientos históricos (sin filtro de fecha)
-        $query = new Query();
-        $query->select('SUM(quantity) as total_comprado')
-            ->from('movement')
-            ->where([
-                'ingredient_id' => $ingredienteId,
-                'business_id' => $business->id,
-                'type' => 'input' // Solo movimientos de entrada
-            ]);
-        
-        $result = $query->one();
-        $totalComprado = $result['total_comprado'] ?: 0;
-        
-        return $totalComprado;
+        try {
+            $query = new Query();
+            $query->select('SUM(quantity) as total_comprado')
+                ->from('movement')
+                ->where([
+                    'ingredient_id' => $ingredienteId,
+                    'business_id' => $business->id,
+                    'type' => 'input' // Solo movimientos de entrada
+                ]);
+            
+            // Si no es "TODOS", aplicar filtros de fecha
+            if ($selectedYear != 0 && $selectedMonth != 0) {
+                // Filtro específico para año y mes
+                $fechaInicio = sprintf('%d-%02d-01 00:00:00', $selectedYear, $selectedMonth);
+                $fechaFin = date('Y-m-t 23:59:59', strtotime($fechaInicio));
+                
+                $query->andWhere(['>=', 'created_at', $fechaInicio])
+                      ->andWhere(['<=', 'created_at', $fechaFin]);
+            } elseif ($selectedYear != 0) {
+                // Solo filtro por año
+                $fechaInicio = sprintf('%d-01-01 00:00:00', $selectedYear);
+                $fechaFin = sprintf('%d-12-31 23:59:59', $selectedYear);
+                
+                $query->andWhere(['>=', 'created_at', $fechaInicio])
+                      ->andWhere(['<=', 'created_at', $fechaFin]);
+            }
+            
+            $result = $query->one();
+            $totalComprado = floatval($result['total_comprado'] ?: 0);
+            
+            return $totalComprado;
+            
+        } catch (\Exception $e) {
+            Yii::error("Error calculando compras para ingrediente {$ingredienteId}: " . $e->getMessage());
+            return 0;
+        }
     }
     
     /**
