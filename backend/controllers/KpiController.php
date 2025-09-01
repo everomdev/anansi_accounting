@@ -159,6 +159,7 @@ class KpiController extends Controller
     
     /**
      * Calcula el consumo por ventas usando las recetas y filtros de período
+     * Incluye el consumo de ingredientes en subrecetas
      */
     private function calcularConsumoVentas($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
     {
@@ -166,42 +167,19 @@ class KpiController extends Controller
         $consumoTotal = 0;
         
         try {
-            // Construir filtros según el período seleccionado
-            $whereConditions = [
-                'ms.model_type' => 'standard_recipe',
-                'isr.ingredient_id' => $ingredienteId,
-                'sr.business_id' => $business->id
-            ];
+            // PASO 1: Buscar consumo directo (ingredientes directos en recetas vendidas)
+            $consumoDirecto = $this->calcularConsumoDirecto($ingredienteId, $selectedMonth, $selectedYear, $debug);
+            $consumoTotal += $consumoDirecto;
             
-            // Si se selecciona "TODOS" (0), no agregar filtros de período
-            if ($selectedYear != 0) {
-                $whereConditions['ms.year'] = $selectedYear;
-            }
-            if ($selectedMonth != 0) {
-                $whereConditions['ms.month'] = $selectedMonth;
-            }
+            // PASO 2: Buscar consumo indirecto (ingredientes en subrecetas de recetas vendidas)
+            $consumoIndirecto = $this->calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selectedYear, $debug);
+            $consumoTotal += $consumoIndirecto;
             
-            // Buscar ventas del período específico
-            $query = new Query();
-            $query->select([
-                'ms.sales',
-                'isr.quantity',
-                'sr.title as receta_nombre',
-                'ms.month',
-                'ms.year'
-            ])
-            ->from('monthly_sales ms')
-            ->innerJoin('ingredient_standard_recipe isr', 'isr.standard_recipe_id = ms.model_id')
-            ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
-            ->where($whereConditions);
-            
-            $ventasRecetas = $query->all();
-            
-            foreach ($ventasRecetas as $venta) {
-                $cantidadVendida = floatval($venta['sales'] ?: 0);
-                $cantidadIngrediente = floatval($venta['quantity'] ?: 0);
-                $consumoPorVenta = $cantidadVendida * $cantidadIngrediente;
-                $consumoTotal += $consumoPorVenta;
+            if ($debug) {
+                Yii::info("=== RESUMEN CONSUMO INGREDIENTE {$ingredienteId} ===", 'control-insumos');
+                Yii::info("Consumo directo: {$consumoDirecto}", 'control-insumos');
+                Yii::info("Consumo indirecto (subrecetas): {$consumoIndirecto}", 'control-insumos');
+                Yii::info("CONSUMO TOTAL: {$consumoTotal}", 'control-insumos');
             }
             
             return $consumoTotal;
@@ -210,6 +188,141 @@ class KpiController extends Controller
             Yii::error("Error calculando consumo de ventas para ingrediente {$ingredienteId}: " . $e->getMessage());
             return 0;
         }
+    }
+    
+    /**
+     * Calcula el consumo directo (ingredientes directos en recetas)
+     */
+    private function calcularConsumoDirecto($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
+    {
+        $business = RedisKeys::getBusiness();
+        $consumoTotal = 0;
+        
+        // Construir filtros según el período seleccionado
+        $whereConditions = [
+            'ms.model_type' => 'standard_recipe',
+            'isr.ingredient_id' => $ingredienteId,
+            'sr.business_id' => $business->id
+        ];
+        
+        // Si se selecciona "TODOS" (0), no agregar filtros de período
+        if ($selectedYear != 0) {
+            $whereConditions['ms.year'] = $selectedYear;
+        }
+        if ($selectedMonth != 0) {
+            $whereConditions['ms.month'] = $selectedMonth;
+        }
+        
+        // Buscar ventas del período específico
+        $query = new Query();
+        $query->select([
+            'ms.sales',
+            'isr.quantity',
+            'sr.title as receta_nombre',
+            'ms.month',
+            'ms.year'
+        ])
+        ->from('monthly_sales ms')
+        ->innerJoin('ingredient_standard_recipe isr', 'isr.standard_recipe_id = ms.model_id')
+        ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
+        ->where($whereConditions);
+        
+        $ventasRecetas = $query->all();
+        
+        if ($debug && !empty($ventasRecetas)) {
+            Yii::info("=== CONSUMO DIRECTO INGREDIENTE {$ingredienteId} ===", 'control-insumos');
+            Yii::info("Recetas con ingrediente directo: " . count($ventasRecetas), 'control-insumos');
+        }
+        
+        foreach ($ventasRecetas as $venta) {
+            $cantidadVendida = floatval($venta['sales'] ?: 0);
+            $cantidadIngrediente = floatval($venta['quantity'] ?: 0);
+            $consumoPorVenta = $cantidadVendida * $cantidadIngrediente;
+            $consumoTotal += $consumoPorVenta;
+            
+            if ($debug) {
+                Yii::info("- Receta: {$venta['receta_nombre']}, Ventas: {$cantidadVendida}, Cantidad: {$cantidadIngrediente}, Consumo: {$consumoPorVenta}", 'control-insumos');
+            }
+        }
+        
+        return $consumoTotal;
+    }
+    
+    /**
+     * Calcula el consumo indirecto (ingredientes en subrecetas de recetas vendidas)
+     */
+    private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
+    {
+        $business = RedisKeys::getBusiness();
+        $consumoTotal = 0;
+        
+        // PASO 1: Buscar recetas vendidas que tienen subrecetas
+        $whereConditions = [
+            'ms.model_type' => 'standard_recipe',
+            'sr.business_id' => $business->id
+        ];
+        
+        if ($selectedYear != 0) {
+            $whereConditions['ms.year'] = $selectedYear;
+        }
+        if ($selectedMonth != 0) {
+            $whereConditions['ms.month'] = $selectedMonth;
+        }
+        
+        $queryRecetasConSubrecetas = new Query();
+        $queryRecetasConSubrecetas->select([
+            'ms.sales',
+            'ms.model_id as receta_principal_id',
+            'sr.title as receta_principal_nombre',
+            'srssr.sub_standard_recipe_id',
+            'srssr.quantity as cantidad_subreceta',
+            'sr_sub.title as subreceta_nombre'
+        ])
+        ->from('monthly_sales ms')
+        ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
+        ->innerJoin('standard_recipe_sub_standard_recipe srssr', 'srssr.standard_recipe_id = ms.model_id')
+        ->innerJoin('standard_recipe sr_sub', 'sr_sub.id = srssr.sub_standard_recipe_id')
+        ->where($whereConditions);
+        
+        $recetasConSubrecetas = $queryRecetasConSubrecetas->all();
+        
+        if ($debug && !empty($recetasConSubrecetas)) {
+            Yii::info("=== CONSUMO INDIRECTO INGREDIENTE {$ingredienteId} ===", 'control-insumos');
+            Yii::info("Recetas con subrecetas encontradas: " . count($recetasConSubrecetas), 'control-insumos');
+        }
+        
+        // PASO 2: Para cada subreceta, verificar si contiene nuestro ingrediente
+        foreach ($recetasConSubrecetas as $recetaConSub) {
+            $ventasRecetaPrincipal = floatval($recetaConSub['sales'] ?: 0);
+            $cantidadSubreceta = floatval($recetaConSub['cantidad_subreceta'] ?: 0);
+            $subrecetaId = $recetaConSub['sub_standard_recipe_id'];
+            
+            // Buscar si la subreceta contiene nuestro ingrediente
+            $queryIngredienteEnSubreceta = new Query();
+            $queryIngredienteEnSubreceta->select(['quantity'])
+                ->from('ingredient_standard_recipe')
+                ->where([
+                    'standard_recipe_id' => $subrecetaId,
+                    'ingredient_id' => $ingredienteId
+                ]);
+            
+            $ingredienteEnSubreceta = $queryIngredienteEnSubreceta->one();
+            
+            if ($ingredienteEnSubreceta) {
+                $cantidadIngredienteEnSubreceta = floatval($ingredienteEnSubreceta['quantity'] ?: 0);
+                
+                // Calcular consumo: ventas_receta_principal × cantidad_subreceta × cantidad_ingrediente_en_subreceta
+                $consumoIndirectoPorVenta = $ventasRecetaPrincipal * $cantidadSubreceta * $cantidadIngredienteEnSubreceta;
+                $consumoTotal += $consumoIndirectoPorVenta;
+                
+                if ($debug) {
+                    Yii::info("- Receta: {$recetaConSub['receta_principal_nombre']} → Subreceta: {$recetaConSub['subreceta_nombre']}", 'control-insumos');
+                    Yii::info("  Ventas: {$ventasRecetaPrincipal} × Cant.Sub: {$cantidadSubreceta} × Cant.Ing: {$cantidadIngredienteEnSubreceta} = {$consumoIndirectoPorVenta}", 'control-insumos');
+                }
+            }
+        }
+        
+        return $consumoTotal;
     }
     
     /**
