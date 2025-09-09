@@ -15,7 +15,7 @@ use Da\User\Event\UserEvent;
 use Da\User\Factory\MailFactory;
 use Da\User\Filter\AccessRuleFilter;
 use Da\User\Model\Profile;
-use Da\User\Model\User;
+use common\models\User; // Usar nuestro modelo personalizado
 use Da\User\Query\UserQuery;
 use Da\User\Search\UserSearch;
 use Da\User\Service\PasswordExpireService;

@@ -166,6 +166,79 @@ class User extends \Da\User\Model\User
         return null;
     }
 
+    public function getSubscriptionDetails()
+    {
+        try {
+            $userPlan = $this->userPlan;
+            if (!$userPlan || !$userPlan->stripe_subscription_id) {
+                return null;
+            }
+
+            $stripe = new \Stripe\StripeClient(\Yii::$app->params['stripe.secretKey']);
+            $subscription = $stripe->subscriptions->retrieve($userPlan->stripe_subscription_id);
+            
+            if (!$subscription) {
+                return null;
+            }
+
+            // Obtener el precio desde items o plan (compatibilidad con ambas estructuras)
+            $price = null;
+            $amount = 0;
+            $interval = '';
+            
+            if (!empty($subscription->items->data)) {
+                $item = $subscription->items->data[0];
+                if (isset($item->price)) {
+                    $price = $item->price;
+                    $amount = $price->unit_amount;
+                    $interval = $price->recurring->interval;
+                } elseif (isset($item->plan)) {
+                    // Para compatibilidad con versiones anteriores de Stripe
+                    $price = $item->plan;
+                    $amount = $price->amount;
+                    $interval = $price->interval;
+                }
+            } elseif (isset($subscription->plan)) {
+                // Fallback al plan directo en la suscripción
+                $price = $subscription->plan;
+                $amount = $price->amount;
+                $interval = $price->interval;
+            }
+
+            // Determinar la próxima fecha de pago basándose en el estado
+            $nextPaymentDate = null;
+            if ($subscription->status === 'active' && !$subscription->cancel_at_period_end) {
+                $nextPaymentDate = $subscription->current_period_end;
+            } elseif ($subscription->status === 'trialing' && $subscription->trial_end) {
+                $nextPaymentDate = $subscription->trial_end;
+            }
+            
+            return [
+                'status' => $subscription->status,
+                'current_period_start' => $subscription->current_period_start,
+                'current_period_end' => $subscription->current_period_end,
+                'billing_interval' => $interval, // 'month' or 'year'
+                'amount' => $amount ? $amount / 100 : 0, // Amount in dollars
+                'currency' => $subscription->currency ? strtoupper($subscription->currency) : 'USD',
+                'next_payment_date' => $nextPaymentDate,
+                'cancel_at_period_end' => $subscription->cancel_at_period_end,
+                'canceled_at' => $subscription->canceled_at,
+                'ended_at' => $subscription->ended_at ?? null,
+                'trial_end' => $subscription->trial_end,
+                'trial_start' => $subscription->trial_start,
+                'cancel_at' => $subscription->cancel_at ?? null,
+            ];
+
+        } catch (\Exception $exception) {
+            Yii::error(Yaml::dump([
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTrace()
+            ]));
+        }
+
+        return null;
+    }
+
     public function getInvoices()
     {
         try {

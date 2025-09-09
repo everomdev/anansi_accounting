@@ -14,6 +14,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\web\View;
 use yii\widgets\Pjax;
+use common\models\User as CustomUser; // Importar nuestro modelo personalizado
 
 /**
  * @var $this         yii\web\View
@@ -102,25 +103,197 @@ $module = Yii::$app->getModule('user');
                 'contentOptions' => ['style' => 'font-weight: 600;'],
             ],
             'email:email',
-            // [
-            //     'attribute' => 'registration_ip',
-            //     'value' => function ($model) {
-            //         return $model->registration_ip == null
-            //             ? '<span class="not-set">' . Yii::t('usuario', '(not set)') . '</span>'
-            //             : $model->registration_ip;
-            //     },
-            //     'format' => 'html',
-            // ],
-            // [
-            //     'attribute' => 'created_at',
-            //     'value' => function ($model) {
-            //         if (extension_loaded('intl')) {
-            //             return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->created_at]);
-            //         }
-
-            //         return date('Y-m-d G:i:s', $model->created_at);
-            //     },
-            // ],
+            [
+                'attribute' => 'created_at',
+                'label' => 'Fecha de registro',
+                'value' => function ($model) {
+                    if (extension_loaded('intl')) {
+                        return Yii::t('usuario', '{0, date, MMM dd, YYYY HH:mm}', [$model->created_at]);
+                    }
+                    return date('Y-m-d G:i:s', $model->created_at);
+                },
+                'headerOptions' => ['style' => 'min-width: 140px;'],
+            ],
+            [
+                'label' => 'Plan actual',
+                'value' => function ($model) {
+                    // Usar nuestro modelo personalizado para obtener la relación
+                    $customUser = CustomUser::findOne($model->id);
+                    if ($customUser && $customUser->userPlan && $customUser->userPlan->plan) {
+                        return $customUser->userPlan->plan->name;
+                    }
+                    return '<span class="text-muted">Sin plan</span>';
+                },
+                'format' => 'raw',
+                'headerOptions' => ['style' => 'min-width: 120px;'],
+            ],
+            [
+                'label' => 'Estado de suscripción',
+                'value' => function ($model) {
+                    // Usar nuestro modelo personalizado para obtener la relación
+                    $customUser = CustomUser::findOne($model->id);
+                    if ($customUser && $customUser->userPlan && $customUser->userPlan->stripe_subscription_status) {
+                        $status = $customUser->userPlan->stripe_subscription_status;
+                        $class = '';
+                        $text = '';
+                        
+                        // Obtener detalles adicionales de Stripe
+                        $subscriptionDetails = $customUser->getSubscriptionDetails();
+                        $additionalInfo = '';
+                        
+                        if ($subscriptionDetails && $status === 'canceled') {
+                            if ($subscriptionDetails['ended_at']) {
+                                $endedDate = date('d/m/Y', $subscriptionDetails['ended_at']);
+                                $additionalInfo = " (Terminó: $endedDate)";
+                            } elseif ($subscriptionDetails['canceled_at']) {
+                                $canceledDate = date('d/m/Y', $subscriptionDetails['canceled_at']);
+                                $additionalInfo = " (Cancelada: $canceledDate)";
+                            }
+                        }
+                        
+                        switch ($status) {
+                            case 'active':
+                                $class = 'text-success';
+                                $text = 'Activa';
+                                break;
+                            case 'canceled':
+                                $class = 'text-danger';
+                                $text = 'Cancelada';
+                                break;
+                            case 'past_due':
+                                $class = 'text-warning';
+                                $text = 'Vencida';
+                                break;
+                            case 'incomplete':
+                                $class = 'text-info';
+                                $text = 'Incompleta';
+                                break;
+                            case 'trialing':
+                                $class = 'text-primary';
+                                $text = 'En prueba';
+                                break;
+                            case 'unpaid':
+                                $class = 'text-danger';
+                                $text = 'No pagada';
+                                break;
+                            default:
+                                $class = 'text-secondary';
+                                $text = ucfirst($status);
+                        }
+                        
+                        return '<span class="' . $class . '">' . $text . $additionalInfo . '</span>';
+                    }
+                    return '<span class="text-muted">No activa</span>';
+                },
+                'format' => 'raw',
+                'headerOptions' => ['style' => 'min-width: 160px;'],
+            ],
+            [
+                'label' => 'Tipo de facturación',
+                'value' => function ($model) {
+                    // Usar nuestro modelo personalizado para obtener información detallada
+                    $customUser = CustomUser::findOne($model->id);
+                    if ($customUser && $customUser->userPlan && $customUser->userPlan->stripe_subscription_id) {
+                        $subscriptionDetails = $customUser->getSubscriptionDetails();
+                        if ($subscriptionDetails) {
+                            $interval = $subscriptionDetails['billing_interval'];
+                            $amount = $subscriptionDetails['amount'];
+                            $currency = $subscriptionDetails['currency'];
+                            
+                            $intervalText = $interval === 'year' ? 'Anual' : 'Mensual';
+                            return "$intervalText - $$amount $currency";
+                        }
+                    }
+                    
+                    // Fallback a la lógica anterior si no hay datos de Stripe
+                    if ($customUser && $customUser->userPlan && $customUser->userPlan->plan) {
+                        $plan = $customUser->userPlan->plan;
+                        if ($plan->monthly_price > 0 && $plan->yearly_price > 0) {
+                            return 'Mensual/Anual disponible';
+                        } elseif ($plan->monthly_price > 0) {
+                            return 'Mensual';
+                        } elseif ($plan->yearly_price > 0) {
+                            return 'Anual';
+                        }
+                        return 'Gratuito';
+                    }
+                    return '<span class="text-muted">N/A</span>';
+                },
+                'format' => 'raw',
+                'headerOptions' => ['style' => 'min-width: 140px;'],
+            ],
+            [
+                'label' => 'Próximo pago / Vencimiento',
+                'value' => function ($model) {
+                    // Usar nuestro modelo personalizado para obtener información detallada
+                    $customUser = CustomUser::findOne($model->id);
+                    if ($customUser && $customUser->userPlan && $customUser->userPlan->stripe_subscription_id) {
+                        $subscriptionDetails = $customUser->getSubscriptionDetails();
+                        if ($subscriptionDetails) {
+                            $status = $subscriptionDetails['status'];
+                            
+                            // Suscripción activa
+                            if ($status === 'active') {
+                                if ($subscriptionDetails['cancel_at_period_end']) {
+                                    // Cancelada pero sigue activa hasta el final del período
+                                    $endDate = $subscriptionDetails['current_period_end'];
+                                    $date = date('d/m/Y', $endDate);
+                                    $daysUntil = ceil(($endDate - time()) / (60 * 60 * 24));
+                                    return '<span class="text-warning">Termina: ' . $date . ' (' . $daysUntil . ' días)</span>';
+                                } else {
+                                    // Suscripción activa normal
+                                    $nextPayment = $subscriptionDetails['next_payment_date'];
+                                    if ($nextPayment) {
+                                        $date = date('d/m/Y', $nextPayment);
+                                        $daysUntil = ceil(($nextPayment - time()) / (60 * 60 * 24));
+                                        
+                                        if ($daysUntil <= 0) {
+                                            return '<span class="text-danger">Vencida</span>';
+                                        } elseif ($daysUntil <= 7) {
+                                            return '<span class="text-warning">' . $date . ' (' . $daysUntil . ' días)</span>';
+                                        } else {
+                                            return '<span class="text-success">' . $date . ' (' . $daysUntil . ' días)</span>';
+                                        }
+                                    }
+                                }
+                            }
+                            // En período de prueba
+                            elseif ($status === 'trialing') {
+                                $trialEnd = $subscriptionDetails['trial_end'];
+                                if ($trialEnd) {
+                                    $date = date('d/m/Y', $trialEnd);
+                                    $daysUntil = ceil(($trialEnd - time()) / (60 * 60 * 24));
+                                    if ($daysUntil <= 0) {
+                                        return '<span class="text-danger">Prueba expirada</span>';
+                                    } elseif ($daysUntil <= 3) {
+                                        return '<span class="text-warning">Fin prueba: ' . $date . ' (' . $daysUntil . ' días)</span>';
+                                    } else {
+                                        return '<span class="text-info">Fin prueba: ' . $date . ' (' . $daysUntil . ' días)</span>';
+                                    }
+                                }
+                            }
+                            // Suscripción cancelada
+                            elseif ($status === 'canceled') {
+                                if ($subscriptionDetails['ended_at']) {
+                                    $endedDate = date('d/m/Y', $subscriptionDetails['ended_at']);
+                                    return '<span class="text-muted">Terminó: ' . $endedDate . '</span>';
+                                } elseif ($subscriptionDetails['canceled_at']) {
+                                    $canceledDate = date('d/m/Y', $subscriptionDetails['canceled_at']);
+                                    return '<span class="text-muted">Cancelada: ' . $canceledDate . '</span>';
+                                }
+                                return '<span class="text-muted">Cancelada</span>';
+                            }
+                            // Otros estados
+                            else {
+                                return '<span class="text-secondary">' . ucfirst($status) . '</span>';
+                            }
+                        }
+                    }
+                    return '<span class="text-muted">N/A</span>';
+                },
+                'format' => 'raw',
+                'headerOptions' => ['style' => 'min-width: 160px;'],
+            ],
              [
                  'attribute' => 'last_login_at',
                  'value' => function ($model) {
