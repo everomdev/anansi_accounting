@@ -37,48 +37,67 @@ $module = Yii::$app->getModule('user');
     position: relative;
     overflow: auto;
     max-width: 100%;
+    max-height: 70vh; /* Altura máxima para activar scroll */
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
 }
 
 .fixed-table {
     border-collapse: separate;
     border-spacing: 0;
+    width: 100%;
+    margin: 0;
 }
 
+/* Headers fijos en la parte superior */
+.fixed-table thead th {
+    position: sticky;
+    top: 0;
+    background: #e9ecef;
+    z-index: 10;
+    border-bottom: 2px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 12px 8px;
+}
+
+/* Primera columna fija a la izquierda */
 .fixed-table th:first-child,
 .fixed-table td:first-child {
     position: sticky;
     left: 0;
     background: #f8f9fa;
-    z-index: 2;
+    z-index: 5;
     min-width: 120px;
+    border-right: 2px solid #dee2e6;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
 }
 
+/* Header de la primera columna (fijo tanto arriba como a la izquierda) */
 .fixed-table th:first-child {
     background: #e9ecef;
-    z-index: 3;
+    z-index: 15; /* Mayor z-index para estar sobre todo */
+    border-right: 2px solid #dee2e6;
+    border-bottom: 2px solid #dee2e6;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.15);
 }
 
-.fixed-table thead th {
-    position: sticky;
-    top: 0;
-    background: #e9ecef;
-    z-index: 1;
+/* Estilos para las celdas */
+.fixed-table td {
+    padding: 8px;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
-.fixed-table th:first-child {
-    z-index: 4;
+/* Hover effect para las filas */
+.fixed-table tbody tr:hover {
+    background-color: #f5f5f5;
 }
 
-/* Sombra para el efecto visual */
-.fixed-table td:first-child::after,
-.fixed-table th:first-child::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -2px;
-    bottom: 0;
-    width: 2px;    background: linear-gradient(90deg, rgba(0,0,0,0.1), transparent);
-    pointer-events: none;
+.fixed-table tbody tr:hover td:first-child {
+    background-color: #e9ecef;
 }
 
 /* Asegurar que los modales tengan prioridad sobre la tabla sticky */
@@ -89,6 +108,40 @@ $module = Yii::$app->getModule('user');
 .modal-backdrop {
     z-index: 1040 !important;
 }
+
+/* Mejorar responsive */
+@media (max-width: 768px) {
+    .fixed-table-container {
+        max-height: 60vh;
+    }
+    
+    .fixed-table th,
+    .fixed-table td {
+        padding: 6px 4px;
+        font-size: 0.875rem;
+    }
+}
+
+/* Scrollbar personalizado */
+.fixed-table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.fixed-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.fixed-table-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.fixed-table-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
 </style>
 <div class="fixed-table-container">
 <?= GridView::widget(
@@ -367,8 +420,8 @@ $module = Yii::$app->getModule('user');
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{switch} {reset} {force-password-change} {update} {delete}',
-                'buttons' => [
+                'template' => '{view} {switch} {reset} {force-password-change} {update} {delete}',
+                'buttons' => [  
                     'switch' => function ($url, $model) use ($module) {
                         if ($model->id != Yii::$app->user->id && $module->enableSwitchIdentities) {
                             return Html::a(

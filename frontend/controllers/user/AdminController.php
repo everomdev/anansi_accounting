@@ -346,4 +346,39 @@ class AdminController extends Controller
         }
         $this->redirect(['index']);
     }
+
+    /**
+     * Displays detailed information about a user including Stripe subscription details
+     * @param integer $id
+     */
+    public function actionView($id)
+    {
+        /** @var User $user */
+        $user = $this->userQuery->where(['id' => $id])->one();
+        
+        if (!$user) {
+            throw new \yii\web\NotFoundHttpException('Usuario no encontrado');
+        }
+
+        // Usar nuestro modelo personalizado para obtener los datos de suscripción
+        $customUser = User::findOne($id);
+        $subscriptionDetails = null;
+        $rawSubscription = null;
+        
+        if ($customUser && $customUser->userPlan && $customUser->userPlan->stripe_subscription_id) {
+            try {
+                $subscriptionDetails = $customUser->getSubscriptionDetails();
+                $rawSubscription = $customUser->getSubscription();
+            } catch (\Exception $e) {
+                Yii::error('Error getting subscription details: ' . $e->getMessage());
+            }
+        }
+
+        return $this->render('view', [
+            'user' => $user,
+            'customUser' => $customUser,
+            'subscriptionDetails' => $subscriptionDetails,
+            'rawSubscription' => $rawSubscription,
+        ]);
+    }
 }
