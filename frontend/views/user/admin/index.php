@@ -141,13 +141,90 @@ $module = Yii::$app->getModule('user');
 .fixed-table-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
-</style>
+
+/* Paginador fijo en la parte inferior */
+.pagination-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border-top: 2px solid #dee2e6;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    padding: 15px 20px;
+    text-align: center;
+}
+
+.pagination-container .pagination {
+    margin: 0;
+    justify-content: center;
+}
+
+.pagination-container .pagination .page-link {
+    border-radius: 0.375rem;
+    margin: 0 2px;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    transition: all 0.15s ease-in-out;
+}
+
+.pagination-container .pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pagination-container .pagination .page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+}
+
+/* Agregar padding inferior al contenido para evitar que se oculte detrás del paginador */
+body {
+    padding-bottom: 80px;
+}
+
+/* Estilos responsive para el paginador */
+@media (max-width: 768px) {
+    .pagination-container {
+        padding: 10px 15px;
+    }
+    
+    .pagination-container .pagination .page-link {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    body {
+        padding-bottom: 70px;
+    }
+}
+
+@media (max-width: 576px) {
+    .pagination-container {
+        padding: 8px 10px;
+    }
+    
+    .pagination-container .pagination .page-link {
+        padding: 0.25rem 0.375rem;
+        font-size: 0.75rem;
+        margin: 0 1px;
+    }
+    
+    body {
+        padding-bottom: 60px;
+    }
+}
 </style>
 <div class="fixed-table-container">
 <?= GridView::widget(
     [
         'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,        'layout' => "{items}\n{pager}",
+        'filterModel' => $searchModel,        'layout' => "{items}\n<div class='pagination-container'>{pager}</div>",
         'tableOptions' => ['class' => 'table table-striped fixed-table'],
         'columns' => [
             [
@@ -481,5 +558,51 @@ $module = Yii::$app->getModule('user');
 ); ?>
 </div>
 <?php Pjax::end() ?>
+
+<script>
+// Mejorar la experiencia del paginador fijo
+$(document).ready(function() {
+    // Función para ajustar la posición del paginador en dispositivos móviles
+    function adjustPaginationPosition() {
+        const paginationContainer = $('.pagination-container');
+        if (paginationContainer.length) {
+            // En dispositivos móviles, ajustar la posición para evitar la barra de navegación
+            if (window.innerWidth <= 768) {
+                paginationContainer.css('bottom', '10px');
+            } else {
+                paginationContainer.css('bottom', '0');
+            }
+        }
+    }
+    
+    // Ajustar posición inicial
+    adjustPaginationPosition();
+    
+    // Ajustar en cambio de tamaño de ventana
+    $(window).resize(function() {
+        adjustPaginationPosition();
+    });
+    
+    // Scroll suave al cambiar de página
+    $(document).on('click', '.pagination-container .pagination a', function(e) {
+        // Pequeño delay para permitir que PJAX haga su trabajo
+        setTimeout(function() {
+            $('.fixed-table-container').animate({
+                scrollTop: 0
+            }, 300);
+        }, 100);
+    });
+    
+    // Agregar efecto de desvanecimiento al hacer hover en el paginador
+    $('.pagination-container').hover(
+        function() {
+            $(this).css('box-shadow', '0 -4px 20px rgba(0,0,0,0.15)');
+        },
+        function() {
+            $(this).css('box-shadow', '0 -2px 10px rgba(0,0,0,0.1)');
+        }
+    );
+});
+</script>
 
 <?php $this->endContent() ?>
