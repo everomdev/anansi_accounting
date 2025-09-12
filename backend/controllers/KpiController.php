@@ -140,6 +140,9 @@ class KpiController extends Controller
         // 7. Determinar estado
         $estado = $this->determinarEstado($diferencia, $inventario);
         
+        // 8. Analizar alertas de stock basado en min_stock y max_stock
+        $alertaStock = $this->analizarAlertasStock($ingrediente, $inventario);
+        
         return [
             'id' => $ingrediente->id,
             'nombre' => $ingrediente->ingredient,
@@ -154,6 +157,12 @@ class KpiController extends Controller
             'inventario' => $inventario,
             'diferencia' => $diferencia,
             'estado' => $estado,
+            'min_stock' => $ingrediente->min_stock,
+            'max_stock' => $ingrediente->max_stock,
+            'alerta_stock' => $alertaStock['tipo'],
+            'nivel_critico' => $alertaStock['critico'],
+            'porcentaje_stock' => $alertaStock['porcentaje'],
+            'mensaje_alerta' => $alertaStock['mensaje'],
         ];
     }
     
@@ -382,6 +391,90 @@ class KpiController extends Controller
         } else {
             return 'Equilibrado';
         }
+    }
+    
+    /**
+     * Analiza las alertas de stock basado en min_stock y max_stock
+     */
+    private function analizarAlertasStock($ingrediente, $inventarioActual)
+    {
+        $minStock = $ingrediente->min_stock;
+        $maxStock = $ingrediente->max_stock;
+        
+        // Si no hay límites configurados
+        if (!$minStock && !$maxStock) {
+            return [
+                'tipo' => 'sin_configurar',
+                'critico' => false,
+                'porcentaje' => null,
+                'mensaje' => 'Sin límites configurados'
+            ];
+        }
+        
+        // Calcular porcentaje basado en el rango min-max
+        $porcentaje = null;
+        if ($minStock && $maxStock && $maxStock > $minStock) {
+            $rango = $maxStock - $minStock;
+            $posicionEnRango = $inventarioActual - $minStock;
+            $porcentaje = ($posicionEnRango / $rango) * 100;
+            $porcentaje = max(0, min(100, $porcentaje)); // Limitar entre 0-100%
+        }
+        
+        // Stock crítico (por debajo del mínimo)
+        if ($minStock && $inventarioActual < $minStock) {
+            $deficit = $minStock - $inventarioActual;
+            return [
+                'tipo' => 'critico',
+                'critico' => true,
+                'porcentaje' => $porcentaje,
+                'mensaje' => "Stock crítico: {$deficit} unidades por debajo del mínimo"
+            ];
+        }
+        
+        // Stock bajo (entre mínimo y 20% del rango)
+        if ($minStock && $maxStock && $inventarioActual >= $minStock) {
+            $umbralBajo = $minStock + (($maxStock - $minStock) * 0.2); // 20% del rango
+            if ($inventarioActual <= $umbralBajo) {
+                return [
+                    'tipo' => 'bajo',
+                    'critico' => false,
+                    'porcentaje' => $porcentaje,
+                    'mensaje' => 'Stock bajo - Considerar reabastecimiento pronto'
+                ];
+            }
+        }
+        
+        // Stock excesivo (por encima del máximo)
+        if ($maxStock && $inventarioActual > $maxStock) {
+            $exceso = $inventarioActual - $maxStock;
+            return [
+                'tipo' => 'excesivo',
+                'critico' => false,
+                'porcentaje' => $porcentaje,
+                'mensaje' => "Stock excesivo: {$exceso} unidades por encima del máximo"
+            ];
+        }
+        
+        // Stock alto (entre 80% del rango y máximo)
+        if ($minStock && $maxStock && $inventarioActual <= $maxStock) {
+            $umbralAlto = $minStock + (($maxStock - $minStock) * 0.8); // 80% del rango
+            if ($inventarioActual >= $umbralAlto) {
+                return [
+                    'tipo' => 'alto',
+                    'critico' => false,
+                    'porcentaje' => $porcentaje,
+                    'mensaje' => 'Stock alto - Nivel cerca del máximo'
+                ];
+            }
+        }
+        
+        // Stock normal
+        return [
+            'tipo' => 'normal',
+            'critico' => false,
+            'porcentaje' => $porcentaje,
+            'mensaje' => 'Stock en rango normal'
+        ];
     }
     
     /**

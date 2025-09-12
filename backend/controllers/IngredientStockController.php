@@ -78,7 +78,8 @@ class IngredientStockController extends Controller
                             'import-ingredients',
                             'duplicate-insumos',
                             'view',
-                            'check-usage'
+                            'check-usage',
+                            'stock-alerts'
                         ],
                         'allow' => true,
                         'roles' => ['ingredients_list','ingredients_view'],
@@ -487,6 +488,62 @@ class IngredientStockController extends Controller
             'usedInSubRecipes' => $subRecipesCount > 0,
             'recipesCount' => $recipesCount,
             'subRecipesCount' => $subRecipesCount
+        ];
+    }
+
+    /**
+     * Obtener resumen de ingredientes con alertas de stock
+     */
+    public function actionStockAlerts()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        
+        // Ingredientes con stock bajo
+        $lowStockQuery = IngredientStock::find()
+            ->where(['business_id' => $business['id']])
+            ->andWhere(['not', ['min_stock' => null]])
+            ->andWhere('quantity <= min_stock');
+        
+        // Ingredientes con stock alto
+        $highStockQuery = IngredientStock::find()
+            ->where(['business_id' => $business['id']])
+            ->andWhere(['not', ['max_stock' => null]])
+            ->andWhere('quantity >= max_stock');
+        
+        $lowStockIngredients = $lowStockQuery->all();
+        $highStockIngredients = $highStockQuery->all();
+        
+        return [
+            'lowStock' => [
+                'count' => count($lowStockIngredients),
+                'ingredients' => array_map(function($ingredient) {
+                    return [
+                        'id' => $ingredient->id,
+                        'name' => $ingredient->ingredient,
+                        'key' => $ingredient->key,
+                        'quantity' => $ingredient->quantity,
+                        'min_stock' => $ingredient->min_stock,
+                        'um' => $ingredient->um,
+                        'percentage' => $ingredient->getStockPercentage()
+                    ];
+                }, $lowStockIngredients)
+            ],
+            'highStock' => [
+                'count' => count($highStockIngredients),
+                'ingredients' => array_map(function($ingredient) {
+                    return [
+                        'id' => $ingredient->id,
+                        'name' => $ingredient->ingredient,
+                        'key' => $ingredient->key,
+                        'quantity' => $ingredient->quantity,
+                        'max_stock' => $ingredient->max_stock,
+                        'um' => $ingredient->um,
+                        'percentage' => $ingredient->getStockPercentage()
+                    ];
+                }, $highStockIngredients)
+            ]
         ];
     }
 }

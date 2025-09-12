@@ -3,7 +3,51 @@ $(document).ready(function() {
     if (window.BusinessNumberFormatter) {
         window.BusinessNumberFormatter.setupAutoFormatInputs();
     }
+    
+    // Validación para campos de stock mínimo y máximo
+    initStockValidation();
 });
+
+// Función para inicializar la validación de stock
+function initStockValidation() {
+    const minStockField = $('#ingredientstock-min_stock');
+    const maxStockField = $('#ingredientstock-max_stock');
+    
+    if (minStockField.length && maxStockField.length) {
+        // Validar cuando cambie el stock mínimo
+        minStockField.on('input change', function() {
+            validateStockFields();
+        });
+        
+        // Validar cuando cambie el stock máximo
+        maxStockField.on('input change', function() {
+            validateStockFields();
+        });
+    }
+}
+
+// Función para validar que el stock máximo sea mayor que el mínimo
+function validateStockFields() {
+    const minStockField = $('#ingredientstock-min_stock');
+    const maxStockField = $('#ingredientstock-max_stock');
+    const minValue = parseFloat(minStockField.val()) || 0;
+    const maxValue = parseFloat(maxStockField.val()) || 0;
+    
+    // Remover clases previas
+    minStockField.removeClass('is-invalid');
+    maxStockField.removeClass('is-invalid');
+    $('.stock-validation-error').remove();
+    
+    // Validar si ambos campos tienen valores
+    if (minValue > 0 && maxValue > 0 && maxValue <= minValue) {
+        maxStockField.addClass('is-invalid');
+        
+        // Agregar mensaje de error
+        const errorMsg = $('<div class="stock-validation-error text-danger mt-1">')
+            .text('El stock máximo debe ser mayor que el stock mínimo');
+        maxStockField.closest('.form-group').append(errorMsg);
+    }
+}
 
 $(document).on('change', "#final-quantity, #initial-quantity", function (event) {
     $("#ingredientstock-yield").val(80);

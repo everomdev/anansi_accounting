@@ -149,7 +149,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <small><strong>Total de ingredientes:</strong> <?= count($dataProvider->allModels) ?></small>
                     </div>
                     
-                    <!-- Resumen estadístico -->
+                    <!-- Cálculo de estadísticas -->
                     <?php
                     $totalInsumos = count($dataProvider->allModels);
                     $sobrantes = count(array_filter($dataProvider->allModels, function($item) {
@@ -159,19 +159,138 @@ $this->params['breadcrumbs'][] = $this->title;
                         return $item['diferencia'] < 0;
                     }));
                     $equilibrados = $totalInsumos - $sobrantes - $faltantes;
+                    
+                    // Estadísticas de alertas de stock
+                    $stockCritico = count(array_filter($dataProvider->allModels, function($item) {
+                        return isset($item['alerta_stock']) && $item['alerta_stock'] === 'critico';
+                    }));
+                    $stockBajo = count(array_filter($dataProvider->allModels, function($item) {
+                        return isset($item['alerta_stock']) && $item['alerta_stock'] === 'bajo';
+                    }));
+                    $stockExcesivo = count(array_filter($dataProvider->allModels, function($item) {
+                        return isset($item['alerta_stock']) && $item['alerta_stock'] === 'excesivo';
+                    }));
+                    $sinConfigurar = count(array_filter($dataProvider->allModels, function($item) {
+                        return isset($item['alerta_stock']) && $item['alerta_stock'] === 'sin_configurar';
+                    }));
+                    $stockNormal = count(array_filter($dataProvider->allModels, function($item) {
+                        return isset($item['alerta_stock']) && $item['alerta_stock'] === 'normal';
+                    }));
+                    $stockAlto = count(array_filter($dataProvider->allModels, function($item) {
+                        return isset($item['alerta_stock']) && $item['alerta_stock'] === 'alto';
+                    }));
                     ?>
                     
+                    <!-- Filtros rápidos de alertas -->
                     <div class="row mb-3">
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-info"><i class="fas fa-boxes"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Total Insumos</span>
-                                    <span class="info-box-number"><?= $totalInsumos ?></span>
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-filter"></i> Filtros Rápidos por Alerta de Stock
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="btn-group" role="group" aria-label="Filtros de alertas">
+                                        <button type="button" class="btn btn-outline-secondary active" onclick="filtrarPorAlerta('todos')">
+                                            <i class="fas fa-list"></i> Todos
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" onclick="filtrarPorAlerta('critico')">
+                                            <i class="fas fa-exclamation-triangle"></i> Críticos (<?= $stockCritico ?>)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning" onclick="filtrarPorAlerta('bajo')">
+                                            <i class="fas fa-exclamation"></i> Bajos (<?= $stockBajo ?>)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success" onclick="filtrarPorAlerta('normal')">
+                                            <i class="fas fa-check"></i> Normales (<?= $stockNormal ?>)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info" onclick="filtrarPorAlerta('alto')">
+                                            <i class="fas fa-arrow-up"></i> Altos (<?= $stockAlto ?>)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" onclick="filtrarPorAlerta('excesivo')">
+                                            <i class="fas fa-arrow-up"></i> Excesivos (<?= $stockExcesivo ?>)
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="filtrarPorAlerta('sin_configurar')">
+                                            <i class="fas fa-cog"></i> Sin Config. (<?= $sinConfigurar ?>)
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                    </div>
+                    <!-- Alertas de Stock -->
+                    <!-- <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Alertas de Stock</h5>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-circle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Stock Crítico</span>
+                                    <span class="info-box-number"><?= $stockCritico ?></span>
+                                    <small class="text-muted">Por debajo del mínimo</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning"><i class="fas fa-exclamation"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Stock Bajo</span>
+                                    <span class="info-box-number"><?= $stockBajo ?></span>
+                                    <small class="text-muted">Requiere reabastecimiento</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Stock Normal</span>
+                                    <span class="info-box-number"><?= $stockNormal ?></span>
+                                    <small class="text-muted">En rango óptimo</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info"><i class="fas fa-arrow-up"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Stock Alto</span>
+                                    <span class="info-box-number"><?= $stockAlto ?></span>
+                                    <small class="text-muted">Cerca del máximo</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-primary"><i class="fas fa-arrow-up"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Stock Excesivo</span>
+                                    <span class="info-box-number"><?= $stockExcesivo ?></span>
+                                    <small class="text-muted">Por encima del máximo</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-secondary"><i class="fas fa-cog"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Sin Configurar</span>
+                                    <span class="info-box-number"><?= $sinConfigurar ?></span>
+                                    <small class="text-muted">Sin límites definidos</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+                    
+                    <!-- Resumen de Diferencias -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h5><i class="fas fa-chart-bar"></i> Análisis de Diferencias (Comprado vs. Consumido)</h5>
+                        </div>
+                        <div class="col-md-4">
                             <div class="info-box">
                                 <span class="info-box-icon bg-success"><i class="fas fa-arrow-up"></i></span>
                                 <div class="info-box-content">
@@ -180,7 +299,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="info-box">
                                 <span class="info-box-icon bg-danger"><i class="fas fa-arrow-down"></i></span>
                                 <div class="info-box-content">
@@ -189,7 +308,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="info-box">
                                 <span class="info-box-icon bg-warning"><i class="fas fa-balance-scale"></i></span>
                                 <div class="info-box-content">
@@ -211,7 +330,47 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'label' => 'Insumo',
                                 'format' => 'raw',
                                 'value' => function ($model) {
-                                    return Html::encode($model['nombre']);
+                                    $alerta = $model['alerta_stock'] ?? 'sin_configurar';
+                                    
+                                    // Mapear tipos de alerta a clases CSS
+                                    $backgroundClass = '';
+                                    $textClass = 'text-white';
+                                    
+                                    switch ($alerta) {
+                                        case 'critico':
+                                            $backgroundClass = 'bg-danger';
+                                            $textClass = 'text-white';
+                                            break;
+                                        case 'bajo':
+                                            $backgroundClass = 'bg-warning';
+                                            $textClass = 'text-dark';
+                                            break;
+                                        case 'normal':
+                                            $backgroundClass = 'bg-success';
+                                            $textClass = 'text-white';
+                                            break;
+                                        case 'alto':
+                                            $backgroundClass = 'bg-info';
+                                            $textClass = 'text-white';
+                                            break;
+                                        case 'excesivo':
+                                            $backgroundClass = 'bg-primary';
+                                            $textClass = 'text-white';
+                                            break;
+                                        case 'sin_configurar':
+                                        default:
+                                            $backgroundClass = 'bg-secondary';
+                                            $textClass = 'text-white';
+                                            break;
+                                    }
+                                    
+                                    $nombre = Html::encode($model['nombre']);
+                                    $mensaje = $model['mensaje_alerta'] ?? '';
+                                    
+                                    return '<div class="ingredient-name-container ' . $backgroundClass . ' ' . $textClass . '" title="' . 
+                                           Html::encode($mensaje) . '">' .
+                                           '<strong>' . $nombre . '</strong>' .
+                                           '</div>';
                                 },
                             ],
                             [
@@ -275,6 +434,84 @@ $this->params['breadcrumbs'][] = $this->title;
                                 },
                             ],
                             [
+                                'label' => 'Límites Stock',
+                                'format' => 'raw',
+                                'headerOptions' => ['style' => 'width: 100px;'],
+                                'contentOptions' => ['class' => 'text-center'],
+                                'value' => function ($model) {
+                                    $min = $model['min_stock'] ?? 0;
+                                    $max = $model['max_stock'] ?? 0;
+                                    if (!$min && !$max) {
+                                        return '<small class="text-muted">Sin configurar</small>';
+                                    }
+                                    return '<small class="text-info">' . 
+                                           ($min ? 'Min: ' . number_format($min, 1) : '') . 
+                                           ($min && $max ? '<br>' : '') .
+                                           ($max ? 'Max: ' . number_format($max, 1) : '') . 
+                                           '</small>';
+                                },
+                            ],
+                            [
+                                'label' => 'Alerta Stock',
+                                'format' => 'raw',
+                                'headerOptions' => ['style' => 'width: 120px;'],
+                                'contentOptions' => ['class' => 'text-center'],
+                                'value' => function ($model) {
+                                    $alerta = $model['alerta_stock'] ?? 'sin_configurar';
+                                    $mensaje = $model['mensaje_alerta'] ?? '';
+                                    
+                                    $classMap = [
+                                        'critico' => 'badge-danger',
+                                        'bajo' => 'badge-warning',
+                                        'alto' => 'badge-info', 
+                                        'excesivo' => 'badge-primary',
+                                        'normal' => 'badge-success',
+                                        'sin_configurar' => 'badge-secondary'
+                                    ];
+                                    
+                                    $iconMap = [
+                                        'critico' => 'fas fa-exclamation-triangle',
+                                        'bajo' => 'fas fa-exclamation',
+                                        'alto' => 'fas fa-arrow-up',
+                                        'excesivo' => 'fas fa-arrow-up',
+                                        'normal' => 'fas fa-check',
+                                        'sin_configurar' => 'fas fa-cog'
+                                    ];
+                                    
+                                    $textMap = [
+                                        'critico' => 'CRÍTICO',
+                                        'bajo' => 'BAJO',
+                                        'alto' => 'ALTO',
+                                        'excesivo' => 'EXCESIVO',
+                                        'normal' => 'NORMAL',
+                                        'sin_configurar' => 'SIN CONFIG'
+                                    ];
+                                    
+                                    $badgeClass = $classMap[$alerta] ?? 'badge-secondary';
+                                    $icon = $iconMap[$alerta] ?? 'fas fa-question';
+                                    $text = $textMap[$alerta] ?? 'DESCONOCIDO';
+                                    
+                                    $badge = '<span class="badge ' . $badgeClass . '" title="' . Html::encode($mensaje) . '">' .
+                                             '<i class="' . $icon . '"></i> ' . $text .
+                                             '</span>';
+                                    
+                                    // Agregar barra de progreso para items con límites configurados
+                                    if (isset($model['porcentaje_stock']) && $model['porcentaje_stock'] !== null) {
+                                        $porcentaje = max(0, min(100, $model['porcentaje_stock']));
+                                        $progressClass = 'bg-success';
+                                        if ($porcentaje < 20) $progressClass = 'bg-danger';
+                                        elseif ($porcentaje < 40) $progressClass = 'bg-warning';
+                                        elseif ($porcentaje > 80) $progressClass = 'bg-info';
+                                        
+                                        $badge .= '<div class="progress mt-1" style="height: 4px;">' .
+                                                 '<div class="progress-bar ' . $progressClass . '" style="width: ' . $porcentaje . '%"></div>' .
+                                                 '</div>';
+                                    }
+                                    
+                                    return $badge;
+                                },
+                            ],
+                            [
                                 'attribute' => 'diferencia',
                                 'label' => 'Diferencia (Comprado - Consumido)',
                                 'format' => 'raw',
@@ -318,14 +555,62 @@ $this->params['breadcrumbs'][] = $this->title;
                     
                     <!-- Leyenda -->
                     <div class="mt-3">
-                        <h5>Leyenda:</h5>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-circle text-info"></i> <strong>Consumido (Teórico):</strong> Cantidad que debería haberse consumido según las ventas y recetas.</li>
-                            <li><i class="fas fa-circle text-secondary"></i> <strong>Consumido (Real):</strong> Consumo teórico dividido por el factor de rendimiento del insumo.</li>
-                            <li><i class="fas fa-circle text-primary"></i> <strong>Comprado:</strong> Total de compras registradas en el período.</li>
-                            <li><i class="fas fa-circle text-success"></i> <strong>Inventario:</strong> Stock actual registrado en el sistema.</li>
-                            <li><i class="fas fa-circle text-warning"></i> <strong>Diferencia:</strong> Comprado menos Consumido Real. Positivo = Sobrante, Negativo = Faltante.</li>
-                        </ul>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Leyenda - Análisis de Consumo:</h5>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-circle text-info"></i> <strong>Consumido (Teórico):</strong> Cantidad que debería haberse consumido según las ventas y recetas.</li>
+                                    <li><i class="fas fa-circle text-secondary"></i> <strong>Consumido (Real):</strong> Consumo teórico dividido por el factor de rendimiento del insumo.</li>
+                                    <li><i class="fas fa-circle text-primary"></i> <strong>Comprado:</strong> Total de compras registradas en el período.</li>
+                                    <li><i class="fas fa-circle text-success"></i> <strong>Inventario:</strong> Stock actual registrado en el sistema.</li>
+                                    <li><i class="fas fa-circle text-warning"></i> <strong>Diferencia:</strong> Comprado menos Consumido Real. Positivo = Sobrante, Negativo = Faltante.</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Leyenda - Alertas de Stock:</h5>
+                                <ul class="list-unstyled">
+                                    <li><span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> CRÍTICO</span> Stock por debajo del mínimo configurado</li>
+                                    <li><span class="badge badge-warning"><i class="fas fa-exclamation"></i> BAJO</span> Stock bajo, requiere reabastecimiento pronto</li>
+                                    <li><span class="badge badge-success"><i class="fas fa-check"></i> NORMAL</span> Stock en rango normal (entre 20%-80% del rango)</li>
+                                    <li><span class="badge badge-info"><i class="fas fa-arrow-up"></i> ALTO</span> Stock alto, cerca del máximo configurado</li>
+                                    <li><span class="badge badge-primary"><i class="fas fa-arrow-up"></i> EXCESIVO</span> Stock por encima del máximo configurado</li>
+                                    <li><span class="badge badge-secondary"><i class="fas fa-cog"></i> SIN CONFIG</span> Sin límites de stock configurados</li>
+                                </ul>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> La barra de progreso muestra la posición del stock actual dentro del rango mínimo-máximo configurado.
+                                </small>
+                            </div>
+                            <!-- <div class="col-md-6">
+                                <h5>Leyenda - Colores de Ingredientes:</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="ingredient-name-container bg-danger text-white mb-2" style="animation: none;">
+                                            <small><strong>🔴 CRÍTICO</strong></small>
+                                        </div>
+                                        <div class="ingredient-name-container bg-warning text-dark mb-2">
+                                            <small><strong>🟡 BAJO</strong></small>
+                                        </div>
+                                        <div class="ingredient-name-container bg-success text-white mb-2">
+                                            <small><strong>🟢 NORMAL</strong></small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="ingredient-name-container bg-info text-white mb-2">
+                                            <small><strong>🔵 ALTO</strong></small>
+                                        </div>
+                                        <div class="ingredient-name-container bg-primary text-white mb-2">
+                                            <small><strong>🔵 EXCESIVO</strong></small>
+                                        </div>
+                                        <div class="ingredient-name-container bg-secondary text-white mb-2">
+                                            <small><strong>⚪ SIN CONFIG</strong></small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-palette"></i> Los nombres de ingredientes cambian de color según su estado de stock. Pasa el mouse sobre el nombre para ver detalles.
+                                </small>
+                            </div> -->
+                        </div>
                     </div>
                     
                         </div>
@@ -421,28 +706,35 @@ $this->params['breadcrumbs'][] = $this->title;
     display: block;
     float: left;
     height: 90px;
-    width: 90px;
+    width: 70px; /* Reducido para acomodar 6 columnas */
     text-align: center;
-    font-size: 45px;
+    font-size: 35px; /* Reducido */
     line-height: 90px;
     background: rgba(0,0,0,0.2);
 }
 
 .info-box-content {
-    padding: 5px 10px;
-    margin-left: 90px;
+    padding: 5px 8px; /* Reducido padding */
+    margin-left: 70px; /* Ajustado al nuevo ancho del icono */
 }
 
 .info-box-text {
     text-transform: uppercase;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 11px; /* Reducido para que quepa mejor */
+    line-height: 1.1;
 }
 
 .info-box-number {
     display: block;
     font-weight: bold;
-    font-size: 18px;
+    font-size: 16px; /* Reducido */
+    line-height: 1;
+}
+
+.info-box small {
+    font-size: 9px; /* Muy pequeño para que quepa */
+    line-height: 1;
 }
 
 .bg-info {
@@ -463,6 +755,128 @@ $this->params['breadcrumbs'][] = $this->title;
 .bg-warning {
     background-color: #ffc107!important;
     color: black;
+}
+
+.bg-secondary {
+    background-color: #6c757d!important;
+    color: white;
+}
+
+/* Estilos específicos para alertas de stock */
+.badge {
+    font-size: 0.75em;
+    padding: 0.375em 0.5em;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+    animation: pulse-danger 2s infinite;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* Animación para alertas críticas */
+@keyframes pulse-danger {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Estilos para las barras de progreso pequeñas */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Estilos para tooltips de alertas */
+.badge[title]:hover {
+    cursor: help;
+    opacity: 0.8;
+}
+
+/* Estilos para contenedor de nombres de ingredientes con colores de stock */
+.ingredient-name-container {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px 0;
+    font-weight: 600;
+    text-align: center;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    cursor: help;
+}
+
+.ingredient-name-container:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Animación especial para ingredientes críticos */
+.ingredient-name-container.bg-danger {
+    animation: pulse-critical 2s infinite;
+    border: 2px solid #fff;
+}
+
+@keyframes pulse-critical {
+    0% { 
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Mejoras de contraste para texto */
+.ingredient-name-container.bg-warning {
+    color: #212529 !important;
+    font-weight: 700;
+}
+
+.ingredient-name-container.bg-secondary {
+    opacity: 0.8;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+    .ingredient-name-container {
+        padding: 6px 8px;
+        min-height: 35px;
+        font-size: 0.9em;
+    }
 }
 </style>
 
@@ -577,5 +991,101 @@ function mostrarDetalles(ingredienteId, nombreInsumo) {
     
     // Mostrar modal
     $('#detallesModal').modal('show');
+}
+
+// Funciones para filtros rápidos de alertas
+function filtrarPorAlerta(tipoAlerta) {
+    const table = document.querySelector('.table-responsive table tbody');
+    const rows = table.querySelectorAll('tr');
+    const buttons = document.querySelectorAll('[onclick^="filtrarPorAlerta"]');
+    
+    // Actualizar estado de botones
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Filtrar filas
+    rows.forEach(row => {
+        if (tipoAlerta === 'todos') {
+            row.style.display = '';
+            return;
+        }
+        
+        // Buscar el contenedor del nombre del ingrediente para identificar el tipo de alerta
+        const nameContainer = row.querySelector('.ingredient-name-container');
+        if (!nameContainer) {
+            row.style.display = tipoAlerta === 'sin_configurar' ? '' : 'none';
+            return;
+        }
+        
+        // Verificar el tipo de alerta basado en las clases CSS del contenedor del nombre
+        let shouldShow = false;
+        switch (tipoAlerta) {
+            case 'critico':
+                shouldShow = nameContainer.classList.contains('bg-danger');
+                break;
+            case 'bajo':
+                shouldShow = nameContainer.classList.contains('bg-warning');
+                break;
+            case 'excesivo':
+                shouldShow = nameContainer.classList.contains('bg-primary');
+                break;
+            case 'sin_configurar':
+                shouldShow = nameContainer.classList.contains('bg-secondary');
+                break;
+            case 'normal':
+                shouldShow = nameContainer.classList.contains('bg-success');
+                break;
+            case 'alto':
+                shouldShow = nameContainer.classList.contains('bg-info');
+                break;
+        }
+        
+        row.style.display = shouldShow ? '' : 'none';
+    });
+    
+    // Actualizar contador visible
+    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none').length;
+    
+    // Mostrar mensaje temporal con el resultado del filtro
+    mostrarMensajeFiltro(tipoAlerta, visibleRows);
+}
+
+// Función para mostrar mensaje temporal del filtro aplicado
+function mostrarMensajeFiltro(tipoAlerta, cantidad) {
+    const filtroNames = {
+        'todos': 'Todos los ingredientes',
+        'critico': 'Ingredientes críticos',
+        'bajo': 'Ingredientes con stock bajo',
+        'normal': 'Ingredientes con stock normal',
+        'alto': 'Ingredientes con stock alto',
+        'excesivo': 'Ingredientes con stock excesivo',
+        'sin_configurar': 'Ingredientes sin configurar'
+    };
+    
+    const mensaje = `${filtroNames[tipoAlerta]}: ${cantidad} encontrados`;
+    
+    // Crear o actualizar el mensaje
+    let mensajeElement = document.getElementById('filtro-mensaje');
+    if (!mensajeElement) {
+        mensajeElement = document.createElement('div');
+        mensajeElement.id = 'filtro-mensaje';
+        mensajeElement.className = 'alert alert-info alert-dismissible fade show mt-2';
+        mensajeElement.style.position = 'relative';
+        
+        const tableContainer = document.querySelector('.table-responsive');
+        tableContainer.parentNode.insertBefore(mensajeElement, tableContainer);
+    }
+    
+    mensajeElement.innerHTML = `
+        <i class="fas fa-filter"></i> <strong>Filtro aplicado:</strong> ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Auto-ocultar después de 3 segundos
+    setTimeout(() => {
+        if (mensajeElement && mensajeElement.parentNode) {
+            mensajeElement.remove();
+        }
+    }, 3000);
 }
 </script>

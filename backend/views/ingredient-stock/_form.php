@@ -255,6 +255,32 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                     ])->label('Observaciones') ?>
                 </div>
             </div>
+
+            <div class="row mb-3">
+                <h5 class="card-title mb-3">Control de Inventario</h5>
+                
+                <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4 mb-3">
+                    <?= $form->field($model, 'min_stock')->textInput([
+                        'class' => 'form-control format-number',
+                        'id' => 'ingredientstock-min_stock',
+                        'placeholder' => formatNumber(10, 2, false),
+                        'data-format' => 'number',
+                        'data-decimals' => '2',
+                        'value' => $model->min_stock ? formatNumber($model->min_stock, 2, false) : ''
+                    ])->label("Stock Mínimo") ?>
+                </div>
+                
+                <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4 mb-3">
+                    <?= $form->field($model, 'max_stock')->textInput([
+                        'class' => 'form-control format-number',
+                        'id' => 'ingredientstock-max_stock',
+                        'placeholder' => formatNumber(100, 2, false),
+                        'data-format' => 'number',
+                        'data-decimals' => '2',
+                        'value' => $model->max_stock ? formatNumber($model->max_stock, 2, false) : ''
+                    ])->label("Stock Máximo") ?>
+                </div>
+            </div>
         </div>
         
         <div class="card-footer">

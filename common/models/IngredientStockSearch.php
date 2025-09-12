@@ -19,7 +19,7 @@ class IngredientStockSearch extends IngredientStock
         return [
             [['id', 'business_id'], 'integer'],
             [['ingredient', 'um', 'portion_um', 'observations', 'key', 'brand', 'presentation'], 'safe'],
-            [['quantity', 'yield', 'portions_per_unit'], 'number'],
+            [['quantity', 'yield', 'portions_per_unit', 'min_stock', 'max_stock'], 'number'],
         ];
     }
 
@@ -64,6 +64,8 @@ class IngredientStockSearch extends IngredientStock
             'quantity' => $this->quantity,
             'yield' => $this->yield,
             'portions_per_unit' => $this->portions_per_unit,
+            'min_stock' => $this->min_stock,
+            'max_stock' => $this->max_stock,
         ]);
 
         $query->andFilterWhere(['like', 'ingredient', $this->ingredient])

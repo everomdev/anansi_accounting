@@ -22,6 +22,8 @@ use yii\db\Query;
  * @property float $final_quantity [float]
  * @property int $category_id [int]
  * @property string[] $providers
+ * @property float|null $min_stock [float]
+ * @property float|null $max_stock [float]
  *
  * @property Business $business
  * @property Purchase[] $purchases
@@ -73,7 +75,7 @@ class IngredientStock extends \yii\db\ActiveRecord
             'numberFormatter' => [
                 'class' => \common\behaviors\NumberFormatterBehavior::class,
                 'priceFields' => ['price', 'adjustedPrice'],
-                'numberFields' => ['quantity', 'yield', 'portions_per_unit', 'final_quantity'],
+                'numberFields' => ['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'min_stock', 'max_stock'],
             ]
         ];
     }    public function rules()
@@ -81,7 +83,7 @@ class IngredientStock extends \yii\db\ActiveRecord
         return [
             [['ingredient', 'business_id', 'um', 'portions_per_unit', 'category_id', 'key', 'portions_per_unit', 'portion_um', 'yield'], 'required'],
             [['business_id', 'category_id'], 'integer'],
-            [['quantity', 'yield', 'portions_per_unit', 'final_quantity'], 'number'],
+            [['quantity', 'yield', 'portions_per_unit', 'final_quantity', 'min_stock', 'max_stock'], 'number'],
             [['price', 'adjustedPrice'], 'safe'],
             [['price', 'adjustedPrice'], 'validatePrice'],
             [['observations', '_category', 'key', 'brand', 'presentation'], 'string'],
@@ -91,6 +93,8 @@ class IngredientStock extends \yii\db\ActiveRecord
             [['ingredient', '_category', 'observations', 'brand', 'presentation'], 'filter', 'filter' => 'trim'],
             [['key'], 'validateUniqueKey'],
             [['providers'], 'each', 'rule' => ['integer']],
+            [['min_stock', 'max_stock'], 'number', 'min' => 0],
+            [['max_stock'], 'validateMaxStock'],
         ];
     }
 
@@ -115,6 +119,8 @@ class IngredientStock extends \yii\db\ActiveRecord
             'providers' => Yii::t('app', "Proveedores"),
             'brand' => Yii::t('app', "Marca"),
             'presentation' => Yii::t('app', "Presentación"),
+            'min_stock' => Yii::t('app', "Stock Mínimo"),
+            'max_stock' => Yii::t('app', "Stock Máximo"),
         ];
     }
 
@@ -180,6 +186,18 @@ class IngredientStock extends \yii\db\ActiveRecord
             }
         } else {
             $this->addError($attribute, Yii::t('app', '{attribute} debe ser un número.', ['attribute' => $this->getAttributeLabel($attribute)]));
+        }
+    }
+
+    /**
+     * Validación personalizada para verificar que el stock máximo sea mayor que el mínimo
+     */
+    public function validateMaxStock($attribute, $params)
+    {
+        if (!empty($this->min_stock) && !empty($this->max_stock)) {
+            if ((float)$this->max_stock <= (float)$this->min_stock) {
+                $this->addError($attribute, Yii::t('app', 'El stock máximo debe ser mayor que el stock mínimo.'));
+            }
         }
     }
 
@@ -374,6 +392,64 @@ class IngredientStock extends \yii\db\ActiveRecord
     public function getName()
     {
         return $this->ingredient;
+    }
+
+    /**
+     * Verifica si el stock actual está por debajo del mínimo
+     * @return bool
+     */
+    public function isLowStock()
+    {
+        if (empty($this->min_stock)) {
+            return false;
+        }
+        return (float)$this->quantity <= (float)$this->min_stock;
+    }
+
+    /**
+     * Verifica si el stock actual está por encima del máximo
+     * @return bool
+     */
+    public function isOverStock()
+    {
+        if (empty($this->max_stock)) {
+            return false;
+        }
+        return (float)$this->quantity >= (float)$this->max_stock;
+    }
+
+    /**
+     * Obtiene el estado del stock
+     * @return string 'low', 'high', 'normal'
+     */
+    public function getStockStatus()
+    {
+        if ($this->isLowStock()) {
+            return 'low';
+        }
+        if ($this->isOverStock()) {
+            return 'high';
+        }
+        return 'normal';
+    }
+
+    /**
+     * Obtiene el porcentaje del stock actual respecto al rango min-max
+     * @return float|null
+     */
+    public function getStockPercentage()
+    {
+        if (empty($this->min_stock) || empty($this->max_stock)) {
+            return null;
+        }
+        
+        $range = (float)$this->max_stock - (float)$this->min_stock;
+        if ($range <= 0) {
+            return null;
+        }
+        
+        $currentAboveMin = (float)$this->quantity - (float)$this->min_stock;
+        return min(100, max(0, ($currentAboveMin / $range) * 100));
     }
 
     public function getRecipes()
