@@ -1806,12 +1806,70 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $sheet->setCellValue('D1', 'Porcentaje de costo');
             $sheet->setCellValue('E1', 'Cantidad de ingredientes');
             $sheet->setCellValue('F1', 'Cantidad de Sub-recetas');
+            
+            // Configurar ancho de columnas para recetas principales
+            $sheet->getColumnDimension('A')->setWidth(25); // Nombre
+            $sheet->getColumnDimension('B')->setWidth(15); // Costo
+            $sheet->getColumnDimension('C')->setWidth(18); // Precio de venta
+            $sheet->getColumnDimension('D')->setWidth(22); // Porcentaje de costo
+            $sheet->getColumnDimension('E')->setWidth(25); // Cantidad de ingredientes
+            $sheet->getColumnDimension('F')->setWidth(25); // Cantidad de Sub-recetas
         } else {
             $sheet->setCellValue('A1', 'Nombre');
             $sheet->setCellValue('B1', 'Costo');
             $sheet->setCellValue('C1', 'Cantidad de ingredientes');
             $sheet->setCellValue('D1', 'Cantidad de Recetas');
+            
+            // Configurar ancho de columnas para subrecetas
+            $sheet->getColumnDimension('A')->setWidth(25); // Nombre
+            $sheet->getColumnDimension('B')->setWidth(15); // Costo
+            $sheet->getColumnDimension('C')->setWidth(25); // Cantidad de ingredientes
+            $sheet->getColumnDimension('D')->setWidth(20); // Cantidad de Recetas
         }
+
+        // Configurar estilos para los headers
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'size' => 12,
+                'color' => ['rgb' => '000000']
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ];
+
+        // Aplicar estilo a los headers
+        if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+        } else {
+            $sheet->getStyle('A1:D1')->applyFromArray($headerStyle);
+        }
+
+        // Configurar estilo para centrar todas las celdas de datos
+        $dataStyle = [
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'CCCCCC']
+                ]
+            ]
+        ];
 
         $row = 2;
         foreach ($recipes as $recipe) {
@@ -1821,13 +1879,29 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $sheet->setCellValue('C' . $row, '$' . $recipe->price);
                 $sheet->setCellValue('D' . $row, $recipe->costPercent*100 . '%');
                 $sheet->setCellValue('E' . $row, $recipe->getIngredientRelations()->count());
-                $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()['main']);
+                $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()->count());
             } else {
                 $sheet->setCellValue('C' . $row, $recipe->getIngredientRelations()->count());
-                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()['sub']);
+                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()->count());
             }
             $row++;
         }
+
+        // Aplicar estilo de centrado a todas las celdas de datos
+        $lastRow = $row - 1;
+        if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+            $sheet->getStyle('A2:F' . $lastRow)->applyFromArray($dataStyle);
+            // Alineación especial para la columna de nombres (izquierda)
+            $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        } else {
+            $sheet->getStyle('A2:D' . $lastRow)->applyFromArray($dataStyle);
+            // Alineación especial para la columna de nombres (izquierda)
+            $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        }
+
+        // Configurar altura de filas para mejor visualización
+        $sheet->getDefaultRowDimension()->setRowHeight(20);
+        $sheet->getRowDimension('1')->setRowHeight(25); // Header más alto
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $fileName = $type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? 'Recetas.xlsx':'Sub-Recetas.xlsx';
