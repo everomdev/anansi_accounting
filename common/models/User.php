@@ -266,6 +266,31 @@ class User extends \Da\User\Model\User
             $stripe = new \Stripe\StripeClient(\Yii::$app->params['stripe.secretKey']);
             $userPlan = $this->userPlan;
             $subscription = $this->getSubscription();
+            
+            // Obtener el precio actual de la suscripción
+            $currentPrice = $subscription->items->data[0]->price;
+            $currentPriceAmount = $currentPrice->unit_amount; // Precio en centavos
+            
+            // Obtener el nuevo precio desde Stripe para comparar
+            $newPriceObject = $stripe->prices->retrieve($price);
+            $newPriceAmount = $newPriceObject->unit_amount; // Precio en centavos
+            
+            // Determinar el comportamiento de prorrateo basado en si es upgrade o downgrade
+            $prorationBehavior = 'none'; // Por defecto, sin prorrateo
+            
+            if ($newPriceAmount > $currentPriceAmount) {
+                // Es un upgrade (plan más caro) → aplicar prorrateo inmediato
+                $prorationBehavior = 'always_invoice';
+                \Yii::info("Plan upgrade detected: {$currentPriceAmount} → {$newPriceAmount}. Applying immediate proration.", 'payment');
+            } elseif ($newPriceAmount < $currentPriceAmount) {
+                // Es un downgrade (plan más barato) → aplicar cambio al siguiente ciclo
+                $prorationBehavior = 'none';
+                \Yii::info("Plan downgrade detected: {$currentPriceAmount} → {$newPriceAmount}. Change will apply at next billing cycle.", 'payment');
+            } else {
+                // Mismo precio (cambio de intervalo de facturación) → sin prorrateo
+                \Yii::info("Same price plan change: {$currentPriceAmount} → {$newPriceAmount}. No proration needed.", 'payment');
+            }
+            
             $stripe->subscriptions->update($subscription->id, [
                 'items' => [
                     [
@@ -273,8 +298,9 @@ class User extends \Da\User\Model\User
                         'price' => $price,
                     ],
                 ],
-                'proration_behavior' => 'always_invoice',
+                'proration_behavior' => $prorationBehavior,
             ]);
+            
             Yii::$app->db->createCommand()
                 ->update(
                     'user_plan',
@@ -283,6 +309,7 @@ class User extends \Da\User\Model\User
                 )
                 ->execute();
             $this->applyRoles();
+            
             return true;
         } catch (\Exception $exception) {
             Yii::error(Yaml::dump([
