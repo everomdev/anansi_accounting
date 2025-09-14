@@ -90,31 +90,47 @@ $controller = $model->isNewRecord
 
 <script>
 $(document).ready(function() {
+    // Cartel de error personalizado
+    var errorAlert = $('<div id="um-duplicate-error" class="alert alert-danger" style="display:none;"></div>');
+    $('.unit-of-measurement-form').prepend(errorAlert);
+
     // Evento del botón "Guardar" inicial
     $('#save-custom-unit-btn').on('click', function(e) {
         e.preventDefault();
-        
-        // Validar el formulario primero
         var form = $('#form-um');
         if (form.find('#unitofmeasurement-name').val().trim() === '') {
-            // Si el nombre está vacío, permitir que la validación normal de Yii se ejecute
             form.submit();
             return;
         }
-        
-        // Mostrar el modal de advertencia
         var modal = new bootstrap.Modal(document.getElementById('custom-unit-warning-modal'));
         modal.show();
     });
-    
+
     // Evento del botón "Aceptar y crear unidad personalizada"
     $('#confirm-custom-unit-btn').on('click', function() {
-        // Cerrar el modal
         var modal = bootstrap.Modal.getInstance(document.getElementById('custom-unit-warning-modal'));
         modal.hide();
-        
-        // Enviar el formulario
-        $('#form-um').submit();
+
+        var form = $('#form-um');
+        var formData = form.serialize();
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    // Recarga la página o cierra el modal principal si lo usas
+                    location.reload();
+                } else if (response.error) {
+                    // Mostrar el cartel de error
+                    errorAlert.text(response.error).show();
+                }
+            },
+            error: function() {
+                errorAlert.text('Error al procesar la solicitud.').show();
+            }
+        });
     });
 });
 </script>

@@ -124,8 +124,8 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                 <div class="col-sm-12 col-md-6 col-lg-4 col-xl-4 mb-3">
                     <?= $form->field($model, 'category_id')->dropDownList(
                         \yii\helpers\ArrayHelper::map(Category::all(), 'id', 'name'), 
-                        ['prompt' => '-- Seleccione una categoría --', 'data-url' => Url::to(['ingredient-stock/generate-key'])]
-                    )->label('Categoría <span class="asterisk">*</span>') ?>
+                        ['prompt' => '-- Seleccione una familia de insumos --', 'data-url' => Url::to(['ingredient-stock/generate-key'])]
+                    )->label('Familia de insumos <span class="asterisk">*</span>') ?>
                 </div>
                 
                 <div class="col-sm-12 col-md-4 col-lg-2 col-xl-2 mb-3">

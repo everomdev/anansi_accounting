@@ -43,9 +43,10 @@ class ExcelHelper
 
         $spreadsheet = new Spreadsheet();
         $activeWorksheet = $spreadsheet->getActiveSheet();
-        $activeWorksheet->setCellValue('A1', 'Identificador');
-        $activeWorksheet->setCellValue('B1', 'Categoría');
-        $activeWorksheet->setCellValue('E1', 'Unidad de Medida');
+    $activeWorksheet->setCellValue('A1', 'Identificador');
+    $activeWorksheet->setCellValue('B1', 'Categoría');
+    $activeWorksheet->setCellValue('E1', 'Unidad de Medida');
+    $activeWorksheet->setCellValue('F1', 'Tipo');
 
         $currentIndex = 2;
         foreach ($categories as $category) {
@@ -60,6 +61,7 @@ class ExcelHelper
         $currentIndex = 2;
         foreach ($unitOfMeasurements as $unitOfMeasurement) {
             $activeWorksheet->setCellValue("E$currentIndex", $unitOfMeasurement->name);
+            $activeWorksheet->setCellValue("F$currentIndex", $unitOfMeasurement->type == 'purchase' ? 'Compra' : ($unitOfMeasurement->type == 'kitchen' ? 'Cocina' : $unitOfMeasurement->type));
             $currentIndex++;
         }
 
@@ -125,8 +127,8 @@ class ExcelHelper
 
     // Create a named range for categories
     $categorySheet = $spreadsheet->createSheet();
-    $categorySheet->setTitle('Categorias');
-    $categorySheet->setCellValue('A1', 'Categoría');
+    $categorySheet->setTitle('Familia de Insumos');
+    $categorySheet->setCellValue('A1', 'Familia de Insumos');
 
     $row = 2;
     foreach ($categories as $category) {
@@ -135,7 +137,7 @@ class ExcelHelper
     }
 
     $spreadsheet->addNamedRange(
-        new \PhpOffice\PhpSpreadsheet\NamedRange('Categorias', $categorySheet, 'A2:A' . ($row - 1))
+        new \PhpOffice\PhpSpreadsheet\NamedRange('FamiliaDeInsumos', $categorySheet, 'A2:A' . ($row - 1))
     );
 
     // Apply data validation to the category column
@@ -148,9 +150,9 @@ class ExcelHelper
     $dataValidation->setShowDropDown(true);
     $dataValidation->setErrorTitle('Error de entrada');
     $dataValidation->setError('Este valor no es admitido');
-    $dataValidation->setPromptTitle('Selecciona una categoría');
+    $dataValidation->setPromptTitle('Selecciona una familia de insumos');
     $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidation->setFormula1('=Categorias!$A$2:$A$' . ($row - 1));
+    $dataValidation->setFormula1('=FamiliaDeInsumos!$A$2:$A$' . ($row - 1));
 
     for ($i = 2; $i <= 5000; $i++) {
         $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);

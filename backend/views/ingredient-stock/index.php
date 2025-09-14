@@ -362,8 +362,7 @@ $this->registerCss('
     'title' => Yii::t('app', "Descargar plantilla")
 ]);
 ?>
-<p>Vas a descargar la plantilla para la importación automática de insumos. <strong>Recuerda que debes utilizar la tabla
-        de referencias para indicar el indicador de las categorías de tus insumos correctamente</strong></p>
+<p>Vas a descargar la plantilla para la importación automática de insumos. <strong>Recuerda que debes utilizar la tabla de referencias para indicar las familias de tus insumos correctamente</strong></p>
 <div class="d-flex justify-content-end gap-3">
     <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Descargar plantilla', [
         'icon' => ""

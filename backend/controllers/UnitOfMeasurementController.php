@@ -91,8 +91,33 @@ class UnitOfMeasurementController extends Controller
         if (array_key_exists('ajax', $post)) {
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['unit-of-measurement/index']);
+        if ($model->load(Yii::$app->request->post())) {
+            // Validar duplicados por nombre y tipo
+            $exists = UnitOfMeasurement::find()
+                ->where([
+                    'name' => $model->name,
+                    'type' => $model->type,
+                    'business_id' => $model->business_id
+                ])
+                ->exists();
+            if ($exists) {
+                $model->addError('name', 'Ya existe una unidad de medida con ese nombre y tipo en este negocio.');
+                if (Yii::$app->request->isAjax) {
+                    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                    return [
+                        'success' => false,
+                        'error' => 'Ya existe una unidad de medida con ese nombre y tipo en este negocio.'
+                    ];
+                }
+            } else {
+                if ($model->save()) {
+                    if (Yii::$app->request->isAjax) {
+                        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                        return ['success' => true];
+                    }
+                    return $this->redirect(['unit-of-measurement/index']);
+                }
+            }
         }
 
         return $this->renderAjax('create', [
