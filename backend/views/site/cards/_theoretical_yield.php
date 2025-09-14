@@ -7,7 +7,7 @@
 $year = (int)date('Y');
 $theoreticalYieldData = $business->getTheoreticalYield(null, $year);
 $theoreticalYield = $theoreticalYieldData['theoricalTotal'];
-$yieldPercentage = $theoreticalYield; // Ya está formateado como porcentaje
+$yieldPercentage = formatPercentage($theoreticalYield) === null? formatPercentage(0) : formatPercentage($theoreticalYield);
 
 // Determinar el estado de la rentabilidad para el color
 $yieldStatus = 'success'; // Por defecto, asumimos buena rentabilidad

@@ -157,7 +157,7 @@ class PaymentController extends Controller
 
     public function actionStripeCheckoutSuccess($session_id, $plan, $user)
     {
-        \Yii::$app->session->setFlash('success', "Subscription started");
+        \Yii::$app->session->setFlash('success', "Suscripción iniciada");
         $user = User::findOne(['id' => $user]);
         $user->onCheckoutSessionComplete($session_id);
         return $this->redirect(['site/index']);

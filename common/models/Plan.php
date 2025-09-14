@@ -306,6 +306,7 @@ class Plan extends \yii\db\ActiveRecord
                 'cancel_url' => Url::toRoute(['payment/stripe-checkout-cancel', 'plan' => $this->id, 'user' => $user->id], true),
                 'customer' => $userPlan->stripe_customer_id,
                 'currency' => 'usd',
+                'locale' => 'es',
                 'line_items' => [],
                 'mode' => 'subscription',
                 'metadata' => $this->getAttributes(null, ['intro', 'description']),
@@ -323,7 +324,7 @@ class Plan extends \yii\db\ActiveRecord
                 'tax_id_collection' => [
                     'enabled' => false // TODO: habilitar esto cuando se complete la cuenta en Stripe
                 ],
-                'locale' => 'en', // Idioma de la página de checkout
+                'locale' => 'es', // Idioma de la página de checkout
                 'customer_update' => [
                     'name' => 'auto', // Actualizar automáticamente el nombre del cliente
                     'address' => 'auto', // Actualizar automáticamente la dirección del cliente
