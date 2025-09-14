@@ -1819,12 +1819,14 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $sheet->setCellValue('B1', 'Costo');
             $sheet->setCellValue('C1', 'Cantidad de ingredientes');
             $sheet->setCellValue('D1', 'Cantidad de Recetas');
+            $sheet->setCellValue('E1', 'Cantidad de SubRecetas');
             
             // Configurar ancho de columnas para subrecetas
             $sheet->getColumnDimension('A')->setWidth(25); // Nombre
             $sheet->getColumnDimension('B')->setWidth(15); // Costo
             $sheet->getColumnDimension('C')->setWidth(25); // Cantidad de ingredientes
             $sheet->getColumnDimension('D')->setWidth(20); // Cantidad de Recetas
+            $sheet->getColumnDimension('E')->setWidth(25); // Cantidad de Recetas
         }
 
         // Configurar estilos para los headers
@@ -1854,7 +1856,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
             $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
         } else {
-            $sheet->getStyle('A1:D1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
         }
 
         // Configurar estilo para centrar todas las celdas de datos
@@ -1882,7 +1884,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()->count());
             } else {
                 $sheet->setCellValue('C' . $row, $recipe->getIngredientRelations()->count());
-                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()->count());
+                //die(var_dump($recipe->getSubRecipeCount()['sub']));
+                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()['main']);
+                $sheet->setCellValue('E' . $row, $recipe->getSubRecipeCount()['sub']);
             }
             $row++;
         }
@@ -1894,7 +1898,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             // Alineación especial para la columna de nombres (izquierda)
             $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
         } else {
-            $sheet->getStyle('A2:D' . $lastRow)->applyFromArray($dataStyle);
+            $sheet->getStyle('A2:E' . $lastRow)->applyFromArray($dataStyle);
             // Alineación especial para la columna de nombres (izquierda)
             $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
         }
@@ -1940,9 +1944,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $html .= '<tr><th>Nombre</th><th>Costo</th>';
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
             $html .= '<th>Precio de venta</th><th>Porcentaje de costo</th>';
+            $html .= '<th>Cantidad de ingredientes</th><th>Cantidad de Sub-recetas</th>';
+        } else {
+            $html .= '<th>Cantidad de ingredientes</th><th>Cantidad de Recetas</th><th>Cantidad de Sub-recetas</th>';
         }
-        $html .= '<th>Cantidad de ingredientes</th>';
-        $type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? $html .= '<th>Cantidad de Sub-recetas</th>' : $html .= '<th>Cantidad de Recetas</th>';
         $html .= '</tr>';
 
         foreach ($recipes as $recipe) {
@@ -1954,7 +1959,13 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $html .= '<td style="text-align: center;">' . ($recipe->costPercent)*100 . '%</td>';
             }
             $html .= '<td style="text-align: center;">' . $recipe->getIngredientRelations()->count() . '</td>';
-            $type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN ? $html .= '<td style="text-align: center;">' . $recipe->getSubStandardRecipes()->count() . '</td>': $html .= '<td style="text-align: center;">' . $recipe->getSubRecipeCount()->count() . '</td>';
+            if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+                $html .= '<td style="text-align: center;">' . $recipe->getSubStandardRecipes()->count() . '</td>';
+            } else {
+                // Para subrecetas: mostrar cantidad de recetas y cantidad de subrecetas
+                $html .= '<td style="text-align: center;">' . $recipe->getSubRecipeCount()['main'] . '</td>';
+                $html .= '<td style="text-align: center;">' . $recipe->getSubRecipeCount()['sub'] . '</td>';
+            }
             $html .= '</tr>';
         }
 
