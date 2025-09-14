@@ -1,4 +1,24 @@
 <?php
+$this->registerCss('
+    .grid-view th a {
+        color: #333;
+        text-decoration: none;
+        position: relative;
+        display: block;
+    }
+    .grid-view th a.asc:after {
+        content: " ▲";
+        font-size: 12px;
+    }
+    .grid-view th a.desc:after {
+        content: " ▼";
+        font-size: 12px;
+    }
+    .grid-view th a:hover {
+        color: #333;
+        text-decoration: none;
+    }
+');
 
 use yii\helpers\Html;
 use yii\grid\GridView;
@@ -404,8 +424,13 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'attribute' => 'consumido_real',
                                 'label' => 'Consumido (Real)',
                                 'format' => 'raw',
-                                'headerOptions' => ['style' => 'width: 120px;'],
+                                'headerOptions' => [
+                                    'style' => 'width: 120px; font-weight: bold; cursor: pointer;',
+                                    'class' => 'sortable-column',
+                                    'data-sort-by' => 'consumido_real'
+                                ],
                                 'contentOptions' => ['class' => 'text-center'],
+                                'enableSorting' => true,
                                 'value' => function ($model) {
                                     $valor = $model['consumido_real'];
                                     return '<span class="badge badge-dark text-black">' . number_format($valor, 2) . '</span>';
@@ -439,16 +464,22 @@ $this->params['breadcrumbs'][] = $this->title;
                                 'headerOptions' => ['style' => 'width: 100px;'],
                                 'contentOptions' => ['class' => 'text-center'],
                                 'value' => function ($model) {
-                                    $min = $model['min_stock'] ?? 0;
                                     $max = $model['max_stock'] ?? 0;
+                                    $min = $model['min_stock'] ?? 0;
                                     if (!$min && !$max) {
                                         return '<small class="text-muted">Sin configurar</small>';
                                     }
-                                    return '<small class="text-info">' . 
-                                           ($min ? 'Min: ' . number_format($min, 1) : '') . 
-                                           ($min && $max ? '<br>' : '') .
-                                           ($max ? 'Max: ' . number_format($max, 1) : '') . 
-                                           '</small>';
+                                    $out = '';
+                                    if ($max) {
+                                        $out .= 'Máx: ' . number_format($max, 1);
+                                    }
+                                    if ($max && $min) {
+                                        $out .= '<br>';
+                                    }
+                                    if ($min) {
+                                        $out .= 'Mín: ' . number_format($min, 1);
+                                    }
+                                    return '<small class="text-info">' . $out . '</small>';
                                 },
                             ],
                             [
@@ -600,6 +631,27 @@ $this->params['breadcrumbs'][] = $this->title;
                                         </div>
                                         <div class="ingredient-name-container bg-primary text-white mb-2">
                                             <small><strong>🔵 EXCESIVO</strong></small>
+
+                                $this->registerCss('
+                                    .grid-view th a {
+                                        color: #333;
+                                        text-decoration: none;
+                                        position: relative;
+                                        display: block;
+                                    }
+                                    .grid-view th a.asc:after {
+                                        content: " ▲";
+                                        font-size: 12px;
+                                    }
+                                    .grid-view th a.desc:after {
+                                        content: " ▼";
+                                        font-size: 12px;
+                                    }
+                                    .grid-view th a:hover {
+                                        color: #333;
+                                        text-decoration: none;
+                                    }
+                                ');
                                         </div>
                                         <div class="ingredient-name-container bg-secondary text-white mb-2">
                                             <small><strong>⚪ SIN CONFIG</strong></small>

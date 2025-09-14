@@ -36,7 +36,7 @@ class KpiController extends Controller
                     [
                         'actions' => ['control-insumos', 'proyeccion-compras'],
                         'allow' => true,
-                        'roles' => ['@'],
+                        'roles' => ['kpi_access'],
                     ],
                 ],
             ],
@@ -91,6 +91,7 @@ class KpiController extends Controller
                 'attributes' => [
                     'nombre',
                     'consumido',
+                    'consumido_real',
                     'comprado',
                     'inventario',
                     'diferencia',
