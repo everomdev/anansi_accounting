@@ -120,7 +120,7 @@ use yii\helpers\ArrayHelper;
 <input type="text" class="form-control" id="edit-special-step-indicator" name="indicator" autocomplete="off" autocorrect="off" spellcheck="false">
                     </div>
                     <div class="mb-3">
-                        <label for="edit-special-step-image" class="form-label"><?= Yii::t('app', 'Image') ?></label>
+                        <label for="edit-special-step-image" class="form-label"><?= Yii::t('app', 'Imagen') ?></label>
                         <div id="edit-special-step-image-preview-container" class="mb-2 position-relative" style="display:none;">
                             <img id="edit-special-step-image-preview" src="" alt="Imagen actual" style="max-width: 120px; max-height: 120px; border-radius: 6px; display:block; margin-bottom:8px;" />
                             <button type="button" id="edit-special-step-remove-image-btn" class="btn btn-sm btn-danger position-absolute" style="top:0; right:0; border-radius:50%; width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center; z-index:2;" title="Eliminar imagen actual">

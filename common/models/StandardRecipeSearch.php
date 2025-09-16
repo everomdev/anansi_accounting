@@ -18,7 +18,7 @@ class StandardRecipeSearch extends StandardRecipe
     {
         return [
             [['id', 'business_id'], 'integer'],
-            [['flowchart', 'equipment', 'steps', 'allergies', 'type', 'title'], 'safe'],
+            [['flowchart', 'equipment', 'steps', 'allergies', 'type', 'title', 'type_of_recipe'], 'safe'],
         ];
     }
 
@@ -57,10 +57,16 @@ class StandardRecipeSearch extends StandardRecipe
         }
 
         // grid filtering conditions
+
         $query->andFilterWhere([
             'id' => $this->id,
-            'business_id' => $this->business_id,
+            'business_id' => $this->business_id
         ]);
+
+        // Filtro por type_of_recipe (exacto o like, según tu modelo)
+        if (!empty($this->type_of_recipe)) {
+            $query->andFilterWhere(['type_of_recipe' => $this->type_of_recipe]);
+        }
 
         $query->andFilterWhere(['like', 'title', $this->title])
             ->andFilterWhere(['like', 'flowchart', $this->equipment])

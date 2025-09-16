@@ -351,7 +351,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'type_of_recipe',
-                'label' => 'Familia',
+                'label' => 'Categoría',
                 'enableSorting' => true,
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
@@ -359,13 +359,11 @@ $this->registerCss('
                 'filter' => '<div style="position: relative;">' . 
                     Html::dropDownList('StandardRecipeSearch[type_of_recipe]', $searchModel->type_of_recipe, 
                         ArrayHelper::merge(['' => 'Todas las familias'], [
-                            'Entrada' => 'Entrada',
-                            'Plato Principal' => 'Plato Principal', 
-                            'Postre' => 'Postre',
-                            'Bebida' => 'Bebida',
-                            'Acompañamiento' => 'Acompañamiento',
-                            'Salsa' => 'Salsa',
-                            'Otro' => 'Otro'
+                            'Fondos' => 'Fondos',
+                            'Bases' => 'Bases',
+                            'Guarnición' => 'Guarnición',
+                            'Masas' => 'Masas',
+                            'Salsa' => 'Salsa'
                         ]), [
                         'class' => 'form-control',
                         'id' => 'type-filter',

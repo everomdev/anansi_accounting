@@ -45,7 +45,7 @@ $(document).on('pjax:end', '#pjax-list-steps', function() {
         <?= $form->field($model, 'indicator')->textInput() ?>
     </div>
     <div class="col-12">
-        <?= $form->field($model, '_image')->fileInput() ?>
+        <?= $form->field($model, '_image')->fileInput()->label('Imagen') ?>
     </div>
     <div class="col-12">
         <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Add'), [
