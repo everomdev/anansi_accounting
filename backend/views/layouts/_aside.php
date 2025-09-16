@@ -119,6 +119,13 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $gestionInsumosActive ? 'show' : '' ?>" id="gestionInsumos">
                 <ul class="sub-menu">
+                    <?php if (Yii::$app->user->can('providers_list')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'provider' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['provider/index']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Providers') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'ingredient-stock' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['ingredient-stock/index']) ?>" class="menu-link">
@@ -126,18 +133,14 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('providers_list')): ?>
-                        <li class="menu-item <?= $currentControllerId == 'provider' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['provider/index']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Providers') ?></div>
-                            </a>
-                        </li>
-                        <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
+                    <?php if (Yii::$app->user->can('ingredients_list')): ?>
+                         <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['provider/ingredients']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Insumos por Proveedores') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
+                    
                 </ul>
             </div>
         </li>

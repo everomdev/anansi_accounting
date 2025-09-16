@@ -1697,8 +1697,8 @@ if ($ccRow > 2) {
         $activeWorksheet->setCellValue("E1", "Unidad de cocina");
         $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
         $activeWorksheet->setCellValue("G1", "EQ. Uni. Cocina");
-        $activeWorksheet->setCellValue("H1", "Observaciones");
-        $activeWorksheet->setCellValue("I1", "Precio");
+        $activeWorksheet->setCellValue("I1", "Observaciones");
+        $activeWorksheet->setCellValue("H1", "Precio");
         $activeWorksheet->freezePane("C2");
 
         $ingredients = $business->getIngredientStocks()->all();
@@ -1712,8 +1712,8 @@ if ($ccRow > 2) {
             $activeWorksheet->setCellValue("E$currentRow", $ingredient->portion_um);
             $activeWorksheet->setCellValue("F$currentRow", $ingredient->yield);
             $activeWorksheet->setCellValue("G$currentRow", $ingredient->portions_per_unit);
-            $activeWorksheet->setCellValue("H$currentRow", $ingredient->observations);
-            $activeWorksheet->setCellValue("I$currentRow",$ingredient->lastPrice/$ingredient->portions_per_unit);
+            $activeWorksheet->setCellValue("I$currentRow", $ingredient->observations);
+            $activeWorksheet->setCellValue("H$currentRow",$ingredient->lastPrice/$ingredient->portions_per_unit);
 
             $currentRow++;
         }
@@ -1725,7 +1725,7 @@ if ($ccRow > 2) {
         $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Catálogo_de_insumos.xlsx';

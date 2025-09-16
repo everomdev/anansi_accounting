@@ -244,7 +244,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'portion_um',
-                'label' => 'Unidad<br>de Cocina',
+                'label' => 'Unidad<br>Cocina',
                 'encodeLabel' => false,
                 'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'portion_um', [
                     'class' => 'form-control form-control-sm',
@@ -389,7 +389,8 @@ $url = \yii\helpers\Url::to(['ingredient-stock/import-ingredients', 'id' => $bus
 ]);
 
 echo \yii\bootstrap5\Html::input('file', 'ingredient-file', '', [
-    'class' => 'form-control'
+    'class' => 'form-control',
+    'accept' => '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'
 ]);
 echo "<br>";
 echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [

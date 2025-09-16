@@ -4,7 +4,17 @@
 $this->title = "Insumos por proveedores"
 ?>
 
-<?= \yii\bootstrap5\Html::dropDownList('provider', $provider, \yii\helpers\ArrayHelper::map($providers, 'name', 'name'), ['class' => 'form-control mb-3', 'prompt' => 'Todos', 'id' => 'provider', 'data-url' => \yii\helpers\Url::to(['provider/ingredients'])]) ?>
+<?= \yii\bootstrap5\Html::dropDownList(
+    'provider',
+    $provider,
+    \yii\helpers\ArrayHelper::map($providers, 'business_name', 'business_name'),
+    [
+        'class' => 'form-control mb-3',
+        'prompt' => 'Todos',
+        'id' => 'provider',
+        'data-url' => \yii\helpers\Url::to(['provider/ingredients'])
+    ]
+) ?>
 
 <?= \yii\grid\GridView::widget([
     'dataProvider' => $dataProvider,
