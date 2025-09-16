@@ -3655,13 +3655,13 @@ public function actionEditStep()
 
     public function actionDownloadSalesTemplate()
     {
+
         // Crear nuevo libro de Excel
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Plantilla Ventas');
 
         // Configurar encabezados de información
-
         $sheet->setCellValue('A1', 'MES:');
         $sheet->setCellValue('B1', '');
         $sheet->setCellValue('A2', 'AÑO:');
@@ -3681,13 +3681,50 @@ public function actionEditStep()
         $validation->setPrompt('Seleccione el mes de la lista desplegable');
         $validation->setFormula1('"Enero,Febrero,Marzo,Abril,Mayo,Junio,Julio,Agosto,Septiembre,Octubre,Noviembre,Diciembre"');
 
-        // Agregar instrucciones
+        // Agregar validación de datos tipo lista para la celda B2 (año)
+        $currentYear = (int)date('Y');
+        $years = range($currentYear - 5, $currentYear + 5);
+        $yearsList = implode(',', $years);
+        $yearValidation = $sheet->getCell('B2')->getDataValidation();
+        $yearValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $yearValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $yearValidation->setAllowBlank(false);
+        $yearValidation->setShowInputMessage(true);
+        $yearValidation->setShowErrorMessage(true);
+        $yearValidation->setShowDropDown(true);
+        $yearValidation->setErrorTitle('Año inválido');
+        $yearValidation->setError('Seleccione un año de la lista');
+        $yearValidation->setPromptTitle('Seleccionar año');
+        $yearValidation->setPrompt('Seleccione el año de la lista desplegable');
+        $yearValidation->setFormula1('"' . $yearsList . '"');
+
+        // Obtener recetas y combos
+        $business = \backend\helpers\RedisKeys::getBusiness();
+        $recipes = \common\models\StandardRecipe::find()
+            ->where(['business_id' => $business->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN, 'in_construction' => 0])
+            ->select('title')
+            ->orderBy('title')
+            ->asArray()->all();
+        $combos = \common\models\Menu::find()
+            ->where(['business_id' => $business->id])
+            ->select('name')
+            ->orderBy('name')
+            ->asArray()->all();
+
+        $names = [];
+        foreach ($recipes as $r) {
+            $names[] = $r['title'];
+        }
+        foreach ($combos as $c) {
+            $names[] = $c['name'];
+        }
+
+        // Configurar encabezados de datos
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
         $sheet->setCellValue('A5', '1. Complete el mes (1-12) y año en las celdas B1 y B2');
         $sheet->setCellValue('A6', '2. Complete los datos de ventas en las columnas de abajo');
         $sheet->setCellValue('A7', '3. Guarde el archivo y súbalo al sistema');
 
-        // Configurar encabezados de datos
         $sheet->setCellValue('A9', 'DESCRIPCIÓN');
         $sheet->setCellValue('B9', 'VENTAS');
 
@@ -3702,6 +3739,25 @@ public function actionEditStep()
         $sheet->getStyle('A9:B9')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFCCCCCC');
+
+        // Rellenar la tabla con los nombres de recetas y combos
+        $startRow = 10;
+        foreach ($names as $idx => $name) {
+            $row = $startRow + $idx;
+            $sheet->setCellValue('A' . $row, $name);
+            // Validación para que solo se puedan ingresar números positivos en ventas
+            $salesValidation = $sheet->getCell('B' . $row)->getDataValidation();
+            $salesValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_WHOLE);
+            $salesValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $salesValidation->setAllowBlank(true);
+            $salesValidation->setShowInputMessage(true);
+            $salesValidation->setShowErrorMessage(true);
+            $salesValidation->setErrorTitle('Valor inválido');
+            $salesValidation->setError('Ingrese un número entero mayor o igual a cero');
+            $salesValidation->setPromptTitle('Cantidad de ventas');
+            $salesValidation->setPrompt('Ingrese la cantidad de ventas para este producto');
+            $salesValidation->setFormula1(0);
+        }
 
         // Crear el archivo en temporal y enviarlo
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);

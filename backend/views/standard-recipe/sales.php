@@ -44,6 +44,7 @@ $foodGridColumns = [
     ['class' => \yii\grid\SerialColumn::class],
     [
         'attribute' => 'title',
+        'label' => 'Nombre de la receta',
         'filter' => '<div class="position-relative">' . 
             Html::textInput('food_title', 
                 Yii::$app->request->get('food_title', ''), 
@@ -99,6 +100,7 @@ $drinkGridColumns = [
     ['class' => \yii\grid\SerialColumn::class],
     [
         'attribute' => 'title',
+        'label' => 'Nombre de la receta',
         'filter' => '<div class="position-relative">' . 
             Html::textInput('drink_title', 
                 Yii::$app->request->get('drink_title', ''), 
@@ -153,7 +155,7 @@ $comboGridColumns = [
     ['class' => \yii\grid\SerialColumn::class],
     [
         'attribute' => 'name',
-        'label' => 'Título',
+        'label' => 'Nombre del combo',
         'filter' => '<div class="position-relative">' . 
             Html::textInput('combo_name', 
                 Yii::$app->request->get('combo_name', ''), 
