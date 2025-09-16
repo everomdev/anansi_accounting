@@ -186,7 +186,7 @@ $categories = RecipeCategory::find()
                     'contentOptions' => ['style' => 'text-align: center;'],
                     'headerOptions' => ['style' => 'text-align: center;'],
                 ],
-                /*[
+                [
                     'label' => "Categoría",
                     'value' => function ($model) {
                         return get_class($model) == \common\models\StandardRecipe::class ? $model->type_of_recipe : $model->category->name;
@@ -195,7 +195,7 @@ $categories = RecipeCategory::find()
                         'prompt' => "Seleccione una categoría",
                         'class' => 'form-control'
                     ])
-                ],*/
+                ],
                 [
                     'class' => \yii\grid\ActionColumn::class,
                     'template' => '{remove-from-menu}',
