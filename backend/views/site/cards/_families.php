@@ -146,7 +146,7 @@ $this->registerCss("
 <div class="family-stats-container">
     <div class="family-stats-header d-flex justify-content-between align-items-center">
         <div>
-            <h5>Familias de Recetas</h5>
+            <h5>Categorías de Recetas</h5>
             <p>Distribución de recetas por categoría</p>
         </div>
         <div class="total-badge">

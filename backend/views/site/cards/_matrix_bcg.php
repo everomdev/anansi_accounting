@@ -223,7 +223,7 @@ $this->registerCss("
 <div class="bcg-container">
     <div class="bcg-header">
         <h5>Matriz BCG</h5>
-        <span class="badge bg-secondary"><?= count($data) ?> familias</span>
+        <span class="badge bg-secondary"><?= count($data) ?> categorías</span>
     </div>
     
     <?php if (empty($data)): ?>
@@ -237,7 +237,7 @@ $this->registerCss("
                 <table class="bcg-table">
                     <thead>
                         <tr>
-                            <th>Familia</th>
+                            <th>Categoría</th>
                             <th class="text-center">Estrella</th>
                             <th class="text-center">Vaca</th>
                             <th class="text-center">Perro</th>
