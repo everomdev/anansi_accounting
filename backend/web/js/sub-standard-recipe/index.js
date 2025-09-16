@@ -88,3 +88,30 @@ $(document).on('click', '#delete-current-page, #delete-all, #confirm-delete-sele
     
     handleDeleteRequest('/sub-standard-recipe/delete-sub-recipe', requestData, $button);
 });
+
+// Exportar subrecetas completas (Excel)
+$(document).on('click', '#download-recipes-complete-excel', function(e) {
+    e.preventDefault();
+    var selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length === 0) {
+        $('#modal-no-export-selection').modal('show');
+        return false;
+    }
+    $('#modal-export-recipes').modal('show');
+});
+
+// Exportar solo las seleccionadas
+$(document).on('click', '#export-current-page', function() {
+    var selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '/standard-recipe/export-recipes-to-excel?id=' + selectedIds.join(',') + '&type=sub';
+    }
+});
+
+// Exportar todas (de todas las páginas)
+$(document).on('click', '#export-all', function() {
+    var selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '/standard-recipe/export-recipes-to-excel?id=' + selectedIds.join(',') + '&all=true&type=sub';
+    }
+});

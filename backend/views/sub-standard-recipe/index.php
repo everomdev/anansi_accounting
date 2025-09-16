@@ -231,7 +231,7 @@ $this->registerCss('
         ]), '#', ['class' => 'btn btn-warning m-1', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
         ]), ['#'], ['class' => 'btn btn-danger m-1', 'id' => 'btn-delete-recipes']) ?>
-        <?= Html::a('Exportar Subrecetas Completas', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
+        <?= Html::a('Exportar Subrecetas en Excel', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
 
     </p>
     <?php Pjax::begin(['id' => 'sub-standard-recipes-pjax']); ?>
@@ -530,7 +530,7 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
     'title' => Yii::t('app', "Selección vacía"),
 ]);
 ?>
-<p>No has seleccionado ninguna receta para exportar. Por favor, selecciona al menos una receta.</p>
+<p>No has seleccionado ninguna subreceta para exportar. Por favor, selecciona al menos una subreceta.</p>
 <div class="d-flex justify-content-end">
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
         'class' => 'btn btn-primary',
@@ -540,42 +540,39 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 <?php
 \yii\bootstrap5\Modal::end();
 ?>
-<?php
+
+
 $this->registerJs("
     // Nuevo código para manejo de exportación
-document.getElementById('download-recipes-complete-excel').addEventListener('click', function(e) {
-    e.preventDefault();
-    
-    // Obtener IDs de las filas seleccionadas
-    const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
-    
-    if (selectedIds.length === 0) {
-        // Mostrar modal de error si no hay selección
-        const noSelectionModal = new bootstrap.Modal(document.getElementById('modal-no-export-selection'));
-        noSelectionModal.show();
-        return;
-    }
-    
-    // Mostrar el modal de confirmación para exportación
-    const exportModal = new bootstrap.Modal(document.getElementById('modal-export-recipes'));
-    exportModal.show();
-});
+    document.getElementById('download-recipes-complete-excel').addEventListener('click', function(e) {
+        e.preventDefault();
+        const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+        if (selectedIds.length === 0) {
+            // Mostrar modal de error si no hay selección
+            const noSelectionModal = new bootstrap.Modal(document.getElementById('modal-no-export-selection'));
+            noSelectionModal.show();
+            return;
+        }
+        // Mostrar el modal de confirmación para exportación
+        const exportModal = new bootstrap.Modal(document.getElementById('modal-export-recipes'));
+        exportModal.show();
+    });
 
-// Manejar la exportación de las recetas seleccionadas
-document.getElementById('export-current-page').addEventListener('click', function() {
-    const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
-    if (selectedIds.length > 0) {
-        window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&type=sub';
-    }
-});
+    // Manejar la exportación de las recetas seleccionadas
+    document.getElementById('export-current-page').addEventListener('click', function() {
+        const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+        if (selectedIds.length > 0) {
+            window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&type=sub';
+        }
+    });
 
-// Manejar la exportación de todas las recetas (todas las páginas)
-document.getElementById('export-all').addEventListener('click', function() {
-    const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
-    if (selectedIds.length > 0) {
-        window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&all=true' + '&type=sub';
-    }
-});
+    // Manejar la exportación de todas las recetas (todas las páginas)
+    document.getElementById('export-all').addEventListener('click', function() {
+        const selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
+        if (selectedIds.length > 0) {
+            window.location.href = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "?id=' + selectedIds.join(',') + '&all=true' + '&type=sub';
+        }
+    });
 ", \yii\web\View::POS_HEAD);
 ?>
 <?php
