@@ -541,7 +541,7 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 \yii\bootstrap5\Modal::end();
 ?>
 
-
+<?php
 $this->registerJs("
     // Nuevo código para manejo de exportación
     document.getElementById('download-recipes-complete-excel').addEventListener('click', function(e) {
