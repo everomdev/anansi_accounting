@@ -29,7 +29,7 @@ $autocompleteUm = array_values(array_unique(\yii\helpers\ArrayHelper::getColumn(
 $this->registerJsVar('formUrl', \yii\helpers\Url::to(['standard-recipe/form-select-ingredient', 'id' => $model->id]));
 $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/form.js"), [
     'position' => $this::POS_END,
-    'depends' => [\yii\web\YiiAsset::class]
+    'depends' => [\yii\web\JqueryAsset::class, \yii\web\YiiAsset::class]
 ]);
 $this->registerCssFile(Yii::getAlias("@web/css/flowchart.css"));
 
@@ -49,6 +49,14 @@ $this->registerJsVar('createNewCategoryUrl', \yii\helpers\Url::to(['recipe-categ
 // Use global number formatter configuration
 $formatConfig = \common\helpers\NumberFormatter::getJsConfig();
 $this->registerJsVar('userFormatConfig', $formatConfig);
+
+$convoys = \common\models\Convoy::findAll(['business_id' => $business['id']]);
+$convoyAmounts = [];
+foreach ($convoys as $convoy) {
+    $convoyAmounts[$convoy->id] = $convoy->amount;
+}
+// Registrar correctamente la variable global para JS
+$this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';', \yii\web\View::POS_HEAD);
 ?>
 
 <div class="standard-recipe-form">

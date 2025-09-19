@@ -1,4 +1,16 @@
+// --- Convoy cost integration ---
+// Precargar los montos de convoy desde una variable global (inyectada desde PHP)
+let convoyAmounts = window.convoyAmounts || {};
+
 $(document).ready(function () {
+    // Si existe el selector de convoy, actualizar el costo al cambiar
+    const convoySelect = $("#standardrecipe-convoy_id");
+    if (convoySelect.length > 0) {
+        convoySelect.on('change', function() {
+            // Forzar recálculo tras un pequeño delay para asegurar que el valor esté actualizado
+            setTimeout(computeCost, 10);
+        });
+    }
     function drawArrows() {
         $(".arrow").remove(); // Eliminar flechas previas
         let currentRow = 0;
@@ -56,7 +68,8 @@ $(document).ready(function () {
         currency: currency
     }).format(cost));
 
-    computeCost();
+    // Forzar recálculo inicial del costo (por si hay convoy seleccionado al cargar)
+    setTimeout(computeCost, 50);
 });
 $(document).on('change', '#standardrecipe-type_of_recipe', function (event) {
     console.log(createNewCategoryUrl);
@@ -107,57 +120,66 @@ $(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', func
 
 function computeCost() {
     let totalCost = 0;
+    console.log('--- computeCost called ---');
 
     $('table tbody tr').each(function(index) {
         if ($(this).find('.exclude-checkbox').length > 0) {
             let ingredientName = $(this).find('td:nth-child(2)').text().trim();
-            // Get cost from the ingredient-cost span, not the full td text
             let costElement = $(this).find('.ingredient-cost, .subrecipe-cost');
             let costText = costElement.length > 0 ? costElement.text().trim() : $(this).find('td:nth-child(4)').text().trim();
             let cost = parseUserNumber(costText);
             let isExcluded = $(this).find('.exclude-checkbox').is(':checked');
             let discountPercentage = parseInt($(this).find('.cost-percentage').val(), 10);
-            
-
+            console.log(`[Row ${index}] Ingredient: ${ingredientName}, Cost: ${cost}, Excluded: ${isExcluded}, Discount: ${discountPercentage}`);
             if (isExcluded) {
                 if (discountPercentage > 0) {
-                    // Si está excluido Y tiene descuento: aplicar descuento y sumar ese valor
                     let discountedCost = cost * (discountPercentage / 100);
                     totalCost += discountedCost;
-                  
+                    console.log(`  -> Excluded with discount. DiscountedCost: ${discountedCost}, totalCost: ${totalCost}`);
                 } else {
-                    // Si está excluido SIN descuento: no se suma nada
+                    console.log('  -> Excluded without discount. Not added.');
                 }
             } else {
-                // Si NO está excluido: sumar costo completo
                 totalCost += cost;
+                console.log(`  -> Included. totalCost: ${totalCost}`);
             }
         }
     });
 
+    // Sumar el costo del convoy seleccionado si existe
+    let convoyCost = 0;
+    let convoyId = $("#standardrecipe-convoy_id").val();
+    console.log('Convoy seleccionado:', convoyId, 'convoyAmounts:', convoyAmounts);
+    if (convoyId && typeof convoyAmounts[convoyId] !== 'undefined') {
+        convoyCost = parseFloat(convoyAmounts[convoyId]) || 0;
+        if (!isNaN(convoyCost)) {
+            totalCost += convoyCost;
+            console.log(`Convoy cost (${convoyId}):`, convoyCost, 'totalCost after convoy:', totalCost);
+        } else {
+            console.log('Convoy cost is NaN para id', convoyId, convoyAmounts[convoyId]);
+        }
+    } else {
+        console.log('No convoy seleccionado o convoyAmounts no tiene ese id');
+    }
+
     // Resto del cálculo (porciones, yield, formato)
     let portions = parseFloat($("#standardrecipe-portions").val()) || 1;
     let _yield = parseFloat($("#standardrecipe-yield").val()) || 1;
-    
+    console.log('Final totalCost:', totalCost, 'portions:', portions, 'yield:', _yield);
     if (!isNaN(totalCost)) {
         let costPerPortion = portions > 0 && _yield > 0 ? totalCost / _yield / portions : totalCost;
-        
+        console.log('Cost per portion:', costPerPortion);
         // Actualizar la interfaz
         $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
         $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
-        
-        // Formatear el costo solo como número (sin símbolo de moneda) ya que el HTML ya tiene el símbolo
         let formattedCost = formatUserNumber(costPerPortion);
-        
-        // Solo actualizar el contenido de texto, no el HTML completo
         $("#ingredients-selection-total-cost").text(formattedCost);
-        
-        if ($("#cost-value").length > 0) {            $("#cost-value").html(formatUserNumber(costPerPortion));
+        if ($("#cost-value").length > 0) {
+            $("#cost-value").html(formatUserNumber(costPerPortion));
             $("#cost-value").data('price', costPerPortion);
-            
-            // Actualizar el porcentaje de costo si hay un precio establecido
-           //updateCostPercent();
         }
+    } else {
+        console.log('totalCost es NaN, no se actualiza la UI');
     }
 }
 // Función para formatear números según las preferencias del usuario
