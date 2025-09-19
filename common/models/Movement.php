@@ -134,8 +134,13 @@ class Movement extends \yii\db\ActiveRecord
             return false;
         }
 
-        if ($insert and empty($this->created_at)) {
+        if ($insert && empty($this->created_at)) {
             $this->created_at = date('Y-m-d H:i:s');
+        }
+
+        // Calcular unit_price automáticamente si es entrada y hay cantidad y amount
+        if ($this->type == self::TYPE_INPUT && $this->quantity > 0 && $this->amount > 0) {
+            $this->unit_price = round($this->amount / $this->quantity, 4); // 4 decimales para precisión
         }
 
         $this->um = $this->ingredient->portion_um;
