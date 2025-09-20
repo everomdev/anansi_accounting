@@ -123,12 +123,10 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
         'name' => $ingredientStandardRecipe->ingredient->ingredient
     ]
 ]) ?>
-                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
+                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), 'javascript:void(0);', [
                                 'class' => "btn btn-sm btn-danger delete-ingredient",
-                                'data' => [
-                                    'confirm-message' => Yii::t('app', 'Are you sure you want to delete this item?'),
-                                    'pjax' => "#pjax-ingredients-selection"
-                                ]
+                                'data-url' => \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]),
+                                'data-pjax' => "#pjax-ingredients-selection"
                             ]) ?>
                         </td>
                     </tr>
@@ -175,12 +173,10 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                                     'name' => $subStandardRecipe->title
                                 ]
                             ]) ?>
-                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
+                            <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), 'javascript:void(0);', [
                                 'class' => "btn btn-sm btn-danger delete-ingredient",
-                                'data' => [
-                                    'confirm-message' => Yii::t('app', 'Are you sure you want to delete this item?'),
-                                    'pjax' => "#pjax-ingredients-selection"
-                                ]
+                                'data-url' => \yii\helpers\Url::to(['standard-recipe/unselect-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]),
+                                'data-pjax' => "#pjax-ingredients-selection"
                             ]) ?>
                         </td>
                     </tr>
@@ -207,3 +203,79 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
 </div>
 
 <?php \yii\widgets\Pjax::end(); ?>
+
+<?php
+// Modal personalizado para confirmar eliminación de ingrediente (acción irreversible)
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-delete-ingredient',
+    'title' => Yii::t('app', "Eliminar ingrediente"),
+]);
+?>
+<p>¿Estás seguro de que deseas eliminar este ingrediente? <strong>Esta acción no se puede deshacer.</strong></p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
+        'class' => 'btn btn-danger',
+        'id' => 'confirm-delete-ingredient-btn',
+        'type' => 'button'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+$this->registerJs(<<<'JS'
+let deleteIngredientUrl = '';
+
+$(document).on('click', '.delete-ingredient', function(e) {
+    e.preventDefault();
+    deleteIngredientUrl = $(this).data('url');
+    const modal = new bootstrap.Modal(document.getElementById('modal-delete-ingredient'));
+    modal.show();
+});
+
+$('#confirm-delete-ingredient-btn').on('click', function(e) {
+    if (deleteIngredientUrl) {
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Eliminando...');
+        $.ajax({
+            url: deleteIngredientUrl,
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                // Recargar solo la tabla de ingredientes
+                $.pjax.reload({
+                    container: '#pjax-ingredients-selection',
+                    timeout: 10000,
+                    complete: function() {
+                        if (typeof computeCost === 'function') {
+                            computeCost();
+                        }
+                    }
+                });
+                // Recargar el formulario completo después de un pequeño delay
+                setTimeout(function() {
+                    if (typeof computeCost === 'function') {
+                        computeCost();
+                    }
+                    location.reload();
+                }, 500);
+            },
+            complete: function() {
+                // Cerrar el modal siempre
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modal-delete-ingredient'));
+                modal.hide();
+                deleteIngredientUrl = '';
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    }
+});
+JS
+);
+?>

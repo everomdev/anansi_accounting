@@ -61,12 +61,7 @@ $(document).ready(function () {
         drawArrows();
     });
 
-    let cost = $("#standardrecipe-custom_cost").val();
-    $("#ingredients-selection-total-cost").data('value', cost);
-    $("#ingredients-selection-total-cost").html(Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: currency
-    }).format(cost));
+
 
     // Forzar recálculo inicial del costo (por si hay convoy seleccionado al cargar)
     setTimeout(computeCost, 50);
@@ -214,22 +209,7 @@ $(document).on('show.bs.modal', "#modal-add-ingredient", (event) => {
     })
 })
 
-$(document).on('click', '.delete-ingredient, .delete', function (event) {
-    event.preventDefault();
-    const _this = $(this);
-    let url = _this.attr('href');
-    let message = _this.data('confirm-message');
-    let pjax = _this.data('pjax');
-    if (confirm(message)) {
-        $.ajax({
-            url,
-            type: 'post'
-        }).done((response) => {
-            $.pjax.reload({container: pjax});
-        })
-    }
-    return false;
-})
+// Desactivado: confirmación y borrado antiguo para .delete-ingredient, ahora se usa modal personalizado en el PHP
 
 $(document).on('submit', "#form_step", function (event) {
     event.preventDefault();
