@@ -3667,16 +3667,31 @@ public function actionEditStep()
     public function actionDownloadSalesTemplate()
     {
 
-        // Crear nuevo libro de Excel
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Plantilla Ventas');
+    // Crear nuevo libro de Excel
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Plantilla Ventas');
 
-        // Configurar encabezados de información
-        $sheet->setCellValue('A1', 'MES:');
-        $sheet->setCellValue('B1', '');
-        $sheet->setCellValue('A2', 'AÑO:');
-        $sheet->setCellValue('B2', '');
+    // Quitar líneas de cuadrícula
+    $sheet->setShowGridlines(false);
+
+    // Configurar encabezados de información
+    $sheet->setCellValue('A1', 'MES:');
+    $sheet->setCellValue('B1', '');
+    $sheet->setCellValue('A2', 'AÑO:');
+    $sheet->setCellValue('B2', '');
+
+        // Agregar bordes a MES y AÑO y sus casillas
+        $borderStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ];
+        $sheet->getStyle('A1:B1')->applyFromArray($borderStyle);
+        $sheet->getStyle('A2:B2')->applyFromArray($borderStyle);
 
         // Agregar validación de datos tipo lista para la celda B1 (mes)
         $validation = $sheet->getCell('B1')->getDataValidation();
@@ -3732,16 +3747,19 @@ public function actionEditStep()
 
         // Configurar encabezados de datos
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
-        $sheet->setCellValue('A5', '1. Complete el mes (1-12) y año en las celdas B1 y B2');
+        $sheet->setCellValue('A5', '1. Seleccione el mes y el año de la lista desplegable');
         $sheet->setCellValue('A6', '2. Complete los datos de ventas en las columnas de abajo');
         $sheet->setCellValue('A7', '3. Guarde el archivo y súbalo al sistema');
 
-        $sheet->setCellValue('A9', 'DESCRIPCIÓN');
-        $sheet->setCellValue('B9', 'VENTAS');
+    $sheet->setCellValue('A9', 'DESCRIPCIÓN');
+    $sheet->setCellValue('B9', 'VENTAS');
 
-        // Ajustar anchos de columna
-        $sheet->getColumnDimension('A')->setWidth(50);
-        $sheet->getColumnDimension('B')->setWidth(15);
+    // Ajustar anchos de columna
+    $sheet->getColumnDimension('A')->setWidth(50);
+    $sheet->getColumnDimension('B')->setWidth(15);
+
+    // Bordes para encabezados de tabla
+    $sheet->getStyle('A9:B9')->applyFromArray($borderStyle);
 
         // Aplicar estilo a los encabezados
         $sheet->getStyle('A1:B2')->getFont()->setBold(true);
@@ -3753,6 +3771,7 @@ public function actionEditStep()
 
         // Rellenar la tabla con los nombres de recetas y combos
         $startRow = 10;
+        $lastRow = $startRow + count($names) - 1;
         foreach ($names as $idx => $name) {
             $row = $startRow + $idx;
             $sheet->setCellValue('A' . $row, $name);
@@ -3768,6 +3787,10 @@ public function actionEditStep()
             $salesValidation->setPromptTitle('Cantidad de ventas');
             $salesValidation->setPrompt('Ingrese la cantidad de ventas para este producto');
             $salesValidation->setFormula1(0);
+        }
+        // Bordes simples a todas las filas de datos (DESCRIPCIÓN y VENTAS)
+        if ($lastRow >= $startRow) {
+            $sheet->getStyle('A'.$startRow.':B'.$lastRow)->applyFromArray($borderStyle);
         }
 
         // Crear el archivo en temporal y enviarlo
