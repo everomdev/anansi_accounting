@@ -93,6 +93,7 @@ $categories = RecipeCategory::find()
     ->where([
         'business_id' => $business['id'],
     ])
+    ->andWhere(['type' => 'main'])
     ->orderBy(['name' => SORT_ASC])
     ->all();
 ?>
@@ -120,6 +121,21 @@ $categories = RecipeCategory::find()
     ]), '', ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>
 
 </p>
+<div class="row mb-2 align-items-center">
+    <div class="col-md-4">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+            <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 75px;">
+                <?php
+                $currentPageSize = isset($_GET['per-page']) ? (int)$_GET['per-page'] : $pagination->pageSize;
+                foreach ([10, 25, 50, 100] as $value): ?>
+                    <option value="<?= $value ?>" <?= $currentPageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                <?php endforeach; ?>
+            </select>
+            <span class="input-group-text bg-light"><?= Yii::t('app', 'recetas por página') ?></span>
+        </div>
+    </div>
+</div>
 <div class="card">
     <div class="card-body">
         <?= \yii\grid\GridView::widget([
@@ -235,6 +251,15 @@ $categories = RecipeCategory::find()
 
 
 <?php
+$this->registerJs(<<<JS
+document.getElementById('per-page-selector').addEventListener('change', function() {
+    const pageSize = this.value;
+    let url = new URL(window.location);
+    url.searchParams.set('per-page', pageSize);
+    window.location.href = url.toString();
+});
+JS
+);
 // Definir las funciones globales para limpiar filtros al principio del archivo
 $this->registerJs("
 // Funciones globales para limpiar filtros
