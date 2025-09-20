@@ -356,27 +356,31 @@ $this->registerCss('
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
                 'headerOptions' => ['style' => 'text-align: center;'],
-                'filter' => '<div style="position: relative;">' . 
-                    Html::dropDownList('StandardRecipeSearch[type_of_recipe]', $searchModel->type_of_recipe, 
-                        ArrayHelper::merge(['' => 'Todas las familias'], [
-                            'Fondos' => 'Fondos',
-                            'Bases' => 'Bases',
-                            'Guarnición' => 'Guarnición',
-                            'Masas' => 'Masas',
-                            'Salsa' => 'Salsa'
-                        ]), [
-                        'class' => 'form-control',
-                        'id' => 'type-filter',
-                        'style' => 'padding-right: 30px;'
-                    ]) . 
-                    Html::button('×', [
-                        'class' => 'btn btn-sm',
-                        'id' => 'clear-type-btn', 
-                        'onclick' => 'clearTypeFilter()',
-                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->type_of_recipe) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
-                        'title' => 'Limpiar filtro'
-                    ]) . 
-                    '</div>',
+                'filter' => (function() use ($searchModel, $business) {
+                    $categories = \yii\helpers\ArrayHelper::map(
+                        \common\models\RecipeCategory::find()
+                            ->where(['type' => 'sub', 'business_id' => $business->id])
+                            ->orderBy('name')
+                            ->all(),
+                        'name',
+                        'name'
+                    );
+                    $items = \yii\helpers\ArrayHelper::merge(['' => 'Todas las categorías'], $categories);
+                    return '<div style="position: relative;">' .
+                        Html::dropDownList('StandardRecipeSearch[type_of_recipe]', $searchModel->type_of_recipe, $items, [
+                            'class' => 'form-control',
+                            'id' => 'type-filter',
+                            'style' => 'padding-right: 30px;'
+                        ]) .
+                        Html::button('×', [
+                            'class' => 'btn btn-sm',
+                            'id' => 'clear-type-btn',
+                            'onclick' => 'clearTypeFilter()',
+                            'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->type_of_recipe) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                            'title' => 'Limpiar filtro'
+                        ]) .
+                        '</div>';
+                })(),
             ],
             [
                 'attribute' => 'observation',
