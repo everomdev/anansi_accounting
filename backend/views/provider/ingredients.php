@@ -23,7 +23,20 @@ $this->title = "Insumos por proveedores"
         'ingredient.key',
         ['attribute' => 'ingredient.category.name', 'label' => "Familia"],
         'ingredient.ingredient',
-        'provider'
+        [
+            'attribute' => 'provider',
+            'label' => 'Proveedor',
+            'value' => function($model) {
+                if (empty($model->provider)) {
+                    return 'Sin proveedor';
+                }
+                $prov = \common\models\Provider::findOne(['name' => $model->provider]);
+                if ($prov) {
+                    return $prov->business_name ?: $prov->name;
+                }
+                return $model->provider;
+            }
+        ]
     ]
 ]) ?>
 
