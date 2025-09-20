@@ -73,7 +73,7 @@ class ExcelHelper
         exit(200);
     }
 
- public static function generateIngredientsTemplate($id)
+public static function generateIngredientsTemplate($id)
 {
     /** @var Category[] $categories */
     $categories = Category::find()->where([
@@ -89,6 +89,9 @@ class ExcelHelper
 
     $spreadsheet = new Spreadsheet();
     $activeWorksheet = $spreadsheet->getActiveSheet();
+    
+    // Cambiar el nombre de la primera hoja a "Catálogo de insumos"
+    $activeWorksheet->setTitle('Catálogo de insumos');
 
     // 7. Configurar estilos
      $centerStyle = [
@@ -101,7 +104,8 @@ class ExcelHelper
     $activeWorksheet->setCellValue("B1", "Insumo*");
     $activeWorksheet->setCellValue("C1", "Marca");
     $activeWorksheet->setCellValue("D1", "Presentación");
-    $activeWorksheet->setCellValue("E1", "Categoría*");
+    // CAMBIO: Cambiar "Categoría*" por "Familia de insumos*"
+    $activeWorksheet->setCellValue("E1", "Familia de insumos*");
     $activeWorksheet->setCellValue("F1", "Unidad de compra*");
     $activeWorksheet->setCellValue("G1", "Unidad de cocina*");
     $activeWorksheet->setCellValue("H1", "Factor de Rendimiento*");
@@ -117,7 +121,7 @@ class ExcelHelper
     $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(35); // Insumo
     $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
     $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(35); // Insumo
-    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Categoría
+    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(18); // Familia de insumos
     $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(18); // Unidad de compra
     $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(18); // Unidad de cocina
     $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(25); // Factor de Rendimiento
@@ -127,8 +131,10 @@ class ExcelHelper
 
     // Create a named range for categories
     $categorySheet = $spreadsheet->createSheet();
-    $categorySheet->setTitle('Familia de Insumos');
-    $categorySheet->setCellValue('A1', 'Familia de Insumos');
+    // CAMBIO: Cambiar nombre de la hoja a "Familias de insumos"
+    $categorySheet->setTitle('Familias de insumos');
+    // CAMBIO: Cambiar texto de cabecera a "Familias de insumos"
+    $categorySheet->setCellValue('A1', 'Familias de insumos');
 
     $row = 2;
     foreach ($categories as $category) {
@@ -136,8 +142,15 @@ class ExcelHelper
         $row++;
     }
 
+    // Asegurarse de que el rango nombrado se crea correctamente
+    $lastRow = $row - 1;
     $spreadsheet->addNamedRange(
-        new \PhpOffice\PhpSpreadsheet\NamedRange('FamiliaDeInsumos', $categorySheet, 'A2:A' . ($row - 1))
+        // CAMBIO: Cambiar nombre del rango a "FamiliasDeInsumos"
+        new \PhpOffice\PhpSpreadsheet\NamedRange(
+            'FamiliasDeInsumos', 
+            $categorySheet, 
+            'A2:A' . $lastRow
+        )
     );
 
     // Apply data validation to the category column
@@ -150,9 +163,13 @@ class ExcelHelper
     $dataValidation->setShowDropDown(true);
     $dataValidation->setErrorTitle('Error de entrada');
     $dataValidation->setError('Este valor no es admitido');
+    // CAMBIO: Cambiar texto para que coincida con "familias de insumos"
     $dataValidation->setPromptTitle('Selecciona una familia de insumos');
     $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidation->setFormula1('=FamiliaDeInsumos!$A$2:$A$' . ($row - 1));
+    
+    // CORRECCIÓN: Usar la referencia correcta al rango nombrado
+    // Importante: usar el nombre de la hoja entre comillas simples y el rango correcto
+    $dataValidation->setFormula1("='Familias de insumos'!\$A\$2:\$A\$$lastRow");
 
     for ($i = 2; $i <= 5000; $i++) {
         $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
@@ -169,12 +186,13 @@ class ExcelHelper
         $row++;
     }
 
+    $lastRowUM = $row - 1;
     $spreadsheet->addNamedRange(
-        new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $umSheet, 'A2:A' . ($row - 1))
+        new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $umSheet, 'A2:A' . $lastRowUM)
     );
 
     // Apply data validation to the um column
-    $dataValidation = $spreadsheet->getActiveSheet()->getCell('F1')->getDataValidation();
+    $dataValidation = $spreadsheet->getActiveSheet()->getCell('F2')->getDataValidation();
     $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
     $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
     $dataValidation->setAllowBlank(false);
@@ -185,7 +203,9 @@ class ExcelHelper
     $dataValidation->setError('Este valor no es admitido');
     $dataValidation->setPromptTitle('Selecciona una unidad de medida');
     $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
-    $dataValidation->setFormula1('=UMs!$A$2:$A$' . ($row - 1));
+    
+    // CORRECCIÓN: Usar referencia directa en lugar del rango nombrado
+    $dataValidation->setFormula1("='UMs'!\$A\$2:\$A\$$lastRowUM");
 
     for ($i = 2; $i <= 5000; $i++) {
         $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $dataValidation);
@@ -193,7 +213,6 @@ class ExcelHelper
     }
 
     // Apply data validation to the factor de rendimiento column
-    // CAMBIO: Tipo cambiado a DECIMAL para permitir valores con decimales
     $factorValidation = $spreadsheet->getActiveSheet()->getCell('H2')->getDataValidation();
     $factorValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
     $factorValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -226,20 +245,21 @@ class ExcelHelper
     $priceValidation->setFormula2(99999999); // Aumentar el límite máximo
 
     for ($i = 2; $i <= 5000; $i++) {
-        $spreadsheet->getActiveSheet()->getCell("K$i")->setDataValidation(clone $priceValidation);
+        $spreadsheet->getActiveSheet()->getCell("J$i")->setDataValidation(clone $priceValidation);
     }
 
     // Create a legend sheet
     $legendSheet = $spreadsheet->createSheet();
-    $legendSheet->setTitle('Leyenda');
+    $legendSheet->setTitle('Instrucciones');
     $legendSheet->setCellValue('A1', 'Columna');
     $legendSheet->setCellValue('B1', 'Descripción');
-    $legendSheet->setCellValue('A2', 'Identificador');
+    $legendSheet->setCellValue('A2', 'Clave');
     $legendSheet->setCellValue('B2', 'Debe ser un número entero. No puede contener % ni $.');
-    $legendSheet->setCellValue('A3', 'Categoría');
-    $legendSheet->setCellValue('B3', 'Debe ser una de las categorías listadas en la hoja Categorías.');
+    // CAMBIO: Actualizar textos en la leyenda para referirse a "familias de insumos"
+    $legendSheet->setCellValue('A3', 'Familia de insumos');
+    $legendSheet->setCellValue('B3', 'Debe ser una de las familias de insumos listadas');
     $legendSheet->setCellValue('A4', 'Unidad de Medida');
-    $legendSheet->setCellValue('B4', 'Debe ser una de las unidades de medida listadas en la hoja UMs.');
+    $legendSheet->setCellValue('B4', 'Debe ser una de las unidades de medida listadas');
     $legendSheet->setCellValue('A5', 'Factor de Rendimiento');
     $legendSheet->setCellValue('B5', 'Debe ser un valor numérico entre 0 y 100. Permite decimales.');
     $legendSheet->setCellValue('A6', 'Precio');
@@ -248,9 +268,10 @@ class ExcelHelper
     $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('A')->setAutoSize(true);
     $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('B')->setAutoSize(true);
 
-     foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
-         $worksheet->calculateColumnWidths();
-     }
+    // Asegurarse de que las hojas ocultas (Familias de insumos y UMs) no sean visibles
+    $categorySheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+    $umSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
     // Activar la primera hoja antes de guardar
     $spreadsheet->setActiveSheetIndex(0);
     
@@ -1132,6 +1153,7 @@ if ($ccRow > 2) {
                     break;
                 }
                 $data = [];
+               
                 $data['key'] = strval($cellIterator->current()->getValue()); // A - Clave
                 $cellIterator->next();
                 $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
@@ -1150,9 +1172,9 @@ if ($ccRow > 2) {
                 $cellIterator->next();
                 $data['portions_per_unit'] = $cellIterator->current()->getValue(); // G - Porciones por unidad
                 $cellIterator->next();
-                $data['observations'] = $cellIterator->current()->getValue(); // H - Observaciones
-                $cellIterator->next();
                 $data['price'] = $cellIterator->current()->getValue(); // I - Precio
+                $cellIterator->next();
+                $data['observations'] = $cellIterator->current()->getValue(); // H - Observaciones
                 $cellIterator->next();
                 $price = preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
                 $data['unit_price'] = $price / $data['portions_per_unit'];
@@ -1160,7 +1182,6 @@ if ($ccRow > 2) {
                 $data['adjusted_price'] = $data['unit_price'] / ($yield / 100);
                 $data['business_id'] = $business->id;
                 $data['quantity'] = 0;
-
                 /// extract category id
                 //var_dump($data['category_id']);
                 $data['category_id'] = explode(' - ', $data['category_id'])[0];
