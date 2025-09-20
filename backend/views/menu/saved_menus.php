@@ -29,6 +29,9 @@ $this->registerCssFile("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font
     </div>
     </div>
     <div class="card-body">
+        <div class="alert alert-info mb-3" role="alert">
+            <i class="bi bi-info-circle"></i> Selecciona <strong>exactamente 2 menús</strong> para comparar.
+        </div>
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
             'columns' => [
@@ -143,7 +146,7 @@ $this->registerCssFile("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font
     'size' => \yii\bootstrap5\Modal::SIZE_SMALL,
 ]);
 ?>
-<p>¿Deseas comparar los <span id="selected-menus-count">0</span> menús seleccionados?</p>
+<p>¿Deseas comparar los 2 menús seleccionados?</p>
 <div id="selected-menus-list" class="mb-3 alert alert-info">
     <!-- La lista de menús seleccionados se mostrará aquí dinámicamente -->
 </div>
@@ -201,8 +204,8 @@ $(document).ready(function() {
             });
         });
         
-        // Habilitar el botón solo si hay 1 o 2 menús seleccionados
-        if (selectedMenus.length >= 1 && selectedMenus.length <= 2) {
+        // Habilitar el botón solo si hay exactamente 2 menús seleccionados
+        if (selectedMenus.length === 2) {
             $('#btn-compare-menus').prop('disabled', false);
         } else {
             $('#btn-compare-menus').prop('disabled', true);
@@ -214,7 +217,7 @@ $(document).ready(function() {
         // Limitar a seleccionar máximo 2 menús
         if ($('.menu-checkbox:checked').length > 2) {
             $(this).prop('checked', false);
-            alert('Solo puedes seleccionar hasta 2 menús para comparar');
+            alert('Debes seleccionar exactamente 2 menús para comparar');
         }
         
         updateCompareButton();
@@ -222,6 +225,12 @@ $(document).ready(function() {
     
     // Al hacer clic en el botón de comparar
     $('#btn-compare-menus').on('click', function() {
+        // Verificar que tenemos exactamente 2 menús seleccionados
+        if (selectedMenus.length !== 2) {
+            alert('Debes seleccionar exactamente 2 menús para comparar');
+            return;
+        }
+        
         // Actualizar el modal de confirmación
         $('#selected-menus-count').text(selectedMenus.length);
         
