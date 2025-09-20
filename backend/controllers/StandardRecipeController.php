@@ -2512,10 +2512,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         
         $insumosSheet = $spreadsheet->createSheet();
         $insumosSheet->setTitle('INSUMOS');
-        if ($type === StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-            $subrecipesSheet = $spreadsheet->createSheet();
-            $subrecipesSheet->setTitle('SUBRECETAS');
-        }
+        // if ($type === StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+        //     $subrecipesSheet = $spreadsheet->createSheet();
+        //     $subrecipesSheet->setTitle('SUBRECETAS');
+        // }
         
         
         $convoySheet = $spreadsheet->createSheet();
@@ -2555,18 +2555,18 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $insumosSheet->setCellValue('C1', 'UM');
         $insumosSheet->setCellValue('D1', 'Costo');
         
-        if ($type === StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-            $subrecipesSheet->setCellValue('A1', 'Nombre de la Subreceta');
-            $subrecipesSheet->setCellValue('B1', 'Tipo de Subreceta');
-            $subrecipesSheet->setCellValue('C1', 'Tiempo de preparación');
-            $subrecipesSheet->setCellValue('D1', 'Unidad de tiempo');
-            $subrecipesSheet->setCellValue('E1', 'Rendimiento');
-            $subrecipesSheet->setCellValue('F1', 'Rendimiento UM');
-            $subrecipesSheet->setCellValue('G1', 'Porciones');
-            $subrecipesSheet->setCellValue('H1', 'Duración');
-            $subrecipesSheet->setCellValue('I1', 'Unidad de duración');
-            $subrecipesSheet->setCellValue('J1', 'Unidad de medida final');
-        }
+        // if ($type === StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+        //     $subrecipesSheet->setCellValue('A1', 'Nombre de la Subreceta');
+        //     $subrecipesSheet->setCellValue('B1', 'Tipo de Subreceta');
+        //     $subrecipesSheet->setCellValue('C1', 'Tiempo de preparación');
+        //     $subrecipesSheet->setCellValue('D1', 'Unidad de tiempo');
+        //     $subrecipesSheet->setCellValue('E1', 'Rendimiento');
+        //     $subrecipesSheet->setCellValue('F1', 'Rendimiento UM');
+        //     $subrecipesSheet->setCellValue('G1', 'Porciones');
+        //     $subrecipesSheet->setCellValue('H1', 'Duración');
+        //     $subrecipesSheet->setCellValue('I1', 'Unidad de duración');
+        //     $subrecipesSheet->setCellValue('J1', 'Unidad de medida final');
+        // }
         
         
         $convoySheet->setCellValue('A1', 'ID Convoy');
@@ -2728,6 +2728,17 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $ingredientsSheet->setCellValue('E'.$ingredientsRow, $ingredientRelation->lastPrice);
                 $ingredientsRow++;
             }
+           //die(var_dump($recipe->getSubStandardRecipes()->all()));
+            foreach ($recipe->getSubStandardRecipes()->all() as $subrecipeRelation) {
+                $ingredientsSheet->setCellValue('A'.$ingredientsRow, $recipe->title);
+                //die(var_dump($subrecipeRelation->title));
+                $ingredientsSheet->setCellValue('B'.$ingredientsRow, $subrecipeRelation->title);
+                // die(var_dump($recipe->id));
+                $ingredientsSheet->setCellValue('C'.$ingredientsRow, $subrecipeRelation->getQuantityLinked($recipe->id));
+                $ingredientsSheet->setCellValue('D'.$ingredientsRow, $subrecipeRelation->um);
+                $ingredientsSheet->setCellValue('E'.$ingredientsRow, $subrecipeRelation->custom_cost*$subrecipeRelation->getQuantityLinked($recipe->id));
+                $ingredientsRow++;
+            }
             
             $recipesRow++;
         }
@@ -2765,10 +2776,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_CURRENCY_USD_SIMPLE);
     
         // 9. Agregar fórmulas para insumos similares a la plantilla
-        for ($i = 2; $i <= 100; $i++) {
-            $ingredientsSheet->setCellValue("D$i", "=IFERROR(VLOOKUP(B$i, INSUMOS!A:D, 3, FALSE), \"\")");
-            $ingredientsSheet->setCellValue("E$i", "=IF(IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\")=\"\",\"\",ROUND(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), 2))");
-        }
+        // for ($i = 2; $i <= 100; $i++) {
+        //     $ingredientsSheet->setCellValue("D$i", "=IFERROR(VLOOKUP(B$i, INSUMOS!A:D, 3, FALSE), \"\")");
+        //     $ingredientsSheet->setCellValue("E$i", "=IF(IFERROR(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), \"\")=\"\",\"\",ROUND(C$i * VLOOKUP(B$i, INSUMOS!A:D, 4, FALSE), 2))");
+        // }
     
         // 10. Añadir nota informativa similar a la plantilla
         $noteText = ($type === 'sub') 

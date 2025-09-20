@@ -224,14 +224,15 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                             </div>
                         </div>
                     </div>
-                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>                        <?= $form->field($model, 'price', [
+                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>                        
+                    <?= $form->field($model, 'price', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div>{error}</div></div>"
                         ])->textInput([
                             'id' => 'price-input',
                             'value' => $model->price !== null && $model->price !== '' ? formatPrice($model->price) : '',
                             'class' => 'form-control format-price-input',
                             'data-raw-value' => $model->price
-                        ])->label(null, ['class' => 'col-sm-3 text-start']) ?>                        <div class="row mb-3">
+                        ])->label('Precio sin IVA', ['class' => 'col-sm-3 text-start']) ?>                        <div class="row mb-3">
                             <div class="col-sm-3 text-start">
                                 <?= Yii::t('app', "Cost") ?>
                             </div>
