@@ -176,9 +176,18 @@ class ProviderController extends Controller
     {
         $business = RedisKeys::getBusiness();
         \Yii::$app->db->createCommand("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''));")->execute();
+        // Subconsulta para obtener el id del último movimiento de entrada por ingrediente
+        $subQuery = (new \yii\db\Query())
+            ->select(['MAX(id)'])
+            ->from('movement')
+            ->where([
+                'business_id' => $business->id,
+                'type' => 'input',
+            ])
+            ->groupBy('ingredient_id');
+
         $movements = Movement::find()
-            ->where(['business_id' => $business->id])
-            ->groupBy(['ingredient_id']);
+            ->where(['id' => $subQuery]);
 
         if ($provider != 'all') {
             $movements->andWhere(['provider' => $provider]);
