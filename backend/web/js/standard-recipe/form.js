@@ -165,21 +165,25 @@ function computeCost() {
     // Resto del cálculo (porciones, yield, formato)
     let portions = parseFloat($("#standardrecipe-portions").val()) || 1;
     let _yield = parseFloat($("#standardrecipe-yield").val()) || 1;
-    console.log('Final totalCost:', totalCost, 'portions:', portions, 'yield:', _yield);
-    if (!isNaN(totalCost)) {
-        let costPerPortion = portions > 0 && _yield > 0 ? totalCost / _yield / portions : totalCost;
-        console.log('Cost per portion:', costPerPortion);
-        // Actualizar la interfaz
-        $("#ingredients-selection-total-cost").data('total', costPerPortion.toFixed(2));
-        $("#standardrecipe-custom_cost").val(costPerPortion.toFixed(2));
-        let formattedCost = formatUserNumber(costPerPortion);
+    // El convoyCost NO se divide entre el rendimiento/yield, solo los ingredientes
+    let ingredientsCost = totalCost - convoyCost;
+    let costPerPortion = 0;
+    if (!isNaN(ingredientsCost)) {
+        costPerPortion = portions > 0 && _yield > 0 ? (ingredientsCost / _yield / portions) : ingredientsCost;
+    }
+    let finalTotal = costPerPortion + convoyCost;
+    console.log('Final totalCost:', totalCost, 'ingredientsCost:', ingredientsCost, 'convoyCost:', convoyCost, 'costPerPortion:', costPerPortion, 'finalTotal:', finalTotal, 'portions:', portions, 'yield:', _yield);
+    if (!isNaN(finalTotal)) {
+        $("#ingredients-selection-total-cost").data('total', finalTotal.toFixed(2));
+        $("#standardrecipe-custom_cost").val(finalTotal.toFixed(2));
+        let formattedCost = formatUserNumber(finalTotal);
         $("#ingredients-selection-total-cost").text(formattedCost);
         if ($("#cost-value").length > 0) {
-            $("#cost-value").html(formatUserNumber(costPerPortion));
-            $("#cost-value").data('price', costPerPortion);
+            $("#cost-value").html(formatUserNumber(finalTotal));
+            $("#cost-value").data('price', finalTotal);
         }
     } else {
-        console.log('totalCost es NaN, no se actualiza la UI');
+        console.log('finalTotal es NaN, no se actualiza la UI');
     }
 }
 // Función para formatear números según las preferencias del usuario
