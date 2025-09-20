@@ -27,12 +27,12 @@ $this->title = "Insumos por proveedores"
             'attribute' => 'provider',
             'label' => 'Proveedor',
             'value' => function($model) {
-                if (empty($model->providers)) {
+                if (empty($model->provider)) {
                     return 'Sin proveedor';
                 }
                 $prov = \common\models\Provider::findOne(['business_name' => $model->provider]);
                 if ($prov) {
-                    return $prov->business_name ?: $prov->name;
+                    return $prov->business_name;
                 }
                 return $model->provider;
             }
