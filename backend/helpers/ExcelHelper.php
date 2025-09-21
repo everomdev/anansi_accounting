@@ -44,13 +44,13 @@ class ExcelHelper
         $spreadsheet = new Spreadsheet();
         $activeWorksheet = $spreadsheet->getActiveSheet();
     $activeWorksheet->setCellValue('A1', 'Identificador');
-    $activeWorksheet->setCellValue('B1', 'Categoría');
+    $activeWorksheet->setCellValue('B1', 'Familias');
     $activeWorksheet->setCellValue('E1', 'Unidad de Medida');
     $activeWorksheet->setCellValue('F1', 'Tipo');
 
         $currentIndex = 2;
         foreach ($categories as $category) {
-            $activeWorksheet->setCellValue("A$currentIndex", $category->id);
+            $activeWorksheet->setCellValue("A$currentIndex", $category->key_prefix);
             $activeWorksheet->setCellValue("B$currentIndex", $category->name);
             $currentIndex++;
         }
