@@ -3747,7 +3747,7 @@ public function actionEditStep()
 
         // Configurar encabezados de datos
         $sheet->setCellValue('A4', 'INSTRUCCIONES:');
-        $sheet->setCellValue('A5', '1. Seleccione el mes y el año de la lista desplegable');
+        $sheet->setCellValue('A5', '1. Seleccione el mes y el año de la lista desplegable en las celdas B1 y B2');
         $sheet->setCellValue('A6', '2. Complete los datos de ventas en las columnas de abajo');
         $sheet->setCellValue('A7', '3. Guarde el archivo y súbalo al sistema');
 
