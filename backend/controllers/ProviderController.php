@@ -172,7 +172,7 @@ class ProviderController extends Controller
         return $this->redirect(['index']);
     }
 
-    public function actionIngredients($provider = 'all')
+    /*public function actionIngredients($provider = 'all')
     {
         $business = RedisKeys::getBusiness();
         \Yii::$app->db->createCommand("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode, 'ONLY_FULL_GROUP_BY', ''));")->execute();
@@ -203,6 +203,27 @@ class ProviderController extends Controller
             'provider' => $provider
         ]);
 
+    }*/
+    public function actionIngredients($provider = 'all')
+    {
+        $business = RedisKeys::getBusiness();
+        $query = IngredientStock::find()
+            ->where(['ingredient_stock.business_id' => $business->id])
+            ->with(['category', 'providers']);
+        if ($provider != 'all') {
+            $query->joinWith('providers')->andWhere(['provider_id' => $provider]);
+        } else {
+            $query->joinWith('providers');
+        }
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+        ]);
+        $providers = Provider::findAll(['business_id' => $business->id]);
+        return $this->render('ingredients', [
+            'dataProvider' => $dataProvider,
+            'providers' => $providers,
+            'provider' => $provider
+        ]);
     }
 
     /**

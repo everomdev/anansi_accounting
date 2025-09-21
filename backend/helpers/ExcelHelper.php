@@ -265,8 +265,8 @@ public static function generateIngredientsTemplate($id)
     $legendSheet->setCellValue('A6', 'Precio');
     $legendSheet->setCellValue('B6', 'Debe ser un valor numérico mayor que 0.');
 
-    $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('A')->setAutoSize(true);
-    $spreadsheet->getSheetByName('Leyenda')->getColumnDimension('B')->setAutoSize(true);
+    //$spreadsheet->getSheetByName('Leyenda')->getColumnDimension('A')->setAutoSize(true);
+    //$spreadsheet->getSheetByName('Leyenda')->getColumnDimension('B')->setAutoSize(true);
 
     // Asegurarse de que las hojas ocultas (Familias de insumos y UMs) no sean visibles
     $categorySheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
