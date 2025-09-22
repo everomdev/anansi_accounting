@@ -13,6 +13,12 @@ use Yii;
  * @property int|null $business_id
  * @property int $custom
  * @property string $type
+ * @property int $is_purchase
+ * @property int $is_kitchen
+ * @property int $is_subrecipe_yield
+ * @property int $is_subrecipe_um
+ * @property int $is_recipe_yield
+ * @property int $is_recipe_final_um
  *
  * @property Business $business
  */
@@ -35,10 +41,11 @@ class UnitOfMeasurement extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
-            [['business_id', 'custom'], 'integer'],
+            [['business_id', 'custom', 'is_purchase', 'is_kitchen', 'is_subrecipe_yield', 'is_subrecipe_um', 'is_recipe_yield', 'is_recipe_final_um'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [['type'], 'string', 'max' => 20],
             [['custom'], 'default', 'value' => 0],
+            [['is_purchase', 'is_kitchen', 'is_subrecipe_yield', 'is_subrecipe_um', 'is_recipe_yield', 'is_recipe_final_um'], 'default', 'value' => 0],
             [['type'], 'default', 'value' => self::TYPE_KITCHEN],
             [['type'], 'in', 'range' => [self::TYPE_KITCHEN, self::TYPE_PURCHASE]],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
@@ -56,6 +63,12 @@ class UnitOfMeasurement extends \yii\db\ActiveRecord
             'business_id' => Yii::t('app', 'Business ID'),
             'custom' => Yii::t('app', 'Unidad personalizada'),
             'type' => Yii::t('app', 'Tipo de unidad'),
+            'is_purchase' => Yii::t('app', '¿Es unidad de compra?'),
+            'is_kitchen' => Yii::t('app', '¿Es unidad de cocina?'),
+            'is_subrecipe_yield' => Yii::t('app', '¿Es unidad de rendimiento de subreceta?'),
+            'is_subrecipe_um' => Yii::t('app', '¿Es unidad de insumo de subreceta?'),
+            'is_recipe_yield' => Yii::t('app', '¿Es unidad de rendimiento de receta?'),
+            'is_recipe_final_um' => Yii::t('app', '¿Es unidad final de receta?'),
         ];
     }
 

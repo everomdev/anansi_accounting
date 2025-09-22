@@ -90,8 +90,12 @@ $this->registerJsVar('userFormatConfig', $formatConfig);
 
 // Obtener unidades separadas por tipo
 $allUms = \common\models\UnitOfMeasurement::find()->where(['business_id' => $business['id']])->all();
-$purchaseUms = array_filter($allUms, function($um) { return $um->type === \common\models\UnitOfMeasurement::TYPE_PURCHASE; });
-$kitchenUms = array_filter($allUms, function($um) { return $um->type === \common\models\UnitOfMeasurement::TYPE_KITCHEN; });
+$purchaseUms = array_filter($allUms, function($um) {
+    return ($um->is_purchase ?? 0) == 1;
+});
+$kitchenUms = array_filter($allUms, function($um) {
+    return ($um->is_kitchen ?? 0) == 1;
+});
 
 $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id' => $business['id']])->all(), 'id', 'name');
 ?>

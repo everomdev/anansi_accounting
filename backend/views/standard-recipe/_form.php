@@ -141,7 +141,15 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                             </div>
                         </div>
                     </div>
-                    <?php $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::getOwn()->all(), 'name', 'name'), ['class' => 'form-control', 'id' => 'standardrecipe-yield_um'])->label(false) ?>
+                    <?php
+                    $yieldUms = \common\models\UnitOfMeasurement::getOwn()->all();
+                    if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+                        $yieldUms = array_filter($yieldUms, function($um) { return ($um->is_recipe_yield ?? 0) == 1; });
+                    } elseif ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB) {
+                        $yieldUms = array_filter($yieldUms, function($um) { return ($um->is_subrecipe_yield ?? 0) == 1; });
+                    }
+                    $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map($yieldUms, 'name', 'name'), ['class' => 'form-control', 'id' => 'standardrecipe-yield_um'])->label(false);
+                    ?>
                     <?= $form->field($model, 'yield', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
                     ])->textInput()->label(null, ['class' => 'col-sm-4 text-start required']) ?>
@@ -151,14 +159,22 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                         ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Convoy::findAll(['business_id' => $business['id']]), 'id', 'label'), ['prompt' => Yii::t('app', "No convoy")])->label(null, ['class' => 'col-sm-4 text-start']) ?>
                     <?php endif; ?>
                     <?php  ?>
-                    <?= $form->field($model, 'um', [
+                    <?php
+                    $finalUms = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
+                    if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+                        $finalUms = array_filter($finalUms, function($um) { return ($um->is_recipe_final_um ?? 0) == 1; });
+                    } elseif ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB) {
+                        $finalUms = array_filter($finalUms, function($um) { return ($um->is_subrecipe_um ?? 0) == 1; });
+                    }
+                    echo $form->field($model, 'um', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                    ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]), 'name', 'name'))->label(
+                    ])->dropDownList(\yii\helpers\ArrayHelper::map($finalUms, 'name', 'name'))->label(
                         $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
                             ? Yii::t('app', 'Unidad de medida')
                             : Yii::t('app', 'Unidad final'),
                         ['class' => 'col-sm-4 text-start required']
-                    ) ?>
+                    );
+                    ?>
                     <?php ?>
                     <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'is_food')->widget(\kartik\switchinput\SwitchInput::class, [

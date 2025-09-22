@@ -32,14 +32,40 @@ $controller = $model->isNewRecord
 
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'type')->dropDownList(
+    <!-- <?= $form->field($model, 'type')->dropDownList(
         \common\models\UnitOfMeasurement::getTypeOptions(),
         ['prompt' => 'Selecciona el tipo de unidad...']
-    ) ?>
+    ) ?> -->
+
 
     <?php if ($model->isNewRecord): ?>
         <?= $form->field($model, 'custom')->hiddenInput(['value' => 1])->label(false) ?>
     <?php endif; ?>
+
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'is_purchase')->checkbox() ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'is_kitchen')->checkbox() ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'is_subrecipe_yield')->checkbox() ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'is_subrecipe_um')->checkbox() ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'is_recipe_yield')->checkbox() ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'is_recipe_final_um')->checkbox() ?>
+        </div>
+    </div>
 
     <div class="form-group mt-3">
         <?php if ($model->isNewRecord): ?>

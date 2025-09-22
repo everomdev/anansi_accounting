@@ -104,22 +104,22 @@ $this->registerCss('
                 'columns' => [
                 ['class' => 'yii\grid\SerialColumn'],
                 'name',
-                [
-                    'attribute' => 'type',
-                    'format' => 'raw',
-                    'value' => function ($model) {
-                        if ($model->type === \common\models\UnitOfMeasurement::TYPE_PURCHASE) {
-                            return '<span class="badge bg-primary"><i class="fas fa-shopping-cart"></i> Compra</span>';
-                        } else {
-                            return '<span class="badge bg-info"><i class="fas fa-utensils"></i> Cocina</span>';
-                        }
-                    },
-                    'filter' => [
-                        \common\models\UnitOfMeasurement::TYPE_KITCHEN => 'Cocina',
-                        \common\models\UnitOfMeasurement::TYPE_PURCHASE => 'Compra'
-                    ],
-                    'headerOptions' => ['style' => 'width: 120px;']
-                ],
+                // [
+                //     'attribute' => 'type',
+                //     'format' => 'raw',
+                //     'value' => function ($model) {
+                //         if ($model->type === \common\models\UnitOfMeasurement::TYPE_PURCHASE) {
+                //             return '<span class="badge bg-primary"><i class="fas fa-shopping-cart"></i> Compra</span>';
+                //         } else {
+                //             return '<span class="badge bg-info"><i class="fas fa-utensils"></i> Cocina</span>';
+                //         }
+                //     },
+                //     'filter' => [
+                //         \common\models\UnitOfMeasurement::TYPE_KITCHEN => 'Cocina',
+                //         \common\models\UnitOfMeasurement::TYPE_PURCHASE => 'Compra'
+                //     ],
+                //     'headerOptions' => ['style' => 'width: 120px;']
+                // ],
                 [
                     'attribute' => 'custom',
                     'format' => 'raw',
@@ -137,6 +137,78 @@ $this->registerCss('
                     'headerOptions' => ['style' => 'width: 150px;'],
                 ],
 
+                [
+                    'attribute' => 'is_purchase',
+                    'label' => 'Insumos<br>(Compras)',
+                    'encodeLabel' => false,
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        return $model->is_purchase
+                            ? '<span class="badge bg-success">Sí</span>'
+                            : '<span class="badge bg-danger">No</span>';
+                    },
+                    'headerOptions' => ['style' => 'width: 80px;'],
+                ],
+                [
+                    'attribute' => 'is_kitchen',
+                    'label' => 'Insumos<br>(Cocina)',
+                    'encodeLabel' => false,
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        return $model->is_kitchen
+                            ? '<span class="badge bg-success">Sí</span>'
+                            : '<span class="badge bg-danger">No</span>';
+                    },
+                    'headerOptions' => ['style' => 'width: 80px;'],
+                ],
+                [
+                    'attribute' => 'is_subrecipe_yield',
+                    'label' => 'Subrecetas<br>(Rendimiento)',
+                    'encodeLabel' => false,
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        return $model->is_subrecipe_yield
+                            ? '<span class="badge bg-success">Sí</span>'
+                            : '<span class="badge bg-danger">No</span>';
+                    },
+                    'headerOptions' => ['style' => 'width: 100px;'],
+                ],
+                [
+                    'attribute' => 'is_subrecipe_um',
+                    'label' => 'Subrecetas<br>(Unidad de medida)',
+                    'encodeLabel' => false,
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        return $model->is_subrecipe_um
+                            ? '<span class="badge bg-success">Sí</span>'
+                            : '<span class="badge bg-danger">No</span>';
+                    },
+                    'headerOptions' => ['style' => 'width: 120px;'],
+                ],
+                [
+                    'attribute' => 'is_recipe_yield',
+                    'label' => 'Recetas<br>(rendimiento)',
+                    'encodeLabel' => false,
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        return $model->is_recipe_yield
+                            ? '<span class="badge bg-success">Sí</span>'
+                            : '<span class="badge bg-danger">No</span>';
+                    },
+                    'headerOptions' => ['style' => 'width: 100px;'],
+                ],
+                [
+                    'attribute' => 'is_recipe_final_um',
+                    'label' => 'Recetas<br>(unidad final)',
+                    'encodeLabel' => false,
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        return $model->is_recipe_final_um
+                            ? '<span class="badge bg-success">Sí</span>'
+                            : '<span class="badge bg-danger">No</span>';
+                    },
+                    'headerOptions' => ['style' => 'width: 100px;'],
+                ],
                 [
                     'class' => 'yii\grid\ActionColumn',
                     'template' => "{update} {delete}",
