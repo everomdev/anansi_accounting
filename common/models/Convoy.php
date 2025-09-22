@@ -55,7 +55,8 @@ class Convoy extends \yii\db\ActiveRecord
             [['business_id', 'plates'], 'integer'],
             [['um', 'type', 'name', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
-            [['type'], 'in', 'range' => [self::TYPE_GENERAL, self::TYPE_FAMILY]]
+            [['type'], 'in', 'range' => [self::TYPE_GENERAL, self::TYPE_FAMILY]],
+            [['name'], 'unique', 'targetAttribute' => ['name'], 'message' => 'El nombre del convoy debe ser único.']
         ];
     }
 

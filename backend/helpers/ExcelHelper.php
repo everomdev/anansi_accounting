@@ -86,6 +86,9 @@ public static function generateIngredientsTemplate($id)
     $unitOfMeasurements = UnitOfMeasurement::find()
         ->where(['business_id' => $id])
         ->all();
+    // Separar unidades de compra y de cocina
+    $purchaseUMs = array_filter($unitOfMeasurements, function($um) { return $um->type === 'purchase'; });
+    $kitchenUMs = array_filter($unitOfMeasurements, function($um) { return $um->type === 'kitchen'; });
 
     $spreadsheet = new Spreadsheet();
     $activeWorksheet = $spreadsheet->getActiveSheet();
@@ -175,41 +178,54 @@ public static function generateIngredientsTemplate($id)
         $spreadsheet->getActiveSheet()->getCell("E$i")->setDataValidation(clone $dataValidation);
     }
 
-    // Create a named range for unit of measurements
+    // Crear hoja UMs con dos listas: compra y cocina
     $umSheet = $spreadsheet->createSheet();
     $umSheet->setTitle('UMs');
-    $umSheet->setCellValue('A1', 'Unidad de medida');
-
-    $row = 2;
-    foreach ($unitOfMeasurements as $um) {
-        $umSheet->setCellValue("A$row", $um->name);
-        $row++;
+    $umSheet->setCellValue('A1', 'Unidades de compra');
+    $umSheet->setCellValue('B1', 'Unidades de cocina');
+    $rowCompra = 2;
+    foreach ($purchaseUMs as $um) {
+        $umSheet->setCellValue("A$rowCompra", $um->name);
+        $rowCompra++;
     }
+    $rowCocina = 2;
+    foreach ($kitchenUMs as $um) {
+        $umSheet->setCellValue("B$rowCocina", $um->name);
+        $rowCocina++;
+    }
+    $lastRowCompra = $rowCompra - 1;
+    $lastRowCocina = $rowCocina - 1;
+    // Validación para unidad de compra (columna F)
+    $dataValidationCompra = $spreadsheet->getActiveSheet()->getCell('F2')->getDataValidation();
+    $dataValidationCompra->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+    $dataValidationCompra->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $dataValidationCompra->setAllowBlank(false);
+    $dataValidationCompra->setShowInputMessage(true);
+    $dataValidationCompra->setShowErrorMessage(true);
+    $dataValidationCompra->setShowDropDown(true);
+    $dataValidationCompra->setErrorTitle('Error de entrada');
+    $dataValidationCompra->setError('Este valor no es admitido');
+    $dataValidationCompra->setPromptTitle('Selecciona una unidad de compra');
+    $dataValidationCompra->setPrompt('Por favor, selecciona un valor del desplegable.');
+    $dataValidationCompra->setFormula1("='UMs'!\$A\$2:\$A\$" . $lastRowCompra);
 
-    $lastRowUM = $row - 1;
-    $spreadsheet->addNamedRange(
-        new \PhpOffice\PhpSpreadsheet\NamedRange('UMs', $umSheet, 'A2:A' . $lastRowUM)
-    );
-
-    // Apply data validation to the um column
-    $dataValidation = $spreadsheet->getActiveSheet()->getCell('F2')->getDataValidation();
-    $dataValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $dataValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $dataValidation->setAllowBlank(false);
-    $dataValidation->setShowInputMessage(true);
-    $dataValidation->setShowErrorMessage(true);
-    $dataValidation->setShowDropDown(true);
-    $dataValidation->setErrorTitle('Error de entrada');
-    $dataValidation->setError('Este valor no es admitido');
-    $dataValidation->setPromptTitle('Selecciona una unidad de medida');
-    $dataValidation->setPrompt('Por favor, selecciona un valor del desplegable.');
-    
-    // CORRECCIÓN: Usar referencia directa en lugar del rango nombrado
-    $dataValidation->setFormula1("='UMs'!\$A\$2:\$A\$$lastRowUM");
+    // Validación para unidad de cocina (columna G)
+    $dataValidationCocina = $spreadsheet->getActiveSheet()->getCell('G2')->getDataValidation();
+    $dataValidationCocina->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+    $dataValidationCocina->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $dataValidationCocina->setAllowBlank(false);
+    $dataValidationCocina->setShowInputMessage(true);
+    $dataValidationCocina->setShowErrorMessage(true);
+    $dataValidationCocina->setShowDropDown(true);
+    $dataValidationCocina->setErrorTitle('Error de entrada');
+    $dataValidationCocina->setError('Este valor no es admitido');
+    $dataValidationCocina->setPromptTitle('Selecciona una unidad de cocina');
+    $dataValidationCocina->setPrompt('Por favor, selecciona un valor del desplegable.');
+    $dataValidationCocina->setFormula1("='UMs'!\$B\$2:\$B\$" . $lastRowCocina);
 
     for ($i = 2; $i <= 5000; $i++) {
-        $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $dataValidation);
-        $spreadsheet->getActiveSheet()->getCell("G$i")->setDataValidation(clone $dataValidation);
+        $spreadsheet->getActiveSheet()->getCell("F$i")->setDataValidation(clone $dataValidationCompra);
+        $spreadsheet->getActiveSheet()->getCell("G$i")->setDataValidation(clone $dataValidationCocina);
     }
 
     // Apply data validation to the factor de rendimiento column
@@ -247,6 +263,22 @@ public static function generateIngredientsTemplate($id)
     for ($i = 2; $i <= 5000; $i++) {
         $spreadsheet->getActiveSheet()->getCell("J$i")->setDataValidation(clone $priceValidation);
     }
+     // Validación para EQ. UNI. Cocina (columna I): solo números
+    $eqValidation = $spreadsheet->getActiveSheet()->getCell('I2')->getDataValidation();
+    $eqValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+    $eqValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    $eqValidation->setAllowBlank(false);
+    $eqValidation->setShowInputMessage(true);
+    $eqValidation->setShowErrorMessage(true);
+    $eqValidation->setErrorTitle('Error de entrada');
+    $eqValidation->setError('Solo se permiten valores numéricos.');
+    $eqValidation->setPromptTitle('Equivalencia unidad de cocina');
+    $eqValidation->setPrompt('Ingresa solo números (ejemplo: 12, 0.5, 100).');
+    $eqValidation->setFormula1(0); // Valor mínimo
+    $eqValidation->setFormula2(99999999); // Valor máximo
+    for ($i = 2; $i <= 5000; $i++) {
+        $spreadsheet->getActiveSheet()->getCell("I$i")->setDataValidation(clone $eqValidation);
+    }
 
     // Create a legend sheet
     $legendSheet = $spreadsheet->createSheet();
@@ -262,8 +294,10 @@ public static function generateIngredientsTemplate($id)
     $legendSheet->setCellValue('B4', 'Debe ser una de las unidades de medida listadas');
     $legendSheet->setCellValue('A5', 'Factor de Rendimiento');
     $legendSheet->setCellValue('B5', 'Debe ser un valor numérico entre 0 y 100. Permite decimales.');
-    $legendSheet->setCellValue('A6', 'Precio');
-    $legendSheet->setCellValue('B6', 'Debe ser un valor numérico mayor que 0.');
+    $legendSheet->setCellValue('A6', 'EQ. UNI. Cocina');
+    $legendSheet->setCellValue('B6', 'Equivalencia entre la unidad de compra y la unidad de cocina. Es decir, cuántas unidades de cocina hay en una unidad de compra. Ejemplo: Si compras 1 pieza y esa pieza equivale a 2 kg, escribe 2. Solo se permiten números.');
+    $legendSheet->setCellValue('A7', 'Precio');
+    $legendSheet->setCellValue('B7', 'Debe ser un valor numérico mayor que 0.');
 
     //$spreadsheet->getSheetByName('Leyenda')->getColumnDimension('A')->setAutoSize(true);
     //$spreadsheet->getSheetByName('Leyenda')->getColumnDimension('B')->setAutoSize(true);
@@ -277,6 +311,18 @@ public static function generateIngredientsTemplate($id)
     
     // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
     $spreadsheet->getActiveSheet()->setSelectedCell('A2');
+      // Proteger la fila de títulos (A1:K1) para que no se puedan editar
+    $protection = $activeWorksheet->getProtection();
+    $protection->setSheet(true);
+    // $protection->setPassword(''); // Sin clave
+    // Desbloquear todas las celdas primero
+    $activeWorksheet->getStyle('A2:K5000')->getProtection()->setLocked(
+        \PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED
+    );
+    // Bloquear solo la fila de títulos
+    $activeWorksheet->getStyle('A1:K1')->getProtection()->setLocked(
+        \PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_PROTECTED
+    );
 
     $writer = new Xlsx($spreadsheet);
     $fileName = 'Plantilla_para_importar_insumos.xlsx';
