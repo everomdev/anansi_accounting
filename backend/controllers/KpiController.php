@@ -70,7 +70,7 @@ class KpiController extends Controller
         
         // Obtener todos los ingredientes activos del negocio
         $ingredientes = IngredientStock::find()
-            ->where(['business_id' => $business->id])
+            ->where(['business_id' => $business->id])//, 'id' => 1593
             ->orderBy('ingredient ASC')
             ->all();
         
@@ -111,62 +111,203 @@ class KpiController extends Controller
     /**
      * Calcula los datos de control para un insumo específico
      */
-    private function calcularDatosInsumo($ingrediente, $selectedMonth, $selectedYear, $debug = false)
-    {
-        $unidad = $ingrediente->um ?: 'und';
-        $rendimiento = $ingrediente->yield ?: 1;
-        $portionsPorUnidad = $ingrediente->portions_per_unit ?: 1; // Cuántas porciones de cocina por unidad de compra
-        $unidadPorcion = $ingrediente->portion_um ?: 'und'; // Unidad de cocina
-        
-        // 1. Calcular consumo por ventas (en unidad de cocina: litros)
-        $consumoVentasEnCocina = $this->calcularConsumoVentas($ingrediente->id, $selectedMonth, $selectedYear, $debug);
-        
-        // 2. Convertir consumo de unidad de cocina a unidad de compra
-        // Si consumo = 10 litros y portions_per_unit = 12 litros/caja
-        // Entonces: 10 litros ÷ 12 litros/caja = 0.83 cajas
-        $consumoVentasEnCompra = $portionsPorUnidad > 0 ? $consumoVentasEnCocina / $portionsPorUnidad : $consumoVentasEnCocina;
-        
-        // 3. Calcular compras (movimientos de entrada en unidad de compra)
-        $compras = $this->calcularCompras($ingrediente->id, $selectedMonth, $selectedYear, $debug);
-        
-        // 4. Obtener inventario actual (en unidad de compra)
-        $inventario = $ingrediente->quantity ?: 0;
-        
-        // 5. Aplicar rendimiento al consumo (solo si es necesario)
-        $consumoReal = $rendimiento > 0 ? $consumoVentasEnCompra / ($rendimiento/100) : $consumoVentasEnCompra;
+private function calcularDatosInsumo($ingrediente, $selectedMonth, $selectedYear, $debug = false)
+{
+    // 1. Obtener datos base
+    $unidad = $ingrediente->um;
+    $unidadPorcion = $ingrediente->portion_um;
+    $rendimiento = $ingrediente->yield ?: 100;
+    $portionsPorUnidad = $ingrediente->portions_per_unit ?: 1;
 
-        // 6. Calcular diferencia (comprado - consumido)
-        $diferencia = $compras - $consumoReal;
+    // 2. Obtener TODAS las subrecetas del ingrediente
+    $subrecetas = $ingrediente->getSubRecipes()->all();
+    $tieneSubrecetas = $ingrediente->getSubRecipes()->exists();
+
+    // 3. CALCULAR CONSUMO TOTAL SUMANDO CADA SUBRECETA POR SEPARADO
+    $consumoTotalUnidadCompra = 0;
+
+    if ($tieneSubrecetas) {
+        // PARA CADA SUBRECETA, calcular su consumo individual
+        foreach ($subrecetas as $subreceta) {
+            $consumoSubreceta = $this->calcularConsumoPorSubreceta($ingrediente, $subreceta->standard_recipe_id, $selectedMonth, $selectedYear, $debug);
+            $consumoTotalUnidadCompra += $consumoSubreceta;
+        }
+    } 
+    // INGREDIENTE DIRECTO (sin subrecetas)
+    $consumoHojas = $this->calcularConsumoDirectoSinSubrecetas($ingrediente->id, $selectedMonth, $selectedYear, $debug);
+    $consumoTotalUnidadCompra += $this->convertirUnidadCocinaACompra($ingrediente, $consumoHojas, $debug);
+    
+
+    // 4. Consumo teórico es el total calculado
+    $consumoTeorico = $consumoTotalUnidadCompra;
+
+    // 5. Aplicar rendimiento para consumo real
+    $rendimientoDecimal = $rendimiento / 100;
+    if ($rendimientoDecimal <= 0) $rendimientoDecimal = 1;
+    $consumoReal = $consumoTeorico / $rendimientoDecimal;
+
+    // 6. Compras e inventario
+    $comprado = $this->calcularCompras($ingrediente->id, $selectedMonth, $selectedYear, false);
+    $inventario = $ingrediente->quantity ?: 0;
+
+    // 7. Diferencia y estado
+    $diferencia = $comprado - $consumoReal;
+    $estado = $this->determinarEstado($diferencia, $inventario);
+    $alertaStock = $this->analizarAlertasStock($ingrediente, $inventario);
+
+
+    return [
+        'id' => $ingrediente->id,
+        'nombre' => $ingrediente->ingredient,
+        'unidad' => $unidad,
+        'unidad_cocina' => $unidadPorcion,
+        'porciones_por_unidad' => $portionsPorUnidad,
+        'rendimiento' => $rendimiento,
+        'consumido' => round($consumoTeorico, 2),
+        'consumido_cocina' => round($this->calcularConsumoVentas($ingrediente->id, $selectedMonth, $selectedYear, false), 2),
+        'consumido_real' => round($consumoReal, 2),
+        'comprado' => round($comprado, 2),
+        'inventario' => round($inventario, 2),
+        'diferencia' => round($diferencia, 2),
+        'estado' => $estado,
+        'min_stock' => $ingrediente->min_stock,
+        'max_stock' => $ingrediente->max_stock,
+        'alerta_stock' => $alertaStock['tipo'],
+        'nivel_critico' => $alertaStock['critico'],
+        'porcentaje_stock' => $alertaStock['porcentaje'],
+        'mensaje_alerta' => $alertaStock['mensaje'],
+        'tiene_subrecetas' => $tieneSubrecetas,
+        'numero_subrecetas' => count($subrecetas),
+    ];
+}
+
+/**
+ * Calcula el consumo para UNA subreceta específica
+ */
+private function calcularConsumoPorSubreceta($ingrediente, $subreceta, $selectedMonth, $selectedYear, $debug = false)
+{
+    $business = RedisKeys::getBusiness();
+    // 1. Obtener ventas de recetas que usan ESTA subreceta
+    $whereConditions = [
+        'ms.model_type' => 'standard_recipe',
+        'sr.business_id' => $business->id,
+        'srssr.sub_standard_recipe_id' => $subreceta
+    ];
+    
+    if ($selectedYear != 0) $whereConditions['ms.year'] = $selectedYear;
+    if ($selectedMonth != 0) $whereConditions['ms.month'] = $selectedMonth;
+    
+    $queryRecetas = new Query();
+    $queryRecetas->select([
+        'ms.sales',
+        'sr.title as receta_nombre',
+        'srssr.quantity as cantidad_subreceta_en_receta'
+    ])
+    ->from('monthly_sales ms')
+    ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
+    ->innerJoin('standard_recipe_sub_standard_recipe srssr', 'srssr.standard_recipe_id = ms.model_id')
+    ->where($whereConditions);
+
+    $recetas = $queryRecetas->all();
+    
+    $consumoTotalSubreceta = 0;
+    // 2. Para cada receta que usa esta subreceta
+    foreach ($recetas as $receta) {
+        $ventasReceta = floatval($receta['sales'] ?: 0);
+        $cantidadSubrecetaEnReceta = floatval($receta['cantidad_subreceta_en_receta'] ?: 0);
         
-        // 7. Determinar estado
-        $estado = $this->determinarEstado($diferencia, $inventario);
+        // 3. Obtener cantidad del ingrediente en ESTA subreceta
+        $ingredienteEnSubreceta = (new Query())
+            ->select(['quantity'])
+            ->from('ingredient_standard_recipe')
+            ->where([
+                'standard_recipe_id' => $subreceta,
+                'ingredient_id' => $ingrediente->id
+            ])
+            ->one();
+            
+        if ($ingredienteEnSubreceta) {
+            $cantidadIngredienteEnSubreceta = floatval($ingredienteEnSubreceta['quantity'] ?: 0);
+            
+            // 4. Calcular consumo en unidad de cocina de la subreceta
+            $consumoUnidadCocina = $ventasReceta * $cantidadSubrecetaEnReceta * $cantidadIngredienteEnSubreceta;
+            
+            // 5. Convertir a unidad de compra según las características de ESTA subreceta
+            $consumoUnidadCompra = $this->convertirConsumoSubreceta($ingrediente, $subreceta, $consumoUnidadCocina, $debug);
+            
+            $consumoTotalSubreceta += $consumoUnidadCompra;
+        }
+    }
+    return $consumoTotalSubreceta;
+}
+
+/**
+ * Convierte el consumo de una subreceta a unidad de compra
+ */
+private function convertirConsumoSubreceta($ingrediente, $subreceta, $consumoUnidadCocina, $debug = false)
+{
+    // CASO 1: Si la subreceta tiene yield (ej: 120 hojas por kg)
+    $sub_recipe = StandardRecipe::findOne($subreceta);
+
+    if ($sub_recipe->yield && $sub_recipe->yield > 0) {
+        // Ejemplo: consumo en hojas → kg
+        $consumoKg = $consumoUnidadCocina / $sub_recipe->portions;
+        // Luego kg → piezas (si aplica)
+        if ($ingrediente->portions_per_unit && $ingrediente->portions_per_unit > 0) {
+            $consumoPiezas = $consumoKg / $ingrediente->portions_per_unit;
+            return $consumoPiezas;
+        }
         
-        // 8. Analizar alertas de stock basado en min_stock y max_stock
-        $alertaStock = $this->analizarAlertasStock($ingrediente, $inventario);
-        
-        return [
-            'id' => $ingrediente->id,
-            'nombre' => $ingrediente->ingredient,
-            'unidad' => $unidad,
-            'unidad_cocina' => $unidadPorcion,
-            'porciones_por_unidad' => $portionsPorUnidad,
-            'rendimiento' => $rendimiento,
-            'consumido' => $consumoVentasEnCompra, // Consumo teórico en unidad de compra
-            'consumido_cocina' => $consumoVentasEnCocina, // Consumo en unidad de cocina para referencia
-            'consumido_real' => $consumoReal,
-            'comprado' => $compras,
-            'inventario' => $inventario,
-            'diferencia' => $diferencia,
-            'estado' => $estado,
-            'min_stock' => $ingrediente->min_stock,
-            'max_stock' => $ingrediente->max_stock,
-            'alerta_stock' => $alertaStock['tipo'],
-            'nivel_critico' => $alertaStock['critico'],
-            'porcentaje_stock' => $alertaStock['porcentaje'],
-            'mensaje_alerta' => $alertaStock['mensaje'],
-        ];
+        return $consumoKg;
     }
     
+    // CASO 2: Si no hay yield, verificar si necesita conversión de unidades
+    $necesitaConversion = ($subreceta->yield_um && $ingrediente->um && 
+                          $subreceta->yield_um !== $ingrediente->um);
+    
+    if ($necesitaConversion && $ingrediente->portions_per_unit && $ingrediente->portions_per_unit > 0) {
+        // Conversión directa usando portions_per_unit
+        $consumoConvertido = $consumoUnidadCocina / $ingrediente->portions_per_unit;
+        
+        if ($debug) {
+            Yii::info("    Conversión directa: {$consumoUnidadCocina} {$subreceta->yield_um} / {$ingrediente->portions_per_unit} = {$consumoConvertido} {$ingrediente->um}", 'control-insumos');
+        }
+        
+        return $consumoConvertido;
+    }
+    
+    // CASO 3: Mismas unidades, no necesita conversión
+    return $consumoUnidadCocina;
+}
+
+/**
+ * Para ingredientes sin subrecetas - cálculo directo
+ */
+private function calcularConsumoDirectoSinSubrecetas($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
+{
+    return $this->calcularConsumoDirecto($ingredienteId, $selectedMonth, $selectedYear, $debug);
+}
+
+/**
+ * Conversión para ingredientes directos sin subrecetas
+ */
+private function convertirUnidadCocinaACompra($ingrediente, $consumoUnidadCocina, $debug = false)
+{
+    $necesitaConversion = ($ingrediente->portion_um && $ingrediente->um && 
+                          $ingrediente->portion_um !== $ingrediente->um);
+    
+    if ($necesitaConversion && $ingrediente->portions_per_unit && $ingrediente->portions_per_unit > 0) {
+        $consumoConvertido = $consumoUnidadCocina / $ingrediente->portions_per_unit;
+        
+        if ($debug) {
+            Yii::info("Conversión ingrediente directo: {$consumoUnidadCocina} {$ingrediente->portion_um} → {$consumoConvertido} {$ingrediente->um}", 'control-insumos');
+        }
+        
+        return $consumoConvertido;
+    }
+    
+    return $consumoUnidadCocina;
+}
     /**
      * Calcula el consumo por ventas usando las recetas y filtros de período
      * Incluye el consumo de ingredientes en subrecetas
@@ -185,12 +326,6 @@ class KpiController extends Controller
             $consumoIndirecto = $this->calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selectedYear, $debug);
             $consumoTotal += $consumoIndirecto;
             
-            if ($debug) {
-                Yii::info("=== RESUMEN CONSUMO INGREDIENTE {$ingredienteId} ===", 'control-insumos');
-                Yii::info("Consumo directo: {$consumoDirecto}", 'control-insumos');
-                Yii::info("Consumo indirecto (subrecetas): {$consumoIndirecto}", 'control-insumos');
-                Yii::info("CONSUMO TOTAL: {$consumoTotal}", 'control-insumos');
-            }
             
             return $consumoTotal;
             
@@ -238,21 +373,13 @@ class KpiController extends Controller
         ->where($whereConditions);
         
         $ventasRecetas = $query->all();
-        
-        if ($debug && !empty($ventasRecetas)) {
-            Yii::info("=== CONSUMO DIRECTO INGREDIENTE {$ingredienteId} ===", 'control-insumos');
-            Yii::info("Recetas con ingrediente directo: " . count($ventasRecetas), 'control-insumos');
-        }
+    
         
         foreach ($ventasRecetas as $venta) {
             $cantidadVendida = floatval($venta['sales'] ?: 0);
             $cantidadIngrediente = floatval($venta['quantity'] ?: 0);
             $consumoPorVenta = $cantidadVendida * $cantidadIngrediente;
             $consumoTotal += $consumoPorVenta;
-            
-            if ($debug) {
-                Yii::info("- Receta: {$venta['receta_nombre']}, Ventas: {$cantidadVendida}, Cantidad: {$cantidadIngrediente}, Consumo: {$consumoPorVenta}", 'control-insumos');
-            }
         }
         
         return $consumoTotal;
@@ -261,79 +388,75 @@ class KpiController extends Controller
     /**
      * Calcula el consumo indirecto (ingredientes en subrecetas de recetas vendidas)
      */
-    private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
-    {
-        $business = RedisKeys::getBusiness();
-        $consumoTotal = 0;
-        
-        // PASO 1: Buscar recetas vendidas que tienen subrecetas
-        $whereConditions = [
-            'ms.model_type' => 'standard_recipe',
-            'sr.business_id' => $business->id
-        ];
-        
-        if ($selectedYear != 0) {
-            $whereConditions['ms.year'] = $selectedYear;
-        }
-        if ($selectedMonth != 0) {
-            $whereConditions['ms.month'] = $selectedMonth;
-        }
-        
-        $queryRecetasConSubrecetas = new Query();
-        $queryRecetasConSubrecetas->select([
-            'ms.sales',
-            'ms.model_id as receta_principal_id',
-            'sr.title as receta_principal_nombre',
-            'srssr.sub_standard_recipe_id',
-            'srssr.quantity as cantidad_subreceta',
-            'sr_sub.title as subreceta_nombre'
-        ])
-        ->from('monthly_sales ms')
-        ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
-        ->innerJoin('standard_recipe_sub_standard_recipe srssr', 'srssr.standard_recipe_id = ms.model_id')
-        ->innerJoin('standard_recipe sr_sub', 'sr_sub.id = srssr.sub_standard_recipe_id')
-        ->where($whereConditions);
-        
-        $recetasConSubrecetas = $queryRecetasConSubrecetas->all();
-        
-        if ($debug && !empty($recetasConSubrecetas)) {
-            Yii::info("=== CONSUMO INDIRECTO INGREDIENTE {$ingredienteId} ===", 'control-insumos');
-            Yii::info("Recetas con subrecetas encontradas: " . count($recetasConSubrecetas), 'control-insumos');
-        }
-        
-        // PASO 2: Para cada subreceta, verificar si contiene nuestro ingrediente
-        foreach ($recetasConSubrecetas as $recetaConSub) {
-            $ventasRecetaPrincipal = floatval($recetaConSub['sales'] ?: 0);
-            $cantidadSubreceta = floatval($recetaConSub['cantidad_subreceta'] ?: 0);
-            $subrecetaId = $recetaConSub['sub_standard_recipe_id'];
-            
-            // Buscar si la subreceta contiene nuestro ingrediente
-            $queryIngredienteEnSubreceta = new Query();
-            $queryIngredienteEnSubreceta->select(['quantity'])
-                ->from('ingredient_standard_recipe')
-                ->where([
-                    'standard_recipe_id' => $subrecetaId,
-                    'ingredient_id' => $ingredienteId
-                ]);
-            
-            $ingredienteEnSubreceta = $queryIngredienteEnSubreceta->one();
-            
-            if ($ingredienteEnSubreceta) {
-                $cantidadIngredienteEnSubreceta = floatval($ingredienteEnSubreceta['quantity'] ?: 0);
-                
-                // Calcular consumo: ventas_receta_principal × cantidad_subreceta × cantidad_ingrediente_en_subreceta
-                $consumoIndirectoPorVenta = $ventasRecetaPrincipal * $cantidadSubreceta * $cantidadIngredienteEnSubreceta;
-                $consumoTotal += $consumoIndirectoPorVenta;
-                
-                if ($debug) {
-                    Yii::info("- Receta: {$recetaConSub['receta_principal_nombre']} → Subreceta: {$recetaConSub['subreceta_nombre']}", 'control-insumos');
-                    Yii::info("  Ventas: {$ventasRecetaPrincipal} × Cant.Sub: {$cantidadSubreceta} × Cant.Ing: {$cantidadIngredienteEnSubreceta} = {$consumoIndirectoPorVenta}", 'control-insumos');
-                }
-            }
-        }
-        
-        return $consumoTotal;
+    /**
+ * Calcula el consumo indirecto (ingredientes en subrecetas de recetas vendidas)
+ */
+private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
+{
+    $business = RedisKeys::getBusiness();
+    $consumoTotal = 0;
+    
+    // PASO 1: Buscar recetas vendidas que tienen subrecetas
+    $whereConditions = [
+        'ms.model_type' => 'standard_recipe',
+        'sr.business_id' => $business->id
+    ];
+    
+    if ($selectedYear != 0) {
+        $whereConditions['ms.year'] = $selectedYear;
     }
+    if ($selectedMonth != 0) {
+        $whereConditions['ms.month'] = $selectedMonth;
+    }
+    
+    $queryRecetasConSubrecetas = new Query();
+    $queryRecetasConSubrecetas->select([
+        'ms.sales',
+        'ms.model_id as receta_principal_id',
+        'sr.title as receta_principal_nombre',
+        'srssr.sub_standard_recipe_id',
+        'srssr.quantity as cantidad_subreceta',
+        'sr_sub.title as subreceta_nombre'
+    ])
+    ->from('monthly_sales ms')
+    ->innerJoin('standard_recipe sr', 'sr.id = ms.model_id')
+    ->innerJoin('standard_recipe_sub_standard_recipe srssr', 'srssr.standard_recipe_id = ms.model_id')
+    ->innerJoin('standard_recipe sr_sub', 'sr_sub.id = srssr.sub_standard_recipe_id')
+    ->where($whereConditions);
+
+    $recetasConSubrecetas = $queryRecetasConSubrecetas->all();
+    
+    // PASO 2: Para cada subreceta, verificar si contiene nuestro ingrediente
+    foreach ($recetasConSubrecetas as $recetaConSub) {
+        $ventasRecetaPrincipal = floatval($recetaConSub['sales'] ?: 0);
+        $cantidadSubreceta = floatval($recetaConSub['cantidad_subreceta'] ?: 0);
+        $subrecetaId = $recetaConSub['sub_standard_recipe_id'];
+
+        // FALTABA ESTA CONSULTA: Buscar si el ingrediente está en la subreceta
+        $queryIngredienteEnSubreceta = new Query();
+        $queryIngredienteEnSubreceta->select(['quantity'])
+            ->from('ingredient_standard_recipe')
+            ->where([
+                'standard_recipe_id' => $subrecetaId,
+                'ingredient_id' => $ingredienteId
+            ]);
+
+        $ingredienteEnSubreceta = $queryIngredienteEnSubreceta->one();
+
+        if ($ingredienteEnSubreceta) {
+            $cantidadIngredienteEnSubreceta = floatval($ingredienteEnSubreceta['quantity'] ?: 0);
+
+            // Calcular hojas consumidas (unidad de cocina de la subreceta)
+            $unidadesCocinaConsumidas = $ventasRecetaPrincipal * $cantidadSubreceta * $cantidadIngredienteEnSubreceta;
+            
+            // Para consumo indirecto, siempre devolvemos las unidades de cocina (hojas)
+            // La conversión a unidad de compra se hace en calcularDatosInsumo
+            $consumoTotal += $unidadesCocinaConsumidas;
+        }
+    }
+    
+    return $consumoTotal;
+}
     
     /**
      * Calcula las compras (movimientos de entrada) para el período seleccionado
