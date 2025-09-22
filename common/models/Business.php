@@ -125,33 +125,47 @@ class Business extends \yii\db\ActiveRecord
 
     private function initUm()
     {
-        // Unidades estándar de compra
-        $purchaseUnits = [
-            ["Litro", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
-            ["Kilogramo", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
-            ["Pieza", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
-            ["Botella", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
-            ["Lata", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
-            ["Caja", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
-            ["Paquete", $this->id, UnitOfMeasurement::TYPE_PURCHASE],
+        
+        $units = [
+            ["Kilogramo", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 1, 1, 1, 1, 1],
+            ["Litro", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 1, 1, 1, 1, 1],
+            ["Pieza", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 1, 1, 1, 1, 1],
+            // ["Kilogramo", $this->id, UnitOfMeasurement::TYPE_KITCHEN, 1, 1, 1, 1, 1, 1],
+            // ["Litro", $this->id, UnitOfMeasurement::TYPE_KITCHEN, 1, 1, 1, 1, 1, 1],
+            // ["Pieza", $this->id, UnitOfMeasurement::TYPE_KITCHEN, 0, 0, 0, 0, 0, 0],
+
+            // 2) Porción => todo en 1 excepto compras y cocina
+            ["Porción", $this->id, UnitOfMeasurement::TYPE_KITCHEN, 0, 0, 1, 1, 1, 1],
+
+            // 3) Rebanada => 0,1,0,1,0,1
+            ["Rebanada", $this->id, UnitOfMeasurement::TYPE_KITCHEN, 0, 1, 0, 1, 0, 1],
+
+            // 4) Botella, Bote, Caja y Paquete => solo compras en true
+            ["Botella", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 0, 0, 0, 0, 0],
+            ["Bote", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 0, 0, 0, 0, 0],
+            ["Caja", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 0, 0, 0, 0, 0],
+            ["Paquete", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 0, 0, 0, 0, 0],
+
+            // 5) Lata => 1,1,0,0,0,0
+            ["Lata", $this->id, UnitOfMeasurement::TYPE_PURCHASE, 1, 1, 0, 0, 0, 0],
         ];
-        
-        // Unidades estándar de cocina
-        $kitchenUnits = [
-            ["Kilogramo", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-            ["Litro", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-            ["Pieza", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-            ["Rebanada", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-            ["Porción", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-            ["Botella", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-            ["Lata", $this->id, UnitOfMeasurement::TYPE_KITCHEN],
-        ];
-        
-        // Combinar todas las unidades
-        $allUnits = array_merge($purchaseUnits, $kitchenUnits);
-        
+
         Yii::$app->db->createCommand()
-            ->batchInsert('unit_of_measurement', ['name', 'business_id', 'type'], $allUnits)
+            ->batchInsert(
+                'unit_of_measurement',
+                [
+                    'name',
+                    'business_id',
+                    'type',
+                    'is_purchase',
+                    'is_kitchen',
+                    'is_subrecipe_yield',
+                    'is_subrecipe_um',
+                    'is_recipe_yield',
+                    'is_recipe_final_um'
+                ],
+                $units
+            )
             ->execute();
     }
 
