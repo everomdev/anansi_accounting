@@ -105,7 +105,7 @@ class InventoryController extends Controller
     }
     public function actionDetalle($fecha)
     {
-        $searchModel = new \backend\models\InventorySearch();
+        $searchModel = new \common\models\InventorySearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $fecha);
         return $this->render('detalle', [
             'dataProvider' => $dataProvider,

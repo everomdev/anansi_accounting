@@ -1,6 +1,7 @@
 <?php
 use yii\grid\GridView;
 use yii\helpers\Html;
+use common\models\InventorySearch;
 
 $this->title = 'Detalle de Inventario';
 $this->params['breadcrumbs'][] = ['label' => 'Inventario de Insumos', 'url' => ['index']];
