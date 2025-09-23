@@ -250,6 +250,11 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
+                    <li class="menu-item <?= $currentControllerId == 'inventory' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['inventory/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Inventario') ?></div>
+                        </a>
+                    </li>
                     <?php if (Yii::$app->user->can('price_trend_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'price-trend' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['ingredient-stock/price-trend']) ?>" class="menu-link">
