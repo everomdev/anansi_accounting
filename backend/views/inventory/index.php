@@ -11,12 +11,12 @@ $this->params['breadcrumbs'][] = $this->title;
         <?= Html::a('Crear Inventario', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
     <?php
-    // Agrupar fechas únicas
-    $fechas = [];
-    foreach ($dataProvider->getModels() as $model) {
-        $f = date('Y-m-d', strtotime($model->fecha));
-        $fechas[$f] = $model->fecha;
-    }
+    // Mostrar todas las fechas únicas completas (con hora) de toda la tabla
+    $fechas = \common\models\Inventory::find()
+        ->select('fecha')
+        ->distinct()
+        ->orderBy(['fecha' => SORT_DESC])
+        ->column();
     ?>
     <table class="table table-bordered table-striped">
         <thead>
@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <tbody>
             <?php foreach ($fechas as $fechaRaw): ?>
                 <tr>
-                    <td><?= Yii::$app->formatter->asDatetime($fechaRaw) ?></td>
+                    <td><?= date('d/m/Y H:i', strtotime($fechaRaw)) ?></td>
                     <td>
                         <?= Html::a('<span class="glyphicon glyphicon-eye-open"></span> Ver detalles', ['inventory/detalle', 'fecha' => $fechaRaw], ['class' => 'btn btn-info btn-sm']) ?>
                     </td>

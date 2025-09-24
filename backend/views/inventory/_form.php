@@ -18,7 +18,7 @@ use yii\widgets\ActiveForm;
     $showAll = isset($_GET['showAll']) && $_GET['showAll'] == '1';
     if ($showAll) {
         $dataProvider->pagination = false;
-        echo '<div class="alert alert-warning">Se están mostrando todos los insumos. Si tienes muchos, la carga puede ser lenta.</div>';
+        echo '<div class="alert alert-warning" style="margin-bottom:16px;">Se están mostrando todos los insumos. Si tienes muchos, la carga puede ser lenta.</div>';
     }
     ?>
     <?php $form = ActiveForm::begin(); ?>
@@ -47,6 +47,14 @@ use yii\widgets\ActiveForm;
         vertical-align: middle;
     }
     </style>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div></div>
+        <div>
+            <?php if (!$showAll): ?>
+                <a href="?showAll=1" class="btn btn-link" style="font-weight:500;">Ver todos</a>
+            <?php endif; ?>
+        </div>
+    </div>
     <div class="table-responsive sticky-header-container">
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -97,9 +105,7 @@ use yii\widgets\ActiveForm;
         ],
     ]) ?>
     </div>
-    <div class="mb-3">
-        <a href="?showAll=1" class="btn btn-warning">Mostrar todos los insumos para guardar inventario masivo</a>
-    </div>
+    <!-- Botón antiguo eliminado, ahora el enlace está arriba -->
     <div style="position: fixed; bottom: 32px; right: 32px; z-index: 1000;">
         <?= Html::submitButton('Guardar', [
             'class' => 'btn btn-success',
