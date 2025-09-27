@@ -2,9 +2,26 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
+// Redireccionar si no están todos los parámetros de áreas
+$areaParams = ['show_almacen', 'show_cocina', 'show_barra', 'show_servicio', 'show_otro'];
+$missing = array_filter($areaParams, function($p) { return !isset($_GET[$p]); });
+if (count($missing) > 0 && !Yii::$app->request->isAjax) {
+    $url = Yii::$app->request->url;
+    $parsed = parse_url($url);
+    $base = $parsed['path'];
+    $query = isset($parsed['query']) ? $parsed['query'] : '';
+    parse_str($query, $params);
+    foreach ($areaParams as $p) {
+        $params[$p] = 1;
+    }
+    $newQuery = http_build_query($params);
+    $redirectUrl = $base . '?' . $newQuery;
+    Yii::$app->response->redirect($redirectUrl)->send();
+    return;
+}
+
 /* @var $this yii\web\View */
 /* @var $model common\models\Inventory */
-
 ?>
 <div class="inventory-form">
     <?php

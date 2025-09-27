@@ -12,6 +12,7 @@ use common\models\IngredientStock;
 use common\models\Movement;
 use common\models\Recipe;
 use common\models\Sales;
+use common\models\Category;
 use common\models\MonthlySales;
 use common\models\StandardRecipe;
 use common\models\IngredientStandardRecipe;
@@ -643,55 +644,69 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
      * Página de comparación de insumos con paginación y filtros
      */
     public function actionComparacionInsumos()
-    {
-        $business = \backend\helpers\RedisKeys::getBusiness();
-        $fecha = \Yii::$app->request->get('fecha');
-        $datos = [];
+{
+    $business = \backend\helpers\RedisKeys::getBusiness();
+    $fecha = \Yii::$app->request->get('fecha');
+    $nombre = \Yii::$app->request->get('nombre', '');
+    $categoriaId = \Yii::$app->request->get('categoria', '');
+    $datos = [];
 
-        // Buscar inventario por fecha
-        $inventarioModels = [];
-        if ($fecha) {
-            $inventarioModels = \common\models\Inventory::find()
-                ->where(['business_id' => $business->id, 'fecha' => $fecha])
-                ->all();
-        }
+    // Obtener todas las categorías
+    $categorias = Category::find()
+        ->select(['name', 'id'])
+        ->indexBy('id')
+        ->column();
 
-        // Si no hay inventario para la fecha, mostrar vacío
-        if (empty($inventarioModels)) {
-            $dataProvider = new \yii\data\ArrayDataProvider([
-                'allModels' => [],
-                'pagination' => ['pageSize' => 20],
-            ]);
-            return $this->render('comparacion-insumos', [
-                'dataProvider' => $dataProvider,
-            ]);
-        }
+    // Buscar inventario por fecha
+    $inventarioModels = [];
+    if ($fecha) {
+        $inventarioModels = \common\models\Inventory::find()
+            ->where(['business_id' => $business->id, 'fecha' => $fecha])
+            ->all();
+    }
 
-        // Obtener los insumos del inventario de esa fecha
-        foreach ($inventarioModels as $inv) {
-            $ingrediente = $inv->ingredientStock;
-            if (!$ingrediente) continue;
-            $existencia_almacen = $ingrediente->quantity;
-            $inventario_almacen = $inv->inventario_almacen;
-            $comprado = method_exists($this, 'calcularCompras') ? $this->calcularCompras($ingrediente->id, 0, 0, false) : 0;
-            $consumido_real = method_exists($this, 'calcularConsumoVentas') ? $this->calcularConsumoVentas($ingrediente->id, 0, 0, false) : 0;
-            $compras_menos_consumo = $comprado - $consumido_real;
-            $datos[] = [
-                'nombre' => $ingrediente->ingredient,
-                'existencia_almacen' => $existencia_almacen,
-                'inventario_almacen' => $inventario_almacen,
-                'compras_menos_consumo' => $compras_menos_consumo,
-            ];
-        }
+    // Si no hay inventario para la fecha, mostrar vacío
+    if (empty($inventarioModels)) {
         $dataProvider = new \yii\data\ArrayDataProvider([
-            'allModels' => $datos,
+            'allModels' => [],
             'pagination' => ['pageSize' => 20],
-            'sort' => [
-                'attributes' => ['nombre', 'existencia_almacen', 'inventario_almacen', 'compras_menos_consumo'],
-            ],
         ]);
         return $this->render('comparacion-insumos', [
             'dataProvider' => $dataProvider,
+            'categorias' => $categorias,
         ]);
     }
+
+    // Obtener los insumos del inventario de esa fecha
+    foreach ($inventarioModels as $inv) {
+        $ingrediente = $inv->ingredientStock;
+        if (!$ingrediente) continue;
+        if ($nombre && stripos($ingrediente->ingredient, $nombre) === false) continue;
+        if ($categoriaId && (!isset($ingrediente->category) || $ingrediente->category->id != $categoriaId)) continue;
+        $existencia_almacen = $ingrediente->quantity;
+        $inventario_almacen = $inv->inventario_almacen;
+        $comprado = method_exists($this, 'calcularCompras') ? $this->calcularCompras($ingrediente->id, 0, 0, false) : 0;
+        $consumido_real = method_exists($this, 'calcularConsumoVentas') ? $this->calcularConsumoVentas($ingrediente->id, 0, 0, false) : 0;
+        $compras_menos_consumo = $comprado - $consumido_real;
+        $datos[] = [
+            'nombre' => $ingrediente->ingredient,
+            'categoria' => isset($ingrediente->category) ? $ingrediente->category->name : '-',
+            'unidad_compra' => $ingrediente->um,
+            'existencia_almacen' => $existencia_almacen,
+            'inventario_almacen' => $inventario_almacen,
+            'compras_menos_consumo' => $compras_menos_consumo,
+        ];
+    }
+    $dataProvider = new \yii\data\ArrayDataProvider([
+        'allModels' => $datos,
+        'pagination' => ['pageSize' => 20],
+        'sort' => [
+            'attributes' => ['nombre', 'categoria', 'unidad_compra', 'existencia_almacen', 'inventario_almacen', 'compras_menos_consumo'],
+        ],
+    ]);
+    return $this->render('comparacion-insumos', [
+        'dataProvider' => $dataProvider,
+        'categorias' => $categorias,
+    ]);
+}
 }
