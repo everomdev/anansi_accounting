@@ -52,7 +52,38 @@ if (count($missing) > 0 && !Yii::$app->request->isAjax) {
     ]); ?>
     
     <div style="margin-bottom: 32px;">
-        <?= $form->field($model, 'fecha')->textInput(['type' => 'datetime-local', 'id' => 'fecha-inventario']) ?>
+        <?php
+        // Set default value to current date/time if not already set
+        $defaultFecha = $model->fecha ? date('Y-m-d\TH:i', strtotime($model->fecha)) : date('Y-m-d\TH:i');
+        ?>
+            <div style="margin-bottom: 32px;">
+            <div style="display: flex; align-items: flex-end; gap: 12px;">
+                    <?= $form->field($model, 'fecha')->textInput([
+                        'type' => 'datetime-local',
+                        'id' => 'fecha-inventario',
+                        'value' => $defaultFecha
+                    ]) ?>
+                    <button type="button" class="btn btn-outline-primary" id="btn-aceptar-fecha">Aceptar</button>
+                </div>
+            </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var btnAceptarFecha = document.getElementById('btn-aceptar-fecha');
+        var fechaInput = document.getElementById('fecha-inventario');
+        if (btnAceptarFecha && fechaInput) {
+            btnAceptarFecha.addEventListener('click', function() {
+                fechaInput.blur();
+                btnAceptarFecha.classList.add('btn-success');
+                btnAceptarFecha.classList.remove('btn-outline-primary');
+                setTimeout(function() {
+                    btnAceptarFecha.classList.remove('btn-success');
+                    btnAceptarFecha.classList.add('btn-outline-primary');
+                }, 1200);
+            });
+        }
+    });
+    </script>
     </div>
 
     <style>
