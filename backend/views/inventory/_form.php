@@ -80,8 +80,6 @@ use yii\widgets\ActiveForm;
         white-space: normal;
         vertical-align: middle;
     }
-    /* Forzar ocultamiento de columnas */
-    .col-hide { display: none !important; }
     </style>
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
@@ -102,13 +100,6 @@ use yii\widgets\ActiveForm;
         <div></div>
     </div>
     <div class="table-responsive sticky-header-container">
-    <div class="mb-3" id="column-toggle-container">
-        <label style="margin-right:12px;"><input type="checkbox" class="column-toggle" data-column="almacen" checked> Almacén</label>
-        <label style="margin-right:12px;"><input type="checkbox" class="column-toggle" data-column="cocina" checked> Cocina</label>
-        <label style="margin-right:12px;"><input type="checkbox" class="column-toggle" data-column="barra" checked> Barra</label>
-        <label style="margin-right:12px;"><input type="checkbox" class="column-toggle" data-column="servicio" checked> Servicio</label>
-        <label style="margin-right:12px;"><input type="checkbox" class="column-toggle" data-column="otro" checked> Otro</label>
-    </div>
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
@@ -148,8 +139,6 @@ use yii\widgets\ActiveForm;
             [
                 'label' => 'Almacén',
                 'format' => 'raw',
-                'headerOptions' => ['class' => 'col-almacen'],
-                'contentOptions' => ['class' => 'col-almacen'],
                 'value' => function($insumo) {
                     return Html::textInput("inventario[{$insumo->id}][inventario_almacen]", null, ['class' => 'form-control', 'type' => 'number', 'step' => '0.001']);
                 }
@@ -157,8 +146,6 @@ use yii\widgets\ActiveForm;
             [
                 'label' => 'Cocina',
                 'format' => 'raw',
-                'headerOptions' => ['class' => 'col-cocina'],
-                'contentOptions' => ['class' => 'col-cocina'],
                 'value' => function($insumo) {
                     return Html::textInput("inventario[{$insumo->id}][inventario_cocina]", null, ['class' => 'form-control', 'type' => 'number', 'step' => '0.001']);
                 }
@@ -166,8 +153,6 @@ use yii\widgets\ActiveForm;
             [
                 'label' => 'Barra',
                 'format' => 'raw',
-                'headerOptions' => ['class' => 'col-barra'],
-                'contentOptions' => ['class' => 'col-barra'],
                 'value' => function($insumo) {
                     return Html::textInput("inventario[{$insumo->id}][inventario_barra]", null, ['class' => 'form-control', 'type' => 'number', 'step' => '0.001']);
                 }
@@ -175,8 +160,6 @@ use yii\widgets\ActiveForm;
             [
                 'label' => 'Servicio',
                 'format' => 'raw',
-                'headerOptions' => ['class' => 'col-servicio'],
-                'contentOptions' => ['class' => 'col-servicio'],
                 'value' => function($insumo) {
                     return Html::textInput("inventario[{$insumo->id}][inventario_servicio]", null, ['class' => 'form-control', 'type' => 'number', 'step' => '0.001']);
                 }
@@ -184,8 +167,6 @@ use yii\widgets\ActiveForm;
             [
                 'label' => 'Otro',
                 'format' => 'raw',
-                'headerOptions' => ['class' => 'col-otro'],
-                'contentOptions' => ['class' => 'col-otro'],
                 'value' => function($insumo) {
                     return Html::textInput("inventario[{$insumo->id}][inventario_otro]", null, ['class' => 'form-control', 'type' => 'number', 'step' => '0.001']);
                 }
@@ -203,7 +184,6 @@ use yii\widgets\ActiveForm;
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Validación de fecha
         var btnGuardar = document.getElementById('btn-guardar-inventario');
         var fechaInput = document.querySelector('input[name="Inventory[fecha]"]');
         function validarFecha() {
@@ -215,6 +195,7 @@ use yii\widgets\ActiveForm;
         }
         validarFecha();
         fechaInput.addEventListener('input', validarFecha);
+        // Evitar submit si no hay fecha
         btnGuardar.form.addEventListener('submit', function(e) {
             if (!fechaInput.value) {
                 e.preventDefault();
@@ -223,33 +204,6 @@ use yii\widgets\ActiveForm;
                 setTimeout(function(){ fechaInput.classList.remove('is-invalid'); }, 2000);
             }
         });
-
-        // Mostrar/ocultar columnas según los checkboxes
-        function toggleColumns() {
-            var checks = document.querySelectorAll('.column-toggle');
-            var active = [];
-            checks.forEach(function(chk) {
-                if (chk.checked) active.push(chk.getAttribute('data-column'));
-            });
-            // Si ninguno está marcado, mostrar todos
-            if (active.length === 0) {
-                active = ['almacen','cocina','barra','servicio','otro'];
-            }
-            ['almacen','cocina','barra','servicio','otro'].forEach(function(col) {
-                var ths = document.querySelectorAll('th.col-' + col + ', td.col-' + col);
-                ths.forEach(function(el) {
-                    if (active.includes(col)) {
-                        el.classList.remove('col-hide');
-                    } else {
-                        el.classList.add('col-hide');
-                    }
-                });
-            });
-        }
-        document.querySelectorAll('.column-toggle').forEach(function(chk) {
-            chk.addEventListener('change', toggleColumns);
-        });
-        toggleColumns(); // Inicial
     });
     </script>
     <?php ActiveForm::end(); ?>
