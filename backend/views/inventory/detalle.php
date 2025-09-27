@@ -39,7 +39,7 @@ $this->params['breadcrumbs'][] = $this->title;
     }
 </style>
 <div class="inventory-detalle">
-    <h2>Inventario del <?= Yii::$app->formatter->asDatetime($fecha) ?></h2>
+    <h2>Inventario del <?= date('d/m/Y H:i', strtotime($fecha)) ?></h2>
     <a href="/kpi/comparacion-insumos?fecha=<?= urlencode($fecha) ?>" class="btn btn-primary mb-3">
         <i class="fas fa-balance-scale"></i> Comparar con Control de Insumos
     </a>
