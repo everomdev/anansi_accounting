@@ -34,7 +34,7 @@ class KpiController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['control-insumos', 'proyeccion-compras'],
+                        'actions' => ['control-insumos', 'proyeccion-compras', 'comparar-insumos', 'comparacion-insumos'],
                         'allow' => true,
                         'roles' => ['kpi_access'],
                     ],
@@ -608,5 +608,90 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
     {
         // Placeholder para futura implementación
         return $this->render('proyeccion-compras');
+    }
+    public function actionCompararInsumos()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $business = \backend\helpers\RedisKeys::getBusiness();
+        $ingredientes = \common\models\IngredientStock::find()
+            ->where(['business_id' => $business->id])
+            ->orderBy('ingredient ASC')
+            ->all();
+
+        $result = [];
+        foreach ($ingredientes as $ingrediente) {
+            // Existencia almacén
+            $existencia_almacen = $ingrediente->quantity;
+            // Inventario almacén (puedes ajustar si tienes el modelo Inventory)
+            $inventario_almacen = isset($ingrediente->inventario_almacen) ? $ingrediente->inventario_almacen : '-';
+            // Compras menos consumo real
+            // Puedes usar los métodos del controlador para calcular estos valores
+            $comprado = method_exists($this, 'calcularCompras') ? $this->calcularCompras($ingrediente->id, 0, 0, false) : 0;
+            $consumido_real = method_exists($this, 'calcularConsumoVentas') ? $this->calcularConsumoVentas($ingrediente->id, 0, 0, false) : 0;
+            $compras_menos_consumo = $comprado - $consumido_real;
+
+            $result[] = [
+                'nombre' => $ingrediente->ingredient,
+                'existencia_almacen' => $existencia_almacen,
+                'inventario_almacen' => $inventario_almacen,
+                'compras_menos_consumo' => $compras_menos_consumo,
+            ];
+        }
+        return $result;
+    }
+     /**
+     * Página de comparación de insumos con paginación y filtros
+     */
+    public function actionComparacionInsumos()
+    {
+        $business = \backend\helpers\RedisKeys::getBusiness();
+        $fecha = \Yii::$app->request->get('fecha');
+        $datos = [];
+
+        // Buscar inventario por fecha
+        $inventarioModels = [];
+        if ($fecha) {
+            $inventarioModels = \common\models\Inventory::find()
+                ->where(['business_id' => $business->id, 'fecha' => $fecha])
+                ->all();
+        }
+
+        // Si no hay inventario para la fecha, mostrar vacío
+        if (empty($inventarioModels)) {
+            $dataProvider = new \yii\data\ArrayDataProvider([
+                'allModels' => [],
+                'pagination' => ['pageSize' => 20],
+            ]);
+            return $this->render('comparacion-insumos', [
+                'dataProvider' => $dataProvider,
+            ]);
+        }
+
+        // Obtener los insumos del inventario de esa fecha
+        foreach ($inventarioModels as $inv) {
+            $ingrediente = $inv->ingredientStock;
+            if (!$ingrediente) continue;
+            $existencia_almacen = $ingrediente->quantity;
+            $inventario_almacen = $inv->inventario_almacen;
+            $comprado = method_exists($this, 'calcularCompras') ? $this->calcularCompras($ingrediente->id, 0, 0, false) : 0;
+            $consumido_real = method_exists($this, 'calcularConsumoVentas') ? $this->calcularConsumoVentas($ingrediente->id, 0, 0, false) : 0;
+            $compras_menos_consumo = $comprado - $consumido_real;
+            $datos[] = [
+                'nombre' => $ingrediente->ingredient,
+                'existencia_almacen' => $existencia_almacen,
+                'inventario_almacen' => $inventario_almacen,
+                'compras_menos_consumo' => $compras_menos_consumo,
+            ];
+        }
+        $dataProvider = new \yii\data\ArrayDataProvider([
+            'allModels' => $datos,
+            'pagination' => ['pageSize' => 20],
+            'sort' => [
+                'attributes' => ['nombre', 'existencia_almacen', 'inventario_almacen', 'compras_menos_consumo'],
+            ],
+        ]);
+        return $this->render('comparacion-insumos', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
 }
