@@ -245,7 +245,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;'],
                 ],
             [
-                'label' => 'Precio<br>Insumo',
+                'label' => 'Costo<br>Insumo',
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ?
@@ -253,7 +253,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             [
-                'label' => 'Total<br>Dinero',
+                'label' => 'Costo<br>Total',
                 'encodeLabel' => false,
                 'value' => function($model) {
                     $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
