@@ -29,6 +29,14 @@ $this->params['breadcrumbs'][] = $this->title;
         white-space: normal;
         vertical-align: middle;
     }
+    .sticky-col {
+        position: sticky;
+        left: 0;
+        background: #fff !important;
+        background-clip: padding-box;
+        z-index: 100;
+        box-shadow: 2px 0 4px -1px rgba(0,0,0,0.12);
+    }
 </style>
 <div class="inventory-detalle">
     <h2>Inventario del <?= Yii::$app->formatter->asDatetime($fecha) ?></h2>
@@ -69,7 +77,7 @@ $this->params['breadcrumbs'][] = $this->title;
         Servicio: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['servicio']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['servicio']) ?> |
         Otro: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['otro']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['otro']) ?>
     </div>
-    <div class="table-responsive sticky-header-container">
+    <div class="table-responsive sticky-header-container" style="overflow-x:auto;">
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => isset($searchModel) ? $searchModel : null,
@@ -79,7 +87,8 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             [
                 'attribute' => 'ingredient_stock_id',
-                'headerOptions' => ['style' => 'min-width: 250px; width: 25%;'],
+                'headerOptions' => ['class' => 'sticky-col', 'style' => 'min-width: 250px; width: 25%;'],
+                'contentOptions' => ['class' => 'sticky-col'],
                 'value' => function($model) {
                     if ($model->ingredientStock) {
                         $insumo = $model->ingredientStock->ingredient;

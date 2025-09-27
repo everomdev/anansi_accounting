@@ -53,7 +53,11 @@ class InventoryController extends Controller
             $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
             $businessId = $businessData['id'] ?? null;
             $errors = [];
-            foreach ($inventarios as $insumoId => $data) {
+            // Obtener todos los insumos del negocio
+            $allStocks = \common\models\IngredientStock::find()->where(['business_id' => $businessId])->all();
+            $allIds = array_map(function($stock) { return $stock->id; }, $allStocks);
+            foreach ($allIds as $insumoId) {
+                $data = isset($inventarios[$insumoId]) ? $inventarios[$insumoId] : [];
                 $inv = new Inventory();
                 $inv->ingredient_stock_id = $insumoId;
                 $inv->business_id = $businessId;

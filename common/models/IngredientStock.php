@@ -298,6 +298,14 @@ class IngredientStock extends \yii\db\ActiveRecord
         return $this->hasOne(Business::className(), ['id' => 'business_id']);
     }
 
+        /**
+     * Relación para obtener los movimientos del insumo
+     */
+    public function getMovements()
+    {
+        return $this->hasMany(Movement::class, ['ingredient_id' => 'id']);
+    }
+
     public function getPurchases()
     {
         return $this->hasMany(Purchase::className(), ['stock_id' => 'id']);

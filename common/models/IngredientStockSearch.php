@@ -11,13 +11,14 @@ use common\models\IngredientStock;
  */
 class IngredientStockSearch extends IngredientStock
 {
+    public $categoria;
     /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
-            [['id', 'business_id'], 'integer'],
+            [['id', 'business_id', 'categoria'], 'integer'],
             [['ingredient', 'um', 'portion_um', 'observations', 'key', 'brand', 'presentation'], 'safe'],
             [['quantity', 'yield', 'portions_per_unit', 'min_stock', 'max_stock'], 'number'],
         ];
@@ -78,6 +79,10 @@ class IngredientStockSearch extends IngredientStock
             ->andFilterWhere(['like', 'brand', $this->brand])
             ->andFilterWhere(['like', 'presentation', $this->presentation])
             ->andFilterWhere(['like', 'observations', $this->observations]);
+
+        if ($this->categoria) {
+            $query->andFilterWhere(['ingredient_stock.category_id' => $this->categoria]);
+        }
 
         return $dataProvider;
     }
