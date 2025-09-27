@@ -5,6 +5,9 @@ use yii\helpers\Html;
 
 $this->title = 'Inventario de Insumos';
 $this->params['breadcrumbs'][] = $this->title;
+$businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$business = \common\models\Business::findOne(['id' => $businessData['id']]);
+
 ?>
 <div class="inventory-index">
     <p>
@@ -14,6 +17,7 @@ $this->params['breadcrumbs'][] = $this->title;
     // Mostrar todas las fechas únicas completas (con hora) de toda la tabla
     $fechas = \common\models\Inventory::find()
         ->select('fecha')
+        ->where(['business_id' => $business->id])
         ->distinct()
         ->orderBy(['fecha' => SORT_DESC])
         ->column();
