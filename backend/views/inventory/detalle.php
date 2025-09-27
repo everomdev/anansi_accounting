@@ -32,6 +32,43 @@ $this->params['breadcrumbs'][] = $this->title;
 </style>
 <div class="inventory-detalle">
     <h2>Inventario del <?= Yii::$app->formatter->asDatetime($fecha) ?></h2>
+    <?php
+    // Calcular totales
+    $totalInventario = 0;
+    $totalDinero = 0;
+    $allModels = $dataProvider->query->all();
+    $areas = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
+    $totalesPorArea = [];
+    $cantidadesPorArea = [];
+    foreach ($areas as $area) {
+        $totalesPorArea[$area] = 0;
+        $cantidadesPorArea[$area] = 0;
+    }
+    foreach ($allModels as $model) {
+        $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
+        $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
+        $totalInventario += $total;
+        $totalDinero += $total * $precio;
+        foreach ($areas as $area) {
+            $cantidad = isset($model->{'inventario_' . $area}) ? $model->{'inventario_' . $area} : 0;
+            $cantidadesPorArea[$area] += $cantidad;
+            $totalesPorArea[$area] += $cantidad * $precio;
+        }
+    }
+    ?>
+    <div class="alert alert-info" style="margin-bottom:18px;">
+        <strong>Total Inventario:</strong> <?= Yii::$app->formatter->asInteger($totalInventario) ?>
+        &nbsp; | &nbsp;
+        <strong>Total Dinero:</strong> <?= Yii::$app->formatter->asCurrency($totalDinero) ?>
+    </div>
+    <div class="alert alert-warning" style="margin-bottom:18px;">
+        <strong>Total por área:</strong>
+        Almacén: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['almacen']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['almacen']) ?>|
+        Cocina:  (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['cocina']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['cocina']) ?> |
+        Barra: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['barra']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['barra']) ?> |
+        Servicio: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['servicio']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['servicio']) ?> |
+        Otro: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['otro']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['otro']) ?>
+    </div>
     <div class="table-responsive sticky-header-container">
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -73,29 +110,115 @@ $this->params['breadcrumbs'][] = $this->title;
                     '</div>',
             ],
             [
+                'label' => 'Unidad<br>Compra',
+                'encodeLabel' => false,
+                'value' => function($model) {
+                    return $model->ingredientStock && isset($model->ingredientStock->um) ? $model->ingredientStock->um : '-';
+                },
+                'headerOptions' => ['style' => 'min-width: 120px; width: 10%;'],
+            ],
+            [
+                'label' => 'Categoría',
+                'encodeLabel' => false,
+                'value' => function($model) {
+                    return $model->ingredientStock && isset($model->ingredientStock->category->name) ? $model->ingredientStock->category->name : '-';
+                },
+                'headerOptions' => ['style' => 'min-width: 120px; width: 12%;'],
+                'filter' => \yii\helpers\Html::activeDropDownList(
+                    $searchModel,
+                    'categoria',
+                    \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
+                    [
+                        'class' => 'form-control',
+                        'prompt' => 'Todas'
+                    ]
+                ),
+            ],
+            [
                 'attribute' => 'inventario_almacen',
-                'label' => 'Inventario Almacén',
+                'label' => 'Inventario<br>Almacén',
+                'encodeLabel' => false,
+                'value' => function($model) {
+                    return Yii::$app->formatter->asInteger($model->inventario_almacen);
+                },
             ],
             [
                 'attribute' => 'inventario_cocina',
                 'label' => 'Inventario<br>Cocina',
                 'encodeLabel' => false,
+                'value' => function($model) {
+                    return Yii::$app->formatter->asInteger($model->inventario_cocina);
+                },
             ],
             [
                 'attribute' => 'inventario_barra',
                 'label' => 'Inventario<br>Barra',
                 'encodeLabel' => false,
+                'value' => function($model) {
+                    return Yii::$app->formatter->asInteger($model->inventario_barra);
+                },
             ],
             [
                 'attribute' => 'inventario_servicio',
                 'label' => 'Inventario<br>Servicio',
                 'encodeLabel' => false,
+                'value' => function($model) {
+                    return Yii::$app->formatter->asInteger($model->inventario_servicio);
+                },
             ],
             [
                 'attribute' => 'inventario_otro',
                 'label' => 'Inventario<br>Otro',
                 'encodeLabel' => false,
+                'value' => function($model) {
+                    return Yii::$app->formatter->asInteger($model->inventario_otro);
+                },
             ],
+                [
+                    'label' => 'Mínimo',
+                    'encodeLabel' => false,
+                    'value' => function($model) {
+                        if (isset($model->ingredientStock) && $model->ingredientStock->min_stock !== null) {
+                            return Yii::$app->formatter->asInteger($model->ingredientStock->min_stock);
+                        }
+                        return '-';
+                    },
+                ],
+                [
+                    'label' => 'Máximo',
+                    'encodeLabel' => false,
+                    'value' => function($model) {
+                        if (isset($model->ingredientStock) && $model->ingredientStock->max_stock !== null) {
+                            return Yii::$app->formatter->asInteger($model->ingredientStock->max_stock);
+                        }
+                        return '-';
+                    },
+                ],
+                [
+                    'label' => 'Último movimiento',
+                    'encodeLabel' => false,
+                        'value' => function($model) {
+                            if (isset($model->ingredientStock)) {
+                                $ultimo = $model->ingredientStock->getMovements()->orderBy(['created_at' => SORT_DESC])->one();
+                                if ($ultimo) {
+                                    $tipo = ($ultimo->type === 'input') ? 'Entrada' : (($ultimo->type === 'output') ? 'Salida' : ucfirst($ultimo->type));
+                                    return $tipo . ': ' . Yii::$app->formatter->asInteger($ultimo->quantity);
+                                }
+                            }
+                            return '-';
+                        },
+                ],
+                [
+                    'label' => 'Proveedor',
+                    'encodeLabel' => false,
+                    'value' => function($model) {
+                        if (isset($model->ingredientStock) && $model->ingredientStock->providers) {
+                            $providers = $model->ingredientStock->getProviders()->select('business_name')->column();
+                            return !empty($providers) ? implode(', ', $providers) : '-';
+                        }
+                        return '-';
+                    },
+                ],
             [
                 'label' => 'Total<br>Inventario',
                 'encodeLabel' => false,
@@ -104,6 +227,14 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#f8f9fa;'],
             ],
+            [
+                    'label' => 'Existencia<br>Almacén',
+                    'encodeLabel' => false,
+                    'value' => function($model) {
+                        return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
+                    },
+                    'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;'],
+                ],
             [
                 'label' => 'Precio<br>Insumo',
                 'encodeLabel' => false,
