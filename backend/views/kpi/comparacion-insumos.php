@@ -40,28 +40,40 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'nombre',
                     'label' => 'Insumo',
+                    'contentOptions' => ['style' => 'text-align:center;'],
+                    'headerOptions' => ['style' => 'text-align:center;'],
                 ],
-                    [
-                        'attribute' => 'categoria',
-                        'label' => 'Categoría',
-                    ],
-                    [
-                        'attribute' => 'unidad_compra',
-                        'label' => 'Unidad de compra',
-                    ],
+                [
+                    'attribute' => 'categoria',
+                    'label' => 'Categoría',
+                    'contentOptions' => ['style' => 'text-align:center;'],
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                ],
+                [
+                    'attribute' => 'unidad_compra',
+                    'label' => 'Unidad<br>compra',
+                    'contentOptions' => ['style' => 'text-align:center;'],
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                ],
                 [
                     'attribute' => 'existencia_almacen',
-                    'label' => 'Existencia almacén',
+                    'label' => 'Existencia<br>almacén',
                     'format' => ['integer'],
+                    'contentOptions' => ['style' => 'text-align:center;'],
+                    'headerOptions' => ['style' => 'text-align:center;'],
                 ],
                 [
                     'attribute' => 'inventario_almacen',
-                    'label' => 'Inventario almacén',
+                    'label' => 'Inventario<br>almacén',
                     'format' => ['integer'],
+                    'contentOptions' => ['style' => 'text-align:center;'],
+                    'headerOptions' => ['style' => 'text-align:center;'],
                 ],
                 [
                     'attribute' => 'compras_menos_consumo',
                     'label' => 'Compras - Consumo real',
+                    'contentOptions' => ['style' => 'text-align:center;'],
+                    'headerOptions' => ['style' => 'text-align:center;'],
                 ],
             ],
         ]) ?>

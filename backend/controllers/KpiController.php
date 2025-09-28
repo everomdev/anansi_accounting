@@ -382,7 +382,7 @@ private function convertirUnidadCocinaACompra($ingrediente, $consumoUnidadCocina
             $consumoPorVenta = $cantidadVendida * $cantidadIngrediente;
             $consumoTotal += $consumoPorVenta;
         }
-        
+        //die(var_dump($consumoTotal,'as', $ingredienteId));
         return $consumoTotal;
     }
     
@@ -463,46 +463,47 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
      * Calcula las compras (movimientos de entrada) para el período seleccionado
      */
     private function calcularCompras($ingredienteId, $selectedMonth, $selectedYear, $debug = false)
-    {
-        $business = RedisKeys::getBusiness();
+{
+    $business = RedisKeys::getBusiness();
+    
+    try {
+        $query = new Query();
+        $query->select('SUM(quantity) as total_comprado')
+            ->from('movement')
+            ->where([
+                'ingredient_id' => $ingredienteId,
+                'business_id' => $business->id,
+                'type' => 'input' // Solo movimientos de entrada
+            ]);
         
-        try {
-            $query = new Query();
-            $query->select('SUM(quantity) as total_comprado')
-                ->from('movement')
-                ->where([
-                    'ingredient_id' => $ingredienteId,
-                    'business_id' => $business->id,
-                    'type' => 'input' // Solo movimientos de entrada
-                ]);
+        // Si es "TODOS" (0,0), no aplicar filtros de fecha
+        if ($selectedYear != 0 && $selectedMonth != 0) {
+            // Filtro específico para año y mes
+            $fechaInicio = sprintf('%d-%02d-01 00:00:00', $selectedYear, $selectedMonth);
+            $fechaFin = date('Y-m-t 23:59:59', strtotime($fechaInicio));
             
-            // Si no es "TODOS", aplicar filtros de fecha
-            if ($selectedYear != 0 && $selectedMonth != 0) {
-                // Filtro específico para año y mes
-                $fechaInicio = sprintf('%d-%02d-01 00:00:00', $selectedYear, $selectedMonth);
-                $fechaFin = date('Y-m-t 23:59:59', strtotime($fechaInicio));
-                
-                $query->andWhere(['>=', 'created_at', $fechaInicio])
-                      ->andWhere(['<=', 'created_at', $fechaFin]);
-            } elseif ($selectedYear != 0) {
-                // Solo filtro por año
-                $fechaInicio = sprintf('%d-01-01 00:00:00', $selectedYear);
-                $fechaFin = sprintf('%d-12-31 23:59:59', $selectedYear);
-                
-                $query->andWhere(['>=', 'created_at', $fechaInicio])
-                      ->andWhere(['<=', 'created_at', $fechaFin]);
-            }
+            $query->andWhere(['>=', 'created_at', $fechaInicio])
+                  ->andWhere(['<=', 'created_at', $fechaFin]);
+        } elseif ($selectedYear != 0) {
+            // Solo filtro por año
+            $fechaInicio = sprintf('%d-01-01 00:00:00', $selectedYear);
+            $fechaFin = sprintf('%d-12-31 23:59:59', $selectedYear);
             
-            $result = $query->one();
-            $totalComprado = floatval($result['total_comprado'] ?: 0);
-            
-            return $totalComprado;
-            
-        } catch (\Exception $e) {
-            Yii::error("Error calculando compras para ingrediente {$ingredienteId}: " . $e->getMessage());
-            return 0;
+            $query->andWhere(['>=', 'created_at', $fechaInicio])
+                  ->andWhere(['<=', 'created_at', $fechaFin]);
         }
+        // Si ambos son 0 (TODOS), no se aplican filtros de fecha
+        
+        $result = $query->one();
+        $totalComprado = floatval($result['total_comprado'] ?: 0);
+        
+        return $totalComprado;
+        
+    } catch (\Exception $e) {
+        Yii::error("Error calculando compras para ingrediente {$ingredienteId}: " . $e->getMessage());
+        return 0;
     }
+}
     
     /**
      * Determina el estado basado en la diferencia e inventario
@@ -643,7 +644,10 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
      /**
      * Página de comparación de insumos con paginación y filtros
      */
-    public function actionComparacionInsumos()
+    /**
+ * Página de comparación de insumos con paginación y filtros
+ */
+public function actionComparacionInsumos()
 {
     $business = \backend\helpers\RedisKeys::getBusiness();
     $fecha = \Yii::$app->request->get('fecha');
@@ -681,13 +685,20 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
     foreach ($inventarioModels as $inv) {
         $ingrediente = $inv->ingredientStock;
         if (!$ingrediente) continue;
+        
+        // Aplicar filtros
         if ($nombre && stripos($ingrediente->ingredient, $nombre) === false) continue;
         if ($categoriaId && (!isset($ingrediente->category) || $ingrediente->category->id != $categoriaId)) continue;
+        
+        // REUTILIZAR EL MÉTODO EXISTENTE con período "TODOS" (0)
+        $datosInsumo = $this->calcularDatosInsumo($ingrediente, 0, 0, false);
+        
         $existencia_almacen = $ingrediente->quantity;
         $inventario_almacen = $inv->inventario_almacen;
-        $comprado = method_exists($this, 'calcularCompras') ? $this->calcularCompras($ingrediente->id, 0, 0, false) : 0;
-        $consumido_real = method_exists($this, 'calcularConsumoVentas') ? $this->calcularConsumoVentas($ingrediente->id, 0, 0, false) : 0;
+        $comprado = $datosInsumo['comprado'];
+        $consumido_real = $datosInsumo['consumido_real'];
         $compras_menos_consumo = $comprado - $consumido_real;
+        
         $datos[] = [
             'nombre' => $ingrediente->ingredient,
             'categoria' => isset($ingrediente->category) ? $ingrediente->category->name : '-',
@@ -695,8 +706,11 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
             'existencia_almacen' => $existencia_almacen,
             'inventario_almacen' => $inventario_almacen,
             'compras_menos_consumo' => $compras_menos_consumo,
+            'consumido_real' => $consumido_real,
+            'comprado' => $comprado,
         ];
     }
+    
     $dataProvider = new \yii\data\ArrayDataProvider([
         'allModels' => $datos,
         'pagination' => ['pageSize' => 20],
@@ -704,9 +718,10 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
             'attributes' => ['nombre', 'categoria', 'unidad_compra', 'existencia_almacen', 'inventario_almacen', 'compras_menos_consumo'],
         ],
     ]);
+    
     return $this->render('comparacion-insumos', [
         'dataProvider' => $dataProvider,
         'categorias' => $categorias,
-    ]);
+    ]); 
 }
 }

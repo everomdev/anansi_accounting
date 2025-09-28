@@ -90,8 +90,8 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             [
                 'attribute' => 'ingredient_stock_id',
-                'headerOptions' => ['class' => 'sticky-col', 'style' => 'min-width: 250px; width: 25%;'],
-                'contentOptions' => ['class' => 'sticky-col'],
+                'headerOptions' => ['class' => 'sticky-col', 'style' => 'min-width: 250px; width: 25%;text-align:center;'],
+                'contentOptions' => ['class' => 'sticky-col','style' => 'text-align:center;'],
                 'value' => function($model) {
                     if ($model->ingredientStock) {
                         $insumo = $model->ingredientStock->ingredient;
@@ -127,7 +127,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->um) ? $model->ingredientStock->um : '-';
                 },
-                'headerOptions' => ['style' => 'min-width: 120px; width: 10%;'],
+                'headerOptions' => ['style' => 'min-width: 120px; width: 10%;text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
             ],
             [
                 'label' => 'Categoría',
@@ -135,7 +136,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->category->name) ? $model->ingredientStock->category->name : '-';
                 },
-                'headerOptions' => ['style' => 'min-width: 120px; width: 12%;'],
+                'headerOptions' => ['style' => 'min-width: 120px; width: 12%;text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'filter' => \yii\helpers\Html::activeDropDownList(
                     $searchModel,
                     'categoria',
@@ -149,6 +151,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'inventario_almacen',
                 'label' => 'Inventario<br>Almacén',
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return Yii::$app->formatter->asInteger($model->inventario_almacen);
@@ -157,6 +161,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'inventario_cocina',
                 'label' => 'Inventario<br>Cocina',
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return Yii::$app->formatter->asInteger($model->inventario_cocina);
@@ -165,6 +171,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'inventario_barra',
                 'label' => 'Inventario<br>Barra',
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return Yii::$app->formatter->asInteger($model->inventario_barra);
@@ -173,6 +181,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'inventario_servicio',
                 'label' => 'Inventario<br>Servicio',
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return Yii::$app->formatter->asInteger($model->inventario_servicio);
@@ -181,6 +191,8 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'inventario_otro',
                 'label' => 'Inventario<br>Otro',
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return Yii::$app->formatter->asInteger($model->inventario_otro);
@@ -189,6 +201,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'label' => 'Mínimo',
                     'encodeLabel' => false,
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                    'contentOptions' => ['style' => 'text-align:center;'],
                     'value' => function($model) {
                         if (isset($model->ingredientStock) && $model->ingredientStock->min_stock !== null) {
                             return Yii::$app->formatter->asInteger($model->ingredientStock->min_stock);
@@ -199,6 +213,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'label' => 'Máximo',
                     'encodeLabel' => false,
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                     'value' => function($model) {
                         if (isset($model->ingredientStock) && $model->ingredientStock->max_stock !== null) {
                             return Yii::$app->formatter->asInteger($model->ingredientStock->max_stock);
@@ -209,6 +225,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'label' => 'Último movimiento',
                     'encodeLabel' => false,
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                         'value' => function($model) {
                             if (isset($model->ingredientStock)) {
                                 $ultimo = $model->ingredientStock->getMovements()->orderBy(['created_at' => SORT_DESC])->one();
@@ -223,6 +241,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'label' => 'Proveedor',
                     'encodeLabel' => false,
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                     'value' => function($model) {
                         if (isset($model->ingredientStock) && $model->ingredientStock->providers) {
                             $providers = $model->ingredientStock->getProviders()->select('business_name')->column();
@@ -234,22 +254,26 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'label' => 'Total<br>Inventario',
                 'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
                     return $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
                 },
-                'contentOptions' => ['style' => 'font-weight:bold; background:#f8f9fa;'],
+                'contentOptions' => ['style' => 'font-weight:bold; background:#f8f9fa;text-align:center;'],
             ],
             [
                     'label' => 'Existencia<br>Almacén',
                     'encodeLabel' => false,
+                    'headerOptions' => ['style' => 'text-align:center;'],
                     'value' => function($model) {
                         return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
                     },
-                    'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;'],
+                    'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;text-align:center;'],
                 ],
             [
                 'label' => 'Costo<br>Insumo',
                 'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ?
                         Yii::$app->formatter->asCurrency($model->ingredientStock->lastUnitPrice) : '-';
@@ -258,12 +282,13 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'label' => 'Costo<br>Total',
                 'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
                     $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
                     $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice : 0;
                     return Yii::$app->formatter->asCurrency($total * $precio);
                 },
-                'contentOptions' => ['style' => 'font-weight:bold; background:#eaf7ea;'],
+                'contentOptions' => ['style' => 'font-weight:bold; background:#eaf7ea;text-align:center;'],
             ],
         ],
     ]) ?>
