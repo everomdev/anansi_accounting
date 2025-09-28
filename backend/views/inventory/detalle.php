@@ -159,6 +159,15 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             [
+                    'label' => 'Existencia<br>Almacén',
+                    'encodeLabel' => false,
+                    'headerOptions' => ['style' => 'text-align:center;'],
+                    'value' => function($model) {
+                        return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
+                    },
+                    'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;text-align:center;'],
+            ],
+            [
                 'attribute' => 'inventario_cocina',
                 'label' => 'Inventario<br>Cocina',
                 'headerOptions' => ['style' => 'text-align:center;'],
@@ -260,15 +269,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#f8f9fa;text-align:center;'],
             ],
-            [
-                    'label' => 'Existencia<br>Almacén',
-                    'encodeLabel' => false,
-                    'headerOptions' => ['style' => 'text-align:center;'],
-                    'value' => function($model) {
-                        return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
-                    },
-                    'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;text-align:center;'],
-                ],
             [
                 'label' => 'Costo<br>Insumo',
                 'encodeLabel' => false,
