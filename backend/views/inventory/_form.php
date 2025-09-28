@@ -76,6 +76,15 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Permitir decimales con coma o punto en los inputs de inventario
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('inventory-input')) {
+                // Si el usuario pone una coma, la convertimos a punto
+                if (e.target.value.includes(',')) {
+                    e.target.value = e.target.value.replace(/,/g, '.');
+                }
+            }
+        });
         var btnAceptarFecha = document.getElementById('btn-aceptar-fecha');
         var fechaInput = document.getElementById('fecha-inventario');
         if (btnAceptarFecha && fechaInput) {

@@ -155,7 +155,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
-                    return Yii::$app->formatter->asInteger($model->inventario_almacen);
+                    return formatNumber($model->inventario_almacen);
                 },
             ],
             [
@@ -165,7 +165,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
-                    return Yii::$app->formatter->asInteger($model->inventario_cocina);
+                    return formatNumber($model->inventario_cocina);
                 },
             ],
             [
@@ -175,7 +175,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
-                    return Yii::$app->formatter->asInteger($model->inventario_barra);
+                    return formatNumber($model->inventario_barra);
                 },
             ],
             [
@@ -185,7 +185,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'encodeLabel' => false,
                 'value' => function($model) {
-                    return Yii::$app->formatter->asInteger($model->inventario_servicio);
+                    return formatNumber($model->inventario_servicio);
                 },
             ],
             [
@@ -276,7 +276,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ?
-                        Yii::$app->formatter->asCurrency($model->ingredientStock->lastUnitPrice) : '-';
+                        formatPrice($model->ingredientStock->lastUnitPrice) : '-';
                 },
             ],
             [
@@ -286,7 +286,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => function($model) {
                     $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
                     $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice : 0;
-                    return Yii::$app->formatter->asCurrency($total * $precio);
+                    return formatCost($total * $precio);
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#eaf7ea;text-align:center;'],
             ],
