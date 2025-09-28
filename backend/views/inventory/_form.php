@@ -4,8 +4,15 @@ use yii\widgets\ActiveForm;
 
 // Redireccionar si no están todos los parámetros de áreas
 $areaParams = ['show_almacen', 'show_cocina', 'show_barra', 'show_servicio', 'show_otro'];
-$missing = array_filter($areaParams, function($p) { return !isset($_GET[$p]); });
-if (count($missing) > 0 && !Yii::$app->request->isAjax) {
+$hasAnyArea = false;
+foreach ($areaParams as $p) {
+    if (isset($_GET[$p])) {
+        $hasAnyArea = true;
+        break;
+    }
+}
+if (!$hasAnyArea && !Yii::$app->request->isAjax) {
+    // Solo si no hay ningún parámetro de área, los ponemos todos en 1
     $url = Yii::$app->request->url;
     $parsed = parse_url($url);
     $base = $parsed['path'];
@@ -383,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Mostrar notificación si hay datos guardados
             if (savedData.insumos && Object.keys(savedData.insumos).length > 0) {
-                mostrarNotificacion('Se han restaurado datos no guardados de una sesión anterior.');
+                // mostrarNotificacion('Se han restaurado datos no guardados de una sesión anterior.');
             }
 
             return savedData;
