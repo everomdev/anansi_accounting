@@ -52,12 +52,14 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'unidad_compra',
                     'label' => 'Unidad<br>compra',
+                    'encodeLabel' => false,
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
                 ],
                 [
                     'attribute' => 'existencia_almacen',
                     'label' => 'Existencia<br>almacén',
+                    'encodeLabel' => false,
                     'format' => ['integer'],
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
@@ -65,6 +67,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'inventario_almacen',
                     'label' => 'Inventario<br>almacén',
+                    'encodeLabel' => false,
                     'format' => ['integer'],
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
