@@ -51,55 +51,91 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
         }
     }
     ?>
+ <!-- FORMULARIO DE BÚSQUEDA SEPARADO -->
+    <?php $searchForm = ActiveForm::begin([
+        'id' => 'search-form',
+        'method' => 'get',
+        'action' => ['inventory/create'], // Mantener en la misma página
+        'options' => ['class' => 'mb-3']
+    ]); ?>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <?= $searchForm->field($searchModel, 'ingredient')->textInput([
+                'placeholder' => 'Buscar insumo...',
+                'name' => 'IngredientStockSearch[ingredient]'
+            ])->label(false) ?>
+        </div>
+        <div class="col-md-3">
+            <?= $searchForm->field($searchModel, 'categoria')->dropDownList(
+                \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
+                [
+                    'class' => 'form-control',
+                    'prompt' => 'Todas las categorías',
+                    'name' => 'IngredientStockSearch[categoria]'
+                ]
+            )->label(false) ?>
+        </div>
+        <div class="col-md-5 d-flex align-items-end" style="gap: 10px;">
+            <?= Html::submitButton('Buscar', ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Limpiar', ['inventory/create'], ['class' => 'btn btn-outline-secondary']) ?>
+        </div>
+    </div>
+    
+    <?php ActiveForm::end(); ?>
 
+    <!-- FORMULARIO PRINCIPAL DE INVENTARIO -->
     <?php $form = ActiveForm::begin([
         'id' => 'inventory-form',
         'action' => ['inventory/create'],
         'method' => 'post'
     ]); ?>
     
+    
     <div style="margin-bottom: 32px;">
         <?php
         // Set default value to current date/time if not already set
         $defaultFecha = $model->fecha ? date('Y-m-d\TH:i', strtotime($model->fecha)) : date('Y-m-d\TH:i');
+        $today = date('Y-m-d');
         ?>
-            <div style="margin-bottom: 32px;">
+        <div style="margin-bottom: 32px;">
             <div style="display: flex; align-items: flex-end; gap: 12px;">
-                    <?= $form->field($model, 'fecha')->textInput([
-                        'type' => 'datetime-local',
-                        'id' => 'fecha-inventario',
-                        'value' => $defaultFecha
-                    ]) ?>
-                    <button type="button" class="btn btn-outline-primary" id="btn-aceptar-fecha">Aceptar</button>
-                </div>
+                <?= $form->field($model, 'fecha')->textInput([
+                    'type' => 'datetime-local',
+                    'id' => 'fecha-inventario',
+                    'value' => $defaultFecha,
+                    'min' => $today . 'T00:00',
+                    'max' => $today . 'T23:59'
+                ]) ?>
+                <button type="button" class="btn btn-outline-primary" id="btn-aceptar-fecha">Aceptar</button>
             </div>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Permitir decimales con coma o punto en los inputs de inventario
-        document.addEventListener('input', function(e) {
-            if (e.target.classList.contains('inventory-input')) {
-                // Si el usuario pone una coma, la convertimos a punto
-                if (e.target.value.includes(',')) {
-                    e.target.value = e.target.value.replace(/,/g, '.');
+        </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Permitir decimales con coma o punto en los inputs de inventario
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('inventory-input')) {
+                    // Si el usuario pone una coma, la convertimos a punto
+                    if (e.target.value.includes(',')) {
+                        e.target.value = e.target.value.replace(/,/g, '.');
+                    }
                 }
+            });
+            var btnAceptarFecha = document.getElementById('btn-aceptar-fecha');
+            var fechaInput = document.getElementById('fecha-inventario');
+            if (btnAceptarFecha && fechaInput) {
+                btnAceptarFecha.addEventListener('click', function() {
+                    fechaInput.blur();
+                    btnAceptarFecha.classList.add('btn-success');
+                    btnAceptarFecha.classList.remove('btn-outline-primary');
+                    setTimeout(function() {
+                        btnAceptarFecha.classList.remove('btn-success');
+                        btnAceptarFecha.classList.add('btn-outline-primary');
+                    }, 1200);
+                });
             }
         });
-        var btnAceptarFecha = document.getElementById('btn-aceptar-fecha');
-        var fechaInput = document.getElementById('fecha-inventario');
-        if (btnAceptarFecha && fechaInput) {
-            btnAceptarFecha.addEventListener('click', function() {
-                fechaInput.blur();
-                btnAceptarFecha.classList.add('btn-success');
-                btnAceptarFecha.classList.remove('btn-outline-primary');
-                setTimeout(function() {
-                    btnAceptarFecha.classList.remove('btn-success');
-                    btnAceptarFecha.classList.add('btn-outline-primary');
-                }, 1200);
-            });
-        }
-    });
-    </script>
+        </script>
     </div>
 
     <style>
@@ -180,7 +216,8 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
-        'filterModel' => $searchModel,
+        //'filterModel' => $searchModel,
+        //'filter' => false,
         'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
         'options' => ['class' => 'grid-view sticky-header-grid'],
         'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
@@ -188,6 +225,7 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
             [
                 'attribute' => 'ingredient',
                 'label' => 'Insumo',
+                'filter' => false
             ],
             [
                 'label' => 'Unidad<br>Compra',
@@ -204,16 +242,16 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
                     return $insumo->category && isset($insumo->category->name) ? $insumo->category->name : '-';
                 },
                 'headerOptions' => ['style' => 'min-width: 120px; width: 12%;'],
-                'filter' => \yii\helpers\Html::activeDropDownList(
-                    $searchModel,
-                    'categoria',
-                    \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
-                    [
-                        'class' => 'form-control',
-                        'prompt' => 'Todas',
-                        'onchange' => 'this.form.method=\'get\';this.form.submit();'
-                    ]
-                ),
+                // 'filter' => \yii\helpers\Html::activeDropDownList(
+                //     $searchModel,
+                //     'categoria',
+                //     \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
+                //     [
+                //         'class' => 'form-control',
+                //         'prompt' => 'Todas',
+                //         'onchange' => 'this.form.method=\'get\';this.form.submit();'
+                //     ]
+                // ),
             ],
             isset($_GET['show_almacen']) ? [
                 'label' => 'Almacén',
@@ -304,147 +342,266 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // ========== ENVIAR TODOS LOS INSUMOS EDITADOS AL GUARDAR ==========
-    var form = document.getElementById('inventory-form');
-    form.addEventListener('submit', function(e) {
-        var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
-        if (savedData.insumos) {
-            // Elimina inputs temporales previos
-            var tempInputs = document.querySelectorAll('.temp-inventario-input');
-            tempInputs.forEach(function(input) { input.remove(); });
-
-            // Áreas posibles
-            var areas = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
-            Object.keys(savedData.insumos).forEach(function(ingredientId) {
-                areas.forEach(function(area) {
-                    var value = savedData.insumos[ingredientId][area];
-                    if (typeof value !== 'undefined' && value !== null && value !== '') {
-                        var input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = `inventario[${ingredientId}][inventario_${area}]`;
-                        input.value = value;
-                        input.className = 'temp-inventario-input';
-                        form.appendChild(input);
-                    }
-                });
-            });
-
-            // Eliminar los inputs ocultos después de enviar el formulario (para no interferir con otros eventos)
-            setTimeout(function() {
-                var tempInputs = document.querySelectorAll('.temp-inventario-input');
-                tempInputs.forEach(function(input) { input.remove(); });
-            }, 1000);
-        }
-    }, true);
-
-    // ========== BOTÓN CANCELAR ==========
-    var btnCancelar = document.getElementById('btn-cancelar-inventario');
-    if (btnCancelar) {
-        btnCancelar.addEventListener('click', function(e) {
-            var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
-            var hasUnsavedData = false;
-            if ((savedData.insumos && Object.keys(savedData.insumos).length > 0) || (savedData.fecha && savedData.fecha !== '')) {
-                if (!confirm('Tienes datos sin guardar. ¿Seguro que quieres cancelar y perder los datos?')) {
-                    e.preventDefault();
-                    return;
-                }
-            }
-            localStorage.removeItem('inventory_draft');
-            window.location.href = '/inventory/index'; // Ajusta la ruta si es necesario
-        });
-    }
-
-    console.log('=== PÁGINA CARGADA ===');
+    // ========== CONFIGURACIÓN INICIAL ==========
     
+    var form = document.getElementById('inventory-form');
+    var searchForm = document.getElementById('search-form');
     var btnGuardar = document.getElementById('btn-guardar-inventario');
     var fechaInput = document.getElementById('fecha-inventario');
+    var btnCancelar = document.getElementById('btn-cancelar-inventario');
     
-    console.log('Botón encontrado:', !!btnGuardar);
-    console.log('Formulario encontrado:', !!form);
-    console.log('Fecha input encontrado:', !!fechaInput);
+    // ========== FUNCIONES DE AUTO-GUARDADO ==========
     
-    // ========== AUTO-GUARDADO EN LOCALSTORAGE ==========
-    
-    // Cargar datos guardados del localStorage (acumulativo)
+    // Cargar datos guardados del localStorage
     function cargarDatosGuardados() {
         try {
             var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
-            console.log('Datos cargados del localStorage:', savedData);
 
             // Restaurar fecha
             if (savedData.fecha && fechaInput) {
                 fechaInput.value = savedData.fecha;
-                console.log('Fecha restaurada:', savedData.fecha);
             }
 
-            // Restaurar SOLO los insumos presentes en la página actual
-            var inventoryInputs = document.querySelectorAll('input[name^="inventario["]');
+            // Restaurar valores de los inputs de inventario
+            var inventoryInputs = document.querySelectorAll('input.inventory-input');
             inventoryInputs.forEach(function(input) {
-                var name = input.name;
-                var match = name.match(/inventario\[(\d+)\]\[inventario_(\w+)\]/);
-                if (match) {
-                    var ingredientId = match[1];
-                    var area = match[2];
-                    if (
-                        savedData.insumos &&
-                        savedData.insumos[ingredientId] &&
-                        savedData.insumos[ingredientId][area] !== undefined &&
-                        savedData.insumos[ingredientId][area] !== null
-                    ) {
-                        input.value = savedData.insumos[ingredientId][area];
-                        console.log('Dato restaurado:', ingredientId, area, savedData.insumos[ingredientId][area]);
+                var ingredientId = input.getAttribute('data-ingredient-id');
+                var area = input.getAttribute('data-area');
+                
+                if (ingredientId && area && savedData.insumos && savedData.insumos[ingredientId]) {
+                    var savedValue = savedData.insumos[ingredientId][area];
+                    if (savedValue !== undefined && savedValue !== null && savedValue !== '') {
+                        input.value = savedValue;
                     }
                 }
             });
 
             // Mostrar notificación si hay datos guardados
             if (savedData.insumos && Object.keys(savedData.insumos).length > 0) {
-                // mostrarNotificacion('Se han restaurado datos no guardados de una sesión anterior.');
+                //mostrarNotificacion('Se han restaurado datos no guardados de una sesión anterior.');
             }
 
-            return savedData;
         } catch (error) {
-            console.error('Error al cargar datos guardados:', error);
-            return {fecha: '', insumos: {}};
+            console.error('❌ Error al cargar datos guardados:', error);
         }
     }
     
-    // Guardar datos en localStorage (acumulativo)
+    // Guardar datos en localStorage
     function guardarEnLocalStorage() {
-        var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
-        var mergedInsumos = savedData.insumos ? JSON.parse(JSON.stringify(savedData.insumos)) : {};
-        var fecha = fechaInput ? fechaInput.value : '';
-
-        // Recopilar todos los inputs de inventario de la página actual
-        var inventoryInputs = document.querySelectorAll('input[name^="inventario["]');
-        inventoryInputs.forEach(function(input) {
-            var name = input.name;
-            var match = name.match(/inventario\[(\d+)\]\[inventario_(\w+)\]/);
-            if (match) {
-                var ingredientId = match[1];
-                var area = match[2];
+        try {
+            var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
+            var insumosData = savedData.insumos || {};
+            
+            // Recopilar todos los inputs de inventario de la página actual
+            var inventoryInputs = document.querySelectorAll('input.inventory-input');
+            var cambiosDetectados = false;
+            
+            inventoryInputs.forEach(function(input) {
+                var ingredientId = input.getAttribute('data-ingredient-id');
+                var area = input.getAttribute('data-area');
                 var value = input.value.trim();
-                if (!mergedInsumos[ingredientId]) {
-                    mergedInsumos[ingredientId] = {};
+                
+                if (ingredientId && area) {
+                    if (!insumosData[ingredientId]) {
+                        insumosData[ingredientId] = {};
+                    }
+                    
+                    // Solo guardar si el valor cambió
+                    var valorAnterior = insumosData[ingredientId][area];
+                    if (valorAnterior !== value) {
+                        insumosData[ingredientId][area] = value;
+                        cambiosDetectados = true;
+                    }
                 }
-                if (value !== '') {
-                    mergedInsumos[ingredientId][area] = value;
-                }
-            }
-        });
+            });
 
-        var dataToSave = {
-            fecha: fecha,
-            insumos: mergedInsumos,
-            timestamp: new Date().toISOString()
-        };
-        localStorage.setItem('inventory_draft', JSON.stringify(dataToSave));
-        console.log('Datos guardados en localStorage:', dataToSave);
+            var dataToSave = {
+                fecha: fechaInput ? fechaInput.value : '',
+                insumos: insumosData,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('inventory_draft', JSON.stringify(dataToSave));
+            
+        } catch (error) {
+            console.error('❌ Error al guardar en localStorage:', error);
+        }
     }
     
-    // Mostrar notificación
+    // ========== EVENT LISTENERS PARA AUTO-GUARDADO ==========
+    
+    // Guardar cuando cambia cualquier input de inventario
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('inventory-input')) {
+            guardarEnLocalStorage();
+        }
+    });
+    
+    // Guardar cuando cambia la fecha
+    if (fechaInput) {
+        fechaInput.addEventListener('input', function() {
+            guardarEnLocalStorage();
+        });
+        
+        fechaInput.addEventListener('change', function() {
+            guardarEnLocalStorage();
+        });
+    }
+    
+    // Guardar cuando se pierde el foco de un input
+    document.addEventListener('blur', function(e) {
+        if (e.target.classList.contains('inventory-input')) {
+            guardarEnLocalStorage();
+        }
+    }, true);
+    
+    // ========== MANEJO DEL FORMULARIO PRINCIPAL ==========
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            
+            // Validar fecha
+            if (!fechaInput || !fechaInput.value) {
+                e.preventDefault();
+                fechaInput.focus();
+                fechaInput.classList.add('is-invalid');
+                alert('Por favor, ingresa una fecha antes de guardar.');
+                return false;
+            }
+            
+            
+            // Preparar datos para enviar
+            var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
+            if (savedData.insumos) {
+                // Crear inputs ocultos con los datos guardados
+                Object.keys(savedData.insumos).forEach(function(ingredientId) {
+                    var areas = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
+                    areas.forEach(function(area) {
+                        var value = savedData.insumos[ingredientId][area];
+                        if (typeof value !== 'undefined' && value !== null && value !== '') {
+                            var inputName = `inventario[${ingredientId}][inventario_${area}]`;
+                            
+                            // Buscar si ya existe el input
+                            var existingInput = document.querySelector(`input[name="${inputName}"]`);
+                            if (existingInput) {
+                                existingInput.value = value;
+                            } else {
+                                // Crear input oculto si no existe
+                                var hiddenInput = document.createElement('input');
+                                hiddenInput.type = 'hidden';
+                                hiddenInput.name = inputName;
+                                hiddenInput.value = value;
+                                form.appendChild(hiddenInput);
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Cambiar estado del botón
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+                btnGuardar.innerHTML = 'Guardando...';
+            }
+            
+            // Limpiar localStorage después de enviar
+            setTimeout(function() {
+                localStorage.removeItem('inventory_draft');
+            }, 1000);
+            
+            return true;
+        });
+    }
+    
+    // ========== MANEJO DEL BOTÓN CANCELAR ==========
+    
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', function(e) {
+            var savedData = JSON.parse(localStorage.getItem('inventory_draft') || '{}');
+            var hasUnsavedData = false;
+            
+            // Verificar si hay datos sin guardar
+            if (savedData.insumos) {
+                Object.keys(savedData.insumos).forEach(function(ingredientId) {
+                    var areas = Object.keys(savedData.insumos[ingredientId]);
+                    if (areas.length > 0) {
+                        hasUnsavedData = true;
+                    }
+                });
+            }
+            
+            if (hasUnsavedData || (savedData.fecha && savedData.fecha !== '')) {
+                if (!confirm('Tienes datos sin guardar. ¿Seguro que quieres cancelar y perder los datos?')) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+            
+            localStorage.removeItem('inventory_draft');
+            window.location.href = '/inventory/index';
+        });
+    }
+    
+    // ========== MANEJO DE FORMULARIO DE BÚSQUEDA ==========
+    
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            // NO guardar en localStorage para búsquedas
+        });
+    }
+    
+    // ========== MANEJO DE PAGINACIÓN Y FILTROS ==========
+    
+    // Selector de elementos por página
+    var perPageSelector = document.getElementById('per-page-selector');
+    if (perPageSelector) {
+        perPageSelector.addEventListener('change', function() {
+            // Guardar antes de cambiar de página
+            guardarEnLocalStorage();
+            
+            const pageSize = this.value;
+            let url = new URL(window.location);
+            url.searchParams.set('per-page', pageSize);
+            
+            <?php 
+            $showParams = ['show_almacen', 'show_cocina', 'show_barra', 'show_servicio', 'show_otro'];
+            foreach ($showParams as $param) {
+                if (isset($_GET[$param])) {
+                    echo "url.searchParams.set('{$param}', '1');";
+                }
+            }
+            ?>
+            
+            window.location.href = url.toString();
+        });
+    }
+    
+    // Filtro de columnas
+    var filterColumnsBtn = document.getElementById('filter-columns-btn');
+    if (filterColumnsBtn) {
+        filterColumnsBtn.addEventListener('click', function() {
+            guardarEnLocalStorage();
+            
+            let url = new URL(window.location);
+            
+            <?php 
+            foreach ($showParams as $param) {
+                echo "url.searchParams.delete('{$param}');";
+            }
+            ?>
+            
+            var checkboxes = document.querySelectorAll('input[type="checkbox"][name^="show_"]:checked');
+            checkboxes.forEach(function(checkbox) {
+                url.searchParams.set(checkbox.name, '1');
+            });
+            
+            window.location.href = url.toString();
+        });
+    }
+    
+    // ========== FUNCIONES AUXILIARES ==========
+    
     function mostrarNotificacion(mensaje) {
-        // Crear notificación temporal
         var notification = document.createElement('div');
         notification.style.cssText = `
             position: fixed;
@@ -466,179 +623,51 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 4000);
     }
     
-    // ========== VALIDACIÓN Y MANEJO DEL FORMULARIO ==========
-    
-    // Validar fecha al cargar la página
     function validarFecha() {
-        if (!fechaInput.value) {
-            btnGuardar.disabled = true;
-            console.log('Fecha vacía - botón deshabilitado');
-        } else {
-            btnGuardar.disabled = false;
-            console.log('Fecha llena - botón habilitado');
+        if (fechaInput && btnGuardar) {
+            if (!fechaInput.value) {
+                btnGuardar.disabled = true;
+            } else {
+                btnGuardar.disabled = false;
+            }
         }
-    }
-    
-    // Manejar el envío del formulario
-    form.addEventListener('submit', function(e) {
-        console.log('=== EVENTO SUBMIT DEL FORMULARIO ===');
-        
-        if (!fechaInput.value) {
-            e.preventDefault();
-            console.log('Fecha vacía - previniendo envío');
-            fechaInput.focus();
-            fechaInput.classList.add('is-invalid');
-            alert('Por favor, ingresa una fecha antes de guardar.');
-            return false;
-        }
-        
-        console.log('Fecha válida - enviando formulario');
-        
-        // Limpiar datos guardados
-        localStorage.removeItem('inventory_draft');
-        console.log('LocalStorage limpiado después del guardado');
-        
-        // Cambiar texto del botón
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = 'Guardando...';
-        
-        return true;
-    });
-    
-    // ========== EVENT LISTENERS PARA AUTO-GUARDADO ==========
-    
-    // Cargar datos al iniciar
-    cargarDatosGuardados();
-    
-    // Guardar automáticamente cuando cambia la fecha
-    if (fechaInput) {
-        fechaInput.addEventListener('input', function() {
-            guardarEnLocalStorage();
-            console.log('Fecha guardada:', this.value);
-        });
-    }
-    
-    // Guardar automáticamente cuando cambia cualquier input de inventario
-    document.addEventListener('input', function(e) {
-        if (e.target.name && e.target.name.includes('inventario')) {
-            guardarEnLocalStorage();
-            console.log('Input de inventario cambiado:', e.target.name, e.target.value);
-        }
-    });
-    
-    // Guardar ANTES de cambiar de página (paginación)
-    document.addEventListener('click', function(e) {
-        var pagLink = e.target.closest('.pagination a');
-        if (pagLink) {
-            e.preventDefault();
-            guardarEnLocalStorage();
-            console.log('Guardando antes de cambiar de página...');
-            window.location.href = pagLink.href;
-        }
-    });
-
-    // Guardar ANTES de filtrar por categoría
-    var catFilter = document.querySelector('select[name="IngredientStockSearch[categoria]"]');
-    if (catFilter) {
-        catFilter.addEventListener('change', function() {
-            guardarEnLocalStorage();
-            console.log('Guardando antes de filtrar por categoría...');
-        });
-    }
-
-    // Guardar ANTES de filtrar por insumo (buscador)
-    var insumoFilter = document.querySelector('input[name="IngredientStockSearch[ingredient]"]');
-    if (insumoFilter) {
-        insumoFilter.addEventListener('change', function() {
-            guardarEnLocalStorage();
-            console.log('Guardando antes de filtrar por insumo...');
-        });
-        insumoFilter.addEventListener('blur', function() {
-            guardarEnLocalStorage();
-            console.log('Guardando antes de filtrar por insumo (blur)...');
-        });
     }
     
     // ========== INICIALIZACIÓN ==========
     
+    // Cargar datos al iniciar
+    cargarDatosGuardados();
+    
+    // Validar fecha inicial
     validarFecha();
+    
+    // Validar fecha cuando cambie
     if (fechaInput) {
         fechaInput.addEventListener('input', validarFecha);
     }
-    
-    // Evento de click solo para logging
-    btnGuardar.addEventListener('click', function(e) {
-        console.log('=== CLICK EN BOTÓN ===');
-        console.log('Valor de fecha:', fechaInput.value);
-    });
-    
-    // ========== MANEJO DE FILTROS Y PAGINACIÓN ==========
-    
-    // Manejo del selector de elementos por página
-    var perPageSelector = document.getElementById('per-page-selector');
-    if (perPageSelector) {
-        perPageSelector.addEventListener('change', function() {
-            guardarEnLocalStorage(); // Guardar antes de cambiar
-            
-            const pageSize = this.value;
-            let url = new URL(window.location);
-            url.searchParams.set('per-page', pageSize);
-            
-            // Mantener los parámetros de filtro de columnas
-            <?php 
-            $showParams = ['show_almacen', 'show_cocina', 'show_barra', 'show_servicio', 'show_otro'];
-            foreach ($showParams as $param) {
-                if (isset($_GET[$param])) {
-                    echo "url.searchParams.set('{$param}', '1');";
-                }
-            }
-            ?>
-            
-            window.location.href = url.toString();
-        });
-    }
-
-    // ========== CORRECCIÓN DEL BOTÓN FILTRAR COLUMNAS ==========
-    var filterColumnsBtn = document.getElementById('filter-columns-btn');
-    if (filterColumnsBtn) {
-        filterColumnsBtn.addEventListener('click', function() {
-            guardarEnLocalStorage(); // Guardar antes de cambiar
-            
-            // Crear URL base manteniendo todos los parámetros existentes
-            let url = new URL(window.location);
-            
-            // Eliminar solo los parámetros de columnas anteriores
-            <?php 
-            foreach ($showParams as $param) {
-                echo "url.searchParams.delete('{$param}');";
-            }
-            ?>
-            
-            // Agregar los checkboxes seleccionados
-            var checkboxes = document.querySelectorAll('input[type="checkbox"][name^="show_"]:checked');
-            checkboxes.forEach(function(checkbox) {
-                url.searchParams.set(checkbox.name, '1');
-            });
-            
-            // Si no hay checkboxes seleccionados, redireccionar sin parámetros de columnas
-            if (checkboxes.length === 0) {
-                // Ya eliminamos los parámetros, así que solo redireccionamos
-            }
-            
-            console.log('Redireccionando a:', url.toString());
-            window.location.href = url.toString();
-        });
-    }
-    
-    // ========== MEJORA ADICIONAL: ENVIAR FORMULARIO AL FILTRAR ==========
-    // Esto asegura que los filtros de búsqueda funcionen correctamente
-    var searchForm = document.querySelector('form[method="get"]');
-    if (searchForm) {
-        searchForm.addEventListener('submit', function() {
-            guardarEnLocalStorage();
-        });
-    }
-    
-    console.log('=== AUTO-GUARDADO CONFIGURADO CORRECTAMENTE ===');
 });
+
+// Permitir decimales con coma o punto
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('inventory-input')) {
+        if (e.target.value.includes(',')) {
+            e.target.value = e.target.value.replace(/,/g, '.');
+        }
+    }
+});
+
+// Botón aceptar fecha
+var btnAceptarFecha = document.getElementById('btn-aceptar-fecha');
+var fechaInput = document.getElementById('fecha-inventario');
+if (btnAceptarFecha && fechaInput) {
+    btnAceptarFecha.addEventListener('click', function() {
+        fechaInput.blur();
+        btnAceptarFecha.classList.add('btn-success');
+        btnAceptarFecha.classList.remove('btn-outline-primary');
+        setTimeout(function() {
+            btnAceptarFecha.classList.remove('btn-success');
+            btnAceptarFecha.classList.add('btn-outline-primary');
+        }, 1200);
+    });
+}
 </script>

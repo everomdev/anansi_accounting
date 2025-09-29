@@ -40,6 +40,9 @@ $this->params['breadcrumbs'][] = $this->title;
 </style>
 <div class="inventory-detalle">
     <h2>Inventario del <?= date('d/m/Y H:i', strtotime($fecha)) ?></h2>
+    <?php if (!empty($dateEnd)) : ?>
+        <div class="text-muted" style="font-size:16px;margin-bottom:8px;">Finalizado el <?= date('d/m/Y H:i', strtotime($dateEnd)) ?></div>
+    <?php endif; ?>
     <a href="/kpi/comparacion-insumos?fecha=<?= urlencode($fecha) ?>" class="btn btn-primary mb-3">
         <i class="fas fa-balance-scale"></i> Comparar con Control de Insumos
     </a>
@@ -158,15 +161,15 @@ $this->params['breadcrumbs'][] = $this->title;
                     return formatNumber($model->inventario_almacen);
                 },
             ],
-            [
-                    'label' => 'Existencia<br>Almacén',
-                    'encodeLabel' => false,
-                    'headerOptions' => ['style' => 'text-align:center;'],
-                    'value' => function($model) {
-                        return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
-                    },
-                    'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;text-align:center;'],
-            ],
+            // [
+            //         'label' => 'Existencia<br>Almacén',
+            //         'encodeLabel' => false,
+            //         'headerOptions' => ['style' => 'text-align:center;'],
+            //         'value' => function($model) {
+            //             return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
+            //         },
+            //         'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;text-align:center;'],
+            // ],
             [
                 'attribute' => 'inventario_cocina',
                 'label' => 'Inventario<br>Cocina',

@@ -32,7 +32,7 @@ class Inventory extends \yii\db\ActiveRecord
             [['ingredient_stock_id', 'business_id'], 'required'],
             [['ingredient_stock_id', 'business_id'], 'integer'],
             [['inventario_almacen', 'inventario_cocina', 'inventario_barra', 'inventario_servicio', 'inventario_otro'], 'number'],
-            [['fecha'], 'safe'],
+            [['fecha','date_end'], 'safe'],
             [['ingredient_stock_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::class, 'targetAttribute' => ['ingredient_stock_id' => 'id']],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::class, 'targetAttribute' => ['business_id' => 'id']],
         ];
@@ -50,6 +50,7 @@ class Inventory extends \yii\db\ActiveRecord
             'inventario_servicio' => 'Inventario en servicio',
             'inventario_otro' => 'Inventario en otro',
             'fecha' => 'Fecha de inventario',
+            'date_end' => 'Fecha de finalización',
         ];
     }
 

@@ -12,6 +12,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 <div class="inventory-index">
     <p>
         <?= Html::a('Crear Inventario', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Descargar plantilla', ['export-plantilla-inventario'], [
+            'class' => 'btn btn-success',
+            'style' => 'margin-left:12px;',
+            'title' => 'Descargar plantilla de inventario en Excel',
+        ]) ?>
+         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar inventario', [
+                'icon' => ""
+            ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
     </p>
     <?php
     // Mostrar todas las fechas únicas completas (con hora) de toda la tabla
@@ -41,3 +49,30 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         </tbody>
     </table>
 </div>
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-upload-file',
+    'title' => Yii::t('app', "Importar inventario")
+]);
+$url = \yii\helpers\Url::to(['inventory/import-plantilla-inventario']);
+\yii\bootstrap5\ActiveForm::begin([
+    'action' => $url,
+    'method' => 'post',
+    'options' => [
+        'enctype' => 'multipart/form-data'
+    ]
+]);
+
+echo \yii\bootstrap5\Html::input('file', 'inventory-file', '', [
+    'class' => 'form-control',
+    'accept' => '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'
+]);
+echo "<br>";
+echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
+    'class' => 'btn btn-success'
+]);
+
+\yii\bootstrap5\ActiveForm::end();
+
+\yii\bootstrap5\Modal::end();
+?>
