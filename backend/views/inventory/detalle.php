@@ -43,9 +43,14 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php if (!empty($dateEnd)) : ?>
         <div class="text-muted" style="font-size:16px;margin-bottom:8px;">Finalizado el <?= date('d/m/Y H:i', strtotime($dateEnd)) ?></div>
     <?php endif; ?>
-    <a href="/kpi/comparacion-insumos?fecha=<?= urlencode($fecha) ?>" class="btn btn-primary mb-3">
-        <i class="fas fa-balance-scale"></i> Comparar con Control de Insumos
-    </a>
+    <div class="mb-3">
+        <a href="/kpi/comparacion-insumos?fecha=<?= urlencode($fecha) ?>" class="btn btn-primary mr-2">
+            <i class="fas fa-balance-scale"></i> Comparar con Control de Insumos
+        </a>
+        <button type="button" class="btn btn-success" onclick="ajustarMasivoInventario('<?= $fecha ?>')">
+            <i class="fas fa-sync-alt"></i> Ajuste Masivo al Inventario
+        </button>
+    </div>
     <?php
     // Calcular totales
     $totalInventario = 0;
@@ -297,6 +302,99 @@ $this->params['breadcrumbs'][] = $this->title;
     ]) ?>
     </div>
     <div class="mt-3">
+        <?= Html::a('<i class="fas fa-history"></i> Ver Historial de Ajustes', ['/kpi/historial-ajustes'], ['class' => 'btn btn-secondary mr-2']) ?>
         <?= Html::a('Volver al listado de fechas', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 </div>
+
+<!-- Modal de Confirmación -->
+<div class="modal fade" id="confirmacionAjusteModal" tabindex="-1" role="dialog" aria-labelledby="confirmacionAjusteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmacionAjusteModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Confirmar Ajuste Masivo
+                </h5>
+                <button type="button" class="close" onclick="cerrarModalConfirmacion()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Está a punto de ajustar las existencias del sistema para que coincidan con los valores del inventario contado.</p>
+                <p class="mb-3">Este cambio reemplazará las existencias actuales con los valores del inventario físico y quedará registrado en el historial.</p>
+                <p class="font-weight-bold text-warning">¿Desea continuar?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalConfirmacion()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmarAjuste()">
+                    <i class="fas fa-check"></i> Confirmar Ajuste
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let fechaAjuste = '';
+
+function ajustarMasivoInventario(fecha) {
+    fechaAjuste = fecha;
+    $('#confirmacionAjusteModal').modal('show');
+}
+
+function cerrarModalConfirmacion() {
+    $('#confirmacionAjusteModal').modal('hide');
+}
+
+function confirmarAjuste() {
+    cerrarModalConfirmacion();
+    
+    // Mostrar progreso
+    var progressHtml = '<div class="alert alert-info" id="progressAlert" style="margin-top: 15px;">' +
+        '<i class="fas fa-spinner fa-spin"></i> Procesando ajuste masivo...' +
+        '</div>';
+    $('.mb-3').after(progressHtml);
+    
+    $.ajax({
+        url: '<?= \yii\helpers\Url::to(['/kpi/ajustar-inventario-completo']) ?>',
+        type: 'POST',
+        data: {
+            fecha: fechaAjuste
+        },
+        success: function(response) {
+            $('#progressAlert').remove();
+            if (response.success) {
+                alert('Se ajustaron ' + response.ajustados + ' insumos correctamente.');
+                location.reload();
+            } else {
+                alert('Error: ' + (response.message || 'No se pudieron ajustar los insumos'));
+            }
+        },
+        error: function() {
+            $('#progressAlert').remove();
+            alert('Error al conectar con el servidor');
+        }
+    });
+}
+
+$(document).ready(function() {
+    // Event listeners para cerrar modal
+    $('.close').on('click', function() {
+        cerrarModalConfirmacion();
+    });
+    
+    $('#confirmacionAjusteModal').on('click', function(e) {
+        if (e.target === this) {
+            cerrarModalConfirmacion();
+        }
+    });
+    
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModalConfirmacion();
+        }
+    });
+});
+</script>
