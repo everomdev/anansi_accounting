@@ -63,12 +63,12 @@ class UnitOfMeasurement extends \yii\db\ActiveRecord
             'business_id' => Yii::t('app', 'Business ID'),
             'custom' => Yii::t('app', 'Unidad personalizada'),
             'type' => Yii::t('app', 'Tipo de unidad'),
-            'is_purchase' => Yii::t('app', '¿Es unidad de compra?'),
-            'is_kitchen' => Yii::t('app', '¿Es unidad de cocina?'),
-            'is_subrecipe_yield' => Yii::t('app', '¿Es unidad de rendimiento de subreceta?'),
-            'is_subrecipe_um' => Yii::t('app', '¿Es unidad de insumo de subreceta?'),
-            'is_recipe_yield' => Yii::t('app', '¿Es unidad de rendimiento de receta?'),
-            'is_recipe_final_um' => Yii::t('app', '¿Es unidad final de receta?'),
+            'is_purchase' => Yii::t('app', '¿Es unidad de compra (insumos)?'),
+            'is_kitchen' => Yii::t('app', '¿Es unidad de cocina (insumos)?'),
+            'is_subrecipe_yield' => Yii::t('app', '¿Es unidad de rendimiento (subreceta)?'),
+            'is_subrecipe_um' => Yii::t('app', '¿Es unidad de insumo (subreceta)?'),
+            'is_recipe_yield' => Yii::t('app', '¿Es unidad de rendimiento (receta)?'),
+            'is_recipe_final_um' => Yii::t('app', '¿Es unidad final de (receta)?'),
         ];
     }
 
