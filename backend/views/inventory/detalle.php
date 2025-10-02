@@ -139,7 +139,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
             ],
             [
-                'label' => 'Categoría',
+                'label' => 'Familias',
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->category->name) ? $model->ingredientStock->category->name : '-';
@@ -149,7 +149,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 'filter' => \yii\helpers\Html::activeDropDownList(
                     $searchModel,
                     'categoria',
-                    \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
+                    \common\models\Category::find()
+                        ->where([
+                            'or',
+                            ['business_id' => \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY)['id'] ?? null],
+                            ['builtin' => 1]
+                        ])
+                        ->select(['name', 'id'])->indexBy('id')->column(),
                     [
                         'class' => 'form-control',
                         'prompt' => 'Todas'
@@ -320,7 +326,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 </button>
             </div>
             <div class="modal-body">
-                <p class="mb-3">Está a punto de ajustar las existencias del sistema para que coincidan con los valores del inventario contado.</p>
+                <p class="mb-3">Está a punto de ajustar las existencias del sistema para que coincidan con los valores del inventario físico.</p>
                 <p class="mb-3">Este cambio reemplazará las existencias actuales con los valores del inventario físico y quedará registrado en el historial.</p>
                 <p class="font-weight-bold text-warning">¿Desea continuar?</p>
             </div>

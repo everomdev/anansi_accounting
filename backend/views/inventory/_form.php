@@ -68,10 +68,16 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
         </div>
         <div class="col-md-3">
             <?= $searchForm->field($searchModel, 'categoria')->dropDownList(
-                \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
+                \common\models\Category::find()
+                ->where([
+                            'or',
+                            ['business_id' => \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY)['id'] ?? null],
+                            ['builtin' => 1]
+                        ])
+                ->select(['name', 'id'])->indexBy('id')->column(),
                 [
                     'class' => 'form-control',
-                    'prompt' => 'Todas las categorías',
+                    'prompt' => 'Todas las familias',
                     'name' => 'IngredientStockSearch[categoria]'
                 ]
             )->label(false) ?>
@@ -236,7 +242,7 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
                 'headerOptions' => ['style' => 'min-width: 120px; width: 10%;'],
             ],
             [
-                'label' => 'Categoría',
+                'label' => 'Familias',
                 'encodeLabel' => false,
                 'value' => function($insumo) {
                     return $insumo->category && isset($insumo->category->name) ? $insumo->category->name : '-';

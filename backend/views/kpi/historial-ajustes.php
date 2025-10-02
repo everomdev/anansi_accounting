@@ -16,6 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
         Aquí puedes ver todos los ajustes realizados a las existencias del almacén, incluyendo quién los hizo y cuándo.
     </div>
 
+    <div class="table-responsive" style="overflow-x: auto;">
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
@@ -140,8 +141,9 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
         ],
     ]) ?>
+    </div>
     
     <div class="mt-3">
-        <?= Html::a('Volver a KPI', ['/inventory/index'], ['class' => 'btn btn-secondary']) ?>
+        <?= Html::a('Volver a Inventario', ['/inventory/index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 </div>

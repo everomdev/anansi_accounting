@@ -23,7 +23,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <?php endif; ?>
             <div class="form-group mr-2">
                 <select name="categoria" class="form-control" onchange="this.form.submit();">
-                    <option value="">Todas las categorías</option>
+                    <option value="">Todas las familias</option>
                     <?php foreach ($categorias as $catId => $catName): ?>
                         <option value="<?= Html::encode($catId) ?>" <?= $categoria == $catId ? 'selected' : '' ?>><?= Html::encode($catName) ?></option>
                     <?php endforeach; ?>
@@ -45,7 +45,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 ],
                 [
                     'attribute' => 'categoria',
-                    'label' => 'Categoría',
+                    'label' => 'Familias',
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
                 ],

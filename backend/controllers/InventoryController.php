@@ -149,7 +149,8 @@ public function actionCreate()
     $businessId = $businessData['id'] ?? null;
     $insumos = \common\models\IngredientStock::find()->where(['business_id' => $businessId])->all();
 
-    $fechaActual = date('Y-m-d H:i');
+    // Usar la fecha enviada por el usuario o la del servidor como fallback
+    $fechaActual = Yii::$app->request->get('fecha', date('Y-m-d H:i'));
 
     // Crear el documento
     $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -244,14 +245,17 @@ public function actionCreate()
     // ====== 6. CONGELAR FILAS DE ENCABEZADOS ======
     $sheet->freezePane("A5");
 
-    // ====== 7. PROTECCIÓN (solo fecha bloqueada) ======
+    // ====== 7. OCULTAR CUADRÍCULA ======
+    $sheet->setShowGridlines(false);
+
+    // ====== 8. PROTECCIÓN (solo fecha bloqueada) ======
     $protection = $sheet->getProtection();
     $protection->setSheet(true);
     $protection->setPassword('inventario');
     $sheet->getStyle("A2:B2")->getProtection()->setLocked(true);
     $sheet->getStyle("A5:H{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
 
-    // ====== 8. EXPORTAR ARCHIVO ======
+    // ====== 9. EXPORTAR ARCHIVO ======
     $filename = 'plantilla_inventario_' . $fechaActual . '.xlsx';
     \Yii::$app->response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     \Yii::$app->response->headers->set('Content-Disposition', 'attachment;filename="' . $filename . '"');

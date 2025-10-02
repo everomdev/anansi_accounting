@@ -12,11 +12,9 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 <div class="inventory-index">
     <p>
         <?= Html::a('Crear Inventario', ['create'], ['class' => 'btn btn-success']) ?>
-        <?= Html::a('Descargar plantilla', ['export-plantilla-inventario'], [
-            'class' => 'btn btn-success',
-            'style' => 'margin-left:12px;',
-            'title' => 'Descargar plantilla de inventario en Excel',
-        ]) ?>
+        <button id="descargar-plantilla-btn" class="btn btn-success" style="margin-left:12px;" title="Descargar plantilla de inventario en Excel">
+            Descargar plantilla
+        </button>
          <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar inventario', [
                 'icon' => ""
             ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
@@ -76,3 +74,20 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 
 \yii\bootstrap5\Modal::end();
 ?>
+
+<script>
+document.getElementById('descargar-plantilla-btn').addEventListener('click', function() {
+    // Obtener la fecha y hora local del usuario
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const fechaLocal = `${year}-${month}-${day} ${hours}:${minutes}`;
+    
+    // Redirigir a la URL con la fecha local como parámetro
+    window.location.href = '<?= \yii\helpers\Url::to(['export-plantilla-inventario']) ?>?fecha=' + encodeURIComponent(fechaLocal);
+});
+</script>
