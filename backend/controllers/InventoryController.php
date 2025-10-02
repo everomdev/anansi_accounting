@@ -169,6 +169,25 @@ public function actionCreate()
     $sheet->getStyle('A2:B2')->getFont()->setBold(true);
     $sheet->getStyle('B2')->getProtection()->setLocked(true); // Solo la fecha protegida
 
+    // ====== 2.1. ALERTA TEMPORAL ======
+    $sheet->mergeCells('A3:H3');
+    $sheet->setCellValue('A3', '⚠️ IMPORTANTE: Esta plantilla solo se puede importar HOY o MAÑANA. Después de ese tiempo será rechazada automáticamente.');
+    $sheet->getStyle('A3')->applyFromArray([
+        'font' => [
+            'bold' => true,
+            'color' => ['rgb' => 'D32F2F'], // Rojo
+            'size' => 10
+        ],
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'FFEBEE'] // Fondo rojo claro
+        ],
+        'alignment' => [
+            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+        ],
+    ]);
+
     // ====== 3. ENCABEZADOS ======
     $headers = [
         'Insumo', 
@@ -180,7 +199,7 @@ public function actionCreate()
         'Existencia Servicio', 
         'Existencia Otro'
     ];
-    $headerRow = 4;
+    $headerRow = 5;
 
     $col = 1;
     foreach ($headers as $header) {
@@ -243,17 +262,18 @@ public function actionCreate()
     }
 
     // ====== 6. CONGELAR FILAS DE ENCABEZADOS ======
-    $sheet->freezePane("A5");
+    $sheet->freezePane("A6");
 
     // ====== 7. OCULTAR CUADRÍCULA ======
     $sheet->setShowGridlines(false);
 
-    // ====== 8. PROTECCIÓN (solo fecha bloqueada) ======
+    // ====== 8. PROTECCIÓN (solo fecha y alerta bloqueadas) ======
     $protection = $sheet->getProtection();
     $protection->setSheet(true);
     $protection->setPassword('inventario');
-    $sheet->getStyle("A2:B2")->getProtection()->setLocked(true);
-    $sheet->getStyle("A5:H{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+    $sheet->getStyle("A2:B2")->getProtection()->setLocked(true); // Fecha protegida
+    $sheet->getStyle("A3:H3")->getProtection()->setLocked(true); // Alerta protegida
+    $sheet->getStyle("A6:H{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
 
     // ====== 9. EXPORTAR ARCHIVO ======
     $filename = 'plantilla_inventario_' . $fechaActual . '.xlsx';
@@ -301,8 +321,8 @@ public function actionCreate()
                     return $this->redirect(['index']);
                 }
 
-                // Leer insumos desde la fila 5 en adelante
-                $row = 5;
+                // Leer insumos desde la fila 6 en adelante (se agregó fila de alerta)
+                $row = 6;
                 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
                 $businessId = $businessData['id'] ?? null;
                 $errores = [];
