@@ -288,13 +288,27 @@ public function actionCreate()
                     return $this->redirect(['import-plantilla-inventario']);
                 }
 
+                // Validar que la plantilla no sea muy antigua (máximo 2 días)
+                // Usar la fecha del usuario (fecha_importacion) para la comparación, no la del servidor
+                $fechaUsuario = Yii::$app->request->post('fecha_importacion', date('Y-m-d H:i:s'));
+                $fechaPlantilla = new \DateTime($fecha);
+                $fechaActualUsuario = new \DateTime($fechaUsuario);
+                $diferenciaDias = $fechaActualUsuario->diff($fechaPlantilla)->days;
+                
+                if ($diferenciaDias > 1) {
+                    $fechaFormateada = $fechaPlantilla->format('d/m/Y H:i');
+                    Yii::$app->session->setFlash('error', "Esta plantilla es muy antigua. Fue descargada el {$fechaFormateada}. Solo se pueden importar plantillas descargadas hoy o ayer. Por favor, descarga una nueva plantilla.");
+                    return $this->redirect(['index']);
+                }
+
                 // Leer insumos desde la fila 5 en adelante
                 $row = 5;
                 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
                 $businessId = $businessData['id'] ?? null;
                 $errores = [];
                 $guardados = 0;
-                $dateEnd = date('Y-m-d H:i:s');
+                // Usar la fecha de importación enviada por el usuario o la del servidor como fallback
+                $dateEnd = Yii::$app->request->post('fecha_importacion', date('Y-m-d H:i:s'));
                 while (true) {
                     $insumoNombre = trim($sheet->getCell("A$row")->getValue());
                     if ($insumoNombre === null || $insumoNombre === '') {

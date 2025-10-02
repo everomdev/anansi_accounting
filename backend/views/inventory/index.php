@@ -66,8 +66,11 @@ echo \yii\bootstrap5\Html::input('file', 'inventory-file', '', [
     'accept' => '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'
 ]);
 echo "<br>";
-echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
-    'class' => 'btn btn-success'
+echo \yii\bootstrap5\Html::hiddenInput('fecha_importacion', '', ['id' => 'fecha-importacion-hidden']);
+echo \yii\bootstrap5\Html::button(Yii::t('app', "Import"), [
+    'id' => 'import-btn',
+    'class' => 'btn btn-success',
+    'type' => 'button'
 ]);
 
 \yii\bootstrap5\ActiveForm::end();
@@ -76,18 +79,37 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ?>
 
 <script>
-document.getElementById('descargar-plantilla-btn').addEventListener('click', function() {
-    // Obtener la fecha y hora local del usuario
+// Función para obtener fecha local del usuario
+function getFechaLocal() {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
     
-    const fechaLocal = `${year}-${month}-${day} ${hours}:${minutes}`;
-    
-    // Redirigir a la URL con la fecha local como parámetro
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+// Botón descargar plantilla
+document.getElementById('descargar-plantilla-btn').addEventListener('click', function() {
+    const fechaLocal = getFechaLocal().slice(0, -3); // Sin segundos para la plantilla
     window.location.href = '<?= \yii\helpers\Url::to(['export-plantilla-inventario']) ?>?fecha=' + encodeURIComponent(fechaLocal);
+});
+
+// Botón importar archivo
+document.getElementById('import-btn').addEventListener('click', function() {
+    const fileInput = document.querySelector('input[name="inventory-file"]');
+    if (!fileInput.files.length) {
+        alert('Por favor selecciona un archivo para importar.');
+        return;
+    }
+    
+    // Establecer la fecha local en el campo oculto
+    document.getElementById('fecha-importacion-hidden').value = getFechaLocal();
+    
+    // Enviar el formulario
+    fileInput.closest('form').submit();
 });
 </script>
