@@ -245,7 +245,7 @@ public function actionCreate()
     // Estilo para el contenido
     $sheet->getStyle("A" . ($headerRow + 1) . ":H{$lastRow}")->applyFromArray([
         'alignment' => [
-            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
         ],
         'borders' => [

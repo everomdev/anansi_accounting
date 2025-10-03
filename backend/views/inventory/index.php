@@ -76,6 +76,26 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', "Import"), [
 \yii\bootstrap5\ActiveForm::end();
 
 \yii\bootstrap5\Modal::end();
+
+// Modal de confirmación para descarga de plantilla
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-confirmacion-descarga',
+    'title' => '⚠️ Atención - Validez de Plantilla',
+    'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT
+]);
+?>
+<div class="alert alert-warning" role="alert">
+    <p>Esta plantilla de inventario tiene una <strong>validez máxima de 48 horas</strong> a partir de su fecha y hora de generación.</p>
+    <p>Si intentas cargarla después de ese tiempo, <strong>el sistema no la aceptará</strong>.</p>
+    <hr>
+    <p class="mb-0"><strong>Recomendación:</strong> Te sugerimos levantar y cargar el inventario el mismo día para asegurar datos correctos.</p>
+</div>
+<div class="text-end">
+    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancelar</button>
+    <button type="button" class="btn btn-success" id="confirmar-descarga-btn">Entendido, descargar plantilla</button>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
 ?>
 
 <script>
@@ -92,9 +112,22 @@ function getFechaLocal() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-// Botón descargar plantilla
+// Botón descargar plantilla - mostrar modal de confirmación
 document.getElementById('descargar-plantilla-btn').addEventListener('click', function() {
+    // Mostrar el modal de confirmación
+    const modal = new bootstrap.Modal(document.getElementById('modal-confirmacion-descarga'));
+    modal.show();
+});
+
+// Botón confirmar descarga en el modal
+document.getElementById('confirmar-descarga-btn').addEventListener('click', function() {
     const fechaLocal = getFechaLocal().slice(0, -3); // Sin segundos para la plantilla
+    
+    // Cerrar el modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modal-confirmacion-descarga'));
+    modal.hide();
+    
+    // Proceder con la descarga
     window.location.href = '<?= \yii\helpers\Url::to(['export-plantilla-inventario']) ?>?fecha=' + encodeURIComponent(fechaLocal);
 });
 
