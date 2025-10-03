@@ -100,8 +100,8 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
     
     <div style="margin-bottom: 32px;">
         <?php
-        // Set default value to current date/time if not already set
-        $defaultFecha = $model->fecha ? date('Y-m-d\TH:i', strtotime($model->fecha)) : date('Y-m-d\TH:i');
+        // Solo usar fecha del modelo si ya existe, sino dejar vacío para que JavaScript establezca la fecha local
+        $defaultFecha = $model->fecha ? date('Y-m-d\TH:i', strtotime($model->fecha)) : '';
         $today = date('Y-m-d');
         ?>
         <div style="margin-bottom: 32px;">
@@ -118,6 +118,20 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
         </div>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Establecer fecha/hora local del usuario si no hay valor previo
+            var fechaInput = document.getElementById('fecha-inventario');
+            if (fechaInput && !fechaInput.value) {
+                var now = new Date();
+                var year = now.getFullYear();
+                var month = String(now.getMonth() + 1).padStart(2, '0');
+                var day = String(now.getDate()).padStart(2, '0');
+                var hours = String(now.getHours()).padStart(2, '0');
+                var minutes = String(now.getMinutes()).padStart(2, '0');
+                
+                var fechaLocal = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+                fechaInput.value = fechaLocal;
+            }
+
             // Permitir decimales con coma o punto en los inputs de inventario
             document.addEventListener('input', function(e) {
                 if (e.target.classList.contains('inventory-input')) {
