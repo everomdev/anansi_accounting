@@ -41,6 +41,7 @@ class UnitOfMeasurement extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
+            [['name'], 'trim'], // Eliminar espacios al inicio y final
             [['business_id', 'custom', 'is_purchase', 'is_kitchen', 'is_subrecipe_yield', 'is_subrecipe_um', 'is_recipe_yield', 'is_recipe_final_um'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [['type'], 'string', 'max' => 20],

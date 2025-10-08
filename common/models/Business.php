@@ -45,6 +45,7 @@ class Business extends \yii\db\ActiveRecord
                 'name',
                 'user_id',
             ], 'required'],
+            [['name'], 'trim'], // Eliminar espacios al inicio y final
             [['user_id', 'monthly_plate_sales'], 'integer'],
             [[
                 'name',

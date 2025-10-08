@@ -123,6 +123,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
     {
         return [
             [['business_id', 'type', 'title'], 'required'],
+            [['title'], 'trim'], // Eliminar espacios al inicio y final
             [['business_id', 'convoy_id'], 'integer'],
             [['yield', 'yield_um', 'portions'], 'required', 'when' => function () {
                 return !$this->isNewRecord;

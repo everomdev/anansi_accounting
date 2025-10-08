@@ -655,8 +655,13 @@ public function actionComparacionInsumos()
     $categoriaId = \Yii::$app->request->get('categoria', '');
     $datos = [];
 
-    // Obtener todas las categorías
+    // Obtener todas las categorías con las mismas condiciones que en detalle
     $categorias = Category::find()
+        ->where([
+            'or',
+            ['business_id' => $business->id],
+            ['builtin' => 1]
+        ])
         ->select(['name', 'id'])
         ->indexBy('id')
         ->column();

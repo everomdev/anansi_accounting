@@ -9,6 +9,97 @@ use yii\widgets\Pjax;
 
 $this->title = Yii::t('app', 'Providers');
 $this->params['breadcrumbs'][] = $this->title;
+
+// CSS personalizado para columna fija
+$this->registerCss("
+    /* Hacer la tabla scrollable horizontalmente */
+    .grid-view .table-responsive {
+        overflow-x: auto;
+        position: relative;
+    }
+    
+    /* Fijar la segunda columna (business_name) */
+    .grid-view table tbody tr td:nth-child(2),
+    .grid-view table thead tr th:nth-child(2) {
+        position: sticky;
+        left: 0;
+        background-color: #fff;
+        z-index: 10;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        border-right: 1px solid #dee2e6;
+    }
+    
+    /* Estilo para el header de la columna fija */
+    .grid-view table thead tr th:nth-child(2) {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    
+    /* Estilo para las filas filtro */
+    .grid-view table tbody tr.filters td:nth-child(2) {
+        background-color: #f8f9fa;
+    }
+    
+    /* Asegurar que el contenido no se desborde y dar más ancho */
+    .grid-view table tbody tr td:nth-child(2),
+    .grid-view table thead tr th:nth-child(2) {
+        min-width: 250px;
+        max-width: 350px;
+        width: 300px;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+    
+    /* Dar un poco más de padding a la columna fija */
+    .grid-view table tbody tr td:nth-child(2),
+    .grid-view table thead tr th:nth-child(2) {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    
+    /* Mejorar la apariencia cuando se hace hover */
+    .grid-view table tbody tr:hover td:nth-child(2) {
+        background-color: #e9ecef;
+    }
+    
+    /* Asegurar que los filtros también se mantengan fijos */
+    .grid-view table thead tr.filters th:nth-child(2) {
+        position: sticky;
+        left: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        border-right: 1px solid #dee2e6;
+    }
+    
+    /* Estilos adicionales cuando se hace scroll */
+    .sticky-column.scrolled {
+        box-shadow: 3px 0 8px rgba(0,0,0,0.15) !important;
+    }
+    
+    /* Asegurar que la tabla tenga un ancho mínimo para activar el scroll horizontal */
+    .grid-view table {
+        min-width: 1200px;
+    }
+");
+
+// JavaScript para mejorar la experiencia de usuario
+$this->registerJs("
+    $(document).ready(function() {
+        // Añadir clase especial a la segunda columna (business_name) para identificarla mejor
+        $('.grid-view table th:nth-child(2), .grid-view table td:nth-child(2)').addClass('sticky-column');
+        
+        // Opcional: Resaltar la columna fija al hacer scroll
+        $('.grid-view .table-responsive').on('scroll', function() {
+            var scrollLeft = $(this).scrollLeft();
+            if (scrollLeft > 0) {
+                $('.sticky-column').addClass('scrolled');
+            } else {
+                $('.sticky-column').removeClass('scrolled');
+            }
+        });
+    });
+", \yii\web\View::POS_READY);
 ?>
 <div class="provider-index">
 

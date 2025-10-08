@@ -73,6 +73,7 @@ class Menu extends \yii\db\ActiveRecord
     {
         return [
             [['name', 'business_id'], 'required'],
+            [['name'], 'trim'], // Eliminar espacios al inicio y final
             [['total_cost', 'total_price', 'cost_precent', 'cost_percent_last_price', 'cost_percent_higher_price', 'cost_percent_avg_price', 'sales', 'custom_cost', 'custom_price'], 'number'],
             [['business_id', 'category_id'], 'integer'],
             [['name'], 'string', 'max' => 255],

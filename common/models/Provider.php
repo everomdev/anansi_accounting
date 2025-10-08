@@ -42,6 +42,7 @@ class Provider extends \yii\db\ActiveRecord
     {
         return [
             [['business_name', 'business_id'], 'required'],
+            [['business_name', 'name'], 'trim'], // Eliminar espacios al inicio y final
             [['business_id'], 'integer'],
             ['payment_method', 'each', 'rule' => ['string']],
             ['payment_method', 'required', 'message' => 'Debe seleccionar al menos un método de pago'],

@@ -76,9 +76,9 @@ $this->params['breadcrumbs'][] = $this->title;
     }
     ?>
     <div class="alert alert-info" style="margin-bottom:18px;">
-        <strong>Total Inventario:</strong> <?= Yii::$app->formatter->asInteger($totalInventario) ?>
+        <strong>Total Inventario:</strong> <?= formatNumber($totalInventario) ?>
         &nbsp; | &nbsp;
-        <strong>Total Dinero:</strong> <?= Yii::$app->formatter->asCurrency($totalDinero) ?>
+        <strong>Total Dinero:</strong> <?= formatPrice($totalDinero) ?>
     </div>
     <div class="alert alert-warning" style="margin-bottom:18px;">
         <strong>Total por área:</strong>

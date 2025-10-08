@@ -33,6 +33,7 @@ class Category extends \yii\db\ActiveRecord
     {
         return [
             [['name'], 'required'],
+            [['name'], 'trim'], // Eliminar espacios al inicio y final
             [['builtin', 'business_id', 'group_id'], 'integer'],
             [['name'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'targetClass' => Business::class, 'targetAttribute' => ['business_id' => 'id']],

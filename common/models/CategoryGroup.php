@@ -30,6 +30,7 @@ class CategoryGroup extends \yii\db\ActiveRecord
     {
         return [
             [['name', 'color'], 'required'],
+            [['name'], 'trim'], // Eliminar espacios al inicio y final
             [['name', 'color'], 'string', 'max' => 255],
         ];
     }
