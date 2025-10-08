@@ -156,13 +156,28 @@ class SecurityController extends Controller
                     RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
                 }
 
-                $business = $user->business;
+                // Verificar si es un usuario empleado (está en user_business)
+                $userBusiness = \common\models\UserBusiness::findOne(['user_id' => $user->id]);
+                $planToCheck = $userPlan; // Por defecto usar el plan del usuario actual
+                
+                if ($userBusiness) {
+                    // Es un empleado, necesita verificar la suscripción del dueño del business
+                    $businessOwner = Business::findOne(['id' => $userBusiness->business_id]);
+                    if ($businessOwner) {
+                        $business = $businessOwner; // Usar el business del empleado
+                        $planToCheck = UserPlan::findOne(['user_id' => $businessOwner->user_id]);
+                    }
+                } else {
+                    // Es el dueño del business, usar su business y plan originales
+                    $business = $user->business;
+                }
 
                 if($business){
                     RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
                     Yii::$app->setTimeZone($business->timezone);
+                    
                     // Verificar el estado de la suscripción
-                    if ($userPlan->stripe_subscription_status === 'canceled') {
+                    if ($planToCheck && $planToCheck->stripe_subscription_status === 'canceled') {
                         // Guardar un mensaje flash para informar al usuario
                         Yii::$app->session->setFlash('warning', Yii::t('app', 'Tu suscripción ha expirado. Por favor renuévala para seguir usando todas las funcionalidades.'));
 
@@ -171,7 +186,10 @@ class SecurityController extends Controller
                         // Redirect with query parameter to identify the origin
                         return $this->redirect(['/site/enable-subscription', 'source' => 'expired_subscription', 'promo' => '15']);
                     }
-                    if ($userPlan->stripe_subscription_id === '' || $userPlan->stripe_subscription_status === '' || $userPlan->stripe_subscription_status === null || $userPlan->stripe_subscription_status === null) {
+                    if (!$planToCheck || 
+                        empty($planToCheck->stripe_subscription_id) || 
+                        empty($planToCheck->stripe_subscription_status) || 
+                        $planToCheck->stripe_subscription_status === null) {
                         // Guardar un mensaje flash para informar al usuario
                         Yii::$app->session->setFlash('warning', Yii::t('app', 'Para poder usar todas las funcionalidades, por favor activa tu suscripción.'));
                         // Redirect with query parameter to identify the origin

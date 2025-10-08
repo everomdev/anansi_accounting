@@ -2962,7 +2962,6 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      $ingredientStock = IngredientStock::find()
          ->where(['business_id' => $business['id']])
-         ->limit($batchSize)
          ->all();
      
      $convoy = Convoy::find()

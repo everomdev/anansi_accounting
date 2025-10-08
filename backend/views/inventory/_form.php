@@ -102,7 +102,6 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
         <?php
         // Solo usar fecha del modelo si ya existe, sino dejar vacío para que JavaScript establezca la fecha local
         $defaultFecha = $model->fecha ? date('Y-m-d\TH:i', strtotime($model->fecha)) : '';
-        $today = date('Y-m-d');
         ?>
         <div style="margin-bottom: 32px;">
             <div style="display: flex; align-items: flex-end; gap: 12px;">
@@ -110,26 +109,59 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
                     'type' => 'datetime-local',
                     'id' => 'fecha-inventario',
                     'value' => $defaultFecha,
-                    'min' => $today . 'T00:00',
-                    'max' => $today . 'T23:59'
+                    'title' => 'Puedes seleccionar desde 24 horas antes hasta 24 horas después de la fecha actual'
                 ]) ?>
                 <button type="button" class="btn btn-outline-primary" id="btn-aceptar-fecha">Aceptar</button>
             </div>
+            <small class="text-muted" id="rango-fechas">
+                Calculando rango permitido...
+            </small>
         </div>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Establecer fecha/hora local del usuario si no hay valor previo
             var fechaInput = document.getElementById('fecha-inventario');
+            var rangoElement = document.getElementById('rango-fechas');
+            
+            // Calcular rango usando la fecha local del usuario
+            var now = new Date();
+            var fechaMinima = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 horas antes
+            var fechaMaxima = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // 24 horas después
+            
+            // Formatear fechas para el input datetime-local
+            function formatearFechaParaInput(fecha) {
+                var year = fecha.getFullYear();
+                var month = String(fecha.getMonth() + 1).padStart(2, '0');
+                var day = String(fecha.getDate()).padStart(2, '0');
+                var hours = String(fecha.getHours()).padStart(2, '0');
+                var minutes = String(fecha.getMinutes()).padStart(2, '0');
+                return year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
+            }
+            
+            // Formatear fechas para mostrar al usuario
+            function formatearFechaParaMostrar(fecha) {
+                var day = String(fecha.getDate()).padStart(2, '0');
+                var month = String(fecha.getMonth() + 1).padStart(2, '0');
+                var year = fecha.getFullYear();
+                var hours = String(fecha.getHours()).padStart(2, '0');
+                var minutes = String(fecha.getMinutes()).padStart(2, '0');
+                return day + '/' + month + '/' + year + ' ' + hours + ':' + minutes;
+            }
+            
+            // Establecer los límites del input
+            var minDate = formatearFechaParaInput(fechaMinima);
+            var maxDate = formatearFechaParaInput(fechaMaxima);
+            fechaInput.setAttribute('min', minDate);
+            fechaInput.setAttribute('max', maxDate);
+            
+            // Mostrar el rango al usuario
+            rangoElement.textContent = 'Rango permitido: ' + 
+                formatearFechaParaMostrar(fechaMinima) + ' - ' + 
+                formatearFechaParaMostrar(fechaMaxima);
+            
+            // Establecer fecha/hora local del usuario si no hay valor previo
             if (fechaInput && !fechaInput.value) {
-                var now = new Date();
-                var year = now.getFullYear();
-                var month = String(now.getMonth() + 1).padStart(2, '0');
-                var day = String(now.getDate()).padStart(2, '0');
-                var hours = String(now.getHours()).padStart(2, '0');
-                var minutes = String(now.getMinutes()).padStart(2, '0');
-                
-                var fechaLocal = year + '-' + month + '-' + day + 'T' + hours + ':' + minutes;
-                fechaInput.value = fechaLocal;
+                var fechaActual = formatearFechaParaInput(now);
+                fechaInput.value = fechaActual;
             }
 
             // Permitir decimales con coma o punto en los inputs de inventario

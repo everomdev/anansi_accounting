@@ -37,9 +37,10 @@ $stock = (new \yii\db\Query())
                 ELSE '' 
             END,
             CASE 
-                WHEN ingredient_stock.um IS NOT NULL AND TRIM(ingredient_stock.um) != '' 
-                THEN CONCAT(' (', ingredient_stock.um, ')') 
-                ELSE '' 
+            WHEN " . ($model->type == \common\models\Movement::TYPE_OUTPUT ? "ingredient_stock.portion_um" : "ingredient_stock.um") . " IS NOT NULL 
+                 AND TRIM(" . ($model->type == \common\models\Movement::TYPE_OUTPUT ? "ingredient_stock.portion_um" : "ingredient_stock.um") . ") != '' 
+            THEN CONCAT(' (', " . ($model->type == \common\models\Movement::TYPE_OUTPUT ? "ingredient_stock.portion_um" : "ingredient_stock.um") . ", ')') 
+            ELSE '' 
             END
         ) as label"
     ])
