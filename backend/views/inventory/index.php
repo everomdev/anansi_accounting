@@ -22,10 +22,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <?php
     // Mostrar todas las fechas únicas completas (con hora) de toda la tabla
     $fechas = \common\models\Inventory::find()
-        ->select('date_end')
+        ->select('fecha')
         ->where(['business_id' => $business->id])
         ->distinct()
-        ->orderBy(['date_end' => SORT_DESC])
+        ->orderBy(['fecha' => SORT_DESC])
         ->column();
     ?>
     <table class="table table-bordered table-striped">
