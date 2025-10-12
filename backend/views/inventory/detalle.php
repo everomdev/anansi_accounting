@@ -47,9 +47,9 @@ $this->params['breadcrumbs'][] = $this->title;
         <a href="/kpi/comparacion-insumos?fecha=<?= urlencode($fecha) ?>" class="btn btn-primary mr-2">
             <i class="fas fa-balance-scale"></i> Comparar con Control de Insumos
         </a>
-        <button type="button" class="btn btn-success" onclick="ajustarMasivoInventario('<?= $fecha ?>')">
+        <!-- <button type="button" class="btn btn-success" onclick="ajustarMasivoInventario('<?= $fecha ?>')">
             <i class="fas fa-sync-alt"></i> Ajuste Masivo al Inventario
-        </button>
+        </button> -->
     </div>
     <?php
     // Calcular totales

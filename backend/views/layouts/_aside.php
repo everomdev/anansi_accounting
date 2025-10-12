@@ -56,7 +56,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo" style="width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; position: relative;">
         <div style="background: #fff; border-radius: 50px; padding: 8px 20px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="app-brand-link" style="display: flex; justify-content: center; align-items: center;">
+            <a href="<?= \yii\helpers\Url::to(['/site/index']) ?>" class="app-brand-link" style="display: flex; justify-content: center; align-items: center;">
                 <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt=""
                      style="object-fit: contain; max-width: 200px; height: 60px;">
             </a>
@@ -71,7 +71,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
         <li class="menu-item <?= $currentControllerId == 'site' ? 'active' : '' ?>">
-            <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="menu-link">
+            <a href="<?= \yii\helpers\Url::to(['/site/index']) ?>" class="menu-link">
                 <div><?= Yii::t('app', 'Home') ?></div>
             </a>
         </li>
@@ -87,21 +87,21 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['category/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/category/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Familias de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->identity->canMultiple(['recipe_list', 'subrecipe_list'])): ?>
                         <li class="menu-item <?= $currentControllerId == 'recipe-category' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['recipe-category/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/recipe-category/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Categorías de recetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'unit-of-measurement' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['unit-of-measurement/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/unit-of-measurement/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Unidades de medida') ?></div>
                             </a>
                         </li>
@@ -121,21 +121,21 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('providers_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'provider' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['provider/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/provider/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Providers') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'ingredient-stock' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['ingredient-stock/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Catálogo de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                          <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['provider/ingredients']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/provider/ingredients']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Insumos por Proveedores') ?></div>
                             </a>
                         </li>
@@ -156,28 +156,28 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('subrecipe_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sub-standard-recipe' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['sub-standard-recipe/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/sub-standard-recipe/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Subrecetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('recipe_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'standard-recipe' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Recipes') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('convoy_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'convoy' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['convoy/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/convoy/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Convoy') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('combo_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['menu/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/menu/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Combos') ?></div>
                             </a>
                         </li>
@@ -197,21 +197,21 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('menu_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu-recipes' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/menu-recipes']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/menu-recipes']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menú') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('menu_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'saved-menus' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['menu/saved-menus']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/menu/saved-menus']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menú histórico') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('sales_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/sales']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/sales']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Ventas') ?></div>
                             </a>
                         </li>
@@ -231,33 +231,33 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->identity->canMultiple(['movements_list'])): ?>
                         <li class="menu-item <?= $currentControllerId == 'consumption-center' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['consumption-center/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/consumption-center/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Consumption Centers') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('storage_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'storage' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['ingredient-stock/storage']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/storage']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Storage') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('movements_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'movement' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['movement/index']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/movement/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Movements') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <li class="menu-item <?= $currentControllerId == 'inventory' ? 'active' : '' ?>">
-                        <a href="<?= \yii\helpers\Url::to(['inventory/index']) ?>" class="menu-link">
+                        <a href="<?= \yii\helpers\Url::to(['/inventory/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Inventario') ?></div>
                         </a>
                     </li>
                     <?php if (Yii::$app->user->can('price_trend_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'price-trend' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['ingredient-stock/price-trend']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/price-trend']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Price Trend') ?></div>
                             </a>
                         </li>
@@ -277,49 +277,49 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 <ul class="sub-menu">
                     <?php if (Yii::$app->user->can('theoretical_profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'theoretical-yield' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/theoretical-yield']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/theoretical-yield']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Rentabilidad Teórica del Menú') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('real_profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'real-yield' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/real-yield']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/real-yield']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Rentabilidad Real del Menú') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('charts_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'charts' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/charts']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/charts']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Charts') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('menu_analysis_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'analytics' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/analytics']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/analytics']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menu Analysis') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('menu_improvements_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu-improvement' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/menu-improvement']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/menu-improvement']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menu improvements') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'profit-comparison' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/profit-comparison']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/profit-comparison']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Profit comparison') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
                     <?php if (Yii::$app->user->can('matrix_bcg')): ?>
                         <li class="menu-item <?= $currentControllerId == 'matrix-bcg' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['standard-recipe/matrix-bcg']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/standard-recipe/matrix-bcg']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Matriz BCG') ?></div>
                             </a>
                         </li>
@@ -339,7 +339,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <!-- Control de Insumos - HABILITADO -->
                     <?php if (Yii::$app->user->can('movements_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'control-insumos' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['kpi/control-insumos']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/kpi/control-insumos']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Control de Insumos') ?></div>
                             </a>
                         </li>
@@ -348,7 +348,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <!-- Planeación de Compras - HABILITADO -->
                     <!-- <?php if (Yii::$app->user->can('movements_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'planeacion-compras' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['kpi/planeacion-compras']) ?>" class="menu-link">
+                            <a href="<?= \yii\helpers\Url::to(['/kpi/planeacion-compras']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Proyección de Compras Inteligentes') ?></div>
                             </a>
                         </li>
