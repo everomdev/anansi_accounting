@@ -1808,7 +1808,7 @@ if ($ccRow > 2) {
 
         $activeWorksheet->setCellValue("A1", "Clave");
         $activeWorksheet->setCellValue("B1", "Insumo");
-        $activeWorksheet->setCellValue("C1", "Categoría");
+        $activeWorksheet->setCellValue("C1", "Familia de Insumos");
         $activeWorksheet->setCellValue("D1", "Unidad de compra");
         $activeWorksheet->setCellValue("E1", "Unidad de cocina");
         $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
