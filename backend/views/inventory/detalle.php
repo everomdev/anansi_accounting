@@ -39,9 +39,9 @@ $this->params['breadcrumbs'][] = $this->title;
     }
 </style>
 <div class="inventory-detalle">
-    <h2>Inventario del <?= date('d/m/Y H:i', strtotime($fecha)) ?></h2>
+    <h2>Inventario del <?= date('d/m/Y H:i', strtotime($dateEnd)) ?></h2>
     <?php if (!empty($dateEnd)) : ?>
-        <div class="text-muted" style="font-size:16px;margin-bottom:8px;">Finalizado el <?= date('d/m/Y H:i', strtotime($dateEnd)) ?></div>
+        <div class="text-muted" style="font-size:16px;margin-bottom:8px;">Iniciado el <?= date('d/m/Y H:i', strtotime($fecha)) ?></div>
     <?php endif; ?>
     <div class="mb-3">
         <a href="/kpi/comparacion-insumos?fecha=<?= urlencode($fecha) ?>" class="btn btn-primary mr-2">
