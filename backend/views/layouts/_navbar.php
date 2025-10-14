@@ -31,15 +31,19 @@ $profile = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::PROF
         <!-- /Search -->
 
         <ul class="navbar-nav flex-row align-items-center ms-auto">
-            <!-- Place this tag where you want the button to render. -->
-
-
+            <?php
+            $business = \backend\helpers\RedisKeys::getBusiness();
+            if ($business) {
+                echo '<li class="nav-item" style="margin-right: 18px;">'
+                    . '<span style="font-weight: bold; font-size: 18px; color: #333;">' . htmlspecialchars($business->name) . '</span>'
+                    . '</li>';
+            }
+            ?>
             <!-- User -->
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <?=
                 Html::a(
-                    "<i class='bx bx-power-off me-2'></i>
-                            ",
+                    "<i class='bx bx-power-off me-2'></i>\n                            ",
                     Url::to(['//user/security/logout']), [
                     'class' => 'btn btn-outline-warning',
                     'data' => [
