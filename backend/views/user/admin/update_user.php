@@ -9,7 +9,14 @@ use yii\bootstrap5\ActiveForm;
 
 $this->title = Yii::t('app', "Update user");
 
-$availableRoles = Yii::$app->authManager->getPermissionsByUser(Yii::$app->user->id);
+// Cargar roles igual que en create_user.php
+$roles = Yii::$app->authManager->getRoles();
+$roles = array_filter($roles, function ($role) {
+    return $role->name != 'admin';
+});
+
+// Cargar permisos del usuario editado
+$availablePermissions = Yii::$app->authManager->getPermissionsByUser($model->userId);
 
 $this->registerJsVar('availableTitle', Yii::t('app', "Available permissions"));
 $this->registerJsVar('selectedTitle', Yii::t('app', "Selected permissions"));
@@ -29,8 +36,11 @@ $this->registerJsVar('searchPlaceholder', Yii::t('app', "Search"));
         <?= $form->field($model, 'email')->textInput() ?>
         <?= $form->field($model, 'password')->textInput(['type' => 'password']) ?>
         <?= $form->field($model, 'confirmPassword')->textInput(['type' => 'password']) ?>
+        <?= $form->field($model, 'role')->dropDownList(
+                \yii\helpers\ArrayHelper::map($roles, 'name', 'description')
+        ) ?>
         <?= $form->field($model, '_permissions')->dropDownList(
-                \yii\helpers\ArrayHelper::map($availableRoles, 'name', 'description'),
+                \yii\helpers\ArrayHelper::map($availablePermissions, 'name', 'description'),
             [
                     'multiple' => true
             ]
@@ -38,7 +48,7 @@ $this->registerJsVar('searchPlaceholder', Yii::t('app', "Search"));
     </div>
     <div class="card-footer">
         <?= \yii\bootstrap5\Html::submitButton(
-            Yii::t('app', "Create"),
+            Yii::t('app', "Update"),
             [
                 'class' => 'btn btn-success'
             ]

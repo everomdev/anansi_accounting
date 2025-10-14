@@ -32,8 +32,14 @@ $this->title = Yii::t('app', "Users");
                 'delete' => function($key, $model, $url){
                     return \yii\bootstrap5\Html::a(
                         "<i class='bx bxs-trash'></i>",
-                        ['//user/admin/delete-user'],
-                        ['class' => 'text-warning']
+                        ['//user/admin/delete-user', 'id' => $model->id],
+                        [
+                            'class' => 'text-danger',
+                            'data' => [
+                                'method' => 'post',
+                                'confirm' => Yii::t('app', 'Are you sure you want to delete this user?'),
+                            ],
+                        ]
                     );
                 },
 

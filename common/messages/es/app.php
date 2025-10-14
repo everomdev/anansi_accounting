@@ -197,6 +197,7 @@ return [
     'My business' => 'Mi negocio',
     'Name' => 'Nombre',
     'New password' => 'Nueva contraseña',
+    'Confirm password' => 'Confirmar contraseña',
     'New Password' => 'Nueva contraseña',
     'New profitability of menu: {yield}' => 'Nueva rentabilidad del menú: {yield}',
     'New sub recipe' => 'Nueva sub-receta',

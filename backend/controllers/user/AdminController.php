@@ -386,10 +386,17 @@ class AdminController extends Controller
             throw new NotFoundHttpException("Este usuario no existe");
         }
 
+
+        // Obtener el rol actual del usuario
+        $auth = \Yii::$app->authManager;
+        $roles = $auth->getRolesByUser($user->id);
+        $currentRole = count($roles) > 0 ? array_keys($roles)[0] : null;
+
         $form = new CreateUserForm([
             'email' => $user->email,
             'name' => $user->profile->name,
             'userId' => $user->id,
+            'role' => $currentRole,
             'scenario' => CreateUserForm::SCENARIO_UPDATE
         ]);
 
@@ -417,8 +424,24 @@ class AdminController extends Controller
         ]);
     }
 
-    public function actionDeleteUser()
+    public function actionDeleteUser($id)
     {
-
+        if (Yii::$app->request->isPost) {
+            $user = User::findOne(['id' => $id]);
+            if (!$user) {
+                throw new NotFoundHttpException("Usuario no encontrado");
+            }
+            if ($user->id == Yii::$app->user->id) {
+                Yii::$app->session->setFlash('danger', 'No puedes eliminar tu propio usuario.');
+                return $this->redirect(['//user/admin/users']);
+            }
+            if ($user->delete()) {
+                Yii::$app->session->setFlash('success', 'Usuario eliminado correctamente.');
+            } else {
+                Yii::$app->session->setFlash('danger', 'No se pudo eliminar el usuario.');
+            }
+            return $this->redirect(['//user/admin/users']);
+        }
+        throw new NotFoundHttpException("Método no permitido");
     }
 }

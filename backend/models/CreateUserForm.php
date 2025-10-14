@@ -71,8 +71,8 @@ class CreateUserForm extends Model
             'name' => \Yii::t('app', "Name"),
             'email' => \Yii::t('app', "Email"),
             'password' => \Yii::t('app', "Password"),
-            'confirmPassword' => \Yii::t('app', "New Password"),
-            'role' => \Yii::t('app', "Role"),
+            'confirmPassword' => \Yii::t('app', "Confirmar contraseña"),
+            'role' => \Yii::t('app', "Rol"),
         ];
     }
 
@@ -97,10 +97,16 @@ class CreateUserForm extends Model
                     $profile->save();
                 }
 
+
                 $authManager = \Yii::$app->authManager;
                 $permissions = $authManager->getPermissionsByRole($this->role);
                 foreach ($permissions as $permission) {
                     $authManager->assign($permission, $user->id);
+                }
+                // Asignar el rol seleccionado
+                $roleObj = $authManager->getRole($this->role);
+                if ($roleObj) {
+                    $authManager->assign($roleObj, $user->id);
                 }
 
                 \Yii::$app->db->createCommand()
@@ -127,6 +133,12 @@ class CreateUserForm extends Model
 
                 $authManager = \Yii::$app->authManager;
                 $authManager->revokeAll($this->userId);
+                // Asignar el rol seleccionado
+                $roleObj = $authManager->getRole($this->role);
+                if ($roleObj) {
+                    $authManager->assign($roleObj, $this->userId);
+                }
+                // Asignar los permisos seleccionados
                 foreach ($this->_permissions as $permissionName) {
                     $permission = $authManager->getPermission($permissionName);
                     $authManager->assign($permission, $this->userId);
