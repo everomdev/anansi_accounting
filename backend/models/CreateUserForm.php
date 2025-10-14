@@ -42,7 +42,8 @@ class CreateUserForm extends Model
             [['name', 'email'], 'required'],
             [['name', 'email', 'password', 'role', 'confirmPassword'], 'string'],
             [['confirmPassword'], 'compare', 'compareAttribute' => 'password'],
-            [['role', 'password', 'confirmPassword'], 'required', 'on' => self::SCENARIO_CREATE],
+            [['role'], 'required', 'on' => [self::SCENARIO_CREATE, self::SCENARIO_UPDATE]],
+            [['password', 'confirmPassword'], 'required', 'on' => self::SCENARIO_CREATE],
             [['_permissions'], 'required', 'on' => self::SCENARIO_UPDATE],
             [['email'], function ($attribute) {
                 if ($this->scenario == self::SCENARIO_CREATE) {
