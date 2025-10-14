@@ -34,8 +34,6 @@ $this->registerJsVar('searchPlaceholder', Yii::t('app', "Search"));
     <div class="card-body">
         <?= $form->field($model, 'name')->textInput() ?>
         <?= $form->field($model, 'email')->textInput() ?>
-        <?= $form->field($model, 'password')->textInput(['type' => 'password']) ?>
-        <?= $form->field($model, 'confirmPassword')->textInput(['type' => 'password']) ?>
         <?= $form->field($model, 'role')->dropDownList(
                 \yii\helpers\ArrayHelper::map($roles, 'name', 'description')
         ) ?>
