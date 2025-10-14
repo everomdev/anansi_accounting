@@ -12,6 +12,10 @@ $this->title = Yii::t('app', "Users");
         'class' => 'btn btn-success mb-3'
     ]
 ) ?>
+<?php else: ?>
+<div class="alert alert-warning mb-3">
+    <?= Yii::t('app', 'Ha alcanzado el límite de creación de usuarios para su plan. Por favor, contacte al soporte para habilitar más usuarios.') ?>
+</div>
 <?php endif; ?>
 <?=
 \yii\grid\GridView::widget([
