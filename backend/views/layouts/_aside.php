@@ -414,7 +414,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $administracionConfiguracionActive ? 'show' : '' ?>" id="administracionConfiguracion">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('manage_users') and $business != null && $business->user_id == Yii::$app->user->identity->getId() and !Yii::$app->user->identity->hasRestrictions('users')): ?>
+                    <?php if (Yii::$app->user->can('manage_users') and $business != null && $business->user_id == Yii::$app->user->identity->getId()): ?>
                         <li class="menu-item <?= $currentControllerId == 'users' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['//user/admin/users']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Users') ?></div>

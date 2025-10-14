@@ -4,6 +4,7 @@
 $this->title = Yii::t('app', "Users");
 
 ?>
+<?php if (!Yii::$app->user->identity->hasRestrictions('users')): ?>
 <?= \yii\bootstrap5\Html::a(
     Yii::t('app', "Add new user"),
     ['//user/admin/create-user'],
@@ -11,6 +12,7 @@ $this->title = Yii::t('app', "Users");
         'class' => 'btn btn-success mb-3'
     ]
 ) ?>
+<?php endif; ?>
 <?=
 \yii\grid\GridView::widget([
     'dataProvider' => new \yii\data\ActiveDataProvider(['models' => $users]),

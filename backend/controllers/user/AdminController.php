@@ -435,6 +435,8 @@ class AdminController extends Controller
                 Yii::$app->session->setFlash('danger', 'No puedes eliminar tu propio usuario.');
                 return $this->redirect(['//user/admin/users']);
             }
+            // Eliminar de user_business
+            Yii::$app->db->createCommand()->delete('user_business', ['user_id' => $user->id])->execute();
             if ($user->delete()) {
                 Yii::$app->session->setFlash('success', 'Usuario eliminado correctamente.');
             } else {
