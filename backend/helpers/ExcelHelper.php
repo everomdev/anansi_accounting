@@ -31,9 +31,10 @@ class ExcelHelper
     {
         $categories = Category::find()
             ->where([
-                'or',
-                ['business_id' => $business->id],
-                ['business_id' => null],
+            'or',
+            ['business_id' => $business->id],
+            ['business_id' => null],
+            ['builtin' => 1],
             ])
             ->all();
 
@@ -1808,13 +1809,15 @@ if ($ccRow > 2) {
 
         $activeWorksheet->setCellValue("A1", "Clave");
         $activeWorksheet->setCellValue("B1", "Insumo");
-        $activeWorksheet->setCellValue("C1", "Familia de Insumos");
-        $activeWorksheet->setCellValue("D1", "Unidad de compra");
-        $activeWorksheet->setCellValue("E1", "Unidad de cocina");
-        $activeWorksheet->setCellValue("F1", "Factor de Rendimiento");
-        $activeWorksheet->setCellValue("G1", "EQ. Uni. Cocina");
-        $activeWorksheet->setCellValue("I1", "Observaciones");
-        $activeWorksheet->setCellValue("H1", "Precio");
+        $activeWorksheet->setCellValue("C1", "Marca");
+        $activeWorksheet->setCellValue("D1", "Presentación");
+        $activeWorksheet->setCellValue("E1", "Familia de Insumos");
+        $activeWorksheet->setCellValue("F1", "Unidad de compra");
+        $activeWorksheet->setCellValue("G1", "Unidad de cocina");
+        $activeWorksheet->setCellValue("H1", "Factor de Rendimiento");
+        $activeWorksheet->setCellValue("I1", "EQ. Uni. Cocina");
+        $activeWorksheet->setCellValue("J1", "Precio");
+        $activeWorksheet->setCellValue("K1", "Observaciones");
         $activeWorksheet->freezePane("C2");
 
         $ingredients = $business->getIngredientStocks()->all();
@@ -1823,13 +1826,15 @@ if ($ccRow > 2) {
             /** @var $ingredient IngredientStock */
             $activeWorksheet->setCellValue("A$currentRow", $ingredient->key);
             $activeWorksheet->setCellValue("B$currentRow", $ingredient->ingredient);
-            $activeWorksheet->setCellValue("C$currentRow", $ingredient->category->name);
-            $activeWorksheet->setCellValue("D$currentRow", $ingredient->um);
-            $activeWorksheet->setCellValue("E$currentRow", $ingredient->portion_um);
-            $activeWorksheet->setCellValue("F$currentRow", $ingredient->yield);
-            $activeWorksheet->setCellValue("G$currentRow", $ingredient->portions_per_unit);
-            $activeWorksheet->setCellValue("I$currentRow", $ingredient->observations);
-            $activeWorksheet->setCellValue("H$currentRow",$ingredient->lastPrice/$ingredient->portions_per_unit);
+            $activeWorksheet->setCellValue("C$currentRow", $ingredient->brand);
+            $activeWorksheet->setCellValue("D$currentRow", $ingredient->presentation);
+            $activeWorksheet->setCellValue("E$currentRow", $ingredient->category->name);
+            $activeWorksheet->setCellValue("F$currentRow", $ingredient->um);
+            $activeWorksheet->setCellValue("G$currentRow", $ingredient->portion_um);
+            $activeWorksheet->setCellValue("H$currentRow", $ingredient->yield);
+            $activeWorksheet->setCellValue("I$currentRow", $ingredient->portions_per_unit);
+            $activeWorksheet->setCellValue("J$currentRow", $ingredient->lastPrice);
+            $activeWorksheet->setCellValue("K$currentRow", $ingredient->observations);
 
             $currentRow++;
         }
@@ -1842,6 +1847,8 @@ if ($ccRow > 2) {
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Catálogo_de_insumos.xlsx';

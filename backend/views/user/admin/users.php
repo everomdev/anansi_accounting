@@ -43,7 +43,7 @@ $this->title = Yii::t('app', "Users");
                             'class' => 'text-danger',
                             'data' => [
                                 'method' => 'post',
-                                'confirm' => Yii::t('app', 'Are you sure you want to delete this user?'),
+                                'confirm' => Yii::t('app', '¿Está seguro que desea eliminar al usuario "{name}"?', ['name' => $model->profile->name]),
                             ],
                         ]
                     );

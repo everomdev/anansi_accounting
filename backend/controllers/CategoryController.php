@@ -83,8 +83,7 @@ class CategoryController extends Controller
                 'key_prefix',
             ],
             'defaultOrder' => [
-                'category_group.name' => SORT_ASC,
-                'name' => SORT_ASC,
+                'key_prefix' => SORT_ASC,
             ]
         ]);
 

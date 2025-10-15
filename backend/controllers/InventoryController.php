@@ -143,7 +143,7 @@ public function actionCreate()
      * Exporta una plantilla de inventario en Excel con todos los insumos y columnas de existencias.
      * La fecha actual se pone en la primera fila y se protege para que no se pueda modificar.
      */
-   public function actionExportPlantillaInventario()
+public function actionExportPlantillaInventario()
 {
     $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
     $businessId = $businessData['id'] ?? null;
@@ -157,11 +157,17 @@ public function actionCreate()
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle('Inventario');
 
-    // // ====== 1. TÍTULO GENERAL ======
-    // $sheet->mergeCells('A1:H1');
-    // $sheet->setCellValue('A1', '📦 Plantilla de Inventario');
-    // $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-    // $sheet->getStyle('A1')->getAlignment()->setHorizontal('center');
+    // ====== BLOQUEAR NUEVAS HOJAS ======
+    // Eliminar hojas por defecto y mantener solo nuestra hoja
+    $sheetCount = $spreadsheet->getSheetCount();
+    for ($i = $sheetCount - 1; $i > 0; $i--) {
+        $spreadsheet->removeSheetByIndex($i);
+    }
+
+    // Configurar protección del libro para evitar nuevas hojas
+    $spreadsheet->getSecurity()->setLockStructure(true);
+    $spreadsheet->getSecurity()->setLockWindows(true);
+    // setRevisions() fue eliminado ya que no existe
 
     // ====== 2. FECHA ======
     $sheet->setCellValue('A2', 'Fecha de generación:');
@@ -275,13 +281,20 @@ public function actionCreate()
     $sheet->getStyle("A3:H3")->getProtection()->setLocked(true); // Alerta protegida
     $sheet->getStyle("A6:H{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
 
-    // ====== 9. EXPORTAR ARCHIVO ======
+    // ====== 9. CONFIGURACIÓN ADICIONAL PARA BLOQUEAR HOJAS ======
+    // Configurar protección del libro con contraseña
+    $spreadsheet->getSecurity()->setLockStructure(true);
+    $spreadsheet->getSecurity()->setLockWindows(true);
+    $spreadsheet->getSecurity()->setWorkbookPassword('inventario');
+
+    // ====== 10. EXPORTAR ARCHIVO ======
     $filename = 'plantilla_inventario_' . $fechaActual . '.xlsx';
     \Yii::$app->response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     \Yii::$app->response->headers->set('Content-Disposition', 'attachment;filename="' . $filename . '"');
     \Yii::$app->response->headers->set('Cache-Control', 'max-age=0');
 
     $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    
     ob_start();
     $writer->save('php://output');
     $content = ob_get_clean();
