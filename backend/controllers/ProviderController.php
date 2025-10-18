@@ -15,6 +15,11 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use yii\web\UploadedFile;
+use yii\web\Response;
 
 /**
  * ProviderController implements the CRUD actions for Provider model.
@@ -41,7 +46,10 @@ class ProviderController extends Controller
                     [
                         'actions' => [
                             'index',
-                            'ingredients'
+                            'export-template',
+                            'export-all',
+                            'ingredients',
+                            'import'
                         ],
                         'allow' => true,
                         'roles' => ['providers_list']
@@ -53,10 +61,18 @@ class ProviderController extends Controller
                         ],
                         'allow' => true,
                         'roles' => ['providers_view']
+
                     ],
                     [
                         'actions' => [
                             'create',
+                        [
+                            'actions' => [
+                                'import'
+                            ],
+                            'allow' => true,
+                            'roles' => ['providers_create']
+                        ],
 
                         ],
                         'allow' => true,
@@ -224,6 +240,60 @@ class ProviderController extends Controller
             'providers' => $providers,
             'provider' => $provider
         ]);
+    }
+
+    /**
+     * Descargar plantilla para importar proveedores (cabeceras y formato)
+     */
+    public function actionExportTemplate()
+    {
+    $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+    // Usar la versión simplificada para diagnosticar problemas de apertura en Excel
+    \backend\helpers\ExcelHelper::generateProvidersTemplate(new \common\models\Business($business));
+    }
+
+    /**
+     * Exportar todos los proveedores usando la misma plantilla
+     */
+    public function actionExportAll()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = \common\models\Business::findOne($businessData['id']);
+        $providers = Provider::find()->where(['business_id' => $businessData['id']])->all();
+        \backend\helpers\ExcelHelper::generateProvidersTemplate($business, $providers);
+    }
+
+    /**
+     * Importar proveedores desde archivo Excel usando las mismas reglas del modelo Provider
+     */
+    public function actionImport()
+    {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $uploadedFile = UploadedFile::getInstanceByName('providers_file');
+        if (!$uploadedFile) {
+            Yii::$app->session->setFlash('danger', 'No se encontró archivo para importar.');
+            return $this->redirect(['index']);
+        }
+
+        try {
+            $result = \backend\helpers\ExcelHelper::importProviders(new \common\models\Business($business), $uploadedFile->tempName);
+        } catch (\Exception $e) {
+            Yii::$app->session->setFlash('danger', 'Error al procesar el archivo: ' . $e->getMessage());
+            return $this->redirect(['index']);
+        }
+
+        $created = $result['created'] ?? 0;
+        $errors = $result['errors'] ?? [];
+
+        if ($created > 0) {
+            Yii::$app->session->setFlash('success', "Se importaron $created proveedores correctamente.");
+        }
+        if (!empty($errors)) {
+            Yii::$app->session->setFlash('warning', 'Algunas filas no se importaron. Revisa los detalles.');
+            Yii::$app->session->setFlash('import_errors', json_encode($errors));
+        }
+
+        return $this->redirect(['index']);
     }
 
     /**

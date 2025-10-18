@@ -104,7 +104,10 @@ $this->registerJs("
 <div class="provider-index">
 
     <p>
-        <?= Html::a(Yii::t('app', 'Create Provider'), ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a(Yii::t('app', 'Create Provider'), ['create'], ['class' => 'btn btn-warning']) ?>
+        <?= Html::a('Descargar plantilla', ['export-template'], ['class' => 'btn btn-warning ms-2']) ?>
+        <?= Html::a('Exportar proveedores', ['export-all'], ['class' => 'btn btn-warning ms-2']) ?>
+        <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar proveedores', ['icon' => '']), '#', ['class' => 'btn btn-warning ms-2', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-upload-file']) ?>
     </p>
 
     <?php Pjax::begin(); ?>
@@ -238,5 +241,61 @@ $this->registerJs("
     ]); ?>
 
     <?php Pjax::end(); ?>
+<?php
+// Mostrar errores de importación (si existen) en un modal para diagnóstico
+$importErrorsJson = Yii::$app->session->getFlash('import_errors');
+if ($importErrorsJson) {
+    $importErrors = json_decode($importErrorsJson, true);
+    if (!empty($importErrors)) {
+        \yii\bootstrap5\Modal::begin([
+            'id' => 'modal-import-errors',
+            'title' => Yii::t('app', 'Errores de importación'),
+            'size' => \yii\bootstrap5\Modal::SIZE_LARGE,
+        ]);
 
+        echo '<div class="alert alert-warning">Se detectaron errores en algunas filas. Corrige el archivo y vuelve a intentar.</div>';
+        echo '<div class="table-responsive"><table class="table table-sm table-bordered">';
+        echo '<thead><tr><th>Fila</th><th>Errores</th></tr></thead><tbody>';
+        foreach ($importErrors as $row => $err) {
+            $parts = [];
+            foreach ($err as $attr => $msgs) {
+                $parts[] = '<strong>' . htmlspecialchars($attr) . '</strong>: ' . htmlspecialchars(implode('; ', $msgs));
+            }
+            echo '<tr><td>' . htmlspecialchars($row) . '</td><td>' . implode('<br/>', $parts) . '</td></tr>';
+        }
+        echo '</tbody></table></div>';
+
+        \yii\bootstrap5\Modal::end();
+        $this->registerJs("$('#modal-import-errors').modal('show');");
+    }
+}
+
+?>
 </div>
+
+<?php
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-upload-file',
+    'title' => Yii::t('app', "Importar proveedores")
+]);
+$url = \yii\helpers\Url::to(['provider/import']);
+\yii\bootstrap5\ActiveForm::begin([
+    'action' => $url,
+    'method' => 'post',
+    'options' => [
+        'enctype' => 'multipart/form-data'
+    ]
+]);
+
+echo \yii\bootstrap5\Html::input('file', 'providers_file', '', [
+    'class' => 'form-control'
+]);
+echo "<br>";
+echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Importar"), [
+    'class' => 'btn btn-success'
+]);
+
+\yii\bootstrap5\ActiveForm::end();
+
+\yii\bootstrap5\Modal::end();
+?>

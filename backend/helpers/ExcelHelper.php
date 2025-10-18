@@ -131,6 +131,286 @@ class ExcelHelper
         exit(200);
     }
 
+    /**
+     * Genera plantilla de Proveedores. Si $providers se pasa como array, llena con datos.
+     * Mantiene formato similar a otras plantillas en ExcelHelper.
+     * @param Business $business
+     * @param array|null $providers Array de modelos Provider opcional
+     */
+    public static function generateProvidersTemplate(Business $business, $providers = null)
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Proveedores');
+
+        // Títulos en español; incluir 'Nombre del negocio' como primera columna
+        $headers = [
+            'Nombre del negocio',
+            'RFC',
+            'Nombre del contacto',
+            'Correo electrónico',
+            'Teléfono',
+            'Teléfono (contacto)',
+            'Dirección',
+            'Método de pago',
+            'Cuenta/Referencia',
+            'Días de crédito',
+            'Ventajas',
+            'Desventajas',
+            'Observaciones'
+        ];
+
+        // Escribir cabeceras
+        $col = 'A';
+        foreach ($headers as $h) {
+            $sheet->setCellValue($col . '1', $h);
+            // centrar cabecera (se reforzará con el estilo global más abajo)
+            $sheet->getStyle($col . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $col++;
+        }
+
+        // Estilo centrado reutilizable para cabeceras y celdas de datos
+        $centerStyle = [
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ];
+
+        // Aplicar centrado a un rango suficientemente grande para la plantilla/exports
+        // A1:M500 cubre cabeceras y filas de datos esperadas
+        $sheet->getStyle('A1:M500')->applyFromArray($centerStyle);
+
+    // Validación para la columna 'Método de pago' (lista fija)
+    $validation = $sheet->getCell('H2')->getDataValidation();
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $validation->setAllowBlank(true);
+        $validation->setShowDropDown(true);
+        $validation->setShowInputMessage(true);
+        $validation->setShowErrorMessage(true);
+        $validation->setPrompt('Selecciona un método de pago (opcional).');
+    // Lista literal de métodos de pago (select fijo)
+    // Crear hoja oculta con mapeo descripción => código para métodos de pago
+    $paymentSheet = $spreadsheet->createSheet();
+    $paymentSheet->setTitle('MetodosPago');
+    $paymentSheet->setCellValue('A1', 'Descripción');
+    $paymentSheet->setCellValue('B1', 'Código');
+
+    $paymentMapping = [
+        'cash'        => Yii::t('app', 'Efectivo'),
+        'transfer'    => Yii::t('app', 'Transferencia Bancaria'),
+        'check'       => Yii::t('app', 'Cheque'),
+        'credit_card' => Yii::t('app', 'Tarjeta de Crédito'),
+        'debit_card'  => Yii::t('app', 'Tarjeta de Débito'),
+        'other'       => Yii::t('app', 'Otro Método')
+    ];
+
+    $row = 2;
+    foreach ($paymentMapping as $code => $label) {
+        $paymentSheet->setCellValue("A{$row}", $label); // texto visible en Excel
+        $paymentSheet->setCellValue("B{$row}", $code);  // código que se usará al importar
+        $row++;
+    }
+
+    $paymentSheet->getColumnDimension('A')->setWidth(35);
+    $paymentSheet->getColumnDimension('B')->setWidth(20);
+
+    // Ocultar la hoja de métodos de pago
+    $paymentSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
+
+    // Usar el rango de la columna A como lista de validación (mostrar etiquetas en español)
+    $paymentList = "='MetodosPago'!\$A\$2:\$A\$" . ($row - 1);
+    $validation->setFormula1($paymentList);
+
+        // Aplicar validación a muchas filas
+        for ($i = 2; $i <= 500; $i++) {
+            $sheet->getCell('H' . $i)->setDataValidation(clone $validation);
+        }
+
+        // Anchuras
+    foreach (range('A', 'M') as $c) {
+            $spreadsheet->getActiveSheet()->getColumnDimension($c)->setAutoSize(true);
+        }
+
+        // Si se pasaron providers, escribirlos
+        if (is_array($providers) && count($providers) > 0) {
+            $row = 2;
+            foreach ($providers as $p) {
+                $col = 'A';
+                // Convert payment_method codes to human labels for the template
+                if (is_array($p->payment_method)) {
+                    $pmLabels = [];
+                    foreach ($p->payment_method as $pmCode) {
+                        $pmLabels[] = $paymentMapping[$pmCode] ?? $pmCode;
+                    }
+                    $pmValue = implode(', ', $pmLabels);
+                } else {
+                    $pmValue = $paymentMapping[$p->payment_method] ?? $p->payment_method;
+                }
+
+                $vals = [
+                    $p->business_name,
+                    $p->rfc,
+                    $p->name,
+                    $p->email,
+                    $p->phone,
+                    $p->second_phone,
+                    $p->address,
+                    $pmValue,
+                    $p->account,
+                    $p->credit_days,
+                    $p->advantages,
+                    $p->disadvantages,
+                    $p->observations,
+                ];
+                foreach ($vals as $v) {
+                    $sheet->setCellValue($col . $row, $v);
+                    $col++;
+                }
+                $row++;
+            }
+        }
+
+    $spreadsheet->setActiveSheetIndex(0);
+        $writer = new Xlsx($spreadsheet);
+    $fileName = (is_array($providers) && count($providers) > 0) ? 'proveedores_export_' . date('Ymd_His') . '.xlsx' : 'plantilla_proveedores.xlsx';
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+        $writer->save('php://output');
+        exit(200);
+    }
+
+        /**
+         * Import providers from an Excel file.
+         * Returns an array with keys: 'created' => int, 'errors' => array(row => errors)
+         * Mapping supports Spanish headers produced by generateProvidersTemplate and plain attribute names.
+         */
+        public static function importProviders(Business $business, $fileName)
+        {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
+
+            $created = 0;
+            $errors = [];
+
+            // mapping labels -> codes used in the views/templates
+            $paymentMap = [
+                Yii::t('app', 'Efectivo') => 'cash',
+                Yii::t('app', 'Transferencia Bancaria') => 'transfer',
+                Yii::t('app', 'Cheque') => 'check',
+                Yii::t('app', 'Tarjeta de Crédito') => 'credit_card',
+                Yii::t('app', 'Tarjeta de Débito') => 'debit_card',
+                Yii::t('app', 'Otro Método') => 'other',
+                // also accept internal codes directly
+                'cash' => 'cash', 'transfer' => 'transfer', 'check' => 'check', 'credit_card' => 'credit_card', 'debit_card' => 'debit_card', 'other' => 'other'
+            ];
+
+            $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
+            // iterate rows like importIngredients pattern
+            foreach ($rowIterator as $row) {
+                $rowIndex = $row->getRowIndex();
+                if ($rowIndex == 1) continue; // skip header
+
+                $cellIterator = $row->getCellIterator('A', 'M');
+                $cellIterator->setIterateOnlyExistingCells(false);
+
+                // read first cell - business name - if empty, assume end of data
+                $cellIterator->rewind();
+                $firstCell = $cellIterator->current();
+                $businessNameVal = trim((string)self::resolveCellValue($firstCell));
+                if ($businessNameVal === '') {
+                    // treat as end of data
+                    break;
+                }
+
+                // sequentially read columns based on template order
+                $data = [];
+                // A - Nombre del negocio
+                $data['business_name'] = $businessNameVal;
+                $cellIterator->next();
+                // B - RFC
+                $data['rfc'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // C - Nombre del contacto
+                $data['name'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // D - Correo electrónico
+                $data['email'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // E - Teléfono
+                $data['phone'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // F - Teléfono (contacto)
+                $data['second_phone'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // G - Dirección
+                $data['address'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // H - Método de pago (puede ser lista separada por comas)
+                $pmRaw = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // I - Cuenta/Referencia
+                $data['account'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // J - Días de crédito
+                $data['credit_days'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // K - Ventajas
+                $data['advantages'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // L - Desventajas
+                $data['disadvantages'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                // M - Observaciones
+                $data['observations'] = trim((string)self::resolveCellValue($cellIterator->current()));
+
+                $data['business_id'] = $business->id;
+
+                // create model and normalize payment_method
+                $model = new \common\models\Provider(['business_id' => $business->id]);
+                $model->load($data, '');
+
+                // Normalize payment methods: accept comma-separated labels or codes
+                $methods = [];
+                if ($pmRaw !== '') {
+                    $parts = array_map('trim', explode(',', $pmRaw));
+                    foreach ($parts as $p) {
+                        if ($p === '') continue;
+                        // map label to code if possible
+                        $mapped = $paymentMap[$p] ?? null;
+                        if ($mapped) $methods[] = $mapped;
+                        else $methods[] = $p; // unknown, keep raw
+                    }
+                }
+                // If no method provided, set default 'other' to satisfy validation
+                if (empty($methods)) $methods[] = 'other';
+                $model->payment_method = $methods;
+
+                // Validate and save inside a transaction
+                $transaction = \Yii::$app->db->beginTransaction();
+                try {
+                    if ($model->validate()) {
+                        if ($model->save(false)) {
+                            $transaction->commit();
+                            $created++;
+                        } else {
+                            $transaction->rollBack();
+                            $errors[$rowIndex] = $model->getErrors() ?: ['save' => ['No se pudo guardar el proveedor']];
+                        }
+                    } else {
+                        $transaction->rollBack();
+                        $errors[$rowIndex] = $model->getErrors();
+                    }
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    $errors[$rowIndex] = ['exception' => [$e->getMessage()]];
+                }
+            }
+
+            return ['created' => $created, 'errors' => $errors];
+        }
+
 public static function generateIngredientsTemplate($id)
 {
     /** @var Category[] $categories */
