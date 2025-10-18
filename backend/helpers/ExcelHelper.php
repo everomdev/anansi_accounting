@@ -88,8 +88,8 @@ public static function generateIngredientsTemplate($id)
         ->where(['business_id' => $id])
         ->all();
     // Separar unidades de compra y de cocina
-    $purchaseUMs = array_filter($unitOfMeasurements, function($um) { return $um->type === 'purchase'; });
-    $kitchenUMs = array_filter($unitOfMeasurements, function($um) { return $um->type === 'kitchen'; });
+    $purchaseUMs = array_filter($unitOfMeasurements, function($um) { return $um->is_purchase; });
+    $kitchenUMs = array_filter($unitOfMeasurements, function($um) { return $um->is_kitchen; });
 
     $spreadsheet = new Spreadsheet();
     $activeWorksheet = $spreadsheet->getActiveSheet();
@@ -2215,6 +2215,38 @@ if ($ccRow > 2) {
             throw new HttpException(500, "Error al importar recetas: " . $e->getMessage());
         }
     }
+    /**
+     * Resolve a cell value preferring calculated value when the cell contains a formula.
+     * Returns scalar or string. Arrays are imploded with comma.
+     */
+    private static function resolveCellValue(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell)
+    {
+        $val = null;
+        try {
+            if (method_exists($cell, 'isFormula') && $cell->isFormula()) {
+                // Try calculated value first
+                $val = $cell->getCalculatedValue();
+                // Fallback to cached/old value when available
+                if (($val === null || $val === '') && method_exists($cell, 'getOldCalculatedValue')) {
+                    $val = $cell->getOldCalculatedValue();
+                }
+            } else {
+                $val = $cell->getValue();
+            }
+        } catch (\Exception $e) {
+            // In case calculation fails, fallback to raw value
+            $val = $cell->getValue();
+        }
+
+        if (is_array($val)) {
+            return implode(',', $val);
+        }
+        if (is_object($val) && method_exists($val, '__toString')) {
+            return (string)$val;
+        }
+
+        return $val;
+    }
     public static function importSubRecipe(Business $business, $fileName)
     {
         try {
@@ -2254,6 +2286,8 @@ if ($ccRow > 2) {
                     $cellIterator->next();
                     $data['yield_um'] = $cellIterator->current()->getValue(); // F - Unidad de medida final
                     $cellIterator->next();
+                    $data['um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
+                    $cellIterator->next();
                     $portionsValue = $cellIterator->current();
                     $data['portions'] = $portionsValue->getCalculatedValue(); // F - Porciones
                     if (!is_numeric($data['portions'])) {
@@ -2270,8 +2304,6 @@ if ($ccRow > 2) {
                     $cellIterator->next();
                     $timeUnit = $cellIterator->current()->getValue();
                     $data['lifetime'] = $timeValue . ' ' . $timeUnit; // G - Duración
-                    $cellIterator->next();
-                    $data['um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
                     $cellIterator->next();
                     
                     $data['business_id'] = $business->id;
@@ -2294,13 +2326,17 @@ if ($ccRow > 2) {
                     $cellIterator->next();
                     $data['type'] = $cellIterator->current()->getValue(); // B - Tipo (INSUMO/SUBRECETA)
                     $cellIterator->next();
-                    $data['item'] = $cellIterator->current()->getValue(); // C - Item (Insumo o Subreceta)
+                            $cell = $cellIterator->current();
+                            $data['item'] = self::resolveCellValue($cell); // C - Item (Insumo o Subreceta)
                     $cellIterator->next();
-                    $data['quantity'] = $cellIterator->current()->getValue(); // D - Cantidad
+                            $cell = $cellIterator->current();
+                            $data['quantity'] = self::resolveCellValue($cell); // D - Cantidad
                     $cellIterator->next();
-                    $data['portion_um'] = $cellIterator->current()->getValue(); // E - UM
+                            $cell = $cellIterator->current();
+                            $data['portion_um'] = self::resolveCellValue($cell); // E - UM
                     $cellIterator->next();
-                    $data['lastPrice'] = $cellIterator->current()->getValue(); // F - Costo
+                            $cell = $cellIterator->current();
+                            $data['lastPrice'] = self::resolveCellValue($cell); // F - Costo
 
                     $data['business_id'] = $business->id;
 
