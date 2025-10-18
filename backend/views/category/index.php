@@ -145,6 +145,17 @@ $this->registerCss('
                 'headerOptions' => ['class' => 'text-center'],
                 'contentOptions' => ['class' => 'text-center'],
             ],
+            [
+                'label' => Yii::t('app', 'Insumos'),
+                'format' => 'integer',
+                'value' => function($model) use ($business) {
+                    return \common\models\IngredientStock::find()
+                        ->where(['category_id' => $model->id, 'business_id' => $business['id']])
+                        ->count();
+                },
+                'headerOptions' => ['class' => 'text-center'],
+                'contentOptions' => ['class' => 'text-center'],
+            ],
 
             [
                 'class' => 'yii\grid\ActionColumn',
