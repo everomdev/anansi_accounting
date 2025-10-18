@@ -47,7 +47,29 @@ class ExcelHelper
     $activeWorksheet->setCellValue('A1', 'Identificador');
     $activeWorksheet->setCellValue('B1', 'Familias');
     $activeWorksheet->setCellValue('E1', 'Unidad de Medida');
-    $activeWorksheet->setCellValue('F1', 'Tipo');
+    //$activeWorksheet->setCellValue('F1', 'Tipo');
+    // Columnas para flags de UnitOfMeasurement
+    $activeWorksheet->setCellValue('F1', "Insumos\n(Compra)");
+    $activeWorksheet->getStyle('F1')->getAlignment()->setWrapText(true);
+    $activeWorksheet->getStyle('F1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+    $activeWorksheet->getStyle('F1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+    // Ajusta la altura de la fila si hace falta
+    $activeWorksheet->getRowDimension(1)->setRowHeight(30);
+    $activeWorksheet->setCellValue('G1', "Insumos\n(Cocina)");
+    $activeWorksheet->setCellValue('H1', "Subreceta\n(Rendimiento)");
+    $activeWorksheet->setCellValue('I1', "Subreceta\n(UM)");
+    $activeWorksheet->setCellValue('J1', "Recetas\n(Rendimiento)");
+    $activeWorksheet->setCellValue('K1', "Recetas\n(UM Final)");
+
+    // Aplicar wrap y centrado a las cabeceras G1:K1
+    $flagCols = ['G','H','I','J','K'];
+    foreach ($flagCols as $col) {
+        $activeWorksheet->getStyle($col . '1')->getAlignment()->setWrapText(true);
+        $activeWorksheet->getStyle($col . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $activeWorksheet->getStyle($col . '1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+    }
+    // Ajustar la altura de la fila 1 si hace falta
+    $activeWorksheet->getRowDimension(1)->setRowHeight(30);
 
         $currentIndex = 2;
         foreach ($categories as $category) {
@@ -56,14 +78,49 @@ class ExcelHelper
             $currentIndex++;
         }
 
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
+    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setAutoSize(true);
+    // Ajustar anchuras para las columnas de flags
+    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(18);
+    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(18);
+    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(18);
+    $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(18);
+    $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(18);
+    $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(18);
 
         $currentIndex = 2;
         foreach ($unitOfMeasurements as $unitOfMeasurement) {
             $activeWorksheet->setCellValue("E$currentIndex", $unitOfMeasurement->name);
-            $activeWorksheet->setCellValue("F$currentIndex", $unitOfMeasurement->type == 'purchase' ? 'Compra' : ($unitOfMeasurement->type == 'kitchen' ? 'Cocina' : $unitOfMeasurement->type));
+            //$activeWorksheet->setCellValue("F$currentIndex", $unitOfMeasurement->type == 'purchase' ? 'Compra' : ($unitOfMeasurement->type == 'kitchen' ? 'Cocina' : $unitOfMeasurement->type));
+            // Marcar con casilla si es true/false
+            $activeWorksheet->setCellValue("F$currentIndex", $unitOfMeasurement->is_purchase ? '☑' : '☐');
+            $activeWorksheet->setCellValue("G$currentIndex", $unitOfMeasurement->is_kitchen ? '☑' : '☐');
+            $activeWorksheet->setCellValue("H$currentIndex", $unitOfMeasurement->is_subrecipe_yield ? '☑' : '☐');
+            $activeWorksheet->setCellValue("I$currentIndex", $unitOfMeasurement->is_subrecipe_um ? '☑' : '☐');
+            $activeWorksheet->setCellValue("J$currentIndex", $unitOfMeasurement->is_recipe_yield ? '☑' : '☐');
+            $activeWorksheet->setCellValue("K$currentIndex", $unitOfMeasurement->is_recipe_final_um ? '☑' : '☐');
             $currentIndex++;
+        }
+
+        // Formato condicional: mostrar casillas marcadas en verde y desmarcadas en rojo
+        $umLastRow = $currentIndex - 1;
+        $flagColumns = ['F','G','H','I','J','K'];
+        foreach ($flagColumns as $col) {
+            $green = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+            $green->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+            $green->addCondition('$' . $col . '2="☑"');
+            $green->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+            $green->getStyle()->getFill()->getStartColor()->setRGB('C6EFCE'); // light green
+            $green->getStyle()->getFont()->getColor()->setRGB('006100'); // dark green text
+
+            $red = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+            $red->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+            $red->addCondition('$' . $col . '2="☐"');
+            $red->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+            $red->getStyle()->getFill()->getStartColor()->setRGB('FFC7CE'); // light red
+            $red->getStyle()->getFont()->getColor()->setRGB('9C0006'); // dark red text
+
+            $spreadsheet->getActiveSheet()->getStyle($col . '2:' . $col . $umLastRow)->setConditionalStyles([$green, $red]);
         }
 
         $writer = new Xlsx($spreadsheet);
