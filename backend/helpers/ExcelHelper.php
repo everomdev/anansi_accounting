@@ -2440,14 +2440,14 @@ if ($ccRow > 2) {
                     $cellIterator->next();
                     
                     $data['business_id'] = $business->id;
-                    
-    
+                    //var_dump($data);
+
                     $recipeData[] = $data;
                 }
                 $rowIterator->next();
             }
             // Importar ingredientes agrupados por receta
-           $rowIterator = $ingredientsSheet->getRowIterator();
+            $rowIterator = $ingredientsSheet->getRowIterator();
             while (true) {
                 $cellIterator = $rowIterator->current()->getCellIterator('A', 'F');
                 if ($rowIterator->current()->getRowIndex() != 1) {
@@ -2459,16 +2459,20 @@ if ($ccRow > 2) {
                     $cellIterator->next();
                     $data['type'] = $cellIterator->current()->getValue(); // B - Tipo (INSUMO/SUBRECETA)
                     $cellIterator->next();
-                    $data['item'] = $cellIterator->current()->getValue(); // C - Item (Insumo o Subreceta)
+                    $cell = $cellIterator->current();
+                    $data['item'] = self::resolveCellValue($cell); // C - Item (Insumo o Subreceta)
                     $cellIterator->next();
-                    $data['quantity'] = $cellIterator->current()->getValue(); // D - Cantidad
+                    $cell = $cellIterator->current();
+                    $data['quantity'] = self::resolveCellValue($cell); // D - Cantidad
                     $cellIterator->next();
-                    $data['portion_um'] = $cellIterator->current()->getValue(); // E - UM
+                    $cell = $cellIterator->current();
+                    $data['portion_um'] = self::resolveCellValue($cell); // E - UM
                     $cellIterator->next();
-                    $data['lastPrice'] = $cellIterator->current()->getValue(); // F - Costo
+                    $cell = $cellIterator->current();
+                    $data['lastPrice'] = self::resolveCellValue($cell); // F - Costo
 
                     $data['business_id'] = $business->id;
-
+                    //var_dump($data); // Commented out debug output
                     if (!isset($ingredientData[$data['recipe']])) {
                         $ingredientData[$data['recipe']] = [];
                     }
@@ -2476,8 +2480,6 @@ if ($ccRow > 2) {
                 }
                 $rowIterator->next();
             }
-
-
             
             $transaction = \Yii::$app->db->beginTransaction();
             try {
