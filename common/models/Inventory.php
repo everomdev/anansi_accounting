@@ -15,9 +15,11 @@ use Yii;
  * @property float $inventario_servicio
  * @property float $inventario_otro
  * @property string $fecha
+ * @property string $date_end
  *
  * @property IngredientStock $ingredientStock
  * @property Business $business
+ * @property InventoryConsumptionCenter[] $inventoryConsumptionCenters
  */
 class Inventory extends \yii\db\ActiveRecord
 {
@@ -62,6 +64,11 @@ class Inventory extends \yii\db\ActiveRecord
     public function getBusiness()
     {
         return $this->hasOne(Business::class, ['id' => 'business_id']);
+    }
+
+    public function getInventoryConsumptionCenters()
+    {
+        return $this->hasMany(InventoryConsumptionCenter::class, ['inventory_id' => 'id']);
     }
 
     public function beforeSave($insert)

@@ -51,51 +51,22 @@ $this->params['breadcrumbs'][] = $this->title;
             <i class="fas fa-sync-alt"></i> Ajuste Masivo al Inventario
         </button> -->
     </div>
-    <?php
-    // Calcular totales
-    $totalInventario = 0;
-    $totalDinero = 0;
-    $allModels = $dataProvider->query->all();
-    $areas = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
-    $totalesPorArea = [];
-    $cantidadesPorArea = [];
-    foreach ($areas as $area) {
-        $totalesPorArea[$area] = 0;
-        $cantidadesPorArea[$area] = 0;
-    }
-    foreach ($allModels as $model) {
-        $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
-        $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
-        $totalInventario += $total;
-        $totalDinero += $total * $precio;
-        foreach ($areas as $area) {
-            $cantidad = isset($model->{'inventario_' . $area}) ? $model->{'inventario_' . $area} : 0;
-            $cantidadesPorArea[$area] += $cantidad;
-            $totalesPorArea[$area] += $cantidad * $precio;
-        }
-    }
-    ?>
     <div class="alert alert-info" style="margin-bottom:18px;">
-        <strong>Total Inventario:</strong> <?= formatNumber($totalInventario) ?>
+        <strong>Total Inventario:</strong> <?= formatNumber($totalInventario ?? 0) ?>
         &nbsp; | &nbsp;
-        <strong>Total Dinero:</strong> <?= formatPrice($totalDinero) ?>
+        <strong>Total Dinero:</strong> <?= formatPrice($totalDinero ?? 0) ?>
     </div>
     <div class="alert alert-warning" style="margin-bottom:18px;">
         <strong>Total por área:</strong>
-        Almacén: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['almacen']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['almacen']) ?>|
-        Cocina:  (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['cocina']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['cocina']) ?> |
-        Barra: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['barra']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['barra']) ?> |
-        Servicio: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['servicio']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['servicio']) ?> |
-        Otro: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['otro']) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['otro']) ?>
+        Almacén: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['almacen'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['almacen'] ?? 0) ?>|
+        Cocina:  (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['cocina'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['cocina'] ?? 0) ?> |
+        Barra: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['barra'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['barra'] ?? 0) ?> |
+        Servicio: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['servicio'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['servicio'] ?? 0) ?> |
+        Otro: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['otro'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['otro'] ?? 0) ?>
     </div>
     <div class="table-responsive sticky-header-container" style="overflow-x:auto;">
-    <?= GridView::widget([
-        'dataProvider' => $dataProvider,
-        'filterModel' => isset($searchModel) ? $searchModel : null,
-        'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
-        'options' => ['class' => 'grid-view sticky-header-grid'],
-        'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
-        'columns' => [
+    <?php
+    $columns = [
             [
                 'attribute' => 'ingredient_stock_id',
                 'headerOptions' => ['class' => 'sticky-col', 'style' => 'min-width: 250px; width: 25%;text-align:center;'],
@@ -162,124 +133,95 @@ $this->params['breadcrumbs'][] = $this->title;
                     ]
                 ),
             ],
-            [
-                'attribute' => 'inventario_almacen',
-                'label' => 'Inventario<br>Almacén',
-                'headerOptions' => ['style' => 'text-align:center;'],
-                'contentOptions' => ['style' => 'text-align:center;'],
+    ];
+
+    // Agregar columnas dinámicas por centro de consumo después de Familias
+    if (!empty($consumptionCenters)) {
+        foreach ($consumptionCenters as $center) {
+            $columns[] = [
+                'label' => Html::encode($center->name),
                 'encodeLabel' => false,
-                'value' => function($model) {
-                    return formatNumber($model->inventario_almacen);
-                },
-            ],
-            // [
-            //         'label' => 'Existencia<br>Almacén',
-            //         'encodeLabel' => false,
-            //         'headerOptions' => ['style' => 'text-align:center;'],
-            //         'value' => function($model) {
-            //             return isset($model->ingredientStock) ? Yii::$app->formatter->asInteger($model->ingredientStock->quantity) : '-';
-            //         },
-            //         'contentOptions' => ['style' => 'background:#eaf7ea; font-weight:bold;text-align:center;'],
-            // ],
-            [
-                'attribute' => 'inventario_cocina',
-                'label' => 'Inventario<br>Cocina',
-                'headerOptions' => ['style' => 'text-align:center;'],
+                'headerOptions' => ['style' => 'text-align:center; min-width:120px;'],
                 'contentOptions' => ['style' => 'text-align:center;'],
-                'encodeLabel' => false,
-                'value' => function($model) {
-                    return formatNumber($model->inventario_cocina);
-                },
-            ],
-            [
-                'attribute' => 'inventario_barra',
-                'label' => 'Inventario<br>Barra',
-                'headerOptions' => ['style' => 'text-align:center;'],
-                'contentOptions' => ['style' => 'text-align:center;'],
-                'encodeLabel' => false,
-                'value' => function($model) {
-                    return formatNumber($model->inventario_barra);
-                },
-            ],
-            [
-                'attribute' => 'inventario_servicio',
-                'label' => 'Inventario<br>Servicio',
-                'headerOptions' => ['style' => 'text-align:center;'],
-                'contentOptions' => ['style' => 'text-align:center;'],
-                'encodeLabel' => false,
-                'value' => function($model) {
-                    return formatNumber($model->inventario_servicio);
-                },
-            ],
-            [
-                'attribute' => 'inventario_otro',
-                'label' => 'Inventario<br>Otro',
-                'headerOptions' => ['style' => 'text-align:center;'],
-                'contentOptions' => ['style' => 'text-align:center;'],
-                'encodeLabel' => false,
-                'value' => function($model) {
-                    return Yii::$app->formatter->asInteger($model->inventario_otro);
-                },
-            ],
-                [
-                    'label' => 'Mínimo',
-                    'encodeLabel' => false,
-                    'headerOptions' => ['style' => 'text-align:center;'],
-                    'contentOptions' => ['style' => 'text-align:center;'],
-                    'value' => function($model) {
-                        if (isset($model->ingredientStock) && $model->ingredientStock->min_stock !== null) {
-                            return Yii::$app->formatter->asInteger($model->ingredientStock->min_stock);
+                'value' => function($model) use ($center) {
+                    foreach ($model->inventoryConsumptionCenters as $icc) {
+                        if ($icc->consumption_center_id == $center->id) {
+                            return formatNumber($icc->quantity);
                         }
-                        return '-';
-                    },
-                ],
-                [
-                    'label' => 'Máximo',
-                    'encodeLabel' => false,
-                    'headerOptions' => ['style' => 'text-align:center;'],
+                    }
+                    return '-';
+                }
+            ];
+        }
+    }
+
+    // Agregar las columnas restantes
+    $columns = array_merge($columns, [
+            [
+                'label' => 'Mínimo',
+                'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
                 'contentOptions' => ['style' => 'text-align:center;'],
-                    'value' => function($model) {
-                        if (isset($model->ingredientStock) && $model->ingredientStock->max_stock !== null) {
-                            return Yii::$app->formatter->asInteger($model->ingredientStock->max_stock);
+                'value' => function($model) {
+                    if (isset($model->ingredientStock) && $model->ingredientStock->min_stock !== null) {
+                        return Yii::$app->formatter->asInteger($model->ingredientStock->min_stock);
+                    }
+                    return '-';
+                },
+            ],
+            [
+                'label' => 'Máximo',
+                'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
+                'value' => function($model) {
+                    if (isset($model->ingredientStock) && $model->ingredientStock->max_stock !== null) {
+                        return Yii::$app->formatter->asInteger($model->ingredientStock->max_stock);
+                    }
+                    return '-';
+                },
+            ],
+            [
+                'label' => 'Último movimiento',
+                'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
+                'contentOptions' => ['style' => 'text-align:center;'],
+                'value' => function($model) {
+                    if (isset($model->ingredientStock)) {
+                        $ultimo = $model->ingredientStock->getMovements()->orderBy(['created_at' => SORT_DESC])->one();
+                        if ($ultimo) {
+                            $tipo = ($ultimo->type === 'input') ? 'Entrada' : (($ultimo->type === 'output') ? 'Salida' : ucfirst($ultimo->type));
+                            return $tipo . ': ' . Yii::$app->formatter->asInteger($ultimo->quantity);
                         }
-                        return '-';
-                    },
-                ],
-                [
-                    'label' => 'Último movimiento',
-                    'encodeLabel' => false,
-                    'headerOptions' => ['style' => 'text-align:center;'],
+                    }
+                    return '-';
+                },
+            ],
+            [
+                'label' => 'Proveedor',
+                'encodeLabel' => false,
+                'headerOptions' => ['style' => 'text-align:center;'],
                 'contentOptions' => ['style' => 'text-align:center;'],
-                        'value' => function($model) {
-                            if (isset($model->ingredientStock)) {
-                                $ultimo = $model->ingredientStock->getMovements()->orderBy(['created_at' => SORT_DESC])->one();
-                                if ($ultimo) {
-                                    $tipo = ($ultimo->type === 'input') ? 'Entrada' : (($ultimo->type === 'output') ? 'Salida' : ucfirst($ultimo->type));
-                                    return $tipo . ': ' . Yii::$app->formatter->asInteger($ultimo->quantity);
-                                }
-                            }
-                            return '-';
-                        },
-                ],
-                [
-                    'label' => 'Proveedor',
-                    'encodeLabel' => false,
-                    'headerOptions' => ['style' => 'text-align:center;'],
-                'contentOptions' => ['style' => 'text-align:center;'],
-                    'value' => function($model) {
-                        if (isset($model->ingredientStock) && $model->ingredientStock->providers) {
-                            $providers = $model->ingredientStock->getProviders()->select('business_name')->column();
-                            return !empty($providers) ? implode(', ', $providers) : '-';
-                        }
-                        return '-';
-                    },
-                ],
+                'value' => function($model) {
+                    if (isset($model->ingredientStock) && $model->ingredientStock->providers) {
+                        $providers = $model->ingredientStock->getProviders()->select('business_name')->column();
+                        return !empty($providers) ? implode(', ', $providers) : '-';
+                    }
+                    return '-';
+                },
+            ],
             [
                 'label' => 'Total<br>Inventario',
                 'encodeLabel' => false,
                 'headerOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
-                    return $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
+                    $total = 0;
+                    if (!empty($model->inventoryConsumptionCenters)) {
+                        foreach ($model->inventoryConsumptionCenters as $icc) {
+                            $total += $icc->quantity;
+                        }
+                    }
+                    return $total;
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#f8f9fa;text-align:center;'],
             ],
@@ -298,14 +240,28 @@ $this->params['breadcrumbs'][] = $this->title;
                 'encodeLabel' => false,
                 'headerOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
-                    $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
+                    $total = 0;
+                    if (!empty($model->inventoryConsumptionCenters)) {
+                        foreach ($model->inventoryConsumptionCenters as $icc) {
+                            $total += $icc->quantity;
+                        }
+                    }
                     $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice : 0;
                     return formatCost($total * $precio);
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#eaf7ea;text-align:center;'],
             ],
-        ],
-    ]) ?>
+    ]);
+
+    echo GridView::widget([
+        'dataProvider' => $dataProvider,
+        'filterModel' => isset($searchModel) ? $searchModel : null,
+        'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
+        'options' => ['class' => 'grid-view sticky-header-grid'],
+        'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
+        'columns' => $columns,
+    ]);
+    ?>
     </div>
     <div class="mt-3">
         <?= Html::a('<i class="fas fa-history"></i> Ver Historial de Ajustes', ['/kpi/historial-ajustes'], ['class' => 'btn btn-secondary mr-2']) ?>

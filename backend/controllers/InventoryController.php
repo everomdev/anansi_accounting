@@ -3,6 +3,8 @@ namespace backend\controllers;
 
 use Yii;
 use common\models\Inventory;
+use common\models\InventoryConsumptionCenter;
+use common\models\ConsumptionCenter;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -47,11 +49,27 @@ class InventoryController extends Controller
 public function actionCreate()
 {
     $model = new Inventory();
+    $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+    $businessId = $businessData['id'] ?? null;
     
     // Si es una petición GET (búsqueda o filtrado), solo mostrar la vista
     if (Yii::$app->request->isGet) {
+        $fecha = Yii::$app->request->get('fecha');
+        $inventarios = [];
+        if ($fecha) {
+            // Cargar datos existentes para edición
+            $inventories = Inventory::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->with('inventoryConsumptionCenters')->all();
+            foreach ($inventories as $inv) {
+                foreach ($inv->inventoryConsumptionCenters as $icc) {
+                    $inventarios[$inv->ingredient_stock_id][$icc->consumption_center_id] = $icc->quantity;
+                }
+            }
+            $model->fecha = $fecha;
+        }
         return $this->render('create', [
             'model' => $model,
+            'inventarios' => $inventarios,
+            'fecha' => $fecha,
         ]);
     }
     
@@ -60,13 +78,23 @@ public function actionCreate()
         $post = Yii::$app->request->post();
         $fecha = $post['Inventory']['fecha'] ?? null;
         $inventarios = $post['inventario'] ?? [];
-        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
-        $businessId = $businessData['id'] ?? null;
         $errors = [];
         
         // Obtener todos los insumos del negocio
         $allStocks = \common\models\IngredientStock::find()->where(['business_id' => $businessId])->all();
         $allIds = array_map(function($stock) { return $stock->id; }, $allStocks);
+        
+        // Obtener centros de consumo del negocio
+        $consumptionCenters = \common\models\ConsumptionCenter::find()->where(['business_id' => $businessId])->all();
+        
+        // Si es edición, eliminar registros existentes
+        if ($fecha) {
+            $existingInventories = Inventory::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->all();
+            foreach ($existingInventories as $inv) {
+                InventoryConsumptionCenter::deleteAll(['inventory_id' => $inv->id]);
+                $inv->delete();
+            }
+        }
         
         $dateEnd = date('Y-m-d H:i:s');
         foreach ($allIds as $insumoId) {
@@ -76,13 +104,19 @@ public function actionCreate()
             $inv->business_id = $businessId;
             $inv->fecha = $fecha;
             $inv->date_end = $dateEnd;
-            $inv->inventario_almacen = isset($data['inventario_almacen']) && $data['inventario_almacen'] !== '' ? $data['inventario_almacen'] : 0;
-            $inv->inventario_cocina = isset($data['inventario_cocina']) && $data['inventario_cocina'] !== '' ? $data['inventario_cocina'] : 0;
-            $inv->inventario_barra = isset($data['inventario_barra']) && $data['inventario_barra'] !== '' ? $data['inventario_barra'] : 0;
-            $inv->inventario_servicio = isset($data['inventario_servicio']) && $data['inventario_servicio'] !== '' ? $data['inventario_servicio'] : 0;
-            $inv->inventario_otro = isset($data['inventario_otro']) && $data['inventario_otro'] !== '' ? $data['inventario_otro'] : 0;
             
-            if (!$inv->save()) {
+            if ($inv->save()) {
+                foreach ($consumptionCenters as $center) {
+                    $quantity = isset($data[$center->id]) && $data[$center->id] !== '' ? $data[$center->id] : 0;
+                    $icc = new InventoryConsumptionCenter();
+                    $icc->inventory_id = $inv->id;
+                    $icc->consumption_center_id = $center->id;
+                    $icc->quantity = $quantity;
+                    if (!$icc->save()) {
+                        $errors[$insumoId][] = 'Error saving for center ' . $center->name . ': ' . json_encode($icc->getErrors());
+                    }
+                }
+            } else {
                 $errors[$insumoId] = $inv->getErrors();
             }
         }
@@ -98,6 +132,7 @@ public function actionCreate()
     
     return $this->render('create', [
         'model' => $model,
+        'inventarios' => [],
     ]);
 }
 
@@ -132,11 +167,114 @@ public function actionCreate()
         // Obtener la fecha de finalización del primer registro de inventario para esa fecha
         $firstInventory = \common\models\Inventory::find()->where(['fecha' => $fecha])->orderBy(['id' => SORT_ASC])->one();
         $dateEnd = $firstInventory ? $firstInventory->date_end : null;
+
+        // Obtener business_id (misma fuente que en otros métodos)
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $businessId = $businessData['id'] ?? null;
+
+        // Centros de consumo del negocio
+        $consumptionCenters = ConsumptionCenter::find()->where(['business_id' => $businessId])->orderBy(['id' => SORT_ASC])->all();
+
+        // Cargar modelos (con relaciones) para calcular totales dinámicos
+        $query = $dataProvider->query->with(['inventoryConsumptionCenters', 'ingredientStock']);
+        $allModels = $query->all();
+
+        $totalInventario = 0;
+        $totalDinero = 0;
+        $totalesPorCentroCantidad = [];
+        $totalesPorCentroCosto = [];
+
+        // Preparar totales por áreas fijas (almacen, cocina, barra, servicio, otro)
+        $areasFixed = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
+        $cantidadesPorArea = array_fill_keys($areasFixed, 0);
+        $totalesPorArea = array_fill_keys($areasFixed, 0);
+
+        // Mapa de id => nombre para centros
+        $centerNameMap = [];
+        foreach ($consumptionCenters as $c) {
+            $centerNameMap[$c->id] = mb_strtolower($c->name);
+        }
+
+        if (!empty($consumptionCenters)) {
+            foreach ($consumptionCenters as $c) {
+                $totalesPorCentroCantidad[$c->id] = 0;
+                $totalesPorCentroCosto[$c->id] = 0;
+            }
+
+            foreach ($allModels as $model) {
+                // calcular suma por modelo (todos los centros)
+                $sumaModel = 0;
+                $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
+                foreach ($model->inventoryConsumptionCenters as $icc) {
+                    $sumaModel += $icc->quantity;
+                    if (isset($totalesPorCentroCantidad[$icc->consumption_center_id])) {
+                        $totalesPorCentroCantidad[$icc->consumption_center_id] += $icc->quantity;
+                        $totalesPorCentroCosto[$icc->consumption_center_id] += ($icc->quantity * $precio);
+                    }
+                    // mapear cantidad también a área fija según el nombre del centro
+                    $centerName = $centerNameMap[$icc->consumption_center_id] ?? '';
+                    $assigned = false;
+                    if ($centerName !== '') {
+                        if (mb_strpos($centerName, 'almac') !== false) { // almacén
+                            $cantidadesPorArea['almacen'] += $icc->quantity;
+                            $totalesPorArea['almacen'] += $icc->quantity * $precio;
+                            $assigned = true;
+                        } elseif (mb_strpos($centerName, 'cocina') !== false) {
+                            $cantidadesPorArea['cocina'] += $icc->quantity;
+                            $totalesPorArea['cocina'] += $icc->quantity * $precio;
+                            $assigned = true;
+                        } elseif (mb_strpos($centerName, 'barra') !== false) {
+                            $cantidadesPorArea['barra'] += $icc->quantity;
+                            $totalesPorArea['barra'] += $icc->quantity * $precio;
+                            $assigned = true;
+                        } elseif (mb_strpos($centerName, 'servi') !== false) {
+                            $cantidadesPorArea['servicio'] += $icc->quantity;
+                            $totalesPorArea['servicio'] += $icc->quantity * $precio;
+                            $assigned = true;
+                        }
+                    }
+                    if (!$assigned) {
+                        $cantidadesPorArea['otro'] += $icc->quantity;
+                        $totalesPorArea['otro'] += $icc->quantity * $precio;
+                    }
+                }
+                $totalInventario += $sumaModel;
+                $totalDinero += $sumaModel * $precio;
+            }
+        } else {
+            // Fallback: calcular usando campos fijos antigos
+            $areas = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
+            $totalesPorArea = [];
+            $cantidadesPorArea = [];
+            foreach ($areas as $area) {
+                $totalesPorArea[$area] = 0;
+                $cantidadesPorArea[$area] = 0;
+            }
+            foreach ($allModels as $model) {
+                $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
+                $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
+                $totalInventario += $total;
+                $totalDinero += $total * $precio;
+                foreach ($areas as $area) {
+                    $cantidad = isset($model->{'inventario_' . $area}) ? $model->{'inventario_' . $area} : 0;
+                    $cantidadesPorArea[$area] += $cantidad;
+                    $totalesPorArea[$area] += $cantidad * $precio;
+                }
+            }
+        }
+
         return $this->render('detalle', [
             'dataProvider' => $dataProvider,
             'searchModel' => $searchModel,
             'fecha' => $fecha,
             'dateEnd' => $dateEnd,
+            'consumptionCenters' => $consumptionCenters,
+            'totalesPorCentroCantidad' => $totalesPorCentroCantidad,
+            'totalesPorCentroCosto' => $totalesPorCentroCosto,
+            'totalesPorArea' => $totalesPorArea,
+            'cantidadesPorArea' => $cantidadesPorArea,
+            'totalInventario' => $totalInventario,
+            'totalDinero' => $totalDinero,
         ]);
     }
     /**

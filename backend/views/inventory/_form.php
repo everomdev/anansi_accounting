@@ -2,8 +2,17 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
-// Redireccionar si no están todos los parámetros de áreas
-$areaParams = ['show_almacen', 'show_cocina', 'show_barra', 'show_servicio', 'show_otro'];
+// Obtener centros de consumo para el business
+$businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$business = \common\models\Business::findOne(['id' => $businessData['id']]);
+$consumptionCenters = \common\models\ConsumptionCenter::find()->where(['business_id' => $business->id])->all();
+
+// Crear parámetros dinámicos para mostrar centros
+$areaParams = [];
+foreach ($consumptionCenters as $center) {
+    $areaParams[] = 'show_' . $center->id;
+}
+
 $hasAnyArea = false;
 foreach ($areaParams as $p) {
     if (isset($_GET[$p])) {
@@ -11,7 +20,7 @@ foreach ($areaParams as $p) {
         break;
     }
 }
-if (!$hasAnyArea && !Yii::$app->request->isAjax) {
+if (!$hasAnyArea && !Yii::$app->request->isAjax && count($consumptionCenters) > 0) {
     // Solo si no hay ningún parámetro de área, los ponemos todos en 1
     $url = Yii::$app->request->url;
     $parsed = parse_url($url);
@@ -29,13 +38,12 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Inventory */
+$inventarios = $inventarios ?? [];
 ?>
 <div class="inventory-form">
     <?php
     use yii\grid\GridView;
     use common\models\IngredientStockSearch;
-    $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
-    $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     $searchModel = new IngredientStockSearch();
     $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
     $dataProvider->query->andWhere([
@@ -251,20 +259,61 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
     
     <div class="mb-3" style="display:flex;gap:16px;align-items:center;">
         <div class="column-toggle-group">
-            <span style="font-weight:600; margin-right:12px;">Áreas a mostrar:</span>
-            <input type="checkbox" class="btn-check" id="almacen-check" name="show_almacen" value="1" <?= isset($_GET['show_almacen']) ? 'checked' : '' ?>>
-            <label class="btn btn-outline-success btn-sm" for="almacen-check">Almacén</label>
-            <input type="checkbox" class="btn-check" id="cocina-check" name="show_cocina" value="1" <?= isset($_GET['show_cocina']) ? 'checked' : '' ?>>
-            <label class="btn btn-outline-success btn-sm" for="cocina-check">Cocina</label>
-            <input type="checkbox" class="btn-check" id="barra-check" name="show_barra" value="1" <?= isset($_GET['show_barra']) ? 'checked' : '' ?>>
-            <label class="btn btn-outline-success btn-sm" for="barra-check">Barra</label>
-            <input type="checkbox" class="btn-check" id="servicio-check" name="show_servicio" value="1" <?= isset($_GET['show_servicio']) ? 'checked' : '' ?>>
-            <label class="btn btn-outline-success btn-sm" for="servicio-check">Servicio</label>
-            <input type="checkbox" class="btn-check" id="otro-check" name="show_otro" value="1" <?= isset($_GET['show_otro']) ? 'checked' : '' ?>>
-            <label class="btn btn-outline-success btn-sm" for="otro-check">Otro</label>
+            <span style="font-weight:600; margin-right:12px;">Centros de consumo a mostrar:</span>
+            <?php foreach ($consumptionCenters as $center): ?>
+                <input type="checkbox" class="btn-check" id="center-<?= $center->id ?>-check" name="show_<?= $center->id ?>" value="1" <?= isset($_GET['show_' . $center->id]) ? 'checked' : '' ?>>
+                <label class="btn btn-outline-success btn-sm" for="center-<?= $center->id ?>-check"><?= Html::encode($center->name) ?></label>
+            <?php endforeach; ?>
         </div>
         <button type="button" class="btn btn-primary btn-sm" id="filter-columns-btn" style="margin-left:18px;">Filtrar columnas</button>
     </div>
+
+    <?php
+    // Construir columnas dinámicas
+    $columns = [
+        [
+            'attribute' => 'ingredient',
+            'label' => 'Insumo',
+            'filter' => false
+        ],
+        [
+            'label' => 'Unidad<br>Compra',
+            'encodeLabel' => false,
+            'value' => function($insumo) {
+                return isset($insumo->um) ? $insumo->um : '-';
+            },
+            'headerOptions' => ['style' => 'min-width: 120px; width: 10%;'],
+        ],
+        [
+            'label' => 'Familias',
+            'encodeLabel' => false,
+            'value' => function($insumo) {
+                return $insumo->category && isset($insumo->category->name) ? $insumo->category->name : '-';
+            },
+            'headerOptions' => ['style' => 'min-width: 120px; width: 12%;'],
+        ],
+    ];
+
+    // Agregar columnas para centros de consumo
+    foreach ($consumptionCenters as $center) {
+        if (isset($_GET['show_' . $center->id])) {
+            $columns[] = [
+                'label' => Html::encode($center->name),
+                'format' => 'raw',
+                'value' => function($insumo) use ($center, $inventarios) {
+                    $value = isset($inventarios[$insumo->id][$center->id]) ? $inventarios[$insumo->id][$center->id] : '';
+                    return Html::textInput("inventario[{$insumo->id}][{$center->id}]", $value, [
+                        'class' => 'form-control inventory-input', 
+                        'type' => 'number', 
+                        'step' => '0.001',
+                        'data-ingredient-id' => $insumo->id,
+                        'data-area' => '<?= $center->id ?>'
+                    ]);
+                }
+            ];
+        }
+    }
+    ?>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -273,104 +322,7 @@ if (!$hasAnyArea && !Yii::$app->request->isAjax) {
         'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
         'options' => ['class' => 'grid-view sticky-header-grid'],
         'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
-        'columns' => array_values(array_filter([
-            [
-                'attribute' => 'ingredient',
-                'label' => 'Insumo',
-                'filter' => false
-            ],
-            [
-                'label' => 'Unidad<br>Compra',
-                'encodeLabel' => false,
-                'value' => function($insumo) {
-                    return isset($insumo->um) ? $insumo->um : '-';
-                },
-                'headerOptions' => ['style' => 'min-width: 120px; width: 10%;'],
-            ],
-            [
-                'label' => 'Familias',
-                'encodeLabel' => false,
-                'value' => function($insumo) {
-                    return $insumo->category && isset($insumo->category->name) ? $insumo->category->name : '-';
-                },
-                'headerOptions' => ['style' => 'min-width: 120px; width: 12%;'],
-                // 'filter' => \yii\helpers\Html::activeDropDownList(
-                //     $searchModel,
-                //     'categoria',
-                //     \common\models\Category::find()->select(['name', 'id'])->indexBy('id')->column(),
-                //     [
-                //         'class' => 'form-control',
-                //         'prompt' => 'Todas',
-                //         'onchange' => 'this.form.method=\'get\';this.form.submit();'
-                //     ]
-                // ),
-            ],
-            isset($_GET['show_almacen']) ? [
-                'label' => 'Almacén',
-                'format' => 'raw',
-                'value' => function($insumo) {
-                    return Html::textInput("inventario[{$insumo->id}][inventario_almacen]", null, [
-                        'class' => 'form-control inventory-input', 
-                        'type' => 'number', 
-                        'step' => '0.001',
-                        'data-ingredient-id' => $insumo->id,
-                        'data-area' => 'almacen'
-                    ]);
-                }
-            ] : null,
-            isset($_GET['show_cocina']) ? [
-                'label' => 'Cocina',
-                'format' => 'raw',
-                'value' => function($insumo) {
-                    return Html::textInput("inventario[{$insumo->id}][inventario_cocina]", null, [
-                        'class' => 'form-control inventory-input', 
-                        'type' => 'number', 
-                        'step' => '0.001',
-                        'data-ingredient-id' => $insumo->id,
-                        'data-area' => 'cocina'
-                    ]);
-                }
-            ] : null,
-            isset($_GET['show_barra']) ? [
-                'label' => 'Barra',
-                'format' => 'raw',
-                'value' => function($insumo) {
-                    return Html::textInput("inventario[{$insumo->id}][inventario_barra]", null, [
-                        'class' => 'form-control inventory-input', 
-                        'type' => 'number', 
-                        'step' => '0.001',
-                        'data-ingredient-id' => $insumo->id,
-                        'data-area' => 'barra'
-                    ]);
-                }
-            ] : null,
-            isset($_GET['show_servicio']) ? [
-                'label' => 'Servicio',
-                'format' => 'raw',
-                'value' => function($insumo) {
-                    return Html::textInput("inventario[{$insumo->id}][inventario_servicio]", null, [
-                        'class' => 'form-control inventory-input', 
-                        'type' => 'number', 
-                        'step' => '0.001',
-                        'data-ingredient-id' => $insumo->id,
-                        'data-area' => 'servicio'
-                    ]);
-                }
-            ] : null,
-            isset($_GET['show_otro']) ? [
-                'label' => 'Otro',
-                'format' => 'raw',
-                'value' => function($insumo) {
-                    return Html::textInput("inventario[{$insumo->id}][inventario_otro]", null, [
-                        'class' => 'form-control inventory-input', 
-                        'type' => 'number', 
-                        'step' => '0.001',
-                        'data-ingredient-id' => $insumo->id,
-                        'data-area' => 'otro'
-                    ]);
-                }
-            ] : null,
-        ])),
+        'columns' => $columns,
     ]) ?>
     </div>
 
@@ -527,11 +479,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (savedData.insumos) {
                 // Crear inputs ocultos con los datos guardados
                 Object.keys(savedData.insumos).forEach(function(ingredientId) {
-                    var areas = ['almacen', 'cocina', 'barra', 'servicio', 'otro'];
-                    areas.forEach(function(area) {
-                        var value = savedData.insumos[ingredientId][area];
+                    <?php foreach ($consumptionCenters as $center): ?>
+                        var value = savedData.insumos[ingredientId]['<?= $center->id ?>'];
                         if (typeof value !== 'undefined' && value !== null && value !== '') {
-                            var inputName = `inventario[${ingredientId}][inventario_${area}]`;
+                            var inputName = `inventario[${ingredientId}][<?= $center->id ?>]`;
                             
                             // Buscar si ya existe el input
                             var existingInput = document.querySelector(`input[name="${inputName}"]`);
@@ -546,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 form.appendChild(hiddenInput);
                             }
                         }
-                    });
+                    <?php endforeach; ?>
                 });
             }
             
@@ -616,10 +567,9 @@ document.addEventListener('DOMContentLoaded', function() {
             url.searchParams.set('per-page', pageSize);
             
             <?php 
-            $showParams = ['show_almacen', 'show_cocina', 'show_barra', 'show_servicio', 'show_otro'];
-            foreach ($showParams as $param) {
-                if (isset($_GET[$param])) {
-                    echo "url.searchParams.set('{$param}', '1');";
+            foreach ($consumptionCenters as $center) {
+                if (isset($_GET['show_' . $center->id])) {
+                    echo "url.searchParams.set('show_{$center->id}', '1');";
                 }
             }
             ?>
@@ -637,8 +587,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let url = new URL(window.location);
             
             <?php 
-            foreach ($showParams as $param) {
-                echo "url.searchParams.delete('{$param}');";
+            foreach ($consumptionCenters as $center) {
+                echo "url.searchParams.delete('show_{$center->id}');";
             }
             ?>
             

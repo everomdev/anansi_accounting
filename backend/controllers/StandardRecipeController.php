@@ -2587,9 +2587,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         // Unidades de medida
         $unitOfMeasurements = UnitOfMeasurement::find()
             ->select('name')
+            ->where(['business_id' => $business->id])
             ->groupBy('name')
             ->all();
-            
         $rowUM = 2;
         foreach ($unitOfMeasurements as $um) {
             $umSheet->setCellValue("A$rowUM", $um->name);
@@ -2598,10 +2598,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         
         // Categorías
         $categories = RecipeCategory::find()
-            ->where([
-                'business_id' => $business['id']
-            ])->all();
-            
+            ->where(['business_id' => $business->id])
+            ->all();
         $rowCategory = 2;
         foreach ($categories as $category) {
             $categorySheet->setCellValue("A$rowCategory", $category->name);
