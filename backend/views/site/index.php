@@ -6,7 +6,7 @@ $this->title = Yii::$app->name;
 
 <div class="alert alert-info" role="alert">
     <h4 class="alert-heading">¡Trabajando en mejoras del Dashboard!</h4>
-    <p>Estamos trabajando en optimizar y mejorar el dashboard para ofrecerte una mejor experiencia. Pronto estará disponible con nuevas funcionalidades.</p>
+    <p>Estamos trabajando en optimizar y mejorar el dashboard para ofrecerte una mejor experiencia. Pronto estará disponible con mejoras.</p>
     <hr>
     <p class="mb-0">Gracias por tu paciencia.</p>
 </div>
