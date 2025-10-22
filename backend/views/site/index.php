@@ -1,7 +1,7 @@
 <?php
 /* @var $this yii\web\View */
 
-/*$this->title = Yii::$app->name;
+$this->title = Yii::$app->name;
 $business = \backend\helpers\RedisKeys::getBusiness();
 
 // CSS personalizado para el layout del dashboard
@@ -15,7 +15,6 @@ $this->registerCss("
     }
     
     /* Tarjetas por columnas en pantallas grandes */
-    /*
     .dashboard-card-small {
         grid-column: span 3;
     }
@@ -33,14 +32,14 @@ $this->registerCss("
     }
     
     /* Estilos para mejorar espaciado y dimensiones */
-    /*.dashboard-card-content {
+    .dashboard-card-content {
         height: 100%;
         display: flex;
         flex-direction: column;
     }
     
     /* Responsivo para tabletas */
-    /*@media screen and (max-width: 992px) {
+    @media screen and (max-width: 992px) {
         .dashboard-card-small {
             grid-column: span 6;
         }
@@ -51,7 +50,7 @@ $this->registerCss("
     }
     
     /* Responsivo para móviles */
-    /*@media screen and (max-width: 576px) {
+    @media screen and (max-width: 576px) {
         .dashboard-container {
             display: flex;
             flex-direction: column;
@@ -164,5 +163,4 @@ $this->registerCss("
     <?php endif; ?>
     
 </div>
-*/
 ?>
