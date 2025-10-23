@@ -63,7 +63,8 @@ class ConsumptionCenterController extends Controller
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new ConsumptionCenterSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-        $dataProvider->query->andWhere(['business_id' => $business['id']]);
+        $dataProvider->query->andWhere(['business_id' => $business['id']])
+            ->andWhere(['!=', 'name', 'Almacén']);
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,

@@ -35,7 +35,7 @@ class KpiController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['control-insumos', 'proyeccion-compras', 'comparar-insumos', 'comparacion-insumos','ajustar-existencia', 'historial-ajustes','ajustar-inventario-completo'],
+                        'actions' => ['control-insumos', 'proyeccion-compras', 'comparar-insumos', 'comparacion-insumos','ajustar-existencia', 'historial-ajustes','ajustar-inventario-completo', 'ajustar-existencia-masivo'],
                         'allow' => true,
                         'roles' => ['kpi_access'],
                     ],
@@ -671,6 +671,7 @@ public function actionComparacionInsumos()
     if ($fecha) {
         $inventarioModels = \common\models\Inventory::find()
             ->where(['business_id' => $business->id, 'fecha' => $fecha])
+            ->with('inventoryConsumptionCenters')
             ->all();
     }
 
@@ -683,7 +684,42 @@ public function actionComparacionInsumos()
         return $this->render('comparacion-insumos', [
             'dataProvider' => $dataProvider,
             'categorias' => $categorias,
+            'fecha' => $fecha,
+            'nombre' => $nombre,
+            'categoria' => $categoriaId,
         ]);
+    }
+
+    // Obtener el centro de consumo "Almacén" para este business
+    $almacenCenter = \common\models\ConsumptionCenter::find()
+        ->where(['business_id' => $business->id, 'name' => 'Almacén'])
+        ->one();
+
+    if (!$almacenCenter) {
+        // Si no hay centro "Almacén", mostrar error o usar 0
+        Yii::$app->session->setFlash('error', 'No se encontró el centro de consumo "Almacén" para este negocio.');
+        $dataProvider = new \yii\data\ArrayDataProvider([
+            'allModels' => [],
+            'pagination' => ['pageSize' => 20],
+        ]);
+        return $this->render('comparacion-insumos', [
+            'dataProvider' => $dataProvider,
+            'categorias' => $categorias,
+            'fecha' => $fecha,
+            'nombre' => $nombre,
+            'categoria' => $categoriaId,
+        ]);
+    }
+
+    // Crear mapa de inventario por ingredient_stock_id
+    $inventarioMap = [];
+    foreach ($inventarioModels as $inv) {
+        foreach ($inv->inventoryConsumptionCenters as $icc) {
+            if ($icc->consumption_center_id == $almacenCenter->id) {
+                $inventarioMap[$inv->ingredient_stock_id] = $icc->quantity;
+                break;
+            }
+        }
     }
 
     // Obtener los insumos del inventario de esa fecha
@@ -699,7 +735,8 @@ public function actionComparacionInsumos()
         $datosInsumo = $this->calcularDatosInsumo($ingrediente, 0, 0, false);
         
         $existencia_almacen = $ingrediente->quantity;
-        $inventario_almacen = $inv->inventario_almacen;
+        // Usar el inventario del centro "Almacén"
+        $inventario_almacen = isset($inventarioMap[$ingrediente->id]) ? $inventarioMap[$ingrediente->id] : 0;
         $comprado = $datosInsumo['comprado'];
         $consumido_real = $datosInsumo['consumido_real'];
         $compras_menos_consumo = $comprado - $consumido_real;
@@ -728,6 +765,9 @@ public function actionComparacionInsumos()
     return $this->render('comparacion-insumos', [
         'dataProvider' => $dataProvider,
         'categorias' => $categorias,
+        'fecha' => $fecha,
+        'nombre' => $nombre,
+        'categoria' => $categoriaId,
     ]); 
 }
 
@@ -902,11 +942,20 @@ public function actionComparacionInsumos()
             // Obtener todos los inventarios de esa fecha
             $inventarios = \common\models\Inventory::find()
                 ->where(['business_id' => $business->id, 'fecha' => $fecha])
-                ->with('ingredientStock')
+                ->with(['ingredientStock', 'inventoryConsumptionCenters'])
                 ->all();
             
             if (empty($inventarios)) {
                 return $this->asJson(['success' => false, 'message' => 'No se encontraron inventarios para esa fecha']);
+            }
+
+            // Obtener el centro de consumo "Almacén" para este business
+            $almacenCenter = \common\models\ConsumptionCenter::find()
+                ->where(['business_id' => $business->id, 'name' => 'Almacén'])
+                ->one();
+
+            if (!$almacenCenter) {
+                return $this->asJson(['success' => false, 'message' => 'No se encontró el centro de consumo "Almacén" para este negocio.']);
             }
             
             $transaction = Yii::$app->db->beginTransaction();
@@ -922,7 +971,15 @@ public function actionComparacionInsumos()
                     
                     $ingredientStock = $inventario->ingredientStock;
                     $existenciaAnterior = $ingredientStock->quantity;
-                    $nuevaExistencia = $inventario->inventario_almacen; // Usar solo el inventario de almacén
+                    
+                    // Encontrar el inventario del centro "Almacén"
+                    $nuevaExistencia = 0;
+                    foreach ($inventario->inventoryConsumptionCenters as $icc) {
+                        if ($icc->consumption_center_id == $almacenCenter->id) {
+                            $nuevaExistencia = $icc->quantity;
+                            break;
+                        }
+                    }
                     
                     // Solo ajustar si hay diferencia
                     if ($existenciaAnterior != $nuevaExistencia) {

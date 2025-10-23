@@ -113,7 +113,7 @@ $providerNames = array_values(
                     <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
                         <?= $form->field($model, 'consumption_center_id')->dropDownList(
                             \yii\helpers\ArrayHelper::map(
-                                \common\models\ConsumptionCenter::find()->where(['business_id' => $businessData['id']])->all(), 
+                                \common\models\ConsumptionCenter::find()->where(['business_id' => $businessData['id']])->andWhere(['!=', 'name', 'Almacén'])->all(), 
                                 'id', 
                                 'name'
                             ), 

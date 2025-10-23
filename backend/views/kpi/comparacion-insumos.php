@@ -90,7 +90,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 return Html::button('<i class="fas fa-adjust"></i> Ajustar', [
                                     'class' => 'btn btn-warning btn-sm',
                                     'title' => 'Ajustar existencia del almacén',
-                                    'onclick' => "ajustarExistencia({$model['ingredient_stock_id']}, '{$model['nombre']}', {$model['existencia_almacen']}, {$model['inventario_almacen']})"
+                                    'onclick' => "ajustarExistencia({$model['ingredient_stock_id']}, " . json_encode($model['nombre']) . ", {$model['existencia_almacen']}, {$model['inventario_almacen']})"
                                 ]);
                             }
                             return '';
@@ -192,7 +192,7 @@ function ajustarTodos() {
             var ajusteBtn = $row.find('button[onclick*="ajustarExistencia"]');
             if (ajusteBtn.length > 0) {
                 var onclick = ajusteBtn.attr('onclick');
-                var matches = onclick.match(/ajustarExistencia\((\d+),\s*'([^']+)',\s*([^,]+),\s*([^)]+)\)/);
+                var matches = onclick.match(/ajustarExistencia\((\d+),\s*"([^"]+)",\s*([^,]+),\s*([^)]+)\)/);
                 if (matches) {
                     ajustes.push({
                         ingredient_stock_id: matches[1],

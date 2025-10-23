@@ -58,11 +58,24 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
     <div class="alert alert-warning" style="margin-bottom:18px;">
         <strong>Total por área:</strong>
-        Almacén: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['almacen'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['almacen'] ?? 0) ?>|
-        Cocina:  (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['cocina'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['cocina'] ?? 0) ?> |
-        Barra: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['barra'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['barra'] ?? 0) ?> |
-        Servicio: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['servicio'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['servicio'] ?? 0) ?> |
-        Otro: (<?= Yii::$app->formatter->asInteger($cantidadesPorArea['otro'] ?? 0) ?>) <?= Yii::$app->formatter->asCurrency($totalesPorArea['otro'] ?? 0) ?>
+        <?php
+        $totalesHtml = [];
+        if (!empty($consumptionCenters)) {
+            foreach ($consumptionCenters as $center) {
+                $cantidad = $totalesPorCentroCantidad[$center->id] ?? 0;
+                $costo = $totalesPorCentroCosto[$center->id] ?? 0;
+                $totalesHtml[] = Html::encode($center->name) . ': (' . Yii::$app->formatter->asInteger($cantidad) . ') ' . Yii::$app->formatter->asCurrency($costo);
+            }
+        } else {
+            // Fallback a áreas fijas si no hay centros dinámicos
+            $totalesHtml[] = 'Almacén: (' . Yii::$app->formatter->asInteger($cantidadesPorArea['almacen'] ?? 0) . ') ' . Yii::$app->formatter->asCurrency($totalesPorArea['almacen'] ?? 0);
+            $totalesHtml[] = 'Cocina: (' . Yii::$app->formatter->asInteger($cantidadesPorArea['cocina'] ?? 0) . ') ' . Yii::$app->formatter->asCurrency($totalesPorArea['cocina'] ?? 0);
+            $totalesHtml[] = 'Barra: (' . Yii::$app->formatter->asInteger($cantidadesPorArea['barra'] ?? 0) . ') ' . Yii::$app->formatter->asCurrency($totalesPorArea['barra'] ?? 0);
+            $totalesHtml[] = 'Servicio: (' . Yii::$app->formatter->asInteger($cantidadesPorArea['servicio'] ?? 0) . ') ' . Yii::$app->formatter->asCurrency($totalesPorArea['servicio'] ?? 0);
+            $totalesHtml[] = 'Otro: (' . Yii::$app->formatter->asInteger($cantidadesPorArea['otro'] ?? 0) . ') ' . Yii::$app->formatter->asCurrency($totalesPorArea['otro'] ?? 0);
+        }
+        echo implode(' | ', $totalesHtml);
+        ?>
     </div>
     <div class="table-responsive sticky-header-container" style="overflow-x:auto;">
     <?php
