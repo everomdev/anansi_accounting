@@ -40,7 +40,7 @@ class Category extends \yii\db\ActiveRecord
             [['group_id'], 'exist', 'targetClass' => CategoryGroup::class, 'targetAttribute' => ['group_id' => 'id']],
             [['name'], 'validateName'],
             [['key_prefix'], 'string', 'max' => 4],
-            [['key_prefix'], 'unique'],
+            [['key_prefix'], 'unique', 'targetAttribute' => ['key_prefix', 'business_id']],
         ];
     }
 

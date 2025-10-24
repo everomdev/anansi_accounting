@@ -15,10 +15,26 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <div class="ingredient-stock-index">
 
-    <?php Pjax::begin(); ?>
+    <!-- Selector de elementos por página y filtros mejorados -->
+    <div class="row mb-2 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+                <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
+                    <?php foreach ([10, 25, 50, 100] as $value): ?>
+                    <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'insumos por página') ?></span>
+            </div>
+        </div>
+    </div>
+
+    <?php Pjax::begin(['id' => 'ingredient-stock-storage-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
+        'id' => 'ingredient-stock-storage-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
@@ -77,3 +93,22 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <?php Pjax::end(); ?>
 
 </div>
+<?php
+$this->registerJs("
+// Detector de cambio en elementos por página
+document.getElementById('per-page-selector').addEventListener('change', function() {
+    const pageSize = this.value;
+    
+    // Crear URL con nuevo tamaño de página
+    let url = new URL(window.location);
+    url.searchParams.set('per-page', pageSize);
+    
+    // Recargar con el nuevo tamaño de página
+    $.pjax.reload({
+        container: '#ingredient-stock-storage-pjax',
+        url: url.toString(),
+        timeout: 10000
+    });
+});
+");
+?>
