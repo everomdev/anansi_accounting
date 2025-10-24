@@ -26,36 +26,50 @@ $this->registerJsFile(Yii::getAlias("@web/js/ingredient-stock/price_trend.js"),
         ]) ?>
         <div class="d-flex gap-4">
 
+            <div class="flex-fill">
             <?=
-            \yii\bootstrap5\Html::dropDownList(
-                'ingredientId',
-                $ingredientId,
-                ArrayHelper::map(\common\models\IngredientStock::findAll(['business_id' => $business['id']]), 'id', 'label'),
-                [
-                    'class' => "form-control",
-                    'prompt' => '----',
-                    'id' => 'ingredientId'
+            \kartik\select2\Select2::widget([
+                'name' => 'ingredientId',
+                'value' => $ingredientId,
+                'data' => ArrayHelper::map(\common\models\IngredientStock::findAll(['business_id' => $business['id']]), 'id', 'label'),
+                'theme' => \kartik\select2\Select2::THEME_KRAJEE_BS5,
+                'pluginOptions' => [
+                    'allowClear' => true,
+                    'placeholder' => 'Seleccionar ingrediente...',
+                    'minimumResultsForSearch' => 0
+                ],
+                'options' => [
+                    'id' => 'ingredientId',
+                    'class' => 'form-control'
                 ]
-            )
+            ])
             ?>
+            </div>
+            <div class="flex-fill">
             <?=
-            \yii\bootstrap5\Html::dropDownList(
-                'categoryId',
-                $categoryId,
-                ArrayHelper::map(\common\models\Category::find()
+            \kartik\select2\Select2::widget([
+                'name' => 'categoryId',
+                'value' => $categoryId,
+                'data' => ArrayHelper::map(\common\models\Category::find()
                     ->where([
                         'or',
                         ['business_id' => $business['id']],
                         ['builtin' => 1]
                     ])
                     ->all(), 'id', 'name'),
-                [
-                    'class' => "form-control",
-                    'prompt' => '----',
-                    'id' => 'categoryId'
+                'theme' => \kartik\select2\Select2::THEME_KRAJEE_BS5,
+                'pluginOptions' => [
+                    'allowClear' => true,
+                    'placeholder' => 'Seleccionar categoría...',
+                    'minimumResultsForSearch' => 0
+                ],
+                'options' => [
+                    'id' => 'categoryId',
+                    'class' => 'form-control'
                 ]
-            )
+            ])
             ?>
+            </div>
 
         </div>
         <div class="d-flex gap-4 mt-2">

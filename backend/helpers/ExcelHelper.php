@@ -1403,7 +1403,7 @@ if ($ccRow > 2) {
 
         // Crear hoja de leyenda
         $legendSheet = $spreadsheet->createSheet();
-        $legendSheet->setTitle('Leyenda');
+        $legendSheet->setTitle('Instrucciones de uso');
         $legendSheet->setCellValue('A1', 'Columna');
         $legendSheet->setCellValue('B1', 'Descripción');
         $legendSheet->setCellValue('A2', 'Movimiento');

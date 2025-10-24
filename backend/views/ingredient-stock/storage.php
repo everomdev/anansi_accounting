@@ -81,7 +81,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     'priceTrend' => function ($url, $model, $key) {
                         return \yii\bootstrap5\Html::a(
                             \yii\bootstrap5\Html::tag('i', '', ['class' => 'bx bx-chart text-primary']),
-                            \yii\helpers\Url::to(['ingredient-stock/price-trend', 'id' => $model->id])
+                            \yii\helpers\Url::to(['ingredient-stock/price-trend', 'ingredientId' => $model->id])
                         );
                     }
                 ],
