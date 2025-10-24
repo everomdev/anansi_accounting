@@ -142,13 +142,20 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                         </div>
                     </div>
                     <?php
+                    // Convertir null a vacío para preseleccionar "Sin unidades"
+                    if ($model->yield_um === null) {
+                        $model->yield_um = '';
+                    }
                     $yieldUms = \common\models\UnitOfMeasurement::getOwn()->all();
                     if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
                         $yieldUms = array_filter($yieldUms, function($um) { return ($um->is_recipe_yield ?? 0) == 1; });
                     } elseif ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB) {
                         $yieldUms = array_filter($yieldUms, function($um) { return ($um->is_subrecipe_yield ?? 0) == 1; });
                     }
-                    $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList(\yii\helpers\ArrayHelper::map($yieldUms, 'name', 'name'), ['class' => 'form-control', 'id' => 'standardrecipe-yield_um'])->label(false);
+                    $yieldUmOptions = \yii\helpers\ArrayHelper::map($yieldUms, 'name', 'name');
+                    $yieldUmOptions = ['' => 'Sin unidades'] + $yieldUmOptions;
+                    //var_dump($model);
+                    $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList($yieldUmOptions, ['class' => 'form-control', 'id' => 'standardrecipe-yield_um'])->label(false);
                     ?>
                     <?= $form->field($model, 'yield', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
@@ -160,15 +167,21 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     <?php endif; ?>
                     <?php  ?>
                     <?php
+                    // Convertir null a vacío para preseleccionar "Sin unidades"
+                    if ($model->um === null) {
+                        $model->um = '';
+                    }
                     $finalUms = \common\models\UnitOfMeasurement::findAll(['business_id' => $business['id']]);
                     if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
                         $finalUms = array_filter($finalUms, function($um) { return ($um->is_recipe_final_um ?? 0) == 1; });
                     } elseif ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB) {
                         $finalUms = array_filter($finalUms, function($um) { return ($um->is_subrecipe_um ?? 0) == 1; });
                     }
+                    $finalUmOptions = \yii\helpers\ArrayHelper::map($finalUms, 'name', 'name');
+                    $finalUmOptions = ['' => 'Sin unidades'] + $finalUmOptions;
                     echo $form->field($model, 'um', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                    ])->dropDownList(\yii\helpers\ArrayHelper::map($finalUms, 'name', 'name'))->label(
+                    ])->dropDownList($finalUmOptions)->label(
                         $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
                             ? Yii::t('app', 'Unidad de medida')
                             : Yii::t('app', 'Unidad final'),
