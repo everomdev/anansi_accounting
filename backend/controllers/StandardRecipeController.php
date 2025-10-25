@@ -2945,9 +2945,31 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      // 5. Cargar datos con límite para la plantilla
      $batchSize = 350;
      
-     $unitOfMeasurements = UnitOfMeasurement::find()
+     // Separar unidades de medida por tipo
+     $subrecipeYieldUMs = UnitOfMeasurement::find()
          ->select('name')
-         ->where(['business_id' => $business['id']])
+         ->where(['business_id' => $business['id'], 'is_subrecipe_yield' => 1])
+         ->groupBy('name')
+         ->limit($batchSize)
+         ->all();
+     
+     $subrecipeUMs = UnitOfMeasurement::find()
+         ->select('name')
+         ->where(['business_id' => $business['id'], 'is_subrecipe_um' => 1])
+         ->groupBy('name')
+         ->limit($batchSize)
+         ->all();
+     
+     $recipeYieldUMs = UnitOfMeasurement::find()
+         ->select('name')
+         ->where(['business_id' => $business['id'], 'is_recipe_yield' => 1])
+         ->groupBy('name')
+         ->limit($batchSize)
+         ->all();
+     
+     $recipeUMs = UnitOfMeasurement::find()
+         ->select('name')
+         ->where(['business_id' => $business['id'], 'is_recipe_final_um' => 1])
          ->groupBy('name')
          ->limit($batchSize)
          ->all();
@@ -2973,9 +2995,17 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          ->all();
      
      // 6. Llenar hojas de referencia
+     // Unidades de medida - combinar todas las categorías para la hoja UMs
+     $allUMs = array_unique(array_merge(
+         array_column($subrecipeYieldUMs, 'name'),
+         array_column($subrecipeUMs, 'name'),
+         array_column($recipeYieldUMs, 'name'),
+         array_column($recipeUMs, 'name')
+     ));
+     
      $rowUM = 2;
-     foreach ($unitOfMeasurements as $um) {
-         $umSheet->setCellValue("A$rowUM", $um->name);
+     foreach ($allUMs as $umName) {
+         $umSheet->setCellValue("A$rowUM", $umName);
          $rowUM++;
      }
      
@@ -3031,6 +3061,10 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      // 8. Configurar TODAS las validaciones optimizadas
      $colFinalUM = 'G'; // Ajusta estas letras según tu estructura de columnas
+     
+     // Determinar qué unidades usar según el tipo
+     $finalUMs = ($type === 'sub') ? $subrecipeUMs : $recipeUMs;
+     $yieldUMs = ($type === 'sub') ? $subrecipeYieldUMs : $recipeYieldUMs;
 
 $dataValidationFinalUM = new \PhpOffice\PhpSpreadsheet\Cell\DataValidation();
 $dataValidationFinalUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
@@ -3042,8 +3076,16 @@ $dataValidationFinalUM->setShowDropDown(true);
 $dataValidationFinalUM->setErrorTitle('Error de entrada');
 $dataValidationFinalUM->setError('Seleccione una unidad de medida válida');
 $dataValidationFinalUM->setPromptTitle('Unidad de medida final');
-$dataValidationFinalUM->setPrompt('Seleccione la unidad de medida final para esta receta');
-$dataValidationFinalUM->setFormula1('=UMs!$A$2:$A$'.($rowUM-1)); // Ajusta el rango según tus datos
+$dataValidationFinalUM->setPrompt('Seleccione la unidad de medida final para esta ' . ($type === 'sub' ? 'subreceta' : 'receta'));
+
+// Crear una hoja temporal para las unidades específicas si no están vacías
+if (!empty($finalUMs)) {
+    $finalUMNames = array_column($finalUMs, 'name');
+    $finalUMList = '"' . implode(',', $finalUMNames) . '"';
+    $dataValidationFinalUM->setFormula1($finalUMList);
+} else {
+    $dataValidationFinalUM->setFormula1('""');
+}
 
 // 2. Aplicar a todas las filas
 for ($i = 2; $i <= 500; $i++) {
@@ -3096,7 +3138,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationFoodOrDrink->setPrompt('Por favor, selecciona un valor del desplegable.');
      $dataValidationFoodOrDrink->setFormula1('"Alimento,Bebida"');
      
-     // c) Validación para unidades de medida (UM)
+     // c) Validación para unidades de medida (UM) en INGREDIENTES - usar todas las unidades disponibles
      $dataValidationUM = $ingredientsSheet->getCell('E2')->getDataValidation();
      $dataValidationUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
      $dataValidationUM->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
@@ -3108,7 +3150,14 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationUM->setError('Este valor no es admitido');
      $dataValidationUM->setPromptTitle('Selecciona una unidad de medida');
      $dataValidationUM->setPrompt('Por favor, selecciona un valor del desplegable.');
-     $dataValidationUM->setFormula1('=UMs!$A$2:$A$' . ($rowUM - 1));
+     
+     // Usar todas las unidades disponibles para ingredientes
+     if (!empty($allUMs)) {
+         $allUMList = '"' . implode(',', $allUMs) . '"';
+         $dataValidationUM->setFormula1($allUMList);
+     } else {
+         $dataValidationUM->setFormula1('""');
+     }
      
      // d) Validación para categorías
      $dataValidationCategory = $recipesSheet->getCell('B2')->getDataValidation();
@@ -3264,7 +3313,26 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
          
          // Hoja RECETAS
          $recipesSheet->getCell("B$i")->setDataValidation(clone $dataValidationCategory);
-         $recipesSheet->getCell("F$i")->setDataValidation(clone $dataValidationUM);
+         
+         // Validación específica para rendimiento (columna F) según el tipo
+         if (!empty($yieldUMs)) {
+             $yieldUMNames = array_column($yieldUMs, 'name');
+             $yieldUMList = '"' . implode(',', $yieldUMNames) . '"';
+             $dataValidationYieldUM = $recipesSheet->getCell("F$i")->getDataValidation();
+             $dataValidationYieldUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+             $dataValidationYieldUM->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+             $dataValidationYieldUM->setAllowBlank(false);
+             $dataValidationYieldUM->setShowInputMessage(true);
+             $dataValidationYieldUM->setShowErrorMessage(true);
+             $dataValidationYieldUM->setShowDropDown(true);
+             $dataValidationYieldUM->setErrorTitle('Error de entrada');
+             $dataValidationYieldUM->setError('Seleccione una unidad de medida de rendimiento válida');
+             $dataValidationYieldUM->setPromptTitle('Unidad de rendimiento');
+             $dataValidationYieldUM->setPrompt('Seleccione la unidad de medida para el rendimiento');
+             $dataValidationYieldUM->setFormula1($yieldUMList);
+             $recipesSheet->getCell("F$i")->setDataValidation($dataValidationYieldUM);
+         }
+         
          $recipesSheet->getCell("E$i")->setDataValidation(clone $dataValidationYield);
          $recipesSheet->getCell("M$i")->setDataValidation(clone $dataValidationConvoy);
          $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationFoodOrDrink);
