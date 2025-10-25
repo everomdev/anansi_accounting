@@ -4,15 +4,15 @@
 $this->title = Yii::$app->name;
 ?>
 
-<div class="alert alert-info" role="alert">
+<!-- <div class="alert alert-info" role="alert">
     <h4 class="alert-heading">¡Trabajando en mejoras del Dashboard!</h4>
     <p>Estamos trabajando en optimizar y mejorar el dashboard para ofrecerte una mejor experiencia. Pronto estará disponible con mejoras.</p>
     <hr>
     <p class="mb-0">Gracias por tu paciencia.</p>
-</div>
+</div> -->
 
 <?php
-/*
+
 $this->title = Yii::$app->name;
 $business = \backend\helpers\RedisKeys::getBusiness();
 
@@ -27,7 +27,7 @@ $this->registerCss("
     }
     
     /* Tarjetas por columnas en pantallas grandes */
-    /*.dashboard-card-small {
+    .dashboard-card-small {
         grid-column: span 3;
     }
     
@@ -44,14 +44,14 @@ $this->registerCss("
     }
     
     /* Estilos para mejorar espaciado y dimensiones */
-    /*.dashboard-card-content {
+    .dashboard-card-content {
         height: 100%;
         display: flex;
         flex-direction: column;
     }
     
     /* Responsivo para tabletas */
-    /*@media screen and (max-width: 992px) {
+    @media screen and (max-width: 992px) {
         .dashboard-card-small {
             grid-column: span 6;
         }
@@ -62,7 +62,7 @@ $this->registerCss("
     }
     
     /* Responsivo para móviles */
-    /*@media screen and (max-width: 576px) {
+    @media screen and (max-width: 576px) {
         .dashboard-container {
             display: flex;
             flex-direction: column;
@@ -175,4 +175,4 @@ $this->registerCss("
     <?php endif; ?>
     
 </div>
-?>*/
+?>
