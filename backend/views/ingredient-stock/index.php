@@ -549,6 +549,9 @@ $this->registerJs("
 document.getElementById('per-page-selector').addEventListener('change', function() {
     const pageSize = this.value;
     
+    // Guardar en localStorage
+    localStorage.setItem('ingredient-stock-per-page', pageSize);
+    
     // Crear URL con nuevo tamaño de página
     let url = new URL(window.location);
     url.searchParams.set('per-page', pageSize);
@@ -559,6 +562,17 @@ document.getElementById('per-page-selector').addEventListener('change', function
         url: url.toString(),
         timeout: 10000
     });
+});
+
+// Cargar selección guardada al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const savedPerPage = localStorage.getItem('ingredient-stock-per-page');
+    if (savedPerPage) {
+        const selector = document.getElementById('per-page-selector');
+        if (selector) {
+            selector.value = savedPerPage;
+        }
+    }
 });
 
 // Destacar la columna al pasar el mouse
@@ -661,3 +675,57 @@ $(document).ready(function() {
 });
 ");
 ?>
+<script>
+    // Función para guardar elementos por página en localStorage
+    function savePerPageToStorage(pageSize) {
+        localStorage.setItem('ingredient-stock-per-page', pageSize);
+    }
+    
+    // Función para obtener elementos por página del localStorage
+    function getPerPageFromStorage() {
+        const saved = localStorage.getItem('ingredient-stock-per-page');
+        return saved || '10'; // Default 10 si no hay valor guardado
+    }
+    
+    // Aplicar configuración guardada al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        const perPageSelector = document.getElementById('per-page-selector');
+        const savedPerPage = getPerPageFromStorage();
+        
+        // Establecer el valor guardado en el selector
+        perPageSelector.value = savedPerPage;
+        
+        // Si el valor actual es diferente al guardado, aplicar el guardado
+        const currentPageSize = '<?= $dataProvider->pagination->pageSize ?>';
+        if (currentPageSize != savedPerPage) {
+            // Crear URL con el valor guardado y recargar
+            let url = new URL(window.location);
+            url.searchParams.set('per-page', savedPerPage);
+            
+            $.pjax.reload({
+                container: '#ingredient-stock-pjax',
+                url: url.toString(),
+                timeout: 10000
+            });
+        }
+    });
+    
+    // Detector de cambio en elementos por página
+    document.getElementById('per-page-selector').addEventListener('change', function() {
+        const pageSize = this.value;
+        
+        // Guardar en localStorage
+        savePerPageToStorage(pageSize);
+        
+        // Crear URL con nuevo tamaño de página
+        let url = new URL(window.location);
+        url.searchParams.set('per-page', pageSize);
+        
+        // Recargar con el nuevo tamaño de página
+        $.pjax.reload({
+            container: '#ingredient-stock-pjax',
+            url: url.toString(),
+            timeout: 10000
+        });
+    });
+</script>

@@ -579,6 +579,60 @@ $this->registerJs("
     });
 ", \yii\web\View::POS_HEAD);
 ?>
+<script>
+    // Función para guardar elementos por página en localStorage
+    function savePerPageToStorage(pageSize) {
+        localStorage.setItem('sub-standard-recipe-per-page', pageSize);
+    }
+    
+    // Función para obtener elementos por página del localStorage
+    function getPerPageFromStorage() {
+        const saved = localStorage.getItem('sub-standard-recipe-per-page');
+        return saved || '10'; // Default 10 si no hay valor guardado
+    }
+    
+    // Aplicar configuración guardada al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        const perPageSelector = document.getElementById('per-page-selector');
+        const savedPerPage = getPerPageFromStorage();
+        
+        // Establecer el valor guardado en el selector
+        perPageSelector.value = savedPerPage;
+        
+        // Si el valor actual es diferente al guardado, aplicar el guardado
+        const currentPageSize = '<?= $dataProvider->pagination->pageSize ?>';
+        if (currentPageSize != savedPerPage) {
+            // Crear URL con el valor guardado y recargar
+            let url = new URL(window.location);
+            url.searchParams.set('per-page', savedPerPage);
+            
+            $.pjax.reload({
+                container: '#sub-standard-recipes-pjax',
+                url: url.toString(),
+                timeout: 10000
+            });
+        }
+    });
+    
+    // Detector de cambio en elementos por página
+    document.getElementById('per-page-selector').addEventListener('change', function() {
+        const pageSize = this.value;
+        
+        // Guardar en localStorage
+        savePerPageToStorage(pageSize);
+        
+        // Crear URL con nuevo tamaño de página
+        let url = new URL(window.location);
+        url.searchParams.set('per-page', pageSize);
+        
+        // Recargar con el nuevo tamaño de página
+        $.pjax.reload({
+            container: '#sub-standard-recipes-pjax',
+            url: url.toString(),
+            timeout: 10000
+        });
+    });
+</script>
 <?php
 // Aquí había una definición duplicada de las funciones de filtrado que ahora está al inicio del archivo
 ?>
@@ -590,45 +644,29 @@ $this->registerJs("
 </style>
 <?php
 $this->registerJs("
-    // Detector de cambio en elementos por página
-document.getElementById('per-page-selector').addEventListener('change', function() {
-    const pageSize = this.value;
-    
-    // Crear URL con nuevo tamaño de página
-    let url = new URL(window.location);
-    url.searchParams.set('per-page', pageSize);
-    
-    // Recargar con el nuevo tamaño de página
-    $.pjax.reload({
-        container: '#sub-standard-recipes-pjax',
-        url: url.toString(),
-        timeout: 10000
+    // Configurar al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        if(typeof window.setupFilterButtons === 'function') {
+            try {
+                window.setupFilterButtons();
+            } catch(e) {
+                console.error('Error al configurar filtros en DOMContentLoaded:', e);
+            }
+        }
     });
-});
 
-// Configurar al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    if(typeof window.setupFilterButtons === 'function') {
-        try {
-            window.setupFilterButtons();
-        } catch(e) {
-            console.error('Error al configurar filtros en DOMContentLoaded:', e);
+    // Reconfigurar después de PJAX
+    $(document).on('pjax:complete', '#sub-standard-recipes-pjax', function() {
+        if(typeof window.setupFilterButtons === 'function') {
+            try {
+                window.setupFilterButtons();
+                console.log('Filtros configurados después de pjax:complete');
+            } catch(e) {
+                console.error('Error al configurar filtros después de PJAX:', e);
+            }
+        } else {
+            console.warn('setupFilterButtons no está definido después de PJAX');
         }
-    }
-});
-
-// Reconfigurar después de PJAX
-$(document).on('pjax:complete', '#sub-standard-recipes-pjax', function() {
-    if(typeof window.setupFilterButtons === 'function') {
-        try {
-            window.setupFilterButtons();
-            console.log('Filtros configurados después de pjax:complete');
-        } catch(e) {
-            console.error('Error al configurar filtros después de PJAX:', e);
-        }
-    } else {
-        console.warn('setupFilterButtons no está definido después de PJAX');
-    }
-});
+    });
 ", \yii\web\View::POS_READY);
 ?>

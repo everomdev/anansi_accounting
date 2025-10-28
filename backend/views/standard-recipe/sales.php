@@ -371,7 +371,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
                 ], true),
                 'options' => ['class' => 'grid-view'],
                 'tableOptions' => ['class' => 'table table-striped responsive-table'],
-                'layout' => "{summary}\n{pager}\n{items}\n{pager}"
+                // 'layout' => "{summary}\n{pager}\n{items}\n{pager}"
             ]) ?>
         </div>
     </div>

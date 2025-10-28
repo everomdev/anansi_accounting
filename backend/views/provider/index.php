@@ -98,6 +98,35 @@ $this->registerJs("
                 $('.sticky-column').removeClass('scrolled');
             }
         });
+        
+        // Función para guardar la selección de elementos por página en localStorage
+        function savePerPageSelection() {
+            var perPage = $('#provider-pjax .summary .summary > b:last-child').text().trim();
+            if (perPage && perPage !== '0') {
+                localStorage.setItem('provider-per-page', perPage);
+            }
+        }
+        
+        // Función para cargar la selección guardada de elementos por página
+        function loadPerPageSelection() {
+            var savedPerPage = localStorage.getItem('provider-per-page');
+            if (savedPerPage) {
+                var selectElement = $('#provider-pjax select[name=\"per-page\"]');
+                if (selectElement.length > 0) {
+                    selectElement.val(savedPerPage);
+                    // Disparar el evento change para actualizar la vista
+                    selectElement.trigger('change');
+                }
+            }
+        }
+        
+        // Cargar la selección guardada al cargar la página
+        loadPerPageSelection();
+        
+        // Guardar la selección cuando cambie el selector de elementos por página
+        $(document).on('change', '#provider-pjax select[name=\"per-page\"]', function() {
+            savePerPageSelection();
+        });
     });
 ", \yii\web\View::POS_READY);
 ?>
@@ -110,7 +139,7 @@ $this->registerJs("
         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar proveedores', ['icon' => '']), '#', ['class' => 'btn btn-warning ms-2', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-upload-file']) ?>
     </p>
 
-    <?php Pjax::begin(); ?>
+    <?php Pjax::begin(['id' => 'provider-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
