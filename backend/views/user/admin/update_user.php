@@ -15,11 +15,11 @@ $roles = array_filter($roles, function ($role) {
     return $role->name != 'admin';
 });
 
-// Cargar permisos del usuario editado
-$availablePermissions = Yii::$app->authManager->getPermissionsByUser($model->userId);
+// Obtener todos los permisos disponibles para permisos adicionales
+$allPermissions = Yii::$app->authManager->getPermissions();
 
 $this->registerJsVar('availableTitle', Yii::t('app', "Available permissions"));
-$this->registerJsVar('selectedTitle', Yii::t('app', "Selected permissions"));
+$this->registerJsVar('selectedTitle', Yii::t('app', "Additional permissions"));
 $this->registerJsVar('addButtonText', Yii::t('app', "Select"));
 $this->registerJsVar('addAllButtonText', Yii::t('app', "Select all"));
 $this->registerJsVar('removeButtonText', Yii::t('app', "Unselect"));
@@ -34,15 +34,22 @@ $this->registerJsVar('searchPlaceholder', Yii::t('app', "Search"));
     <div class="card-body">
         <?= $form->field($model, 'name')->textInput() ?>
         <?= $form->field($model, 'email')->textInput() ?>
-        <?= $form->field($model, 'role')->dropDownList(
-                \yii\helpers\ArrayHelper::map($roles, 'name', 'description')
-        ) ?>
-        <?= $form->field($model, '_permissions')->dropDownList(
-                \yii\helpers\ArrayHelper::map($availablePermissions, 'name', 'description'),
-            [
-                    'multiple' => true
-            ]
-        ) ?>
+        <div class="row">
+            <div class="col-md-6">
+                <?= $form->field($model, 'role')->dropDownList(
+                    \yii\helpers\ArrayHelper::map($roles, 'name', 'description'),
+                    ['class' => 'form-control']
+                )->label('Rol base <small class="text-muted">(selecciona uno)</small>') ?>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <?= $form->field($model, '_permissions')->dropDownList(
+                    \yii\helpers\ArrayHelper::map($allPermissions, 'name', 'description'),
+                    ['multiple' => true, 'class' => 'form-control']
+                )->label('Permisos adicionales <small class="text-muted">(opcional)</small>') ?>
+            </div>
+        </div>
     </div>
     <div class="card-footer">
         <?= \yii\bootstrap5\Html::submitButton(

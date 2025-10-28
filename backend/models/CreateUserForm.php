@@ -26,14 +26,19 @@ class CreateUserForm extends Model
 
         if (!empty($this->userId)) {
             $authManager = \Yii::$app->authManager;
-            $permissions = $authManager->getPermissionsByUser($this->userId);
+            
+            // Cargar rol del usuario
+            $userRoles = $authManager->getRolesByUser($this->userId);
+            $this->role = !empty($userRoles) ? array_keys($userRoles)[0] : null;
+            
+            // Cargar TODOS los permisos del usuario (incluyendo los del rol)
+            $allPermissions = $authManager->getPermissionsByUser($this->userId);
             $this->_permissions = array_map(function ($permission) {
                 return $permission->name;
-            }, $permissions);
+            }, $allPermissions);
 
             $this->user = User::findOne(['id' => $this->userId]);
         }
-
     }
 
     public function rules()
@@ -44,7 +49,7 @@ class CreateUserForm extends Model
             [['confirmPassword'], 'compare', 'compareAttribute' => 'password'],
             [['role'], 'required', 'on' => [self::SCENARIO_CREATE, self::SCENARIO_UPDATE]],
             [['password', 'confirmPassword'], 'required', 'on' => self::SCENARIO_CREATE],
-            [['_permissions'], 'required', 'on' => self::SCENARIO_UPDATE],
+            [['_permissions'], 'safe'], // Permite array vacío en ambos escenarios
             [['email'], function ($attribute) {
                 if ($this->scenario == self::SCENARIO_CREATE) {
                     $exists = User::find()
@@ -73,6 +78,7 @@ class CreateUserForm extends Model
             'password' => \Yii::t('app', "Password"),
             'confirmPassword' => \Yii::t('app', "Confirmar contraseña"),
             'role' => \Yii::t('app', "Rol"),
+            '_permissions' => \Yii::t('app', "Permisos adicionales"),
         ];
     }
 
@@ -99,14 +105,13 @@ class CreateUserForm extends Model
 
 
                 $authManager = \Yii::$app->authManager;
-                $permissions = $authManager->getPermissionsByRole($this->role);
-                foreach ($permissions as $permission) {
-                    $authManager->assign($permission, $user->id);
-                }
-                // Asignar el rol seleccionado
-                $roleObj = $authManager->getRole($this->role);
-                if ($roleObj) {
-                    $authManager->assign($roleObj, $user->id);
+                
+                // Asignar el rol seleccionado (incluye permisos predefinidos)
+                if ($this->role) {
+                    $roleObj = $authManager->getRole($this->role);
+                    if ($roleObj) {
+                        $authManager->assign($roleObj, $user->id);
+                    }
                 }
 
                 \Yii::$app->db->createCommand()
@@ -133,15 +138,37 @@ class CreateUserForm extends Model
 
                 $authManager = \Yii::$app->authManager;
                 $authManager->revokeAll($this->userId);
-                // Asignar el rol seleccionado
-                $roleObj = $authManager->getRole($this->role);
-                if ($roleObj) {
-                    $authManager->assign($roleObj, $this->userId);
+                
+                // Asignar el rol seleccionado (incluye permisos predefinidos)
+                if ($this->role) {
+                    $roleObj = $authManager->getRole($this->role);
+                    if ($roleObj) {
+                        $authManager->assign($roleObj, $this->userId);
+                    }
                 }
-                // Asignar los permisos seleccionados
-                foreach ($this->_permissions as $permissionName) {
-                    $permission = $authManager->getPermission($permissionName);
-                    $authManager->assign($permission, $this->userId);
+                
+                // Obtener permisos que vienen del rol
+                $rolePermissions = [];
+                if ($this->role) {
+                    $roleObj = $authManager->getRole($this->role);
+                    if ($roleObj) {
+                        $rolePerms = $authManager->getPermissionsByRole($this->role);
+                        foreach ($rolePerms as $perm) {
+                            $rolePermissions[$perm->name] = $perm;
+                        }
+                    }
+                }
+                
+                // Asignar permisos adicionales (solo los que no están incluidos en el rol)
+                if (!empty($this->_permissions)) {
+                    foreach ($this->_permissions as $permissionName) {
+                        if (!isset($rolePermissions[$permissionName])) {
+                            $permission = $authManager->getPermission($permissionName);
+                            if ($permission) {
+                                $authManager->assign($permission, $this->userId);
+                            }
+                        }
+                    }
                 }
                 return true;
             }
