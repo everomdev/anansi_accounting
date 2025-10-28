@@ -55,7 +55,39 @@ $this->registerCss('
         box-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
     
-   
+    /* Columnas sticky para scroll horizontal */
+    .sticky-header-table th:first-child,
+    .sticky-header-table td:first-child,
+    .sticky-header-table th:nth-child(2),
+    .sticky-header-table td:nth-child(2) {
+        position: sticky;
+        left: 0;
+        background-color: #f8f9fa;
+        z-index: 5;
+    }
+    
+    .sticky-header-table th:nth-child(2),
+    .sticky-header-table td:nth-child(2) {
+        left: 20px; /* Ancho aproximado de la primera columna */
+        box-shadow: 2px 0 2px rgba(0,0,0,0.1);
+    }
+    
+    .sticky-header-table thead th:first-child,
+    .sticky-header-table thead th:nth-child(2) {
+        z-index: 15; /* Mayor que el header normal para que se superponga correctamente */
+    }
+    
+    /* Ajustar el ancho mínimo de las primeras columnas */
+    .sticky-header-table th:first-child,
+    .sticky-header-table td:first-child {
+        min-width: 40px;
+        max-width: 80px;
+    }
+    
+    .sticky-header-table th:nth-child(2),
+    .sticky-header-table td:nth-child(2) {
+        min-width: 120px; /* Ancho para el nombre */
+    }
     
     /* Mejorar la apariencia de las columnas ordenables */
     .sortable-column {
