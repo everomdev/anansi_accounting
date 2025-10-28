@@ -187,6 +187,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'total',
                 'label' => Yii::t('app', 'Total'),
                 'value' => function($model) {
+                    // Si es un movimiento de salida, calcular el costo basado en el precio del insumo
+                    if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
+                        $unitPrice = $model->ingredient->lastPrice ?? 0;
+                        $total = $unitPrice * $model->quantity;
+                        return formatPrice(-$total); // Mostrar en negativo
+                    }
+                    
+                    // Para entradas y otros tipos, mostrar el total normal
                     return formatPrice($model->total);
                 },
                 'contentOptions' => ['style' => 'text-align: right;'],

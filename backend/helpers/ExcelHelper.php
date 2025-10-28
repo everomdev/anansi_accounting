@@ -414,12 +414,14 @@ class ExcelHelper
 public static function generateIngredientsTemplate($id)
 {
     /** @var Category[] $categories */
-    $categories = Category::find()->where([
-        'or',
-        ['business_id' => $id],
-        ['business_id' => null],
-    ])->all();
-
+    $categories = Category::find()
+        ->where([
+            'or',
+            ['business_id' => $id],
+            ['business_id' => null],
+        ])
+        ->orderBy(['key_prefix' => SORT_ASC])
+        ->all();
     /** @var UnitOfMeasurement[] $unitOfMeasurements */
     $unitOfMeasurements = UnitOfMeasurement::find()
         ->where(['business_id' => $id])
