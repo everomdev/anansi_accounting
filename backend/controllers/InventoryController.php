@@ -285,6 +285,13 @@ public function actionExportPlantillaInventario()
 {
     $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
     $businessId = $businessData['id'] ?? null;
+    
+    // Obtener centros de consumo del usuario
+    $consumptionCenters = \common\models\ConsumptionCenter::find()
+        ->where(['business_id' => $businessId])
+        ->orderBy(['id' => SORT_ASC])
+        ->all();
+    
     $insumos = \common\models\IngredientStock::find()->where(['business_id' => $businessId])->all();
 
     // Usar la fecha enviada por el usuario o la del servidor como fallback
@@ -336,13 +343,14 @@ public function actionExportPlantillaInventario()
     $headers = [
         'Insumo', 
         'Unidad', 
-        'Categoría',
-        'Existencia Almacén', 
-        'Existencia Cocina', 
-        'Existencia Barra', 
-        'Existencia Servicio', 
-        'Existencia Otro'
+        'Categoría'
     ];
+    
+    // Agregar encabezados dinámicos para cada centro de consumo
+    foreach ($consumptionCenters as $center) {
+        $headers[] = 'Existencia ' . $center->name;
+    }
+    
     $headerRow = 5;
 
     $col = 1;
@@ -352,7 +360,8 @@ public function actionExportPlantillaInventario()
     }
 
     // Estilo de encabezados
-    $sheet->getStyle("A{$headerRow}:H{$headerRow}")->applyFromArray([
+    $lastCol = chr(64 + count($headers)); // Convertir número de columna a letra (A, B, C, etc.)
+    $sheet->getStyle("A{$headerRow}:{$lastCol}{$headerRow}")->applyFromArray([
         'font' => ['bold' => true, 'color' => ['rgb' => '000000']],
         'fill' => [
             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -377,9 +386,11 @@ public function actionExportPlantillaInventario()
         $sheet->setCellValue("B{$row}", $insumo->um);
         $sheet->setCellValue("C{$row}", $insumo->category ? $insumo->category->name : '-');
 
-        // Columnas vacías para llenado manual
-        for ($col = 4; $col <= 8; $col++) {
+        // Columnas vacías para existencias de cada centro de consumo
+        $col = 4; // Empezar desde la columna D
+        foreach ($consumptionCenters as $center) {
             $sheet->setCellValueByColumnAndRow($col, $row, '');
+            $col++;
         }
         $row++;
     }
@@ -387,7 +398,7 @@ public function actionExportPlantillaInventario()
     $lastRow = $row - 1;
 
     // Estilo para el contenido
-    $sheet->getStyle("A" . ($headerRow + 1) . ":H{$lastRow}")->applyFromArray([
+    $sheet->getStyle("A" . ($headerRow + 1) . ":{$lastCol}{$lastRow}")->applyFromArray([
         'alignment' => [
             'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
             'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
@@ -400,9 +411,31 @@ public function actionExportPlantillaInventario()
         ]
     ]);
 
+    // ====== VALIDACIÓN DE DATOS PARA EXISTENCIAS ======
+    for ($r = $headerRow + 1; $r <= $lastRow; $r++) {
+        $col = 4; // Empezar desde la columna D
+        foreach ($consumptionCenters as $center) {
+            $cellCoordinate = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col) . $r;
+            $validation = $sheet->getCell($cellCoordinate)->getDataValidation();
+            $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+            $validation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
+            $validation->setFormula1(0);
+            $validation->setAllowBlank(true);
+            $validation->setShowInputMessage(false);
+            $validation->setShowErrorMessage(true);
+            $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $validation->setErrorTitle('Valor inválido');
+            $validation->setError('Solo se permiten números positivos o cero en esta celda.');
+            $col++;
+        }
+    }
+
     // ====== 5. AUTOAJUSTE DE COLUMNAS ======
-    foreach (range('A', 'H') as $columnID) {
-        $sheet->getColumnDimension($columnID)->setAutoSize(true);
+    $colIndex = 1;
+    foreach ($headers as $header) {
+        $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->getColumnDimension($columnLetter)->setAutoSize(true);
+        $colIndex++;
     }
 
     // ====== 6. CONGELAR FILAS DE ENCABEZADOS ======
@@ -415,9 +448,9 @@ public function actionExportPlantillaInventario()
     $protection = $sheet->getProtection();
     $protection->setSheet(true);
     $protection->setPassword('inventario');
-    $sheet->getStyle("A2:B2")->getProtection()->setLocked(true); // Fecha protegida
-    $sheet->getStyle("A3:H3")->getProtection()->setLocked(true); // Alerta protegida
-    $sheet->getStyle("A6:H{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+    $sheet->getStyle('A2:B2')->getProtection()->setLocked(true); // Fecha protegida
+    $sheet->getStyle('A3:H3')->getProtection()->setLocked(true); // Alerta protegida
+    $sheet->getStyle("A6:{$lastCol}{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
 
     // ====== 9. CONFIGURACIÓN ADICIONAL PARA BLOQUEAR HOJAS ======
     // Configurar protección del libro con contraseña
@@ -456,7 +489,7 @@ public function actionExportPlantillaInventario()
                 $fecha = $sheet->getCell('B2')->getValue();
                 if (!$fecha) {
                     Yii::$app->session->setFlash('error', 'No se encontró la fecha en la plantilla.');
-                    return $this->redirect(['import-plantilla-inventario']);
+                    return $this->redirect(['index']);
                 }
 
                 // Validar que la plantilla no sea muy antigua (máximo 2 días)
@@ -472,14 +505,21 @@ public function actionExportPlantillaInventario()
                     return $this->redirect(['index']);
                 }
 
-                // Leer insumos desde la fila 6 en adelante (se agregó fila de alerta)
-                $row = 6;
+                // Obtener centros de consumo del usuario para mapear las columnas
                 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
                 $businessId = $businessData['id'] ?? null;
+                $consumptionCenters = \common\models\ConsumptionCenter::find()
+                    ->where(['business_id' => $businessId])
+                    ->orderBy(['id' => SORT_ASC])
+                    ->all();
+
+                // Leer insumos desde la fila 6 en adelante (se agregó fila de alerta)
+                $row = 6;
                 $errores = [];
                 $guardados = 0;
                 // Usar la fecha de importación enviada por el usuario o la del servidor como fallback
                 $dateEnd = Yii::$app->request->post('fecha_importacion', date('Y-m-d H:i:s'));
+                
                 while (true) {
                     $insumoNombre = trim($sheet->getCell("A$row")->getValue());
                     if ($insumoNombre === null || $insumoNombre === '') {
@@ -487,11 +527,6 @@ public function actionExportPlantillaInventario()
                     }
                     $unidad = $sheet->getCell("B$row")->getValue();
                     $categoria = $sheet->getCell("C$row")->getValue();
-                    $existencia_almacen = $sheet->getCell("D$row")->getValue();
-                    $existencia_cocina = $sheet->getCell("E$row")->getValue();
-                    $existencia_barra = $sheet->getCell("F$row")->getValue();
-                    $existencia_servicio = $sheet->getCell("G$row")->getValue();
-                    $existencia_otro = $sheet->getCell("H$row")->getValue();
 
                     // Buscar el insumo por nombre, unidad y categoría
                     $insumo = \common\models\IngredientStock::find()
@@ -509,18 +544,60 @@ public function actionExportPlantillaInventario()
                         continue;
                     }
 
-                    // Guardar inventario
+                    // Leer existencias para cada centro de consumo dinámicamente y validar que sean numéricos
+                    $inventariosData = [];
+                    $col = 4; // Empezar desde la columna D
+                    $hasInvalidValue = false;
+                    foreach ($consumptionCenters as $center) {
+                        $existencia = trim($sheet->getCellByColumnAndRow($col, $row)->getValue());
+                        if ($existencia !== '' && !is_numeric($existencia)) {
+                            $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+                            $errores[] = "Valor no numérico en fila $row, columna $columnLetter para $insumoNombre: '$existencia'. Solo se permiten números.";
+                            $hasInvalidValue = true;
+                        }
+                        $inventariosData[$center->id] = $existencia === '' ? 0 : $existencia;
+                        $col++;
+                    }
+                    
+                    // Si hay valores inválidos en esta fila, saltar al siguiente insumo
+                    if ($hasInvalidValue) {
+                        $row++;
+                        continue;
+                    }
+
+                    // Si es edición, eliminar registros existentes para este insumo y fecha
+                    $existingInventories = \common\models\Inventory::find()
+                        ->where([
+                            'ingredient_stock_id' => $insumo->id,
+                            'fecha' => $fecha,
+                            'business_id' => $businessId
+                        ])
+                        ->all();
+                    
+                    foreach ($existingInventories as $existingInv) {
+                        \common\models\InventoryConsumptionCenter::deleteAll(['inventory_id' => $existingInv->id]);
+                        $existingInv->delete();
+                    }
+
+                    // Crear nuevo registro de inventario
                     $inv = new \common\models\Inventory();
                     $inv->ingredient_stock_id = $insumo->id;
                     $inv->business_id = $businessId;
                     $inv->fecha = $fecha;
                     $inv->date_end = $dateEnd;
-                    $inv->inventario_almacen = is_numeric($existencia_almacen) ? $existencia_almacen : 0;
-                    $inv->inventario_cocina = is_numeric($existencia_cocina) ? $existencia_cocina : 0;
-                    $inv->inventario_barra = is_numeric($existencia_barra) ? $existencia_barra : 0;
-                    $inv->inventario_servicio = is_numeric($existencia_servicio) ? $existencia_servicio : 0;
-                    $inv->inventario_otro = is_numeric($existencia_otro) ? $existencia_otro : 0;
+                    
                     if ($inv->save()) {
+                        // Guardar las cantidades por centro de consumo
+                        foreach ($consumptionCenters as $center) {
+                            $quantity = $inventariosData[$center->id] ?? 0;
+                            $icc = new \common\models\InventoryConsumptionCenter();
+                            $icc->inventory_id = $inv->id;
+                            $icc->consumption_center_id = $center->id;
+                            $icc->quantity = $quantity;
+                            if (!$icc->save()) {
+                                $errores[] = "Error al guardar cantidad para {$center->name} en $insumoNombre: " . json_encode($icc->getErrors());
+                            }
+                        }
                         $guardados++;
                     } else {
                         $errores[] = "Error al guardar $insumoNombre: " . json_encode($inv->getErrors());
