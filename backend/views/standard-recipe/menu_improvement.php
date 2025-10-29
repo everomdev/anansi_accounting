@@ -115,7 +115,7 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                         <td>
                             <?= \yii\bootstrap5\Html::activeInput('text', $item, 'custom_cost', [
                                 'class' => 'form-control modify-custom-field',
-                                'value' => $formatter->asDecimal($item->custom_cost,2),
+                                'value' => formatCost($item->recipeLastPrice,2),
                                 'data-url' => get_class($item) == StandardRecipe::class ? 
                                     \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : 
                                     \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
@@ -124,13 +124,13 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                         <td>
                             <?= \yii\bootstrap5\Html::activeInput('text', $item, 'custom_price', [
                                 'class' => 'form-control modify-custom-field',
-                                'value' => $formatter->asDecimal($item->custom_price,2),
+                                'value' => formatPrice($item->custom_price,2),
                                 'data-url' => get_class($item) == StandardRecipe::class ? 
                                     \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : 
                                     \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
                             ]) ?>
                         </td>
-                        <td><?= formatPercentage($item->getCostPercent(true)) ?></td>
+                        <td><?= formatPercentage($item->costPercent*100) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
