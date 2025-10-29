@@ -114,10 +114,10 @@ $this->params['breadcrumbs'][] = $this->title;
                     '</div>',
             ],
             [
-                'label' => 'Unidad<br>Compra',
+                'label' => 'Unidad<br>Cocina',
                 'encodeLabel' => false,
                 'value' => function($model) {
-                    return $model->ingredientStock && isset($model->ingredientStock->um) ? $model->ingredientStock->um : '-';
+                    return $model->ingredientStock && isset($model->ingredientStock->portion_um) ? $model->ingredientStock->portion_um : '-';
                 },
                 'headerOptions' => ['style' => 'min-width: 120px; width: 10%;text-align:center;'],
                 'contentOptions' => ['style' => 'text-align:center;'],
