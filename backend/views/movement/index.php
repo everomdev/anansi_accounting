@@ -203,7 +203,9 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'created_at',
                 'label' => Yii::t('app', 'Fecha de creación'),
                 'value' => function($model) {
-                    return Yii::$app->formatter->asDatetime($model->created_at, 'php:d/m/Y H:i');
+                    // Mostrar la fecha tal cual está guardada (evita conversión de zonas horarias)
+                    $dt = new \DateTime($model->created_at);
+                    return $dt->format('d/m/Y H:i');
                 },
                 'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
             ],

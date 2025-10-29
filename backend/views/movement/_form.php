@@ -94,17 +94,21 @@ $providerNames = array_values(
 
                 <!-- Campo para seleccionar fecha de creación -->
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'created_at')->widget(\kartik\date\DatePicker::class, [
+                    <?= $form->field($model, 'created_at')->widget(\kartik\datetime\DateTimePicker::class, [
                         'options' => [
-                            'placeholder' => 'Seleccionar fecha...',
+                            'placeholder' => 'Seleccionar fecha y hora...',
                             'data-setting' => 'all'
                         ],
                         'pluginOptions' => [
                             'autoclose' => true,
-                            'format' => 'yyyy-mm-dd',
+                            'format' => 'yyyy-mm-dd hh:ii',
                             'todayHighlight' => true,
-                            'orientation' => 'bottom left'
-                        ]
+                            'minuteStep' => 1,
+                            // important: permitir selección de hora
+                            'startView' => 1, // Cambiar a vista de día para facilitar selección de hora
+                            'minView' => 0,   // Permitir hasta vista de hora (con minutos)
+                            'showMeridian' => false,
+                        ],
                     ])->label('Fecha del movimiento') ?>
                 </div>
 
