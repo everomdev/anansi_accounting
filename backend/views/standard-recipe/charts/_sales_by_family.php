@@ -2,13 +2,15 @@
 /** @var $this \yii\web\View */
 /** @var $categories \common\models\RecipeCategory[] */
 /** @var $totalSales float */
+/** @var $selectedMonth string */
+/** @var $selectedYear int */
 $data = [];
 $labels = [];
 foreach ($categories as $category) {
-    if (empty($category->getSalesPercent($totalSales))) {
+    if (empty($category->getSalesPercent($totalSales, $selectedMonth, $selectedYear))) {
         continue;
     }
-    $data[] = $category->getSalesPercent($totalSales) * 100;
+    $data[] = $category->getSalesPercent($totalSales, $selectedMonth, $selectedYear) * 100;
     $labels[] = $category->name;
 }
 

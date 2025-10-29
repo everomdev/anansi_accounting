@@ -23,23 +23,78 @@ $this->registerJsVar('locale', 'en-US'); // You can make this dynamic if needed
 ?>
 
 <div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Filtrar por Mes y Año</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" action="" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="month" class="form-label">Mes</label>
+                        <select name="month" id="month" class="form-select">
+                            <?php 
+                            $meses = [
+                                1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                                5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                                9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                            ];
+                            for ($m = 1; $m <= 12; $m++): 
+                            ?>
+                                <option value="<?= str_pad($m, 2, '0', STR_PAD_LEFT) ?>" <?= $selectedMonth == str_pad($m, 2, '0', STR_PAD_LEFT) ? 'selected' : '' ?>>
+                                    <?= $meses[$m] ?>
+                                </option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="year" class="form-label">Año</label>
+                        <select name="year" id="year" class="form-select">
+                            <?php for ($y = date('Y') - 2; $y <= date('Y'); $y++): ?>
+                                <option value="<?= $y ?>" <?= $selectedYear == $y ? 'selected' : '' ?>>
+                                    <?= $y ?>
+                                </option>
+                            <?php endfor; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Filtrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
     <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_sales_by_family', [
             'totalSales' => $totalSales,
-            'categories' => $categories
+            'categories' => $categories,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear
         ]) ?>
     </div>
     <div class="col-sm-12 col-md-6 mb-3">
-        <?= $this->render('charts/_eighty_percet_of_sales.php') ?>
+        <?= $this->render('charts/_eighty_percet_of_sales.php', [
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear
+        ]) ?>
     </div>
     <div class="col-sm-12 col-md-6 mb-3">
-        <?= $this->render('charts/_eighty_percet_of_popularity.php') ?>
+        <?= $this->render('charts/_eighty_percet_of_popularity.php', [
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear
+        ]) ?>
     </div>
     <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_more_profitable.php') ?>
     </div>
     <div class="col-sm-12 col-md-6 mb-3">
-        <?= $this->render('charts/_spend_the_most.php') ?>
+        <?= $this->render('charts/_spend_the_most.php', [
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear
+        ]) ?>
     </div>
     <div class="col-sm-12 col-md-6 mb-3">
         <?= $this->render('charts/_frequent_ingredients.php') ?>

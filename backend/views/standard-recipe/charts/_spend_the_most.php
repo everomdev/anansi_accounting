@@ -10,13 +10,23 @@ $ingredients = \common\models\IngredientStock::find()
 
     $rawData = [];
     foreach ($ingredients as $ingredient) {
-        $recipes = \common\models\StandardRecipe::find()
-            ->select(['sum(sales*quantity) as totalSales'])
-            ->innerJoin('ingredient_standard_recipe isp', 'isp.standard_recipe_id=standard_recipe.id')
-            ->where(['isp.ingredient_id' => $ingredient->id])
-            ->asArray(true)
-            ->one();
-        $rawData[] = ['label' => $ingredient->ingredient, 'sales' => round($recipes['totalSales'] * $ingredient->lastPrice, 2)];
+        // Calculate total sales for this ingredient using MonthlySales data
+        $totalSales = 0;
+        $ingredientRelations = \common\models\IngredientStandardRecipe::find()
+            ->where(['ingredient_id' => $ingredient->id])
+            ->all();
+        
+        foreach ($ingredientRelations as $relation) {
+            $recipeSales = \common\models\MonthlySales::getTotalSales(
+                \common\models\MonthlySales::TYPE_RECIPE,
+                $relation->standard_recipe_id,
+                $selectedYear,
+                $selectedMonth
+            );
+            $totalSales += $recipeSales * $relation->quantity;
+        }
+        
+        $rawData[] = ['label' => $ingredient->ingredient, 'sales' => round($totalSales * $ingredient->lastPrice, 2)];
     }
     
     usort($rawData, function($a, $b){

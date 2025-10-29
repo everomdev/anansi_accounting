@@ -45,7 +45,7 @@ $this->title = Yii::t('app', "Menu Analysis");
 <div class="card">    <div class="card-header">
         <div class="row">
             <div class="col-sm-12 col-md-2 col-lg-2 col-xl-2 mb-2">
-                <?= \yii\bootstrap5\Html::dropDownList('', $family, \yii\helpers\ArrayHelper::map($business->recipeCategories, 'name', 'name'), [
+                <?= \yii\bootstrap5\Html::dropDownList('', $family, \yii\helpers\ArrayHelper::map($business->recipeCategoriesMain, 'name', 'name'), [
                     'prompt' => Yii::t('app', 'All'),
                     'class' => 'form-control',
                     'data-url' => \yii\helpers\Url::to(['standard-recipe/analytics']),
@@ -97,7 +97,7 @@ $this->title = Yii::t('app', "Menu Analysis");
                         </span>
                     </th>
                     <th>                        
-                        <?= Yii::t('app', "Cost percent") ?>
+                        <?= Yii::t('app', "Rentabilidad") ?>
                         <span class="float-end">
                             <?= \yii\bootstrap5\Html::a(
                                 ($currentSort === 'cost-percent' ? '<i class="fas fa-sort-' . ($currentDirection === 'asc' ? 'up' : 'down') . '"></i>' : '<i class="fas fa-sort"></i>'),
@@ -169,16 +169,16 @@ $this->title = Yii::t('app', "Menu Analysis");
                         }
                     }
                     
-                    // Calcular percentiles para colorear otras columnas
+                    // Calcular percentiles para colorear otras columnas (invertido porque ahora posición 1 = peor, posición alta = mejor)
                     $costPercentPercentile = $costPercentPosition / $total;
-                    $colorCostPercent = $costPercentPercentile <= 0.2 ? "#28a745" : ($costPercentPercentile <= 0.5 ? "#ffc107" : "#dc3545");
+                    $colorCostPercent = $costPercentPercentile >= 0.8 ? "#28a745" : ($costPercentPercentile >= 0.5 ? "#ffc107" : "#dc3545");
                     
-                    // Para popularidad y ventas, usar ranking directo (mejor = verde)
-                    $colorPopularity = $popularityPosition <= ceil($total * 0.2) ? "#28a745" : 
-                                      ($popularityPosition <= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
+                    // Para popularidad y ventas, usar ranking directo (mejor = verde, ahora posiciones altas = mejores)
+                    $colorPopularity = $popularityPosition >= ceil($total * 0.8) ? "#28a745" : 
+                                      ($popularityPosition >= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
                     
-                    $colorSales = $salesPosition <= ceil($total * 0.2) ? "#28a745" : 
-                                 ($salesPosition <= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
+                    $colorSales = $salesPosition >= ceil($total * 0.8) ? "#28a745" : 
+                                 ($salesPosition >= ceil($total * 0.5) ? "#ffc107" : "#dc3545");
                 ?>                <tr>
                     <td><?= $item['name'] ?></td>
                     <td><?= formatPercentage($item['cost_percent'] * 100) ?></td>

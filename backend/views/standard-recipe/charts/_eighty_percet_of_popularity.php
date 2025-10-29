@@ -23,6 +23,25 @@ $combos = Menu::find()
 $recipes = $recipes->all();
 $combos = $combos->all();
 
+// Add monthly sales data to each item
+foreach ($recipes as $recipe) {
+    $recipe->sales = \common\models\MonthlySales::getTotalSales(
+        \common\models\MonthlySales::TYPE_RECIPE,
+        $recipe->id,
+        $selectedYear,
+        $selectedMonth
+    );
+}
+
+foreach ($combos as $combo) {
+    $combo->sales = \common\models\MonthlySales::getTotalSales(
+        \common\models\MonthlySales::TYPE_MENU,
+        $combo->id,
+        $selectedYear,
+        $selectedMonth
+    );
+}
+
 $rawData = array_merge($recipes, $combos);
 
 $sortBySales = array_filter($rawData, function ($item) {

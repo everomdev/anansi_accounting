@@ -77,8 +77,54 @@ class RecipeCategory extends \yii\db\ActiveRecord
         ];
     }
 
-    public function getTotalSales()
+    public function getTotalSales($month = null, $year = null)
     {
+        // If month and year are provided, use MonthlySales table
+        if ($month !== null && $year !== null) {
+            $recipesTotalSales = 0;
+            $combosTotalSales = 0;
+
+            // Get all recipes in this category
+            $recipes = StandardRecipe::find()
+                ->where([
+                    'type_of_recipe' => $this->name,
+                    'business_id' => $this->business_id,
+                    'in_construction' => 0,
+                    'in_menu' => true
+                ])->all();
+
+            // Sum monthly sales for each recipe
+            foreach ($recipes as $recipe) {
+                $recipesTotalSales += \common\models\MonthlySales::getTotalSales(
+                    \common\models\MonthlySales::TYPE_RECIPE,
+                    $recipe->id,
+                    $year,
+                    $month
+                );
+            }
+
+            // Get all combos in this category
+            $combos = Menu::find()
+                ->where([
+                    'category_id' => $this->id,
+                    'business_id' => $this->business_id,
+                    'in_menu' => true
+                ])->all();
+
+            // Sum monthly sales for each combo
+            foreach ($combos as $combo) {
+                $combosTotalSales += \common\models\MonthlySales::getTotalSales(
+                    \common\models\MonthlySales::TYPE_MENU,
+                    $combo->id,
+                    $year,
+                    $month
+                );
+            }
+
+            return $recipesTotalSales + $combosTotalSales;
+        }
+
+        // Fallback to original method if no month/year provided
         $recipesTotalSales = StandardRecipe::find()
             ->where([
                 'type_of_recipe' => $this->name,
@@ -97,9 +143,9 @@ class RecipeCategory extends \yii\db\ActiveRecord
         return $recipesTotalSales + $combosTotalSales;
     }
 
-    public function getCpr()
+    public function getCpr($month = null, $year = null)
     {
-        $totalSales = $this->getTotalSales();
+        $totalSales = $this->getTotalSales($month, $year);
 
         $totalPcr = 0;
         $recipes = StandardRecipe::find()
@@ -127,15 +173,13 @@ class RecipeCategory extends \yii\db\ActiveRecord
         return $totalPcr;
     }
 
-    public function getSalesPercent($totalSales)
+    public function getSalesPercent($totalSales, $month = null, $year = null)
     {
         if(empty($totalSales)){
             return 0;
         }
-        return round($this->getTotalSales() / $totalSales, 2);
-    }
-
-    public function getRecipes($type)
+        return round($this->getTotalSales($month, $year) / $totalSales, 2);
+    }    public function getRecipes($type)
     {
         return StandardRecipe::find()
             ->where(['business_id' => $this->business_id])

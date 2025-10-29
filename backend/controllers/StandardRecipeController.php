@@ -1603,9 +1603,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         'sales' => $data
     ];
 
-    usort($sortedVersions['costPercent'], fn($a, $b) => $a['cost_percent'] <=> $b['cost_percent']);
-    usort($sortedVersions['popularity'], fn($a, $b) => $b['sales'] <=> $a['sales']);
-    usort($sortedVersions['sales'], fn($a, $b) => $b['sales_value'] <=> $a['sales_value']);
+    usort($sortedVersions['costPercent'], fn($a, $b) => $b['cost_percent'] <=> $a['cost_percent']);
+    usort($sortedVersions['popularity'], fn($a, $b) => $a['sales'] <=> $b['sales']);
+    usort($sortedVersions['sales'], fn($a, $b) => $a['sales_value'] <=> $b['sales_value']);
 
     // Generar claves únicas y categorías Pareto
     $paretoItems = $sortedVersions['popularity']; // Ya está ordenado por popularidad
@@ -1735,22 +1735,36 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         return $this->render('matrix', $business->getBcgData($type, $year));
     }
 
-    public function actionCharts()
+    public function actionCharts($month = null, $year = null)
     {
+        // Si no se proporciona mes/año, usar el mes actual por defecto
+        if ($month === null) {
+            $month = (int)date('m');
+        } else {
+            $month = (int)$month;
+        }
+        if ($year === null) {
+            $year = (int)date('Y');
+        } else {
+            $year = (int)$year;
+        }
+
         $business = RedisKeys::getBusiness();
         $categories = RecipeCategory::find()
             ->where([
                 'business_id' => $business['id']
             ])->all();
 
-        $totalSales = array_sum(array_map(function ($category) {
-            return $category->totalSales;
+        $totalSales = array_sum(array_map(function ($category) use ($month, $year) {
+            return $category->getTotalSales($month, $year);
         }, $categories));
 
 
         return $this->render('charts', [
             'totalSales' => $totalSales,
-            'categories' => $categories
+            'categories' => $categories,
+            'selectedMonth' => $month,
+            'selectedYear' => $year
         ]);
     }
 
