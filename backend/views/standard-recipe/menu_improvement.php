@@ -82,7 +82,7 @@ if ($total > 0) {
 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-menu-improvement']); ?>
 <?php
 $sum = array_sum(\yii\helpers\ArrayHelper::getColumn($data, function ($item) {
-    return $item->getCostPercent(true);
+    return $item->costPercent*100;
 }));
 
 $countData = count($data);
