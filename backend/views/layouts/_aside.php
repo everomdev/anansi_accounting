@@ -698,7 +698,9 @@ html, body {
         align-items: center !important;
         margin-left: auto !important;
     }
-}/* Prevenir cualquier zoom o escala */
+}
+
+/* Prevenir cualquier zoom o escala */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
     html {
         zoom: 1 !important;
@@ -719,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar tamaño de pantalla
     function isMobile() {
-        return window.innerWidth <= 768;
+        return window.innerWidth < 1200;
     }
     
     // Crear overlay para móvil
