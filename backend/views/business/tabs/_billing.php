@@ -150,10 +150,10 @@ echo "<div id='change-plan-form-container'></div>";
         </label>
     </div>
 </div>
-<div class="modal-footer">    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+<div class="modal-footer">    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
         Mantener Suscripción
     </button>
-    <button type="button" class="btn btn-danger" id="btn-confirm-cancel" disabled>
+    <button type="button" class="btn btn-secondary" id="btn-confirm-cancel" disabled>
         Cancelar Suscripción
     </button>
 </div>

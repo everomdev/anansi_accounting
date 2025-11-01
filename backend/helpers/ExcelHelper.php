@@ -456,7 +456,7 @@ public static function generateIngredientsTemplate($id)
     $activeWorksheet->setCellValue("J1", "Precio*");
     $activeWorksheet->setCellValue("K1", "Observaciones");
     
-    $activeWorksheet->getStyle('A1:L100')->applyFromArray($centerStyle);
+    $activeWorksheet->getStyle('A1:L500')->applyFromArray($centerStyle);
     $activeWorksheet->freezePane('C2');
 
     // Set manual column widths instead of auto-size

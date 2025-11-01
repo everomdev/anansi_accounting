@@ -1660,6 +1660,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     public function actionMenuImprovement()
     {
         $business = RedisKeys::getBusiness();
+
+        // Obtener recetas con datos de ventas
         $recipes = StandardRecipe::find()
             ->where([
                 'business_id' => $business->id,
@@ -1667,6 +1669,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 'in_construction' => 0,
                 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
             ])->all();
+
         $combos = Menu::find()
             ->innerJoin('recipe_category', 'recipe_category.id=menu.category_id')
             ->where([
@@ -1674,14 +1677,55 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 'in_menu' => true,
             ])->all();
 
+        // Crear array de datos con ventas totales incluidas
+        $data = [];
+
+        // Procesar recetas
+        foreach ($recipes as $recipe) {
+            $sales = MonthlySales::getSales(MonthlySales::TYPE_RECIPE, $recipe->id, null, null);
+            $data[] = [
+                'model' => $recipe,
+                'monthly_sales' => $sales,
+                'sales_value' => $recipe->price * $sales
+            ];
+        }
+
+        // Procesar combos
+        foreach ($combos as $combo) {
+            $sales = MonthlySales::getSales(MonthlySales::TYPE_MENU, $combo->id, null, null);
+            $data[] = [
+                'model' => $combo,
+                'monthly_sales' => $sales,
+                'sales_value' => $combo->total_price * $sales
+            ];
+        }
+
         return $this->render('menu_improvement', [
-            'data' => array_merge($recipes, $combos),
+            'data' => $data,
             'formatter' => $business->getFormatter()
         ]);
     }
 
-    public function actionProfitComparison()
+    public function actionProfitComparison($month = null, $year = null)
     {
+        // Si no se proporciona mes/año, usar el mes anterior por defecto
+        if ($month === null) {
+            $month = (int)date('m') - 1;
+            if ($month < 1) {
+                $month = 12;
+                $year = (int)date('Y') - 1;
+            } else {
+                $year = (int)date('Y');
+            }
+        } else {
+            $month = (int)$month;
+        }
+        if ($year === null) {
+            $year = (int)date('Y');
+        } else {
+            $year = (int)$year;
+        }
+
         $business = RedisKeys::getBusiness();
 
         $recipes = StandardRecipe::find()
@@ -1703,10 +1747,17 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $theoreticalCost = 0;
         $desiredCost = 0;
         $totalSales = 0;
-        array_walk($data, function ($item) use (&$theoreticalCost, &$totalSales, &$desiredCost) {
+        array_walk($data, function ($item) use (&$theoreticalCost, &$totalSales, &$desiredCost, $month, $year) {
             $theoreticalCost += $item->getCostPercent(false);
             $desiredCost += $item->getCostPercent(true);
-            $totalSales += ($item->price * $item->sales);
+
+            // Calcular ventas usando datos históricos completos del mes seleccionado
+            if ($item instanceof StandardRecipe) {
+                $sales = MonthlySales::getSales(MonthlySales::TYPE_RECIPE, $item->id, $month, $year);
+            } else {
+                $sales = MonthlySales::getSales(MonthlySales::TYPE_MENU, $item->id, $month, $year);
+            }
+            $totalSales += ($item->price * $sales);
         });
 
         if ($total != 0) {
@@ -1721,7 +1772,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             'theoreticalCost' => $theoreticalCost,
             'desiredCost' => $desiredCost,
             'totalSales' => $totalSales,
-            'business' => $business
+            'business' => $business,
+            'selectedMonth' => $month,
+            'selectedYear' => $year
         ]);
     }    public function actionMatrixBcg($type = 'all', $year = null)
     {

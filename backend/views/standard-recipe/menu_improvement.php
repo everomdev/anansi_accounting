@@ -82,7 +82,7 @@ if ($total > 0) {
 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-menu-improvement']); ?>
 <?php
 $sum = array_sum(\yii\helpers\ArrayHelper::getColumn($data, function ($item) {
-    return $item->costPercent*100;
+    return $item['model']->costPercent*100;
 }));
 
 $countData = count($data);
@@ -106,31 +106,39 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                 <th><?= Yii::t('app', "Recipe") ?></th>
                 <th><?= Yii::t('app', "Cost") ?></th>
                 <th><?= Yii::t('app', "Price") ?></th>
+                <th><?= Yii::t('app', "Ventas (unidades)") ?></th>
+                <th><?= Yii::t('app', "Ventas ($)") ?></th>
                 <th><?= Yii::t('app', "Cost percent") ?></th>
                 </thead>
                 <tbody>
                 <?php foreach ($data as $item): ?>
                     <tr>
-                        <td><?= $item->name ?></td>
+                        <td><?= $item['model']->name ?></td>
                         <td>
-                            <?= \yii\bootstrap5\Html::activeInput('text', $item, 'custom_cost', [
+                            <?= \yii\bootstrap5\Html::activeInput('text', $item['model'], 'custom_cost', [
                                 'class' => 'form-control modify-custom-field',
-                                'value' => formatCost($item->recipeLastPrice,2),
-                                'data-url' => get_class($item) == StandardRecipe::class ? 
-                                    \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : 
-                                    \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
+                                'value' => formatCost($item['model']->recipeLastPrice,2),
+                                'data-url' => get_class($item['model']) == StandardRecipe::class ? 
+                                    \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item['model']->id]) : 
+                                    \yii\helpers\Url::to(['menu/save-sales', 'id' => $item['model']->id])
                             ]) ?>
                         </td>
                         <td>
-                            <?= \yii\bootstrap5\Html::activeInput('text', $item, 'custom_price', [
+                            <?= \yii\bootstrap5\Html::activeInput('text', $item['model'], 'custom_price', [
                                 'class' => 'form-control modify-custom-field',
-                                'value' => formatPrice($item->custom_price,2),
-                                'data-url' => get_class($item) == StandardRecipe::class ? 
-                                    \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item->id]) : 
-                                    \yii\helpers\Url::to(['menu/save-sales', 'id' => $item->id])
+                                'value' => formatPrice($item['model']->custom_price,2),
+                                'data-url' => get_class($item['model']) == StandardRecipe::class ? 
+                                    \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item['model']->id]) : 
+                                    \yii\helpers\Url::to(['menu/save-sales', 'id' => $item['model']->id])
                             ]) ?>
                         </td>
-                        <td><?= formatPercentage($item->costPercent*100) ?></td>
+                        <td class="text-center">
+                            <?= isset($item['monthly_sales']) ? number_format($item['monthly_sales'], 0) : '0' ?>
+                        </td>
+                        <td class="text-center">
+                            <?= isset($item['sales_value']) ? formatPrice($item['sales_value'], 2) : formatPrice(0, 2) ?>
+                        </td>
+                        <td><?= formatPercentage($item['model']->costPercent*100) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

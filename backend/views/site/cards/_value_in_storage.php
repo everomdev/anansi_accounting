@@ -14,6 +14,11 @@ $this->registerCss("
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         padding: 1.25rem;
         transition: all 0.3s ease;
+        overflow: hidden;
+        max-width: 100%;
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
     }
     
     .storage-value-container:hover {
@@ -39,6 +44,9 @@ $this->registerCss("
         align-items: center;
         justify-content: center;
         padding: 0.5rem 0;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
     }
     
     .storage-value-icon {
@@ -55,6 +63,8 @@ $this->registerCss("
     
     .storage-value-info {
         flex: 1;
+        min-width: 0;
+        overflow: hidden;
     }
     
     .storage-value-amount {
@@ -63,11 +73,54 @@ $this->registerCss("
         line-height: 1;
         margin-bottom: 0.25rem;
         color: #3498db;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
     }
     
     .storage-value-label {
         font-size: 0.9rem;
         color: #7f8c8d;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+        .storage-value-container {
+            padding: 1rem;
+            min-height: 130px;
+        }
+        
+        .storage-value-header h5 {
+            font-size: 1rem;
+        }
+        
+        .storage-value-amount {
+            font-size: 1.5rem;
+        }
+        
+        .storage-value-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+        }
+        
+        .storage-value-content {
+            padding: 0.25rem 0;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .storage-value-amount {
+            font-size: 1.25rem;
+        }
+        
+        .storage-value-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+        }
     }
 ");
 ?>

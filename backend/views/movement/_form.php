@@ -25,6 +25,12 @@ $stock = (new \yii\db\Query())
     ->select([
         "ingredient_stock.*",
         "CONCAT(
+            COALESCE(ingredient_stock.key, ''),
+            CASE 
+                WHEN ingredient_stock.key IS NOT NULL AND TRIM(ingredient_stock.key) != '' 
+                THEN ' - ' 
+                ELSE '' 
+            END,
             COALESCE(ingredient_stock.ingredient, ''),
             CASE 
                 WHEN ingredient_stock.brand IS NOT NULL AND TRIM(ingredient_stock.brand) != '' 
@@ -85,9 +91,24 @@ $providerNames = array_values(
                         'data' => \yii\helpers\ArrayHelper::map($stock, 'id', 'label'),
                         'options' => [
                             'data-setting' => 'all',
+                            'placeholder' => 'Buscar por clave o nombre del ingrediente...'
                         ],
                         'pluginOptions' => [
                             'width' => '60%',
+                            'allowClear' => true,
+                            'matcher' => new \yii\web\JsExpression("function(params, data) {
+                                // Si no hay término de búsqueda, mostrar todo
+                                if ($.trim(params.term) === '') {
+                                    return data;
+                                }
+                                
+                                // Buscar en el texto del option (que incluye clave y nombre)
+                                if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                                    return data;
+                                }
+                                
+                                return null;
+                            }")
                         ]
                     ]) ?>
                 </div>

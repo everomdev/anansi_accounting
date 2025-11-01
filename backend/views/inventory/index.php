@@ -81,9 +81,62 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', "Import"), [
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-confirmacion-descarga',
     'title' => '⚠️ Atención - Validez de Plantilla',
-    'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT
+    'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT,
+    'options' => [
+        'class' => 'custom-inventory-modal'
+    ]
 ]);
 ?>
+<style>
+.custom-inventory-modal .modal-content {
+    background-color: #F5F5F5;
+    color: #333333;
+}
+.custom-inventory-modal .modal-header {
+    background-color: #F5F5F5;
+    border-bottom: 1px solid #ddd;
+}
+.custom-inventory-modal .modal-header .modal-title {
+    color: #333333;
+    font-weight: 600;
+}
+.custom-inventory-modal .modal-body .alert {
+    background-color: #E1A948;
+    border-color: #C68B2C;
+    color: #333333;
+}
+.custom-inventory-modal .modal-body .alert strong {
+    color: #D64541;
+}
+.custom-inventory-modal .modal-body p {
+    color: #333333;
+}
+.custom-inventory-modal .modal-footer {
+    background-color: #F5F5F5;
+    border-top: 1px solid #ddd;
+}
+.custom-inventory-modal .modal-footer .btn-secondary {
+    background-color: #6E7A8A;
+    border-color: #6E7A8A;
+    color: white;
+}
+.custom-inventory-modal .modal-footer .btn-secondary:hover {
+    background-color: #5a6473;
+    border-color: #5a6473;
+}
+.custom-inventory-modal .modal-footer .btn-success {
+    background-color: #C68B2C;
+    border-color: #C68B2C;
+    color: white;
+}
+.custom-inventory-modal .modal-footer .btn-success:hover {
+    background-color: #b17a26;
+    border-color: #b17a26;
+}
+.custom-inventory-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+</style>
 <div class="alert alert-warning" role="alert">
     <p>Esta plantilla de inventario tiene una <strong>validez máxima de 48 horas</strong> a partir de su fecha y hora de generación.</p>
     <p>Si intentas cargarla después de ese tiempo, <strong>el sistema no la aceptará</strong>.</p>

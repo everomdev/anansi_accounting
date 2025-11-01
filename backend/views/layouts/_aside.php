@@ -497,7 +497,7 @@ body.menu-collapsed .layout-page {
 }
 
 .navbar-logo img {
-    max-height: 40px !important;
+    max-height: 70px !important;
     object-fit: contain !important;
     width: auto !important;
 }
@@ -505,6 +505,7 @@ body.menu-collapsed .layout-page {
 /* Mostrar logo centrado cuando el menú está contraído */
 body.menu-collapsed .navbar-logo {
     display: flex !important;
+    max-height: 80px !important;
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
@@ -519,7 +520,7 @@ body.menu-collapsed .layout-navbar {
 }
 
 /* En móvil, mantener el logo a la izquierda */
-@media (max-width: 1199px) {
+@media (max-width: 768px) {
     .navbar-logo {
         display: flex !important;
         position: static !important;
@@ -608,13 +609,96 @@ html, body {
     body.menu-open {
         overflow: hidden !important;
     }
-    
-    .navbar-logo {
-        display: flex !important;
-    }
 }
 
-/* Prevenir cualquier zoom o escala */
+/* Estilos específicos para móviles reales */
+@media (max-width: 768px) {
+    /* OCULTAR LOGO COMPLETAMENTE en móviles */
+    .navbar-logo {
+        display: none !important;
+    }
+
+    /* Ajustar navbar en móviles */
+    .layout-navbar {
+        min-height: 50px !important;
+        padding: 8px 12px !important;
+    }
+
+    /* Hacer títulos más pequeños */
+    .navbar-nav .nav-item[style*="font-size: 22px"] {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+    }
+
+    .navbar-nav .nav-item[style*="font-size: 18px"] {
+        font-size: 12px !important;
+        margin-right: 8px !important;
+    }
+
+    /* Ajustar elementos del navbar derecho para móviles */
+    .navbar-nav-right {
+        flex: 1 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    .navbar-nav-right .navbar-nav {
+        flex: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .navbar-nav-right .nav-item {
+        margin: 0 !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Posicionar solo el botón a la derecha */
+    .navbar-nav.flex-row.align-items-center {
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+    }
+
+    /* Botón de logout más compacto */
+    .navbar-nav-right .btn {
+        padding: 4px 8px !important;
+        font-size: 11px !important;
+        white-space: nowrap !important;
+        min-width: auto !important;
+    }
+
+    .navbar-nav-right .btn i {
+        font-size: 12px !important;
+        margin-right: 4px !important;
+    }
+
+    /* Ajustar título para que no ocupe demasiado espacio */
+    .navbar-nav.align-items-center .nav-item {
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        padding-right: 10px !important;
+    }
+
+    /* OCULTAR nombre del negocio en móviles */
+    .navbar-nav.flex-row.align-items-center .nav-item:first-child {
+        display: none !important;
+    }
+
+    /* Asegurar visibilidad del botón logout */
+    .navbar-nav.flex-row.align-items-center .nav-item.navbar-dropdown {
+        display: flex !important;
+        align-items: center !important;
+        margin-left: auto !important;
+    }
+}/* Prevenir cualquier zoom o escala */
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
     html {
         zoom: 1 !important;
@@ -635,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar tamaño de pantalla
     function isMobile() {
-        return window.innerWidth < 1200;
+        return window.innerWidth <= 768;
     }
     
     // Crear overlay para móvil

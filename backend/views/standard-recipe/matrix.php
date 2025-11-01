@@ -53,7 +53,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
                 <?= \yii\bootstrap5\Html::dropDownList(
                     'category',
                     $type,
-                    \yii\helpers\ArrayHelper::map($business->recipeCategories, 'name', 'name'),
+                    \yii\helpers\ArrayHelper::map($business->recipeCategoriesMain, 'name', 'name'),
                     [
                         'class' => 'form-control',
                         'prompt' => Yii::t('app', "All"),
