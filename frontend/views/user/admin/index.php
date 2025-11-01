@@ -219,6 +219,85 @@ body {
         padding-bottom: 60px;
     }
 }
+
+/* Estilos para el modal de confirmación */
+#confirmDeleteModal {
+    z-index: 9999 !important; /* Asegurar que esté por encima del navbar */
+}
+
+#confirmDeleteModal .modal-backdrop {
+    z-index: 9998 !important; /* Backdrop justo debajo del modal */
+}
+
+#confirmDeleteModal .modal-content {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos específicos para vista móvil */
+@media (max-width: 768px) {
+    #confirmDeleteModal {
+        z-index: 9999 !important;
+        padding-top: 20px; /* Espacio extra arriba en móvil */
+    }
+    
+    #confirmDeleteModal .modal-dialog {
+        margin: 20px auto;
+        max-height: calc(100vh - 40px);
+    }
+    
+    #confirmDeleteModal .modal-content {
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+    }
+}
+
+#confirmDeleteModal .modal-header {
+    border-radius: 10px 10px 0 0;
+    border-bottom: none;
+}
+
+#confirmDeleteModal .modal-body {
+    padding: 2rem;
+}
+
+#confirmDeleteModal .alert {
+    border: none;
+    border-radius: 8px;
+}
+
+#confirmDeleteModal .alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+#confirmDeleteModal .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#confirmDeleteModal .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.2s ease;
+}
+
+#confirmDeleteModal .btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+#confirmDeleteModal .fa-user-times {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
 </style>
 <div class="fixed-table-container">
 <?= GridView::widget(
@@ -559,14 +638,159 @@ body {
 </div>
 <?php Pjax::end() ?>
 
+<?php
+// Modal personalizado para confirmar eliminación de usuario
+use yii\bootstrap5\Modal;
+
+Modal::begin([
+    'id' => 'confirmDeleteModal',
+    'title' => 'Eliminar Usuario',
+    'options' => [
+        'tabindex' => '-1',
+        'data-bs-backdrop' => 'static', // Evitar cerrar al hacer clic fuera
+        'data-bs-keyboard' => 'false', // Evitar cerrar con ESC por accidente
+        'style' => 'z-index: 9999 !important;', // Forzar z-index alto
+    ],
+    'dialogOptions' => [
+        'class' => 'modal-dialog modal-dialog-centered',
+    ],
+]);
+?>
+<p><strong>¿Está seguro que desea eliminar este usuario?</strong></p>
+<div class="alert alert-warning">
+    <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+</div>
+<div class="alert alert-danger mb-3">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+</div>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\helpers\Html::button('Cancelar', [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\helpers\Html::button('Eliminar Usuario', [
+        'class' => 'btn btn-danger',
+        'id' => 'confirmDelete'
+    ]) ?>
+</div>
+<?php
+Modal::end();
+?>
+
 <script>
-// Mejorar la experiencia del paginador fijo
-$(document).ready(function() {
-    // Función para ajustar la posición del paginador en dispositivos móviles
+// Override inmediato de window.confirm para interceptar confirmaciones de eliminación
+(function() {
+    const originalConfirm = window.confirm;
+    let pendingDeleteData = null;
+    
+    window.confirm = function(message) {
+        // Si estamos en proceso de eliminación, permitir el confirm original
+        if (window.deletionInProgress) {
+            return originalConfirm.call(this, message);
+        }
+        
+        if (message && message.includes('eliminar')) {
+            // Encontrar el enlace activo
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName === 'A') {
+                const row = activeElement.closest('tr');
+                if (row) {
+                    const cells = row.querySelectorAll('td');
+                    const userName = cells[0] ? cells[0].textContent.trim() : 'N/A';
+                    const userEmail = cells[1] ? cells[1].textContent.trim() : 'N/A';
+                    
+                    // Guardar datos para cuando jQuery esté disponible
+                    pendingDeleteData = {
+                        userName: userName,
+                        userEmail: userEmail,
+                        link: activeElement
+                    };
+                    
+                    // Intentar mostrar el modal si jQuery ya está disponible
+                    if (typeof $ !== 'undefined') {
+                        $('#modalUserName').text(userName);
+                        $('#modalUserEmail').text(userEmail);
+                        $('#confirmDeleteModal').modal('show');
+                    } else {
+                        // Si jQuery no está disponible, esperar un poco y intentar de nuevo
+                        setTimeout(function() {
+                            if (typeof $ !== 'undefined' && pendingDeleteData) {
+                                $('#modalUserName').text(pendingDeleteData.userName);
+                                $('#modalUserEmail').text(pendingDeleteData.userEmail);
+                                $('#confirmDeleteModal').modal('show');
+                            }
+                        }, 100);
+                    }
+                    
+                    return false; // Cancelar el confirm nativo
+                }
+            }
+        }
+        
+        // Para otros mensajes, usar el confirm original
+        return originalConfirm.call(this, message);
+    };
+    
+    // Hacer que esta función esté disponible globalmente para referencia
+    window.originalConfirm = originalConfirm;
+    window.pendingDeleteData = pendingDeleteData;
+})();
+
+// Esperar a que jQuery esté disponible
+function waitForJQuery() {
+    if (typeof $ !== 'undefined') {
+        initializeModal();
+    } else {
+        setTimeout(waitForJQuery, 100);
+    }
+}
+
+function initializeModal() {
+    $(document).ready(function() {
+        // Configurar variables
+        const originalConfirm = window.confirm;
+        let deleteForm = null;    // Interceptar clics en enlaces de eliminación usando addEventListener nativo con captura
+    document.addEventListener('click', function(e) {
+        // Salir si ya estamos en proceso de eliminación para evitar bucles
+        if (window.deletionInProgress) {
+            return;
+        }
+        
+        const target = e.target;
+        const link = target.closest('a[data-confirm]');
+        
+        if (link) {
+            const dataConfirm = link.getAttribute('data-confirm');
+            
+            if (dataConfirm && dataConfirm.includes('eliminar')) {
+                // Prevenir comportamiento por defecto
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                const $link = $(link);
+                const $row = $link.closest('tr');
+                const userName = $row.find('td:first').text().trim();
+                const userEmail = $row.find('td:nth-child(2)').text().trim();
+                
+                // Guardar el enlace
+                deleteForm = $link;
+                
+                // Actualizar y mostrar el modal
+                $('#modalUserName').text(userName || 'N/A');
+                $('#modalUserEmail').text(userEmail || 'N/A');
+                $('#confirmDeleteModal').modal('show');
+                
+                return false;
+            }
+        }
+    }, true); // TRUE = usar fase de captura
+
+    // Funcionalidad del paginador
     function adjustPaginationPosition() {
         const paginationContainer = $('.pagination-container');
         if (paginationContainer.length) {
-            // En dispositivos móviles, ajustar la posición para evitar la barra de navegación
             if (window.innerWidth <= 768) {
                 paginationContainer.css('bottom', '10px');
             } else {
@@ -575,34 +799,121 @@ $(document).ready(function() {
         }
     }
     
-    // Ajustar posición inicial
     adjustPaginationPosition();
+    $(window).resize(adjustPaginationPosition);
     
-    // Ajustar en cambio de tamaño de ventana
-    $(window).resize(function() {
-        adjustPaginationPosition();
-    });
-    
-    // Scroll suave al cambiar de página
-    $(document).on('click', '.pagination-container .pagination a', function(e) {
-        // Pequeño delay para permitir que PJAX haga su trabajo
+    $(document).on('click', '.pagination-container .pagination a', function() {
         setTimeout(function() {
-            $('.fixed-table-container').animate({
-                scrollTop: 0
-            }, 300);
+            $('.fixed-table-container').animate({ scrollTop: 0 }, 300);
         }, 100);
     });
     
-    // Agregar efecto de desvanecimiento al hacer hover en el paginador
     $('.pagination-container').hover(
-        function() {
-            $(this).css('box-shadow', '0 -4px 20px rgba(0,0,0,0.15)');
-        },
-        function() {
-            $(this).css('box-shadow', '0 -2px 10px rgba(0,0,0,0.1)');
-        }
+        function() { $(this).css('box-shadow', '0 -4px 20px rgba(0,0,0,0.15)'); },
+        function() { $(this).css('box-shadow', '0 -2px 10px rgba(0,0,0,0.1)'); }
     );
-});
+
+
+    $(document).on('click', 'a[data-confirm]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $link = $(this);
+        const href = $link.attr('href');
+        const confirmMessage = $link.data('confirm');
+    
+        
+        // Si es un enlace de eliminar (verificar por URL o mensaje de confirmación)
+        if ((href && href.indexOf('delete') !== -1) || 
+            (confirmMessage && (confirmMessage.toLowerCase().indexOf('eliminar') !== -1 || 
+                              confirmMessage.toLowerCase().indexOf('delete') !== -1))) {
+            
+            // Obtener información del usuario desde la fila
+            const $row = $link.closest('tr');
+            const userName = $row.find('td:first').text().trim();
+            const userEmail = $row.find('td:nth-child(2)').text().trim();
+            
+            
+            // Actualizar el modal con la información del usuario
+            $('#modalUserName').text(userName || 'N/A');
+            $('#modalUserEmail').text(userEmail || 'N/A');
+            
+            // Guardar el enlace para usar después
+            deleteForm = $link;
+            
+            // Mostrar el modal
+            $('#confirmDeleteModal').modal('show');
+            
+            return false;
+        } else {
+            console.log('❌ Not a delete link, letting it proceed normally');
+        }
+    });
+    
+    // Confirmar eliminación
+    $('#confirmDelete').click(function() {
+        if (deleteForm) {
+            // Cerrar el modal
+            $('#confirmDeleteModal').modal('hide');
+            
+            // Hacer la petición HTTP directamente
+            const deleteUrl = deleteForm.attr('href');
+            const method = deleteForm.data('method') || 'POST';
+            
+            // Crear formulario oculto para enviar la petición
+            const $form = $('<form>', {
+                method: 'POST',
+                action: deleteUrl,
+                style: 'display: none;'
+            });
+            
+            // Agregar token CSRF de Yii2
+            const csrfParam = $('meta[name="csrf-param"]').attr('content') || '_csrf-frontend';
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+            
+            if (csrfToken) {
+                $form.append($('<input>', {
+                    type: 'hidden',
+                    name: csrfParam,
+                    value: csrfToken
+                }));
+            } else {
+                // Buscar token CSRF en formularios existentes
+                const existingCsrf = $('input[name*="csrf"]').first();
+                if (existingCsrf.length) {
+                    $form.append($('<input>', {
+                        type: 'hidden',
+                        name: existingCsrf.attr('name'),
+                        value: existingCsrf.val()
+                    }));
+                }
+            }
+            
+            // Si el método no es POST, agregar campo _method
+            if (method.toUpperCase() !== 'POST') {
+                $form.append($('<input>', {
+                    type: 'hidden',
+                    name: '_method',
+                    value: method.toUpperCase()
+                }));
+            }
+            
+            // Agregar al DOM y enviar
+            $('body').append($form);
+            $form.submit();
+        }
+    });
+    
+    // Limpiar al cerrar el modal
+    $('#confirmDeleteModal').on('hidden.bs.modal', function() {
+        deleteForm = null;
+    });
+    
+    }); // Fin de $(document).ready()
+}
+
+// Inicializar cuando jQuery esté disponible
+waitForJQuery();
 </script>
 
 <?php $this->endContent() ?>
