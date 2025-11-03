@@ -1,4 +1,5 @@
-$(document).on('click', ".movement-details", function (event) {
+// Interceptar solo los clics en ver detalles, no en conversión
+$(document).on('click', ".movement-details:not(.convert-order)", function (event) {
     event.preventDefault();
     let href = $(this).attr('href')
     $.ajax({
@@ -9,6 +10,12 @@ $(document).on('click', ".movement-details", function (event) {
         $("#modal-details-movement").modal('show');
     });
     return false;
+})
+
+// Permitir navegación normal para botones de conversión
+$(document).on('click', ".convert-order", function (event) {
+    // No interceptar - permitir navegación normal
+    return true;
 })
 
 $(document).on('show.bs.modal', '#modal-balance', function (event) {

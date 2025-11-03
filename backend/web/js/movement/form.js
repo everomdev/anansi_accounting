@@ -46,25 +46,150 @@ $(document).on('change', '#movement-amount, #movement-quantity, #movement-tax', 
     let amount = $("#movement-amount").val();
     let quantity = $("#movement-quantity").val();
     let tax = $("#movement-tax").val();
-
-    // Parsear los valores, usando 0 como valor por defecto si están vacíos
-    let amountValue = Number.parseFloat(amount) || 0;
-    let quantityValue = Number.parseFloat(quantity) || 0;
-    let taxValue = Number.parseFloat(tax) || 0;
-
-    // Calcular el precio unitario sumando el impuesto al monto total
-    if (quantityValue > 0) {
-        let totalWithTax = amountValue + taxValue;
-        let unitPrice = totalWithTax / quantityValue;
+    
+    // Función para validar si un valor es un número válido
+    function isValidNumber(value) {
+        if (value === '' || value === null || value === undefined) return true; // Permitir vacío
+        return !isNaN(value) && !isNaN(parseFloat(value)) && isFinite(value);
+    }
+    
+    // Función para mostrar error en un campo
+    function showFieldError(fieldId, message) {
+        let field = $(fieldId);
+        let fieldGroup = field.closest('.form-group');
         
-        if (!isNaN(unitPrice)) {
-            $("#movement-unit_price").val(unitPrice.toFixed(2));
+        // Remover errores anteriores
+        fieldGroup.find('.invalid-feedback').remove();
+        field.removeClass('is-invalid');
+        
+        // Agregar nuevo error
+        field.addClass('is-invalid');
+        field.after('<div class="invalid-feedback">' + message + '</div>');
+    }
+    
+    // Función para limpiar errores de un campo
+    function clearFieldError(fieldId) {
+        let field = $(fieldId);
+        let fieldGroup = field.closest('.form-group');
+        
+        fieldGroup.find('.invalid-feedback').remove();
+        field.removeClass('is-invalid');
+    }
+    
+    // Validar cada campo
+    let hasErrors = false;
+    
+    if (amount !== '' && !isValidNumber(amount)) {
+        showFieldError('#movement-amount', 'El precio de compra debe ser un número válido');
+        hasErrors = true;
+    } else {
+        clearFieldError('#movement-amount');
+    }
+    
+    if (quantity !== '' && !isValidNumber(quantity)) {
+        showFieldError('#movement-quantity', 'La cantidad debe ser un número válido');
+        hasErrors = true;
+    } else {
+        clearFieldError('#movement-quantity');
+    }
+    
+    if (tax !== '' && !isValidNumber(tax)) {
+        showFieldError('#movement-tax', 'El impuesto debe ser un número válido');
+        hasErrors = true;
+    } else {
+        clearFieldError('#movement-tax');
+    }
+    
+    // Solo hacer cálculos si no hay errores
+    if (!hasErrors) {
+        // Parsear los valores, usando 0 como valor por defecto si están vacíos
+        let amountValue = Number.parseFloat(amount) || 0;
+        let quantityValue = Number.parseFloat(quantity) || 0;
+        let taxValue = Number.parseFloat(tax) || 0;
+
+        // Calcular el precio unitario sumando el impuesto al monto total
+        if (quantityValue > 0) {
+            let totalWithTax = amountValue + taxValue;
+            let unitPrice = totalWithTax / quantityValue;
+            
+            if (!isNaN(unitPrice)) {
+                $("#movement-unit_price").val(unitPrice.toFixed(2));
+            }
+        } else {
+            // Si no hay cantidad, limpiar precio unitario
+            $("#movement-unit_price").val('');
+        }
+        
+        // Calcular el total (amount + tax)
+        let total = amountValue + taxValue;
+        if (!isNaN(total) && total >= 0) {
+            $("#movement-total").val(total.toFixed(2));
+        }
+    } else {
+        // Si hay errores, limpiar los campos calculados
+        $("#movement-unit_price").val('');
+        $("#movement-total").val('');
+    }
+})
+
+// Validación en tiempo real mientras se escribe
+$(document).on('input', '#movement-amount, #movement-quantity, #movement-tax', function (event) {
+    let fieldId = '#' + $(this).attr('id');
+    let value = $(this).val();
+    
+    // Función para validar si un valor es un número válido
+    function isValidNumber(value) {
+        if (value === '' || value === null || value === undefined) return true; // Permitir vacío
+        return !isNaN(value) && !isNaN(parseFloat(value)) && isFinite(value);
+    }
+    
+    // Función para mostrar error en un campo
+    function showFieldError(fieldId, message) {
+        let field = $(fieldId);
+        let fieldGroup = field.closest('.form-group');
+        
+        // Remover errores anteriores
+        fieldGroup.find('.invalid-feedback').remove();
+        field.removeClass('is-invalid');
+        
+        // Agregar nuevo error si el valor no está vacío
+        if (value !== '') {
+            field.addClass('is-invalid');
+            field.after('<div class="invalid-feedback">' + message + '</div>');
         }
     }
-      // Calcular el total (amount + tax)
-    let total = amountValue + taxValue;
-    if (!isNaN(total)) {
-        $("#movement-total").val(total.toFixed(2));
+    
+    // Función para limpiar errores de un campo
+    function clearFieldError(fieldId) {
+        let field = $(fieldId);
+        let fieldGroup = field.closest('.form-group');
+        
+        fieldGroup.find('.invalid-feedback').remove();
+        field.removeClass('is-invalid');
+    }
+    
+    // Validar el campo actual
+    if (value !== '' && !isValidNumber(value)) {
+        let fieldName = $(this).attr('id').replace('movement-', '');
+        let message = '';
+        
+        switch (fieldName) {
+            case 'amount':
+                message = 'El precio de compra debe ser un número válido';
+                break;
+            case 'quantity':
+                message = 'La cantidad debe ser un número válido';
+                break;
+            case 'tax':
+                message = 'El impuesto debe ser un número válido';
+                break;
+            default:
+                message = 'Este campo debe ser un número válido';
+        }
+        
+        showFieldError(fieldId, message);
+    } else {
+        clearFieldError(fieldId);
     }
 })
 

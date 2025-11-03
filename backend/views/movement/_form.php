@@ -71,7 +71,8 @@ $providerNames = array_values(
     <?php $form = ActiveForm::begin([
         'id' => 'movement-form',
         'enableAjaxValidation' => true,
-        'enableClientValidation' => true
+        'enableClientValidation' => true,
+        'validateOnSubmit' => true
     ]); ?>
     <div class="card">
         <div class="card-header">
@@ -215,6 +216,20 @@ $providerNames = array_values(
         margin-bottom: 0.5rem;
         font-weight: 500;
         color: var(--bs-body-color);
+    }
+    
+    /* Estilos para validación de campos numéricos */
+    .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+    
+    .invalid-feedback {
+        display: block !important;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
     }
     </style>
     <div id="provider-warning" class="provider-warning">

@@ -47,7 +47,8 @@ class MovementController extends Controller
                             'export-movements',
                             'import-movements',
                             'balance',
-                            'get-provider-payment-types'
+                            'get-provider-payment-types',
+                            'convert-to-entry'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -63,6 +64,15 @@ class MovementController extends Controller
                         'roles' => [
                             'movements_view',
                             'movements_list'
+                        ],
+                    ],
+                    [
+                        'actions' => [
+                            'update',
+                        ],
+                        'allow' => true,
+                        'roles' => [
+                            'manage_account',
                         ],
                     ],
                     [
@@ -130,12 +140,16 @@ class MovementController extends Controller
 
         if (array_key_exists('ajax', $post)) {
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
+            return;
         }
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['index']);
         } elseif ($model->hasErrors()) {
-           var_dump($model->errors);
+            // Mostrar errores específicos al usuario
+            foreach ($model->getFirstErrors() as $field => $error) {
+                Yii::$app->session->addFlash('error', ucfirst($field) . ': ' . $error);
+            }
         }
 
         return $this->render('create', [
@@ -158,15 +172,67 @@ class MovementController extends Controller
 
         if (array_key_exists('ajax', $post)) {
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
+            return;
         }
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['index']);
+        } elseif ($model->hasErrors()) {
+            // Mostrar errores específicos al usuario
+            foreach ($model->getFirstErrors() as $field => $error) {
+                Yii::$app->session->addFlash('error', ucfirst($field) . ': ' . $error);
+            }
         }
 
         return $this->render('update', [
             'model' => $model,
         ]);
+    }
+
+    /**
+     * Convierte una orden en una entrada
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionConvertToEntry($id)
+    {
+        $originalOrder = $this->findModel($id);
+        
+        // Verificar que sea una orden
+        if ($originalOrder->type !== Movement::TYPE_ORDER) {
+            Yii::$app->session->addFlash('error', 'Solo se pueden convertir órdenes en entradas.');
+            return $this->redirect(['view', 'id' => $id]);
+        }
+        
+        // Crear nuevo movimiento basado en la orden
+        $newEntry = new Movement();
+        $newEntry->type = Movement::TYPE_INPUT;
+        $newEntry->business_id = $originalOrder->business_id;
+        $newEntry->ingredient_id = $originalOrder->ingredient_id;
+        $newEntry->provider = $originalOrder->provider;
+        $newEntry->payment_type = $originalOrder->payment_type;
+        $newEntry->invoice = $originalOrder->invoice;
+        $newEntry->quantity = $originalOrder->quantity;
+        $newEntry->um = $originalOrder->um;
+        $newEntry->amount = $originalOrder->amount;
+        $newEntry->tax = $originalOrder->tax;
+        $newEntry->retention = $originalOrder->retention;
+        $newEntry->unit_price = $originalOrder->unit_price;
+        $newEntry->total = $originalOrder->total;
+        $newEntry->observations = $originalOrder->observations . ' (Convertido de orden #' . $originalOrder->id . ')';
+        $newEntry->created_at = date('Y-m-d H:i:s'); // Fecha actual para la nueva entrada
+        
+        if ($newEntry->save()) {
+            Yii::$app->session->addFlash('success', 'La orden se ha convertido exitosamente en una entrada.');
+            return $this->redirect(['index']);
+        } else {
+            // Mostrar errores específicos
+            foreach ($newEntry->getFirstErrors() as $field => $error) {
+                Yii::$app->session->addFlash('error', ucfirst($field) . ': ' . $error);
+            }
+            return $this->redirect(['view', 'id' => $id]);
+        }
     }
 
     public function actionDownloadTemplate()

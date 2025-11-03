@@ -18,6 +18,82 @@ $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys:
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 ?>
 <div class="movement-index">
+
+    <?php
+    // Obtener y consumir todos los mensajes flash para evitar duplicados en el layout
+    $allFlashes = Yii::$app->session->getAllFlashes();
+    // Limpiar los flashes para que no aparezcan en el layout
+    Yii::$app->session->removeAllFlashes();
+    
+    // Mostrar mensajes flash encima de los botones
+    foreach ($allFlashes as $key => $messages) {
+        $alertClass = '';
+        $iconClass = '';
+        
+        switch ($key) {
+            case 'error':
+                $alertClass = 'alert-danger';
+                $iconClass = 'bx bx-error-circle';
+                break;
+            case 'success':
+                $alertClass = 'alert-success';
+                $iconClass = 'bx bx-check-circle';
+                break;
+            case 'warning':
+                $alertClass = 'alert-warning';
+                $iconClass = 'bx bx-info-circle';
+                break;
+            default:
+                $alertClass = 'alert-info';
+                $iconClass = 'bx bx-info-circle';
+        }
+        
+        foreach ((array) $messages as $message) {
+            echo '<div class="alert ' . $alertClass . ' alert-dismissible fade show mb-3" role="alert">';
+            echo '<i class="' . $iconClass . ' me-2"></i>';
+            
+            // Permitir HTML en mensajes de éxito para mostrar botones
+            if ($key === 'success') {
+                echo $message;
+            } else {
+                echo Html::encode($message);
+            }
+            
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            echo '</div>';
+        }
+    }
+    ?>
+
+    <style>
+    .alert-success {
+        background-color: #d1e7dd;
+        border-color: #badbcc;
+        color: #0f5132;
+    }
+    
+    .alert-success .btn-outline-primary {
+        border-color: #0f5132;
+        color: #0f5132;
+    }
+    
+    .alert-success .btn-outline-primary:hover {
+        background-color: #0f5132;
+        border-color: #0f5132;
+        color: white;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .alert i {
+        font-size: 1.2em;
+        vertical-align: middle;
+    }
+    </style>
+
     <div class="d-flex flex-wrap">
         <div class="p-2">
             <?= Html::a(Yii::t('app', 'Create entry'), ['create', 'type' => \common\models\Movement::TYPE_INPUT], ['class' => 'btn btn-warning']) ?>
@@ -58,8 +134,13 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             [
                 'attribute' => 'type',
                 'value' => function ($model) {
-                    return $model->formattedType;
+                    $type = $model->formattedType;
+                    if ($model->type === \common\models\Movement::TYPE_ORDER) {
+                        return $type . ' <span class="badge bg-info ms-1">Convertible</span>';
+                    }
+                    return $type;
                 },
+                'format' => 'raw',
                 'filter' => \yii\bootstrap5\Html::activeDropDownList(
                     $searchModel,
                     'type',
@@ -214,16 +295,46 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{view}",
+                'template' => "{view} {update} {convert}",
                 'buttons' => [
                     'view' => function ($url, $model, $key) {
                         return \yii\bootstrap5\Html::a(
                             '<i class="bx bx-show"></i>',
                             $url,
                             [
-                                'class' => 'movement-details text-warning'
+                                'class' => 'movement-details text-warning',
+                                'title' => 'Ver detalles'
                             ]
                         );
+                    },
+                    'update' => function ($url, $model, $key) {
+                        // Solo mostrar el botón de editar si el usuario es administrador
+                        if (Yii::$app->user->can('manage_account')) {
+                            return \yii\bootstrap5\Html::a(
+                                '<i class="bx bx-edit-alt"></i>',
+                                ['update', 'id' => $model->id],
+                                [
+                                    'class' => 'text-warning ms-2',
+                                    'title' => 'Editar movimiento'
+                                ]
+                            );
+                        }
+                        return '';
+                    },
+                    'convert' => function ($url, $model, $key) {
+                        // Solo mostrar el botón de convertir para órdenes
+                        if ($model->type === \common\models\Movement::TYPE_ORDER) {
+                            return \yii\bootstrap5\Html::a(
+                                '<i class="bx bx-transfer"></i>',
+                                ['convert-to-entry', 'id' => $model->id],
+                                [
+                                    'class' => 'text-success ms-2 convert-order',
+                                    'title' => 'Convertir a entrada',
+                                    'data-confirm' => '¿Confirmas que quieres convertir esta orden en una entrada?'
+                                ]
+                            );
+                        }
+                        return '';
                     }
                 ]
             ],
