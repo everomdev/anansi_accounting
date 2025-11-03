@@ -383,7 +383,7 @@ public function actionExportPlantillaInventario()
     $row = $headerRow + 1;
     foreach ($insumos as $insumo) {
         $sheet->setCellValue("A{$row}", $insumo->ingredient);
-        $sheet->setCellValue("B{$row}", $insumo->um);
+        $sheet->setCellValue("B{$row}", $insumo->portion_um);
         $sheet->setCellValue("C{$row}", $insumo->category ? $insumo->category->name : '-');
 
         // Columnas vacías para existencias de cada centro de consumo
