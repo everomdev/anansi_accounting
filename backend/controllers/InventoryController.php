@@ -647,7 +647,7 @@ public function actionExportPlantillaInventario()
                         ->where([
                             'ingredient_stock.business_id' => $businessId,
                             'ingredient_stock.ingredient' => $insumoNombre,
-                            'ingredient_stock.um' => $unidad
+                            'ingredient_stock.portion_um' => $unidad
                         ])
                         ->joinWith('category')
                         ->andWhere(['category.name' => $categoria])
