@@ -20,6 +20,7 @@ class InventoryController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'delete' => ['POST'],
+                    'delete-by-fecha' => ['POST'],
                 ],
             ],
         ];
@@ -147,9 +148,122 @@ public function actionCreate()
         ]);
     }
 
+    public function actionEdit($fecha)
+    {
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $businessId = $businessData['id'] ?? null;
+        
+        // Si es POST, procesar el guardado
+        if (Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            $inventarios = $post['inventario'] ?? [];
+            $errors = [];
+            
+            // Eliminar registros existentes para esta fecha
+            $existingInventories = Inventory::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->all();
+            foreach ($existingInventories as $inv) {
+                InventoryConsumptionCenter::deleteAll(['inventory_id' => $inv->id]);
+                $inv->delete();
+            }
+            
+            // Obtener centros de consumo del negocio
+            $consumptionCenters = ConsumptionCenter::find()->where(['business_id' => $businessId])->all();
+            $dateEnd = date('Y-m-d H:i:s');
+            
+            // Guardar nuevos datos
+            foreach ($inventarios as $ingredientId => $data) {
+                $inv = new Inventory();
+                $inv->ingredient_stock_id = $ingredientId;
+                $inv->business_id = $businessId;
+                $inv->fecha = $fecha;
+                $inv->date_end = $dateEnd;
+                
+                if ($inv->save()) {
+                    foreach ($consumptionCenters as $center) {
+                        $quantity = isset($data[$center->id]) && $data[$center->id] !== '' ? $data[$center->id] : 0;
+                        $icc = new InventoryConsumptionCenter();
+                        $icc->inventory_id = $inv->id;
+                        $icc->consumption_center_id = $center->id;
+                        $icc->quantity = $quantity;
+                        if (!$icc->save()) {
+                            $errors[$ingredientId][] = 'Error saving for center ' . $center->name;
+                        }
+                    }
+                } else {
+                    $errors[$ingredientId] = $inv->getErrors();
+                }
+            }
+            
+            if (empty($errors)) {
+                Yii::$app->session->setFlash('success', 'Inventario actualizado correctamente.');
+                return $this->redirect(['detalle', 'fecha' => $fecha]);
+            } else {
+                Yii::$app->session->setFlash('error', 'Error al actualizar el inventario.');
+            }
+        }
+        
+        // Cargar datos para mostrar (similar a actionDetalle)
+        $searchModel = new \common\models\InventorySearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $fecha);
+        
+        // Desactivar la paginación para edición (mostrar todos los elementos)
+        $dataProvider->pagination = false;
+        
+        // Obtener la fecha de finalización del primer registro
+        $firstInventory = Inventory::find()->where(['fecha' => $fecha])->orderBy(['id' => SORT_ASC])->one();
+        $dateEnd = $firstInventory ? $firstInventory->date_end : null;
+        
+        // Centros de consumo del negocio
+        $consumptionCenters = ConsumptionCenter::find()->where(['business_id' => $businessId])->orderBy(['id' => SORT_ASC])->all();
+        
+        return $this->render('edit', [
+            'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel,
+            'fecha' => $fecha,
+            'dateEnd' => $dateEnd,
+            'consumptionCenters' => $consumptionCenters,
+        ]);
+    }
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
+        return $this->redirect(['index']);
+    }
+
+    public function actionDeleteByFecha($fecha)
+    {
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $businessId = $businessData['id'] ?? null;
+        
+        // Buscar todos los inventarios para esta fecha y negocio
+        $inventories = Inventory::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->all();
+        
+        if (empty($inventories)) {
+            Yii::$app->session->setFlash('error', 'No se encontraron inventarios para la fecha especificada.');
+            return $this->redirect(['index']);
+        }
+        
+        $deletedCount = 0;
+        
+        // Eliminar cada inventario y sus registros relacionados
+        foreach ($inventories as $inventory) {
+            // Eliminar registros de InventoryConsumptionCenter
+            InventoryConsumptionCenter::deleteAll(['inventory_id' => $inventory->id]);
+            
+            // Eliminar el inventario
+            if ($inventory->delete()) {
+                $deletedCount++;
+            }
+        }
+        
+        if ($deletedCount > 0) {
+            $fechaFormateada = date('d/m/Y H:i', strtotime($fecha));
+            Yii::$app->session->setFlash('success', "Inventario del {$fechaFormateada} eliminado correctamente. Se eliminaron {$deletedCount} registros.");
+        } else {
+            Yii::$app->session->setFlash('error', 'No se pudieron eliminar los registros de inventario.');
+        }
+        
         return $this->redirect(['index']);
     }
 

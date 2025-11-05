@@ -41,6 +41,15 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     <td><?= date('d/m/Y H:i', strtotime($fechaRaw)) ?></td>
                     <td>
                         <?= Html::a('<span class="glyphicon glyphicon-eye-open"></span> Ver detalles', ['inventory/detalle', 'fecha' => $fechaRaw], ['class' => 'btn btn-info btn-sm']) ?>
+                        <?= Html::a('<span class="glyphicon glyphicon-pencil"></span> Editar inventario', ['inventory/edit', 'fecha' => $fechaRaw], ['class' => 'btn btn-warning btn-sm', 'style' => 'margin-left: 8px;']) ?>
+                        <?= Html::a('<span class="glyphicon glyphicon-trash"></span> Eliminar', ['inventory/delete-by-fecha', 'fecha' => $fechaRaw], [
+                            'class' => 'btn btn-danger btn-sm',
+                            'style' => 'margin-left: 8px;',
+                            'data' => [
+                                'confirm' => '¿Estás seguro de que quieres eliminar todo el inventario del ' . date('d/m/Y H:i', strtotime($fechaRaw)) . '? Esta acción no se puede deshacer.',
+                                'method' => 'post',
+                            ],
+                        ]) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
