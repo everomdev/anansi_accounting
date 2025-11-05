@@ -41,7 +41,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     <td><?= date('d/m/Y H:i', strtotime($fechaRaw)) ?></td>
                     <td>
                         <?= Html::a('<span class="glyphicon glyphicon-eye-open"></span> Ver detalles', ['inventory/detalle', 'fecha' => $fechaRaw], ['class' => 'btn btn-info btn-sm']) ?>
-                        <?php if (Yii::$app->user->identity->canMultiple(['storage_admin', 'manage_users', 'administrator'])): ?>
+                        <?php if (Yii::$app->user->can('storage_admin') || Yii::$app->user->can('manage_users') || Yii::$app->user->can('administrator')): ?>
                             <?= Html::a('<span class="glyphicon glyphicon-pencil"></span> Editar inventario', ['inventory/edit', 'fecha' => $fechaRaw], ['class' => 'btn btn-warning btn-sm', 'style' => 'margin-left: 8px;']) ?>
                             <?= Html::a('<span class="glyphicon glyphicon-trash"></span> Eliminar', ['inventory/delete-by-fecha', 'fecha' => $fechaRaw], [
                                 'class' => 'btn btn-danger btn-sm',
