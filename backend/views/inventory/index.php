@@ -201,10 +201,35 @@ document.getElementById('import-btn').addEventListener('click', function() {
         return;
     }
     
+    // Cambiar el botón a estado de cargando
+    const importBtn = this;
+    const originalText = importBtn.innerHTML;
+    const originalClass = importBtn.className;
+    
+    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importando...';
+    importBtn.className = 'btn btn-secondary';
+    importBtn.disabled = true;
+    
+    // Deshabilitar también el botón de cancelar
+    const cancelBtn = document.querySelector('#modal-upload-file .btn-secondary');
+    if (cancelBtn) {
+        cancelBtn.disabled = true;
+    }
+    
     // Establecer la fecha local en el campo oculto
     document.getElementById('fecha-importacion-hidden').value = getFechaLocal();
     
     // Enviar el formulario
     fileInput.closest('form').submit();
+    
+    // Opcional: restaurar el botón después de un tiempo en caso de error
+    setTimeout(function() {
+        importBtn.innerHTML = originalText;
+        importBtn.className = originalClass;
+        importBtn.disabled = false;
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+        }
+    }, 10000); // 10 segundos como fallback
 });
 </script>
