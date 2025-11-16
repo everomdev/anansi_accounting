@@ -51,7 +51,7 @@ $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center'
 $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
 $kpisControlActive = in_array($currentControllerId, ['control-insumos', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
-$administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
+$administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business', 'expense']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo" style="width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; position: relative;">
@@ -133,6 +133,11 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
+                    <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
+                        </a>
+                    </li>
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                          <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/provider/ingredients']) ?>" class="menu-link">
@@ -421,11 +426,11 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
-                        <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['//business/my-business']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Settings') ?></div>
-                            </a>
-                        </li>
+                    <li class="menu-item <?= $currentControllerId == 'business' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['//business/my-business']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Settings') ?></div>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </li>
