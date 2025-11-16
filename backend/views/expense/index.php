@@ -8,7 +8,7 @@ use yii\widgets\Pjax;
 /* @var $searchModel common\models\ExpenseSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-// $this->title = Yii::t('app', 'Catálogo de Gastos');
+$this->title = Yii::t('app', 'Catálogo de Gastos');
 $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
@@ -91,7 +91,6 @@ $this->registerCss('
 ?>
 <div class="expense-index">
     <div class="d-flex flex-wrap">
-        <h1><?= Html::encode($this->title) ?></h1>
         <div class="ms-auto">
             <?= Html::a(Yii::t('app', 'Crear Gasto'), ['create'], ['class' => 'btn btn-success']) ?>
         </div>
