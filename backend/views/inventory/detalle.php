@@ -278,6 +278,9 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
     <div class="mt-3">
         <?= Html::a('<i class="fas fa-history"></i> Ver Historial de Ajustes', ['/kpi/historial-ajustes'], ['class' => 'btn btn-secondary mr-2']) ?>
+        <?php if (Yii::$app->user->can('storage_admin') || Yii::$app->user->can('manage_users') || Yii::$app->user->can('administrator')): ?>
+            <?= Html::a('<i class="fas fa-edit"></i> Editar inventario', ['edit', 'fecha' => $fecha], ['class' => 'btn btn-warning mr-2']) ?>
+        <?php endif; ?>
         <?= Html::a('Volver al listado de fechas', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 </div>
