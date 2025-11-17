@@ -5,6 +5,7 @@ use Yii;
 use common\models\Inventory;
 use common\models\InventoryConsumptionCenter;
 use common\models\ConsumptionCenter;
+use backend\helpers\RedisKeys;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
