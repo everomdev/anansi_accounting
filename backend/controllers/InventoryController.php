@@ -150,7 +150,7 @@ public function actionCreate()
 
     public function actionEdit($fecha)
     {
-        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $businessId = $businessData['id'] ?? null;
         
         // Si es POST, procesar el guardado
