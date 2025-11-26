@@ -1882,7 +1882,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $sheet = $spreadsheet->getActiveSheet();
 
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-            $sheet->setCellValue('A1', 'Tipo');
+            $sheet->setCellValue('A1', 'A / B');
             $sheet->setCellValue('B1', 'Nombre');
             $sheet->setCellValue('C1', 'Familia');
             $sheet->setCellValue('D1', 'Costo');
@@ -1902,7 +1902,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $sheet->getColumnDimension('H')->setWidth(25); // Cantidad de Sub-recetas
         } else {
             $sheet->setCellValue('A1', 'Nombre');
-            $sheet->setCellValue('B1', 'Familia');
+            $sheet->setCellValue('B1', 'Categoría');
             $sheet->setCellValue('C1', 'Costo');
             $sheet->setCellValue('D1', 'Cantidad de ingredientes');
             $sheet->setCellValue('E1', 'Cantidad de Recetas');
