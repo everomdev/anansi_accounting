@@ -3116,6 +3116,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      $insumosRow = 2;
      foreach ($ingredientStock as $ingredient) {
+        if ($ingredient->ingredient === 'JITOMATE') {
+            die(var_dump($ingredient->lastPrice));
+        }
          $insumosSheet->setCellValue('A'.$insumosRow, $ingredient->ingredient);
          $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
          $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->portion_um);
