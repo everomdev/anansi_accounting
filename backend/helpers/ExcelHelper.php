@@ -2648,135 +2648,169 @@ if ($ccRow > 2) {
     }
     public static function importSubRecipe(Business $business, $fileName)
     {
+        $errors = [];
+        $savedCount = 0;
+
         try {
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
             $recipeData = [];
             $ingredientData = [];
-    
+
             $recipesSheet = $spreadsheet->getSheetByName('FICHA GENERAL DE LA SUBRECETA');
             $ingredientsSheet = $spreadsheet->getSheetByName('INGREDIENTES');
-    
+
             if ($recipesSheet === null) {
-                throw new HttpException(400, 'La hoja "Recipes" no se encontró en el archivo Excel.');
+                $errors[] = 'La hoja "FICHA GENERAL DE LA SUBRECETA" no se encontró en el archivo Excel.';
+                return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
             }
-    
+
             if ($ingredientsSheet === null) {
-                throw new HttpException(400, 'La hoja "Ingredients" no se encontró en el archivo Excel.');
+                $errors[] = 'La hoja "INGREDIENTES" no se encontró en el archivo Excel.';
+                return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
             }
-            // Importar recetas
+
+            // Importar subrecetas
             $rowIterator = $recipesSheet->getRowIterator();
-            while (true) {
+            $rowNumber = 1;
+            while ($rowIterator->valid()) {
+                $rowNumber = $rowIterator->current()->getRowIndex();
+                if ($rowNumber == 1) {
+                    $rowIterator->next();
+                    continue;
+                }
                 $cellIterator = $rowIterator->current()->getCellIterator('A', 'M');
-                if ($rowIterator->current()->getRowIndex() != 1) {
-                    if (empty($cellIterator->current()->getValue())) {
-                        break;
-                    }
-                    $data = [];
-                    $data['title'] = $cellIterator->current()->getValue(); // A - Nombre
-                    $cellIterator->next();
-                    $data['type_of_recipe'] = $cellIterator->current()->getValue(); // B - Tipo de Receta
-                    $cellIterator->next();
-                    $timeValue = $cellIterator->current()->getValue();
-                    $cellIterator->next();
-                    $timeUnit = $cellIterator->current()->getValue(); // Time unit (minutes, hours, days)
-                    $data['time_of_preparation'] = $timeValue . ' ' . $timeUnit;
-                    $cellIterator->next();
-                    $data['yield'] = $cellIterator->current()->getValue(); // E - Rendimiento
-                    $cellIterator->next();
-                    $data['yield_um'] = $cellIterator->current()->getValue(); // F - Unidad de medida final
-                    $cellIterator->next();
-                    $data['um'] = $cellIterator->current()->getValue(); // E - Rendimiento UM
-                    $cellIterator->next();
-                    $portionsValue = $cellIterator->current();
-                    $data['portions'] = $portionsValue->getCalculatedValue(); // F - Porciones
-                    if (!is_numeric($data['portions'])) {
-                        // Try to clean/extract numeric value if it's not already numeric
-                        $data['portions'] = preg_replace('/[^\d.]/', '', $data['portions']);
-                        // If still empty or not numeric, default to 1
-                        if (empty($data['portions']) || !is_numeric($data['portions'])) {
-                            $data['portions'] = 1;
-                        }
-                    }
-                    $cellIterator->next();
-                    //var_dump($data['portions']);
-                    $timeValue = $cellIterator->current()->getValue();
-                    $cellIterator->next();
-                    $timeUnit = $cellIterator->current()->getValue();
-                    $data['lifetime'] = $timeValue . ' ' . $timeUnit; // G - Duración
-                    $cellIterator->next();
-                    
-                    $data['business_id'] = $business->id;
-                    
-    
-                    $recipeData[] = $data;
+                $cellIterator->rewind();
+                if (empty(trim($cellIterator->current()->getValue()))) {
+                    $rowIterator->next();
+                    continue;
                 }
+                $data = [];
+                $data['title'] = trim($cellIterator->current()->getValue()); // A - Nombre
+                if (empty($data['title'])) {
+                    $errors[] = "Fila $rowNumber: El nombre de la subreceta no puede estar vacío.";
+                }
+                $cellIterator->next();
+                $data['type_of_recipe'] = trim($cellIterator->current()->getValue()); // B - Tipo de Receta
+                $cellIterator->next();
+                $timeValue = trim($cellIterator->current()->getValue());
+                $cellIterator->next();
+                $timeUnit = trim($cellIterator->current()->getValue()); // Time unit (minutes, hours, days)
+                $data['time_of_preparation'] = $timeValue . ' ' . $timeUnit;
+                $cellIterator->next();
+                $data['yield'] = trim($cellIterator->current()->getValue()); // E - Rendimiento
+                $cellIterator->next();
+                $data['yield_um'] = trim($cellIterator->current()->getValue()); // F - Unidad de medida final
+                $cellIterator->next();
+                $data['um'] = trim($cellIterator->current()->getValue()); // G - Unidad de medida final
+                $cellIterator->next();
+                $portionsValue = $cellIterator->current();
+                $data['portions'] = $portionsValue->getCalculatedValue(); // H - Porciones
+                if (!is_numeric($data['portions'])) {
+                    // Try to clean/extract numeric value if it's not already numeric
+                    $data['portions'] = preg_replace('/[^\d.]/', '', $data['portions']);
+                    // If still empty or not numeric, default to 1
+                    if (empty($data['portions']) || !is_numeric($data['portions'])) {
+                        $data['portions'] = 1;
+                    }
+                }
+                $cellIterator->next();
+                $timeValue = trim($cellIterator->current()->getValue());
+                $cellIterator->next();
+                $timeUnit = trim($cellIterator->current()->getValue());
+                $data['lifetime'] = $timeValue . ' ' . $timeUnit; // I-J - Duración
+
+                $data['business_id'] = $business->id;
+                $data['row_number'] = $rowNumber;
+
+                $recipeData[] = $data;
                 $rowIterator->next();
             }
-            // Importar ingredientes agrupados por receta
+
+            // Importar ingredientes agrupados por subreceta
             $rowIterator = $ingredientsSheet->getRowIterator();
-            while (true) {
-                $cellIterator = $rowIterator->current()->getCellIterator('A', 'F');
-                if ($rowIterator->current()->getRowIndex() != 1) {
-                    if (empty($cellIterator->current()->getValue())) {
-                        break;
-                    }
-                    $data = [];
-                    $data['recipe'] = $cellIterator->current()->getValue(); // A - Receta
-                    $cellIterator->next();
-                    $data['type'] = $cellIterator->current()->getValue(); // B - Tipo (INSUMO/SUBRECETA)
-                    $cellIterator->next();
-                            $cell = $cellIterator->current();
-                            $data['item'] = self::resolveCellValue($cell); // C - Item (Insumo o Subreceta)
-                    $cellIterator->next();
-                            $cell = $cellIterator->current();
-                            $data['quantity'] = self::resolveCellValue($cell); // D - Cantidad
-                    $cellIterator->next();
-                            $cell = $cellIterator->current();
-                            $data['portion_um'] = self::resolveCellValue($cell); // E - UM
-                    $cellIterator->next();
-                            $cell = $cellIterator->current();
-                            $data['lastPrice'] = self::resolveCellValue($cell); // F - Costo
-
-                    $data['business_id'] = $business->id;
-
-                    if (!isset($ingredientData[$data['recipe']])) {
-                        $ingredientData[$data['recipe']] = [];
-                    }
-                    $ingredientData[$data['recipe']][] = $data;
+            $rowNumber = 1;
+            while ($rowIterator->valid()) {
+                $rowNumber = $rowIterator->current()->getRowIndex();
+                if ($rowNumber == 1) {
+                    $rowIterator->next();
+                    continue;
                 }
+                $cellIterator = $rowIterator->current()->getCellIterator('A', 'F');
+                $cellIterator->rewind();
+                if (empty(trim($cellIterator->current()->getValue()))) {
+                    $rowIterator->next();
+                    continue;
+                }
+                $data = [];
+                $data['recipe'] = trim($cellIterator->current()->getValue()); // A - Subreceta
+                $cellIterator->next();
+                $data['type'] = trim($cellIterator->current()->getValue()); // B - Tipo (INSUMO/SUBRECETA)
+                $cellIterator->next();
+                $cell = $cellIterator->current();
+                $data['item'] = trim(self::resolveCellValue($cell)); // C - Item (Insumo o Subreceta)
+                $cellIterator->next();
+                $cell = $cellIterator->current();
+                $data['quantity'] = self::resolveCellValue($cell); // D - Cantidad
+                $cellIterator->next();
+                $cell = $cellIterator->current();
+                $data['portion_um'] = trim(self::resolveCellValue($cell)); // E - UM
+                $cellIterator->next();
+                $cell = $cellIterator->current();
+                $data['lastPrice'] = self::resolveCellValue($cell); // F - Costo
+
+                $data['business_id'] = $business->id;
+                $data['row_number'] = $rowNumber;
+                if (!isset($ingredientData[$data['recipe']])) {
+                    $ingredientData[$data['recipe']] = [];
+                }
+                $ingredientData[$data['recipe']][] = $data;
                 $rowIterator->next();
             }
 
-
-            
             $transaction = \Yii::$app->db->beginTransaction();
             try {
                 foreach ($recipeData as $data) {
+                    $rowNumber = $data['row_number'];
+                    unset($data['row_number']);
                     $recipe = new StandardRecipe();
                     $recipe['type'] = \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB;
                     $recipe->load($data, '');
-                    if (!$recipe->save()){
-                        var_dump($recipe->errors);
-                        throw new HttpException(400, "Error al guardar receta: " . json_encode($recipe->errors));
+                    if (!$recipe->validate()) {
+                        foreach ($recipe->errors as $attribute => $errorMessages) {
+                            foreach ($errorMessages as $error) {
+                                // Si es un error de unicidad, mostrar mensaje más claro
+                                if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
+                                    $errors[] = "Fila $rowNumber: El nombre de la subreceta '{$data['title']}' ya existe.";
+                                } else {
+                                    $errors[] = "Fila $rowNumber ($attribute): $error";
+                                }
+                            }
+                        }
+                        continue;
                     }
-                    if ($recipe->load($data, '') && $recipe->validate() && $recipe->save()) {
-                        //var_dump($data['title']);
+                    if ($recipe->save()) {
+                        $savedCount++;
+                        // Procesar ingredientes
                         if (isset($ingredientData[$data['title']])) {
                             foreach ($ingredientData[$data['title']] as $ingredient) {
+                                $ingRow = $ingredient['row_number'];
                                 if ($ingredient['type'] === 'INSUMO') {
                                     $ingredientStock = IngredientStock::find()
                                         ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
                                         ->one();
 
                                     if (!$ingredientStock) {
-                                        throw new HttpException(400, "No se encontró el insumo \"{$ingredient['item']}\" en el negocio.");
+                                        $errors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el negocio.";
+                                        continue;
                                     }
 
                                     $ingredientRelation = new IngredientStandardRecipe();
                                     $ingredientRelation->ingredient_id = $ingredientStock->id;
                                     $ingredientRelation->standard_recipe_id = $recipe->id;
                                     $ingredientRelation->quantity = $ingredient['quantity'];
-                                    $ingredientRelation->save();
+                                    if (!$ingredientRelation->save()) {
+                                        $errors[] = "Fila $ingRow: Error al guardar relación con insumo \"{$ingredient['item']}\": " . json_encode($ingredientRelation->errors);
+                                    }
                                 } else if ($ingredient['type'] === 'SUBRECETA') {
                                     $subrecipe = StandardRecipe::find()
                                         ->where([
@@ -2787,38 +2821,51 @@ if ($ccRow > 2) {
                                         ->one();
 
                                     if (!$subrecipe) {
-                                        throw new HttpException(400, "No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.");
+                                        $errors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.";
+                                        continue;
                                     }
 
-                                    // Insert the relation between the main recipe and subrecipe directly to the database
-                                    Yii::$app->db->createCommand()
-                                        ->insert(
-                                            'standard_recipe_sub_standard_recipe',
-                                            [
-                                                'sub_standard_recipe_id' => $subrecipe->id,
-                                                'quantity' => $ingredient['quantity'],
-                                                'standard_recipe_id' => $recipe->id
-                                            ]
-                                        )
-                                        ->execute();
+                                    // Insert the relation between the sub recipe and subrecipe directly to the database
+                                    try {
+                                        Yii::$app->db->createCommand()
+                                            ->insert(
+                                                'standard_recipe_sub_standard_recipe',
+                                                [
+                                                    'sub_standard_recipe_id' => $subrecipe->id,
+                                                    'quantity' => $ingredient['quantity'],
+                                                    'standard_recipe_id' => $recipe->id
+                                                ]
+                                            )
+                                            ->execute();
+                                    } catch (\Exception $e) {
+                                        $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
+                                    }
                                 }
                             }
                         }
                     } else {
-                        Yii::error("Error al guardar receta: " . json_encode($recipe->errors));
+                        foreach ($recipe->errors as $attribute => $errorMessages) {
+                            foreach ($errorMessages as $error) {
+                                // Si es un error de unicidad, mostrar mensaje más claro
+                                if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
+                                    $errors[] = "Fila $rowNumber: El nombre de la subreceta '{$data['title']}' ya existe.";
+                                } else {
+                                    $errors[] = "Fila $rowNumber ($attribute): $error";
+                                }
+                            }
+                        }
                     }
                 }
                 $transaction->commit();
             } catch (\Exception $e) {
                 $transaction->rollBack();
-                throw $e;
+                $errors[] = "Error en la transacción: " . $e->getMessage();
             }
-    
-            return;
+
+            return ['success' => empty($errors), 'saved_count' => $savedCount, 'errors' => $errors];
         } catch (\Exception $e) {
-            Yii::error("Error al importar subrecetas: " . $e->getMessage());
-            Yii::error($e->getTraceAsString());
-            throw new HttpException(500, "Error al importar subrecetas: " . $e->getMessage());
+            $errors[] = "Error general: " . $e->getMessage();
+            return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
         }
     }
 

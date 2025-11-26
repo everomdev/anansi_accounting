@@ -552,16 +552,16 @@ class StandardRecipeController extends Controller
     {
         $business = Business::findOne(['id' => $id]);
 
-        $file = UploadedFile::getInstanceByName('ingredient-file');//
+        $file = UploadedFile::getInstanceByName('ingredient-file');
 
         if ($file) {
-            try {
-                ExcelHelper::importSubRecipe($business, $file->tempName);
-            }catch (\Exception $e) {
-                $errors = json_decode($e->getMessage(), true);
-                foreach ($errors as $field => $fieldErrors) {
-                    Yii::$app->session->setFlash('error', implode("\n", $fieldErrors));
-                }
+            $result = ExcelHelper::importSubRecipe($business, $file->tempName);
+            if (!$result['success']) {
+                // Mostrar errores en flash message
+                Yii::$app->session->setFlash('import_errors', $result['errors']);
+            } else {
+                // Mostrar mensaje de éxito
+                Yii::$app->session->setFlash('success', "Se importaron {$result['saved_count']} subrecetas correctamente.");
             }
         }
 
@@ -1845,9 +1845,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $title = Yii::$app->request->post('title');
         $businessId = Yii::$app->request->post('business_id');
-        // $type = Yii::$app->request->post('type');
+        $type = Yii::$app->request->post('type');
         $exists = StandardRecipe::find()
-            ->where(['title' => $title, 'business_id' => $businessId])
+            ->where(['title' => $title, 'business_id' => $businessId, 'type' => $type])
             ->exists();
 
         return ['exists' => $exists];

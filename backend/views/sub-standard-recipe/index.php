@@ -129,6 +129,13 @@ $this->title = Yii::t('app', "Subrecetas");
 $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+
+// Pasar mensajes de éxito y error a JavaScript
+$successMessage = Yii::$app->session->hasFlash('success') ? Yii::$app->session->getFlash('success') : null;
+$errorMessage = Yii::$app->session->hasFlash('error') ? Yii::$app->session->getFlash('error') : null;
+$this->registerJs("var successMessage = " . json_encode($successMessage) . ";", \yii\web\View::POS_HEAD);
+$this->registerJs("var errorMessage = " . json_encode($errorMessage) . ";", \yii\web\View::POS_HEAD);
+
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerCss('
@@ -218,7 +225,6 @@ $this->registerCss('
 ?>
 
 <div class="sub-standard-recipe-index">
-
 
     <p>
         <?= Html::a(Yii::t('app', 'Nueva Subreceta'), \yii\helpers\Url::to(['standard-recipe/create', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'btn btn-success m-1']) ?>
@@ -546,6 +552,66 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ?>
 
 <?php
+// Modal para mostrar errores de importación
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-import-errors',
+    'title' => Yii::t('app', "Errores en la importación"),
+]);
+?>
+<div id="import-errors-content">
+    <!-- Los errores se cargarán aquí dinámicamente -->
+</div>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para mostrar mensajes de éxito
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-success',
+    'title' => Yii::t('app', "¡Éxito!"),
+]);
+?>
+<div id="success-message-content">
+    <!-- El mensaje se cargará aquí dinámicamente -->
+</div>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-success',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para mostrar mensajes de error
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-error',
+    'title' => Yii::t('app', "Error"),
+]);
+?>
+<div id="error-message-content">
+    <!-- El mensaje se cargará aquí dinámicamente -->
+</div>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-danger',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
 $this->registerJs("
     // Nuevo código para manejo de exportación
     document.getElementById('download-recipes-complete-excel').addEventListener('click', function(e) {
@@ -666,6 +732,34 @@ $this->registerJs("
             }
         } else {
             console.warn('setupFilterButtons no está definido después de PJAX');
+        }
+    });
+
+    // Verificar si hay errores de importación al cargar la página
+    $(document).ready(function() {
+        if (typeof importErrors !== 'undefined' && importErrors.length > 0) {
+            var errorHtml = '<ul class=\"list-group\">';
+            importErrors.forEach(function(error) {
+                errorHtml += '<li class=\"list-group-item list-group-item-danger\">' + error + '</li>';
+            });
+            errorHtml += '</ul>';
+            $('#import-errors-content').html(errorHtml);
+            var importErrorsModal = new bootstrap.Modal(document.getElementById('modal-import-errors'));
+            importErrorsModal.show();
+        }
+        
+        // Verificar si hay mensaje de éxito
+        if (typeof successMessage !== 'undefined' && successMessage !== null) {
+            $('#success-message-content').html('<p>' + successMessage + '</p>');
+            var successModal = new bootstrap.Modal(document.getElementById('modal-success'));
+            successModal.show();
+        }
+        
+        // Verificar si hay mensaje de error
+        if (typeof errorMessage !== 'undefined' && errorMessage !== null) {
+            $('#error-message-content').html('<p>' + errorMessage + '</p>');
+            var errorModal = new bootstrap.Modal(document.getElementById('modal-error'));
+            errorModal.show();
         }
     });
 ", \yii\web\View::POS_READY);
