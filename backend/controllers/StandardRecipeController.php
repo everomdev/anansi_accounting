@@ -537,21 +537,12 @@ class StandardRecipeController extends Controller
         $file = UploadedFile::getInstanceByName('ingredient-file');
 
         if ($file) {
-            try {
-                ExcelHelper::importRecipe($business, $file->tempName);
-            } catch (\Exception $e) {
-                if (is_string($e->getMessage())) {
-                    Yii::$app->session->setFlash('error', $e->getMessage());
-                } else {
-                    $errors = json_decode($e->getMessage(), true);
-                    if (is_array($errors)) {
-                        foreach ($errors as $field => $fieldErrors) {
-                            Yii::$app->session->setFlash('error', implode("\n", $fieldErrors));
-                        }
-                    } else {
-                        Yii::$app->session->setFlash('error', "Error al importar: " . $e->getMessage());
-                    }
-                }
+            $result = ExcelHelper::importRecipe($business, $file->tempName);
+            
+            if (!$result['success']) {
+                Yii::$app->session->setFlash('import_errors', $result['errors']);
+            } else {
+                Yii::$app->session->setFlash('success', "Importación completada exitosamente. {$result['saved_count']} recetas importadas.");
             }
         }
 

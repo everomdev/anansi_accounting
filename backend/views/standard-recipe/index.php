@@ -15,6 +15,10 @@ $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
+// Pasar errores de importación a JavaScript
+$importErrors = Yii::$app->session->hasFlash('import_errors') ? Yii::$app->session->getFlash('import_errors') : [];
+$this->registerJs("var importErrors = " . json_encode($importErrors) . ";", \yii\web\View::POS_HEAD);
+
 $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerJsFile(Yii::getAlias('@web/js/standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerCss('
@@ -499,6 +503,26 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ?>
 
 <?php
+// Modal para mostrar errores de importación
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-import-errors',
+    'title' => Yii::t('app', "Errores en la importación"),
+]);
+?>
+<div id="import-errors-content">
+    <!-- Los errores se cargarán aquí dinámicamente -->
+</div>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
 // Definir las funciones globales primero
 $this->registerJs("
 // Funciones globales para limpiar filtros
@@ -689,6 +713,20 @@ setupFilterButtons();
 // Reconfigurar después de PJAX
 $(document).on('pjax:complete', '#standard-recipes-pjax', function() {
     setupFilterButtons();
+});
+
+// Verificar si hay errores de importación al cargar la página
+$(document).ready(function() {
+    if (typeof importErrors !== 'undefined' && importErrors.length > 0) {
+        var errorHtml = '<ul class=\"list-group\">';
+        importErrors.forEach(function(error) {
+            errorHtml += '<li class=\"list-group-item list-group-item-danger\">' + error + '</li>';
+        });
+        errorHtml += '</ul>';
+        $('#import-errors-content').html(errorHtml);
+        var importErrorsModal = new bootstrap.Modal(document.getElementById('modal-import-errors'));
+        importErrorsModal.show();
+    }
 });
 ");
 ?>
