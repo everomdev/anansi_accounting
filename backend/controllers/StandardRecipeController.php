@@ -1874,6 +1874,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                     'type' => $type,
                     'id' => $recipe_id
                 ])
+                ->with('category')
                 ->all();
         } else {
         $recipes = StandardRecipe::find()
@@ -1882,6 +1883,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 'in_construction' => 0,
                 'type' => $type
             ])
+            ->with('category')
             ->all();
         }
 
@@ -1889,33 +1891,39 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $sheet = $spreadsheet->getActiveSheet();
 
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-            $sheet->setCellValue('A1', 'Nombre');
-            $sheet->setCellValue('B1', 'Costo');
-            $sheet->setCellValue('C1', 'Precio de venta');
-            $sheet->setCellValue('D1', 'Porcentaje de costo');
-            $sheet->setCellValue('E1', 'Cantidad de ingredientes');
-            $sheet->setCellValue('F1', 'Cantidad de Sub-recetas');
+            $sheet->setCellValue('A1', 'Tipo');
+            $sheet->setCellValue('B1', 'Nombre');
+            $sheet->setCellValue('C1', 'Familia');
+            $sheet->setCellValue('D1', 'Costo');
+            $sheet->setCellValue('E1', 'Precio de venta');
+            $sheet->setCellValue('F1', 'Porcentaje de costo');
+            $sheet->setCellValue('G1', 'Cantidad de ingredientes');
+            $sheet->setCellValue('H1', 'Cantidad de Sub-recetas');
             
             // Configurar ancho de columnas para recetas principales
-            $sheet->getColumnDimension('A')->setWidth(25); // Nombre
-            $sheet->getColumnDimension('B')->setWidth(15); // Costo
-            $sheet->getColumnDimension('C')->setWidth(18); // Precio de venta
-            $sheet->getColumnDimension('D')->setWidth(22); // Porcentaje de costo
-            $sheet->getColumnDimension('E')->setWidth(25); // Cantidad de ingredientes
-            $sheet->getColumnDimension('F')->setWidth(25); // Cantidad de Sub-recetas
+            $sheet->getColumnDimension('A')->setWidth(20); // Tipo (Alimento/Bebida)
+            $sheet->getColumnDimension('B')->setWidth(25); // Nombre
+            $sheet->getColumnDimension('C')->setWidth(20); // Categoría
+            $sheet->getColumnDimension('D')->setWidth(15); // Costo
+            $sheet->getColumnDimension('E')->setWidth(18); // Precio de venta
+            $sheet->getColumnDimension('F')->setWidth(22); // Porcentaje de costo
+            $sheet->getColumnDimension('G')->setWidth(25); // Cantidad de ingredientes
+            $sheet->getColumnDimension('H')->setWidth(25); // Cantidad de Sub-recetas
         } else {
             $sheet->setCellValue('A1', 'Nombre');
-            $sheet->setCellValue('B1', 'Costo');
-            $sheet->setCellValue('C1', 'Cantidad de ingredientes');
-            $sheet->setCellValue('D1', 'Cantidad de Recetas');
-            $sheet->setCellValue('E1', 'Cantidad de SubRecetas');
+            $sheet->setCellValue('B1', 'Familia');
+            $sheet->setCellValue('C1', 'Costo');
+            $sheet->setCellValue('D1', 'Cantidad de ingredientes');
+            $sheet->setCellValue('E1', 'Cantidad de Recetas');
+            $sheet->setCellValue('F1', 'Cantidad de SubRecetas');
             
             // Configurar ancho de columnas para subrecetas
             $sheet->getColumnDimension('A')->setWidth(25); // Nombre
-            $sheet->getColumnDimension('B')->setWidth(15); // Costo
-            $sheet->getColumnDimension('C')->setWidth(25); // Cantidad de ingredientes
-            $sheet->getColumnDimension('D')->setWidth(20); // Cantidad de Recetas
-            $sheet->getColumnDimension('E')->setWidth(25); // Cantidad de Recetas
+            $sheet->getColumnDimension('B')->setWidth(20); // Categoría
+            $sheet->getColumnDimension('C')->setWidth(15); // Costo
+            $sheet->getColumnDimension('D')->setWidth(25); // Cantidad de ingredientes
+            $sheet->getColumnDimension('E')->setWidth(20); // Cantidad de Recetas
+            $sheet->getColumnDimension('F')->setWidth(25); // Cantidad de Recetas
         }
 
         // Configurar estilos para los headers
@@ -1943,9 +1951,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
 
         // Aplicar estilo a los headers
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-            $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
         } else {
-            $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
+            $sheet->getStyle('A1:F1')->applyFromArray($headerStyle);
         }
 
         // Configurar estilo para centrar todas las celdas de datos
@@ -1964,18 +1972,23 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
 
         $row = 2;
         foreach ($recipes as $recipe) {
-            $sheet->setCellValue('A' . $row, $recipe->title);
-            $sheet->setCellValue('B' . $row, '$' . number_format($recipe->recipeLastPrice, 2));
             if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-                $sheet->setCellValue('C' . $row, '$' . $recipe->price);
-                $sheet->setCellValue('D' . $row, $recipe->costPercent*100 . '%');
-                $sheet->setCellValue('E' . $row, $recipe->getIngredientRelations()->count());
-                $sheet->setCellValue('F' . $row, $recipe->getSubStandardRecipes()->count());
+                $sheet->setCellValue('A' . $row, $recipe->is_food == 1 ? 'Alimento' : 'Bebida');
+                $sheet->setCellValue('B' . $row, $recipe->title);
+                $sheet->setCellValue('C' . $row, $recipe->category ? $recipe->category->name : '');
+                $sheet->setCellValue('D' . $row, '$' . number_format($recipe->recipeLastPrice, 2));
+                $sheet->setCellValue('E' . $row, '$' . $recipe->price);
+                $sheet->setCellValue('F' . $row, $recipe->costPercent*100 . '%');
+                $sheet->setCellValue('G' . $row, $recipe->getIngredientRelations()->count());
+                $sheet->setCellValue('H' . $row, $recipe->getSubStandardRecipes()->count());
             } else {
-                $sheet->setCellValue('C' . $row, $recipe->getIngredientRelations()->count());
+                $sheet->setCellValue('A' . $row, $recipe->title);
+                $sheet->setCellValue('B' . $row, $recipe->category ? $recipe->category->name : '');
+                $sheet->setCellValue('C' . $row, '$' . number_format($recipe->recipeLastPrice, 2));
+                $sheet->setCellValue('D' . $row, $recipe->getIngredientRelations()->count());
                 //die(var_dump($recipe->getSubRecipeCount()['sub']));
-                $sheet->setCellValue('D' . $row, $recipe->getSubRecipeCount()['main']);
-                $sheet->setCellValue('E' . $row, $recipe->getSubRecipeCount()['sub']);
+                $sheet->setCellValue('E' . $row, $recipe->getSubRecipeCount()['main']);
+                $sheet->setCellValue('F' . $row, $recipe->getSubRecipeCount()['sub']);
             }
             $row++;
         }
@@ -1983,11 +1996,11 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         // Aplicar estilo de centrado a todas las celdas de datos
         $lastRow = $row - 1;
         if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-            $sheet->getStyle('A2:F' . $lastRow)->applyFromArray($dataStyle);
+            $sheet->getStyle('A2:H' . $lastRow)->applyFromArray($dataStyle);
             // Alineación especial para la columna de nombres (izquierda)
-            $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+            $sheet->getStyle('B2:B' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
         } else {
-            $sheet->getStyle('A2:E' . $lastRow)->applyFromArray($dataStyle);
+            $sheet->getStyle('A2:F' . $lastRow)->applyFromArray($dataStyle);
             // Alineación especial para la columna de nombres (izquierda)
             $sheet->getStyle('A2:A' . $lastRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
         }
