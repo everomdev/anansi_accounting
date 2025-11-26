@@ -2513,81 +2513,118 @@ if ($ccRow > 2) {
                 $rowIterator->next();
             }
 
-            $transaction = \Yii::$app->db->beginTransaction();
-            try {
-                foreach ($recipeData as $data) {
-                    $rowNumber = $data['row_number'];
-                    unset($data['row_number']);
-                    $recipe = new StandardRecipe();
-                    $recipe['type'] = \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN;
-                    $recipe->load($data, '');
-                    if (!$recipe->validate()) {
-                        foreach ($recipe->errors as $attribute => $errorMessages) {
-                            foreach ($errorMessages as $error) {
-                                // Si es un error de unicidad, mostrar mensaje más claro
-                                if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
-                                    $errors[] = "Fila $rowNumber: El nombre de la receta '{$data['title']}' ya existe.";
-                                } else {
-                                    $errors[] = "Fila $rowNumber ($attribute): $error";
-                                }
+            // VALIDACIÓN PREVIA: Verificar todas las recetas e ingredientes antes de guardar
+            $validationErrors = [];
+            $recipeObjects = []; // Para almacenar las instancias de receta validadas
+
+            foreach ($recipeData as $data) {
+                $rowNumber = $data['row_number'];
+                unset($data['row_number']);
+
+                $recipe = new StandardRecipe();
+                $recipe['type'] = \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN;
+                $recipe->load($data, '');
+
+                if (!$recipe->validate()) {
+                    foreach ($recipe->errors as $attribute => $errorMessages) {
+                        foreach ($errorMessages as $error) {
+                            if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
+                                $validationErrors[] = "Fila $rowNumber: El nombre de la receta '{$data['title']}' ya existe.";
+                            } else {
+                                $validationErrors[] = "Fila $rowNumber ($attribute): $error";
                             }
                         }
-                        continue;
                     }
+                    continue;
+                }
+
+                $recipeObjects[$data['title']] = $recipe;
+
+                // Validar ingredientes de esta receta
+                if (isset($ingredientData[$data['title']])) {
+                    foreach ($ingredientData[$data['title']] as $ingredient) {
+                        $ingRow = $ingredient['row_number'];
+
+                        // Validar tipo
+                        if (empty($ingredient['type']) || !in_array($ingredient['type'], ['INSUMO', 'SUBRECETA'])) {
+                            $validationErrors[] = "Fila $ingRow: El tipo debe ser 'INSUMO' o 'SUBRECETA'.";
+                            continue;
+                        }
+
+                        // Validar que el item no esté vacío
+                        if (empty($ingredient['item'])) {
+                            $validationErrors[] = "Fila $ingRow: El nombre del insumo/subreceta no puede estar vacío.";
+                            continue;
+                        }
+
+                        // Validar cantidad
+                        if (!is_numeric($ingredient['quantity']) || $ingredient['quantity'] <= 0) {
+                            $validationErrors[] = "Fila $ingRow: La cantidad debe ser un número positivo.";
+                            continue;
+                        }
+
+                        // Validar UM
+                        if (empty($ingredient['portion_um'])) {
+                            $validationErrors[] = "Fila $ingRow: La unidad de medida no puede estar vacía.";
+                            continue;
+                        }
+
+                        // Validar precio (opcional, pero si está presente debe ser numérico)
+                        if (isset($ingredient['lastPrice']) && $ingredient['lastPrice'] !== '' && !is_numeric($ingredient['lastPrice'])) {
+                            $validationErrors[] = "Fila $ingRow: El precio debe ser un número válido.";
+                            continue;
+                        }
+
+                        if ($ingredient['type'] === 'INSUMO') {
+                            $ingredientStock = IngredientStock::find()
+                                ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
+                                ->one();
+
+                            if (!$ingredientStock) {
+                                $validationErrors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el negocio.";
+                            }
+                        } else if ($ingredient['type'] === 'SUBRECETA') {
+                            $subrecipe = StandardRecipe::find()
+                                ->where([
+                                    'title' => $ingredient['item'],
+                                    'business_id' => $business->id,
+                                    'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+                                ])
+                                ->one();
+
+                            if (!$subrecipe) {
+                                $validationErrors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.";
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Si hay errores de validación, no guardar nada
+            if (!empty($validationErrors)) {
+                return ['success' => false, 'saved_count' => 0, 'errors' => $validationErrors];
+            }
+
+            // GUARDADO: Solo proceder si toda la validación pasó
+            $transaction = \Yii::$app->db->beginTransaction();
+            try {
+                foreach ($recipeObjects as $recipeName => $recipe) {
                     if ($recipe->save()) {
                         $savedCount++;
-                        // Procesar ingredientes
-                        if (isset($ingredientData[$data['title']])) {
-                            foreach ($ingredientData[$data['title']] as $ingredient) {
-                                $ingRow = $ingredient['row_number'];
-                                
-                                // Validar tipo
-                                if (empty($ingredient['type']) || !in_array($ingredient['type'], ['INSUMO', 'SUBRECETA'])) {
-                                    $errors[] = "Fila $ingRow: El tipo debe ser 'INSUMO' o 'SUBRECETA'.";
-                                    continue;
-                                }
-                                
-                                // Validar que el item no esté vacío
-                                if (empty($ingredient['item'])) {
-                                    $errors[] = "Fila $ingRow: El nombre del insumo/subreceta no puede estar vacío.";
-                                    continue;
-                                }
-                                
-                                // Validar cantidad
-                                if (!is_numeric($ingredient['quantity']) || $ingredient['quantity'] <= 0) {
-                                    $errors[] = "Fila $ingRow: La cantidad debe ser un número positivo.";
-                                    continue;
-                                }
-                                
-                                // Validar UM
-                                if (empty($ingredient['portion_um'])) {
-                                    $errors[] = "Fila $ingRow: La unidad de medida no puede estar vacía.";
-                                    continue;
-                                }
-                                
-                                // Validar precio (opcional, pero si está presente debe ser numérico)
-                                if (isset($ingredient['lastPrice']) && $ingredient['lastPrice'] !== '' && !is_numeric($ingredient['lastPrice'])) {
-                                    $errors[] = "Fila $ingRow: El precio debe ser un número válido.";
-                                    continue;
-                                }
-                                
+
+                        // Procesar ingredientes (ya validados)
+                        if (isset($ingredientData[$recipeName])) {
+                            foreach ($ingredientData[$recipeName] as $ingredient) {
                                 if ($ingredient['type'] === 'INSUMO') {
                                     $ingredientStock = IngredientStock::find()
                                         ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
                                         ->one();
 
-                                    if (!$ingredientStock) {
-                                        $errors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el negocio.";
-                                        continue;
-                                    }
-
                                     $ingredientRelation = new IngredientStandardRecipe();
                                     $ingredientRelation->ingredient_id = $ingredientStock->id;
                                     $ingredientRelation->standard_recipe_id = $recipe->id;
                                     $ingredientRelation->quantity = $ingredient['quantity'];
-                                    if (!$ingredientRelation->save()) {
-                                        $errors[] = "Fila $ingRow: Error al guardar relación con insumo \"{$ingredient['item']}\": " . json_encode($ingredientRelation->errors);
-                                    }
+                                    $ingredientRelation->save();
                                 } else if ($ingredient['type'] === 'SUBRECETA') {
                                     $subrecipe = StandardRecipe::find()
                                         ->where([
@@ -2597,62 +2634,16 @@ if ($ccRow > 2) {
                                         ])
                                         ->one();
 
-                                    if (!$subrecipe) {
-                                        $errors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.";
-                                        continue;
-                                    }
-
-                                    // Verificar que no se esté agregando la subreceta a sí misma
-                                    if ($subrecipe->id == $recipe->id) {
-                                        $errors[] = "Fila $ingRow: No se puede agregar una subreceta a sí misma.";
-                                        continue;
-                                    }
-
-                                    // Verificar si ya existe la relación
-                                    $existingRelation = Yii::$app->db->createCommand("
-                                        SELECT id FROM standard_recipe_sub_standard_recipe
-                                        WHERE sub_standard_recipe_id = :sub_id AND standard_recipe_id = :recipe_id
-                                    ", [
-                                        ':sub_id' => $subrecipe->id,
-                                        ':recipe_id' => $recipe->id
-                                    ])->queryScalar();
-
-                                    if ($existingRelation) {
-                                        $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
-                                        continue;
-                                    }
-
-                                    // Insert the relation between the main recipe and subrecipe directly to the database
-                                    try {
-                                        Yii::$app->db->createCommand()
-                                            ->insert(
-                                                'standard_recipe_sub_standard_recipe',
-                                                [
-                                                    'sub_standard_recipe_id' => $subrecipe->id,
-                                                    'quantity' => $ingredient['quantity'],
-                                                    'standard_recipe_id' => $recipe->id
-                                                ]
-                                            )
-                                            ->execute();
-                                    } catch (\Exception $e) {
-                                        // Verificar si es un error de clave duplicada
-                                        if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
-                                            $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
-                                        } else {
-                                            $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        foreach ($recipe->errors as $attribute => $errorMessages) {
-                            foreach ($errorMessages as $error) {
-                                // Si es un error de unicidad, mostrar mensaje más claro
-                                if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
-                                    $errors[] = "Fila $rowNumber: El nombre de la receta '{$data['title']}' ya existe.";
-                                } else {
-                                    $errors[] = "Fila $rowNumber ($attribute): $error";
+                                    Yii::$app->db->createCommand()
+                                        ->insert(
+                                            'standard_recipe_sub_standard_recipe',
+                                            [
+                                                'sub_standard_recipe_id' => $subrecipe->id,
+                                                'quantity' => $ingredient['quantity'],
+                                                'standard_recipe_id' => $recipe->id
+                                            ]
+                                        )
+                                        ->execute();
                                 }
                             }
                         }
@@ -2662,6 +2653,7 @@ if ($ccRow > 2) {
             } catch (\Exception $e) {
                 $transaction->rollBack();
                 $errors[] = "Error en la transacción: " . $e->getMessage();
+                return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
             }
 
             return ['success' => empty($errors), 'saved_count' => $savedCount, 'errors' => $errors];
@@ -2823,81 +2815,118 @@ if ($ccRow > 2) {
                 $rowIterator->next();
             }
 
-            $transaction = \Yii::$app->db->beginTransaction();
-            try {
-                foreach ($recipeData as $data) {
-                    $rowNumber = $data['row_number'];
-                    unset($data['row_number']);
-                    $recipe = new StandardRecipe();
-                    $recipe['type'] = \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB;
-                    $recipe->load($data, '');
-                    if (!$recipe->validate()) {
-                        foreach ($recipe->errors as $attribute => $errorMessages) {
-                            foreach ($errorMessages as $error) {
-                                // Si es un error de unicidad, mostrar mensaje más claro
-                                if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
-                                    $errors[] = "Fila $rowNumber: El nombre de la subreceta '{$data['title']}' ya existe.";
-                                } else {
-                                    $errors[] = "Fila $rowNumber ($attribute): $error";
-                                }
+            // VALIDACIÓN PREVIA: Verificar todas las subrecetas e ingredientes antes de guardar
+            $validationErrors = [];
+            $recipeObjects = []; // Para almacenar las instancias de subreceta validadas
+
+            foreach ($recipeData as $data) {
+                $rowNumber = $data['row_number'];
+                unset($data['row_number']);
+
+                $recipe = new StandardRecipe();
+                $recipe['type'] = \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB;
+                $recipe->load($data, '');
+
+                if (!$recipe->validate()) {
+                    foreach ($recipe->errors as $attribute => $errorMessages) {
+                        foreach ($errorMessages as $error) {
+                            if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
+                                $validationErrors[] = "Fila $rowNumber: El nombre de la subreceta '{$data['title']}' ya existe.";
+                            } else {
+                                $validationErrors[] = "Fila $rowNumber ($attribute): $error";
                             }
                         }
-                        continue;
                     }
+                    continue;
+                }
+
+                $recipeObjects[$data['title']] = $recipe;
+
+                // Validar ingredientes de esta subreceta
+                if (isset($ingredientData[$data['title']])) {
+                    foreach ($ingredientData[$data['title']] as $ingredient) {
+                        $ingRow = $ingredient['row_number'];
+
+                        // Validar tipo
+                        if (empty($ingredient['type']) || !in_array($ingredient['type'], ['INSUMO', 'SUBRECETA'])) {
+                            $validationErrors[] = "Fila $ingRow: El tipo debe ser 'INSUMO' o 'SUBRECETA'.";
+                            continue;
+                        }
+
+                        // Validar que el item no esté vacío
+                        if (empty($ingredient['item'])) {
+                            $validationErrors[] = "Fila $ingRow: El nombre del insumo/subreceta no puede estar vacío.";
+                            continue;
+                        }
+
+                        // Validar cantidad
+                        if (!is_numeric($ingredient['quantity']) || $ingredient['quantity'] <= 0) {
+                            $validationErrors[] = "Fila $ingRow: La cantidad debe ser un número positivo.";
+                            continue;
+                        }
+
+                        // Validar UM
+                        if (empty($ingredient['portion_um'])) {
+                            $validationErrors[] = "Fila $ingRow: La unidad de medida no puede estar vacía.";
+                            continue;
+                        }
+
+                        // Validar precio (opcional, pero si está presente debe ser numérico)
+                        if (isset($ingredient['lastPrice']) && $ingredient['lastPrice'] !== '' && !is_numeric($ingredient['lastPrice'])) {
+                            $validationErrors[] = "Fila $ingRow: El precio debe ser un número válido.";
+                            continue;
+                        }
+
+                        if ($ingredient['type'] === 'INSUMO') {
+                            $ingredientStock = IngredientStock::find()
+                                ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
+                                ->one();
+
+                            if (!$ingredientStock) {
+                                $validationErrors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el negocio.";
+                            }
+                        } else if ($ingredient['type'] === 'SUBRECETA') {
+                            $subrecipe = StandardRecipe::find()
+                                ->where([
+                                    'title' => $ingredient['item'],
+                                    'business_id' => $business->id,
+                                    'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+                                ])
+                                ->one();
+
+                            if (!$subrecipe) {
+                                $validationErrors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.";
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Si hay errores de validación, no guardar nada
+            if (!empty($validationErrors)) {
+                return ['success' => false, 'saved_count' => 0, 'errors' => $validationErrors];
+            }
+
+            // GUARDADO: Solo proceder si toda la validación pasó
+            $transaction = \Yii::$app->db->beginTransaction();
+            try {
+                foreach ($recipeObjects as $recipeName => $recipe) {
                     if ($recipe->save()) {
                         $savedCount++;
-                        // Procesar ingredientes
-                        if (isset($ingredientData[$data['title']])) {
-                            foreach ($ingredientData[$data['title']] as $ingredient) {
-                                $ingRow = $ingredient['row_number'];
-                                
-                                // Validar tipo
-                                if (empty($ingredient['type']) || !in_array($ingredient['type'], ['INSUMO', 'SUBRECETA'])) {
-                                    $errors[] = "Fila $ingRow: El tipo debe ser 'INSUMO' o 'SUBRECETA'.";
-                                    continue;
-                                }
-                                
-                                // Validar que el item no esté vacío
-                                if (empty($ingredient['item'])) {
-                                    $errors[] = "Fila $ingRow: El nombre del insumo/subreceta no puede estar vacío.";
-                                    continue;
-                                }
-                                
-                                // Validar cantidad
-                                if (!is_numeric($ingredient['quantity']) || $ingredient['quantity'] <= 0) {
-                                    $errors[] = "Fila $ingRow: La cantidad debe ser un número positivo.";
-                                    continue;
-                                }
-                                
-                                // Validar UM
-                                if (empty($ingredient['portion_um'])) {
-                                    $errors[] = "Fila $ingRow: La unidad de medida no puede estar vacía.";
-                                    continue;
-                                }
-                                
-                                // Validar precio (opcional, pero si está presente debe ser numérico)
-                                if (isset($ingredient['lastPrice']) && $ingredient['lastPrice'] !== '' && !is_numeric($ingredient['lastPrice'])) {
-                                    $errors[] = "Fila $ingRow: El precio debe ser un número válido.";
-                                    continue;
-                                }
-                                
+
+                        // Procesar ingredientes (ya validados)
+                        if (isset($ingredientData[$recipeName])) {
+                            foreach ($ingredientData[$recipeName] as $ingredient) {
                                 if ($ingredient['type'] === 'INSUMO') {
                                     $ingredientStock = IngredientStock::find()
                                         ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
                                         ->one();
 
-                                    if (!$ingredientStock) {
-                                        $errors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el negocio.";
-                                        continue;
-                                    }
-
                                     $ingredientRelation = new IngredientStandardRecipe();
                                     $ingredientRelation->ingredient_id = $ingredientStock->id;
                                     $ingredientRelation->standard_recipe_id = $recipe->id;
                                     $ingredientRelation->quantity = $ingredient['quantity'];
-                                    if (!$ingredientRelation->save()) {
-                                        $errors[] = "Fila $ingRow: Error al guardar relación con insumo \"{$ingredient['item']}\": " . json_encode($ingredientRelation->errors);
-                                    }
+                                    $ingredientRelation->save();
                                 } else if ($ingredient['type'] === 'SUBRECETA') {
                                     $subrecipe = StandardRecipe::find()
                                         ->where([
@@ -2907,62 +2936,16 @@ if ($ccRow > 2) {
                                         ])
                                         ->one();
 
-                                    if (!$subrecipe) {
-                                        $errors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.";
-                                        continue;
-                                    }
-
-                                    // Verificar que no se esté agregando la subreceta a sí misma
-                                    if ($subrecipe->id == $recipe->id) {
-                                        $errors[] = "Fila $ingRow: No se puede agregar una subreceta a sí misma.";
-                                        continue;
-                                    }
-
-                                    // Verificar si ya existe la relación
-                                    $existingRelation = Yii::$app->db->createCommand("
-                                        SELECT id FROM standard_recipe_sub_standard_recipe
-                                        WHERE sub_standard_recipe_id = :sub_id AND standard_recipe_id = :recipe_id
-                                    ", [
-                                        ':sub_id' => $subrecipe->id,
-                                        ':recipe_id' => $recipe->id
-                                    ])->queryScalar();
-
-                                    if ($existingRelation) {
-                                        $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
-                                        continue;
-                                    }
-
-                                    // Insert the relation between the sub recipe and subrecipe directly to the database
-                                    try {
-                                        Yii::$app->db->createCommand()
-                                            ->insert(
-                                                'standard_recipe_sub_standard_recipe',
-                                                [
-                                                    'sub_standard_recipe_id' => $subrecipe->id,
-                                                    'quantity' => $ingredient['quantity'],
-                                                    'standard_recipe_id' => $recipe->id
-                                                ]
-                                            )
-                                            ->execute();
-                                    } catch (\Exception $e) {
-                                        // Verificar si es un error de clave duplicada
-                                        if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
-                                            $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
-                                        } else {
-                                            $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        foreach ($recipe->errors as $attribute => $errorMessages) {
-                            foreach ($errorMessages as $error) {
-                                // Si es un error de unicidad, mostrar mensaje más claro
-                                if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
-                                    $errors[] = "Fila $rowNumber: El nombre de la subreceta '{$data['title']}' ya existe.";
-                                } else {
-                                    $errors[] = "Fila $rowNumber ($attribute): $error";
+                                    Yii::$app->db->createCommand()
+                                        ->insert(
+                                            'standard_recipe_sub_standard_recipe',
+                                            [
+                                                'sub_standard_recipe_id' => $subrecipe->id,
+                                                'quantity' => $ingredient['quantity'],
+                                                'standard_recipe_id' => $recipe->id
+                                            ]
+                                        )
+                                        ->execute();
                                 }
                             }
                         }
@@ -2972,6 +2955,7 @@ if ($ccRow > 2) {
             } catch (\Exception $e) {
                 $transaction->rollBack();
                 $errors[] = "Error en la transacción: " . $e->getMessage();
+                return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
             }
 
             return ['success' => empty($errors), 'saved_count' => $savedCount, 'errors' => $errors];
