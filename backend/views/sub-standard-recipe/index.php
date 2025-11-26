@@ -133,8 +133,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 // Pasar mensajes de éxito y error a JavaScript
 $successMessage = Yii::$app->session->hasFlash('success') ? Yii::$app->session->getFlash('success') : null;
 $errorMessage = Yii::$app->session->hasFlash('error') ? Yii::$app->session->getFlash('error') : null;
+$importErrors = Yii::$app->session->hasFlash('import_errors') ? Yii::$app->session->getFlash('import_errors') : null;
 $this->registerJs("var successMessage = " . json_encode($successMessage) . ";", \yii\web\View::POS_HEAD);
 $this->registerJs("var errorMessage = " . json_encode($errorMessage) . ";", \yii\web\View::POS_HEAD);
+$this->registerJs("var importErrors = " . json_encode($importErrors) . ";", \yii\web\View::POS_HEAD);
 
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);

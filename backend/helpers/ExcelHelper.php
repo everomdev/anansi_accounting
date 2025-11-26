@@ -2540,6 +2540,37 @@ if ($ccRow > 2) {
                         if (isset($ingredientData[$data['title']])) {
                             foreach ($ingredientData[$data['title']] as $ingredient) {
                                 $ingRow = $ingredient['row_number'];
+                                
+                                // Validar tipo
+                                if (empty($ingredient['type']) || !in_array($ingredient['type'], ['INSUMO', 'SUBRECETA'])) {
+                                    $errors[] = "Fila $ingRow: El tipo debe ser 'INSUMO' o 'SUBRECETA'.";
+                                    continue;
+                                }
+                                
+                                // Validar que el item no esté vacío
+                                if (empty($ingredient['item'])) {
+                                    $errors[] = "Fila $ingRow: El nombre del insumo/subreceta no puede estar vacío.";
+                                    continue;
+                                }
+                                
+                                // Validar cantidad
+                                if (!is_numeric($ingredient['quantity']) || $ingredient['quantity'] <= 0) {
+                                    $errors[] = "Fila $ingRow: La cantidad debe ser un número positivo.";
+                                    continue;
+                                }
+                                
+                                // Validar UM
+                                if (empty($ingredient['portion_um'])) {
+                                    $errors[] = "Fila $ingRow: La unidad de medida no puede estar vacía.";
+                                    continue;
+                                }
+                                
+                                // Validar precio (opcional, pero si está presente debe ser numérico)
+                                if (isset($ingredient['lastPrice']) && $ingredient['lastPrice'] !== '' && !is_numeric($ingredient['lastPrice'])) {
+                                    $errors[] = "Fila $ingRow: El precio debe ser un número válido.";
+                                    continue;
+                                }
+                                
                                 if ($ingredient['type'] === 'INSUMO') {
                                     $ingredientStock = IngredientStock::find()
                                         ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
@@ -2571,6 +2602,26 @@ if ($ccRow > 2) {
                                         continue;
                                     }
 
+                                    // Verificar que no se esté agregando la subreceta a sí misma
+                                    if ($subrecipe->id == $recipe->id) {
+                                        $errors[] = "Fila $ingRow: No se puede agregar una subreceta a sí misma.";
+                                        continue;
+                                    }
+
+                                    // Verificar si ya existe la relación
+                                    $existingRelation = Yii::$app->db->createCommand("
+                                        SELECT id FROM standard_recipe_sub_standard_recipe
+                                        WHERE sub_standard_recipe_id = :sub_id AND standard_recipe_id = :recipe_id
+                                    ", [
+                                        ':sub_id' => $subrecipe->id,
+                                        ':recipe_id' => $recipe->id
+                                    ])->queryScalar();
+
+                                    if ($existingRelation) {
+                                        $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
+                                        continue;
+                                    }
+
                                     // Insert the relation between the main recipe and subrecipe directly to the database
                                     try {
                                         Yii::$app->db->createCommand()
@@ -2584,7 +2635,12 @@ if ($ccRow > 2) {
                                             )
                                             ->execute();
                                     } catch (\Exception $e) {
-                                        $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
+                                        // Verificar si es un error de clave duplicada
+                                        if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+                                            $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
+                                        } else {
+                                            $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
+                                        }
                                     }
                                 }
                             }
@@ -2794,6 +2850,37 @@ if ($ccRow > 2) {
                         if (isset($ingredientData[$data['title']])) {
                             foreach ($ingredientData[$data['title']] as $ingredient) {
                                 $ingRow = $ingredient['row_number'];
+                                
+                                // Validar tipo
+                                if (empty($ingredient['type']) || !in_array($ingredient['type'], ['INSUMO', 'SUBRECETA'])) {
+                                    $errors[] = "Fila $ingRow: El tipo debe ser 'INSUMO' o 'SUBRECETA'.";
+                                    continue;
+                                }
+                                
+                                // Validar que el item no esté vacío
+                                if (empty($ingredient['item'])) {
+                                    $errors[] = "Fila $ingRow: El nombre del insumo/subreceta no puede estar vacío.";
+                                    continue;
+                                }
+                                
+                                // Validar cantidad
+                                if (!is_numeric($ingredient['quantity']) || $ingredient['quantity'] <= 0) {
+                                    $errors[] = "Fila $ingRow: La cantidad debe ser un número positivo.";
+                                    continue;
+                                }
+                                
+                                // Validar UM
+                                if (empty($ingredient['portion_um'])) {
+                                    $errors[] = "Fila $ingRow: La unidad de medida no puede estar vacía.";
+                                    continue;
+                                }
+                                
+                                // Validar precio (opcional, pero si está presente debe ser numérico)
+                                if (isset($ingredient['lastPrice']) && $ingredient['lastPrice'] !== '' && !is_numeric($ingredient['lastPrice'])) {
+                                    $errors[] = "Fila $ingRow: El precio debe ser un número válido.";
+                                    continue;
+                                }
+                                
                                 if ($ingredient['type'] === 'INSUMO') {
                                     $ingredientStock = IngredientStock::find()
                                         ->where(['ingredient' => $ingredient['item'], 'business_id' => $business->id])
@@ -2825,6 +2912,26 @@ if ($ccRow > 2) {
                                         continue;
                                     }
 
+                                    // Verificar que no se esté agregando la subreceta a sí misma
+                                    if ($subrecipe->id == $recipe->id) {
+                                        $errors[] = "Fila $ingRow: No se puede agregar una subreceta a sí misma.";
+                                        continue;
+                                    }
+
+                                    // Verificar si ya existe la relación
+                                    $existingRelation = Yii::$app->db->createCommand("
+                                        SELECT id FROM standard_recipe_sub_standard_recipe
+                                        WHERE sub_standard_recipe_id = :sub_id AND standard_recipe_id = :recipe_id
+                                    ", [
+                                        ':sub_id' => $subrecipe->id,
+                                        ':recipe_id' => $recipe->id
+                                    ])->queryScalar();
+
+                                    if ($existingRelation) {
+                                        $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
+                                        continue;
+                                    }
+
                                     // Insert the relation between the sub recipe and subrecipe directly to the database
                                     try {
                                         Yii::$app->db->createCommand()
@@ -2838,7 +2945,12 @@ if ($ccRow > 2) {
                                             )
                                             ->execute();
                                     } catch (\Exception $e) {
-                                        $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
+                                        // Verificar si es un error de clave duplicada
+                                        if (strpos($e->getMessage(), 'Duplicate entry') !== false || strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
+                                            $errors[] = "Fila $ingRow: La subreceta \"{$ingredient['item']}\" ya está relacionada con esta receta.";
+                                        } else {
+                                            $errors[] = "Fila $ingRow: Error al guardar relación con subreceta \"{$ingredient['item']}\": " . $e->getMessage();
+                                        }
                                     }
                                 }
                             }
