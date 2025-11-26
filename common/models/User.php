@@ -345,8 +345,9 @@ class User extends \Da\User\Model\User
 
     public function hasRestrictions($restriction = 'recipes')
     {
-        $plan = $this->plan;
         $business = RedisKeys::getBusiness();
+        // Usar el plan del owner del business, no del usuario autenticado
+        $plan = $business->user->plan;
         switch ($restriction) {
             case 'recipes':
                 $recipesCount = StandardRecipe::find()
