@@ -87,7 +87,7 @@ $data = \yii\helpers\ArrayHelper::map(array_merge($ingredients, $recipes), 'id',
                             <?php foreach ($model->convoyIngredients as $convoyIngredient): ?>
                             <tr>
                                 <td>
-                                    <?= $convoyIngredient->model->name ?>
+                                    <?= $convoyIngredient->model ?  $convoyIngredient->model->name : 'Subreceta o ingrediente no encontrado' ?>
                                     <?php if ($convoyIngredient->model instanceof \common\models\IngredientStock): ?>
                                         (<?= $convoyIngredient->model->portion_um ?>)
                                     <?php elseif ($convoyIngredient->model instanceof \common\models\StandardRecipe): ?>
@@ -97,16 +97,18 @@ $data = \yii\helpers\ArrayHelper::map(array_merge($ingredients, $recipes), 'id',
                                 <td><?= number_format($convoyIngredient->quantity, 2, $business->decimal_separator ?? '.', $business->thousand_separator ?? ',') ?></td>
                                 <td><?= formatPrice($convoyIngredient->amount) ?></td>
                                 <td>
-                                    <?= Html::button(Yii::t('app', "Modify"), [
-                                        'class' => 'btn btn-sm btn-warning update-ingredient',
-                                        'data' => [
+                                    <?php if ($convoyIngredient->model): ?>
+                                        <?= Html::button(Yii::t('app', "Modify"), [
+                                            'class' => 'btn btn-sm btn-warning update-ingredient',
+                                            'data' => [
                                             'url' => \yii\helpers\Url::to(['convoy/update-ingredient', 'id' => $model->id, 'ingredientId' => $convoyIngredient->id]),
                                             'current' => $convoyIngredient->quantity,
                                             'id' => $convoyIngredient->id,
-                                            'name' => $convoyIngredient->model->name,
+                                            'name' => $convoyIngredient->model->name ?? '',
                                             'entity-id' => $convoyIngredient->selectedEntity
                                         ]
                                     ]) ?>
+                                    <?php endif; ?>
                                     <?= \yii\bootstrap5\Html::button(Yii::t('app', "Remove"), [
                                         'class' => 'btn btn-danger btn-sm remove',
                                         'data-url' => \yii\helpers\Url::to(['convoy/remove-ingredient', 'id' => $model->id, 'ingredientId' => $convoyIngredient->id]),
