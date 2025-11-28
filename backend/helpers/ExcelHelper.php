@@ -2381,7 +2381,7 @@ if ($ccRow > 2) {
             $ingredientsSheet = $spreadsheet->getSheetByName('INGREDIENTES');
 
             if ($recipesSheet === null) {
-                $errors[] = 'La hoja "FICHA GENERAL DE LA RECETA" no se encontró en el archivo Excel.';
+                $errors[] = 'Estás intentando importar una plantilla de subrecetas en la sección de recetas. Por favor, selecciona la plantilla correcta.';
                 return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
             }
 
@@ -2708,7 +2708,7 @@ if ($ccRow > 2) {
             $ingredientsSheet = $spreadsheet->getSheetByName('INGREDIENTES');
 
             if ($recipesSheet === null) {
-                $errors[] = 'La hoja "FICHA GENERAL DE LA SUBRECETA" no se encontró en el archivo Excel.';
+                $errors[] = 'Estás intentando importar una plantilla de recetas en la sección de subrecetas. Por favor, selecciona la plantilla correcta.';
                 return ['success' => false, 'saved_count' => 0, 'errors' => $errors];
             }
 
