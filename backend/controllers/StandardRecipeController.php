@@ -827,7 +827,10 @@ public function actionGetSubStandardRecipes()
                 // Delete all recipes
                 $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
                 $business = Business::findOne(['id' => $businessData['id']]);
-                StandardRecipe::deleteAll(['business_id' => $business->id]);
+                StandardRecipe::deleteAll([
+                    'business_id' => $business->id,
+                    'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
+                ]);
                 return $this->asJson(['success' => true]);
             } else if (!empty($ids)) {
                 // Delete selected recipes
