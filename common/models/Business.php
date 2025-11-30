@@ -518,7 +518,7 @@ class Business extends \yii\db\ActiveRecord
         // Costo total promedio para compatibilidad
         $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
     
-die(var_dump("getTheoreticalYield: grouping done", $totalCost,$theoricalYield,  ));
+//die(var_dump("getTheoreticalYield: grouping done", $totalCost,$theoricalYield,  ));
     return [
             'data' => $data,
             'totalCost' => $totalCost,
