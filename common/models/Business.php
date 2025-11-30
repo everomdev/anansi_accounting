@@ -485,7 +485,7 @@ class Business extends \yii\db\ActiveRecord
         $theoricalYield = null;
         $totalCostSum = 0;
         $totalItems = 0;
-die(var_dump("getTheoreticalYield: grouping done", count($categories), count($recipes), count($combos)));
+
         foreach ($allRecipes as $recipe) {
             $totalCostSum += $recipe->costPercent;
             $totalItems++;
@@ -499,6 +499,7 @@ die(var_dump("getTheoreticalYield: grouping done", count($categories), count($re
             $averageCost = $totalCostSum / $totalItems;
             $theoricalYield = formatPercentage($averageCost*100);
         }
+        die(var_dump("getTheoreticalYield: grouping done", count($categories), count($recipes), count($combos)));
           // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
         $foodTheoricalYield = null;
         if (!empty($foodRecipes)) {
