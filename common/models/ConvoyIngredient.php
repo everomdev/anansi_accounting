@@ -108,21 +108,22 @@ class ConvoyIngredient extends \yii\db\ActiveRecord
     public function getAmount()
     {
         try {
-            $model = $this->getModel();
+            // $model = $this->getModel();
 
-            if (empty($model)) {
-                // Entidad faltante: registrar y devolver 0 para evitar excepción
-                Yii::warning("ConvoyIngredient#{$this->id}: entidad no encontrada (entity_class={$this->entity_class}, entity_id={$this->entity_id})", __METHOD__);
-                return 0;
-            }
+            // if (empty($model)) {
+            //     // Entidad faltante: registrar y devolver 0 para evitar excepción
+            //     Yii::warning("ConvoyIngredient#{$this->id}: entidad no encontrada (entity_class={$this->entity_class}, entity_id={$this->entity_id})", __METHOD__);
+            //     return 0;
+            // }
 
-            if ($model instanceof IngredientStock) {
-                $lastPrice = isset($model->adjustedPrice) ? $model->adjustedPrice : 0;
-            } else {
-                $lastPrice = isset($model->custom_cost) ? $model->custom_cost : 0;
-            }
+            // if ($model instanceof IngredientStock) {
+            //     $lastPrice = isset($model->adjustedPrice) ? $model->adjustedPrice : 0;
+            // } else {
+            //     $lastPrice = isset($model->custom_cost) ? $model->custom_cost : 0;
+            // }
 
-            return floatval($this->quantity) * floatval($lastPrice);
+            // return floatval($this->quantity) * floatval($lastPrice);
+            return 0;
         } catch (\Throwable $e) {
             Yii::error('Error calculando amount en ConvoyIngredient#' . ($this->id ?? 'n/a') . ': ' . $e->getMessage(), __METHOD__);
             return 0;
