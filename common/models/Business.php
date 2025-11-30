@@ -444,7 +444,7 @@ class Business extends \yii\db\ActiveRecord
             }
         }
     $t4 = microtime(true);
-   die(var_dump("getTheoreticalYield: grouping done", count($categories), count($recipes), count($combos)));
+   
         if ($generalCategory) {
             $combosByCategory[$generalCategory->name] = $combos;
         }
@@ -485,7 +485,7 @@ class Business extends \yii\db\ActiveRecord
         $theoricalYield = null;
         $totalCostSum = 0;
         $totalItems = 0;
-
+die(var_dump("getTheoreticalYield: grouping done", count($categories), count($recipes), count($combos)));
         foreach ($allRecipes as $recipe) {
             $totalCostSum += $recipe->costPercent;
             $totalItems++;
