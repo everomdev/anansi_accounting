@@ -389,6 +389,8 @@ class Business extends \yii\db\ActiveRecord
     // MÉTODO OPTIMIZADO - NUEVA VERSIÓN CON MEJORAS DE PERFORMANCE
     public function getTheoreticalYield($month = null, $year = null)
     {
+    $t0 = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield START business=%s month=%s year=%s", $this->id, $month, $year), __METHOD__);
         // Para rentabilidad teórica no necesitamos mes/año, solo por compatibilidad
         if ($month === null) {
             $month = (int)date('n');
@@ -403,6 +405,8 @@ class Business extends \yii\db\ActiveRecord
                 ['business_id' => $this->id], // Categorías específicas del negocio
                 ['business_id' => null]       // Categorías generales (como Combos)
             ])->all();
+    $t1 = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield: categories loaded count=%d time=%.4fs", count($categories), $t1 - $t0), __METHOD__);
 
         $data = [];
         $allRecipes = [];  // Todas las recetas para promedio global
@@ -421,12 +425,16 @@ class Business extends \yii\db\ActiveRecord
             'in_menu' => true,
             'type_of_recipe' => $categoryNames
         ])->all();
+    $t2 = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield: recipes loaded count=%d time=%.4fs", count($recipes), $t2 - $t1), __METHOD__);
 
         // OPTIMIZACIÓN: Obtener combos en una sola query
         $combos = Menu::find()->where([
             'business_id' => $this->id,
             'in_menu' => true,
         ])->all();
+    $t3 = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield: combos loaded count=%d time=%.4fs", count($combos), $t3 - $t2), __METHOD__);
 
         // Agrupar recetas por categoría
         $recipesByCategory = [];
@@ -443,6 +451,8 @@ class Business extends \yii\db\ActiveRecord
                 break;
             }
         }
+    $t4 = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield: grouping done categories=%d recipes=%d combos=%d time=%.4fs", count($categories), count($recipes), count($combos), $t4 - $t3), __METHOD__);
         if ($generalCategory) {
             $combosByCategory[$generalCategory->name] = $combos;
         }
@@ -514,9 +524,14 @@ class Business extends \yii\db\ActiveRecord
 
         // Costo total promedio para compatibilidad
         $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
+    $t5 = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield: calculations done totalItems=%d time=%.4fs", $totalItems, $t5 - $t4), __METHOD__);
 
         // Devolver datos basados únicamente en promedios de costos
-        return [
+    $tEnd = microtime(true);
+    Yii::info(sprintf("getTheoreticalYield END totalTime=%.4fs", $tEnd - $t0), __METHOD__);
+
+    return [
             'data' => $data,
             'totalCost' => $totalCost,
             'theoricalTotal' => $theoricalYield,
