@@ -444,7 +444,7 @@ class Business extends \yii\db\ActiveRecord
             }
         }
     $t4 = microtime(true);
-   die(var_dump(sprintf("getTheoreticalYield: grouping done categories=%d recipes=%d combos=%d time=%.4fs", count($categories), count($recipes), count($combos)), __METHOD__));
+   die(var_dump("getTheoreticalYield: grouping done", count($categories), count($recipes), count($combos)));
         if ($generalCategory) {
             $combosByCategory[$generalCategory->name] = $combos;
         }
