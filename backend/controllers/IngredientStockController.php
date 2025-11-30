@@ -13,6 +13,8 @@ use http\Url;
 use Yii;
 use common\models\IngredientStock;
 use common\models\IngredientStockSearch;
+use common\models\Convoy;
+use common\models\ConvoyIngredient;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -335,7 +337,23 @@ class IngredientStockController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+
+        // Remove any convoy ingredients that reference this ingredient within the same business
+        try {
+            $convoyIds = Convoy::find()->select('id')->where(['business_id' => $model->business_id])->column();
+            if (!empty($convoyIds)) {
+                ConvoyIngredient::deleteAll([
+                    'convoy_id' => $convoyIds,
+                    'entity_class' => IngredientStock::class,
+                    'entity_id' => $model->id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Yii::warning('Failed to clean convoy ingredients for ingredient delete: ' . $e->getMessage(), __METHOD__);
+        }
+
+        $model->delete();
 
         return $this->redirect(['index']);
     }
@@ -443,8 +461,37 @@ class IngredientStockController extends Controller
         $business = Business::findOne(['id' => $businessData['id']]);
         $ids = Yii::$app->request->post('keys');
         if (!empty($ids) && $ids != 'all') {
+            // Remove convoy references for these ingredients within this business
+            try {
+                $convoyIds = Convoy::find()->select('id')->where(['business_id' => $business->id])->column();
+                if (!empty($convoyIds)) {
+                    ConvoyIngredient::deleteAll([
+                        'convoy_id' => $convoyIds,
+                        'entity_class' => IngredientStock::class,
+                        'entity_id' => $ids,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('Failed to clean convoy ingredients during bulk remove: ' . $e->getMessage(), __METHOD__);
+            }
+
             IngredientStock::deleteAll(['id' => $ids, 'business_id' => $business->id]);
         } elseif ($ids == 'all') {
+            // Delete convoy references for all ingredients in this business
+            try {
+                $ingredientIds = IngredientStock::find()->select('id')->where(['business_id' => $business->id])->column();
+                $convoyIds = Convoy::find()->select('id')->where(['business_id' => $business->id])->column();
+                if (!empty($ingredientIds) && !empty($convoyIds)) {
+                    ConvoyIngredient::deleteAll([
+                        'convoy_id' => $convoyIds,
+                        'entity_class' => IngredientStock::class,
+                        'entity_id' => $ingredientIds,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('Failed to clean convoy ingredients during bulk remove (all): ' . $e->getMessage(), __METHOD__);
+            }
+
             IngredientStock::deleteAll(['business_id' => $business->id]);
         }
 

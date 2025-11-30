@@ -10,6 +10,8 @@ use Da\User\Validator\AjaxRequestModelValidator;
 use Yii;
 use common\models\StandardRecipe;
 use common\models\StandardRecipeSearch;
+use common\models\Convoy;
+use common\models\ConvoyIngredient;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -252,7 +254,23 @@ class SubStandardRecipeController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id);
+
+        // Remove any convoy ingredients that reference this subrecipe within the same business
+        try {
+            $convoyIds = Convoy::find()->select('id')->where(['business_id' => $model->business_id])->column();
+            if (!empty($convoyIds)) {
+                ConvoyIngredient::deleteAll([
+                    'convoy_id' => $convoyIds,
+                    'entity_class' => StandardRecipe::class,
+                    'entity_id' => $model->id,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Yii::warning('Failed to clean convoy ingredients for subrecipe delete: ' . $e->getMessage(), __METHOD__);
+        }
+
+        $model->delete();
 
         return $this->redirect(['index']);
     }
@@ -265,10 +283,40 @@ class SubStandardRecipeController extends Controller
                 // Delete all recipes
                 $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
                 $business = Business::findOne(['id' => $businessData['id']]);
+                // gather subrecipe ids for this business
+                $subIds = StandardRecipe::find()
+                    ->select('id')
+                    ->where(['business_id' => $business->id, 'type' => StandardRecipe::STANDARD_RECIPE_TYPE_SUB])
+                    ->column();
+
+                // gather convoy ids for this business
+                $convoyIds = Convoy::find()->select('id')->where(['business_id' => $business->id])->column();
+
+                if (!empty($subIds) && !empty($convoyIds)) {
+                    ConvoyIngredient::deleteAll([
+                        'convoy_id' => $convoyIds,
+                        'entity_class' => StandardRecipe::class,
+                        'entity_id' => $subIds,
+                    ]);
+                }
+
                 StandardRecipe::deleteAll(['business_id' => $business->id, 'type'=> StandardRecipe::STANDARD_RECIPE_TYPE_SUB]);
                 return $this->asJson(['success' => true]);
             } else if (!empty($ids)) {
                 // Delete selected recipes
+                // restrict convoy removals to convoys belonging to this business
+                $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+                $business = Business::findOne(['id' => $businessData['id']]);
+                $convoyIds = Convoy::find()->select('id')->where(['business_id' => $business->id])->column();
+
+                if (!empty($convoyIds)) {
+                    ConvoyIngredient::deleteAll([
+                        'convoy_id' => $convoyIds,
+                        'entity_class' => StandardRecipe::class,
+                        'entity_id' => $ids,
+                    ]);
+                }
+
                 foreach ($ids as $id) {
                     $model = $this->findModel($id);
                     if ($model) {
