@@ -390,6 +390,7 @@ class Business extends \yii\db\ActiveRecord
     public function getTheoreticalYield($month = null, $year = null)
     {
     $t0 = microtime(true);
+    die(var_dump("here"));
     \Yii::info(sprintf("getTheoreticalYield START business=%s month=%s year=%s", $this->id, $month, $year), __METHOD__);
         // Para rentabilidad teórica no necesitamos mes/año, solo por compatibilidad
         if ($month === null) {
