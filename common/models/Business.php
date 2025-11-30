@@ -499,7 +499,7 @@ class Business extends \yii\db\ActiveRecord
             $averageCost = $totalCostSum / $totalItems;
             $theoricalYield = formatPercentage($averageCost*100);
         }
-        die(var_dump("getTheoreticalYield: grouping done", count($categories), count($recipes), count($combos)));
+        
           // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
         $foodTheoricalYield = null;
         if (!empty($foodRecipes)) {
@@ -518,7 +518,7 @@ class Business extends \yii\db\ActiveRecord
         // Costo total promedio para compatibilidad
         $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
     
-
+die(var_dump("getTheoreticalYield: grouping done", $totalCost,$theoricalYield,  ));
     return [
             'data' => $data,
             'totalCost' => $totalCost,
