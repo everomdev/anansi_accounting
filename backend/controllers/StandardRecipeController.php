@@ -322,20 +322,79 @@ class StandardRecipeController extends Controller
             'dataProvider' => $dataProvider,
             'ingredientCount' => $ingredientCount
         ]);
-    }    public function actionTheoreticalYield()
+    }    
+    public function actionTheoreticalYield()
     {
         $business = RedisKeys::getBusiness();
 
-        $theoreticalYieldData = $business->getTheoreticalYield();
-        die(var_dump('termino'));
-        return $this->render('theoretical_yield', [
-            'data' => $theoreticalYieldData['data'],
-            'totalCost' => $theoreticalYieldData['totalCost'],
-            'theoricalTotal' => $theoreticalYieldData['theoricalTotal'],
-            'month' => $theoreticalYieldData['month'],
-            'year' => $theoreticalYieldData['year'],
-            'recipesByType' => $theoreticalYieldData['recipesByType'],
-        ]);    }
+            $theoreticalYieldData = $business->getTheoreticalYield();
+
+            // Prepare lightweight objects with scalar values to avoid repeated getters and N+1 queries
+            $preparedData = [];
+            $allRecipeIds = [];
+            foreach ($theoreticalYieldData['data'] as $cat) {
+                foreach ($cat['recipes'] as $r) {
+                    if (!empty($r->id)) $allRecipeIds[] = $r->id;
+                }
+            }
+
+            // Eager-load ingredient relations for all recipes in one query (if any)
+            $recipesMap = [];
+            if (!empty($allRecipeIds)) {
+                $loaded = \common\models\StandardRecipe::find()
+                    ->where(['id' => $allRecipeIds])
+                    ->with(['ingredientRelations.ingredient', 'convoy'])
+                    ->indexBy('id')
+                    ->all();
+                foreach ($loaded as $id => $model) {
+                    $recipesMap[$id] = $model;
+                }
+            }
+
+            foreach ($theoreticalYieldData['data'] as $cat) {
+                // use an associative array so the view can access $category['recipes'] as before
+                $c = [
+                    'category' => $cat['category'],
+                    'recipes' => [],
+                    'combos' => [],
+                ];
+
+                foreach ($cat['recipes'] as $recipe) {
+                    // use preloaded model if available to reduce DB calls
+                    $model = isset($recipesMap[$recipe->id]) ? $recipesMap[$recipe->id] : $recipe;
+                    $obj = new \stdClass();
+                    $obj->id = $model->id;
+                    $obj->title = $model->title;
+                    $obj->recipeLastPrice = $model->recipeLastPrice;
+                    $obj->price = $model->price;
+                    $obj->costPercent = $model->getCostPercent();
+                    $obj->is_food = $model->is_food;
+                    $c['recipes'][] = $obj;
+                }
+
+                foreach ($cat['combos'] as $combo) {
+                    $obj = new \stdClass();
+                    $obj->id = $combo->id;
+                    $obj->title = $combo->title ?? $combo->name;
+                    $obj->cost = $combo->total_cost ?? $combo->totalCostByLastPrice ?? $combo->total_cost_last_price;
+                    $obj->total_price = $combo->total_price ?? $combo->price ?? (method_exists($combo, 'getPrice') ? $combo->getPrice() : null);
+                    // Use available method or attribute for costPercent
+                    $obj->costPercent = method_exists($combo, 'getCostPercent') ? $combo->getCostPercent() : ($combo->cost_percent_last_price ?? 0);
+                    $c['combos'][] = $obj;
+                }
+
+                $preparedData[] = $c;
+            }
+
+            return $this->render('theoretical_yield', [
+                'data' => $preparedData,
+                'totalCost' => $theoreticalYieldData['totalCost'],
+                'theoricalTotal' => $theoreticalYieldData['theoricalTotal'],
+                'month' => $theoreticalYieldData['month'],
+                'year' => $theoreticalYieldData['year'],
+                'recipesByType' => $theoreticalYieldData['recipesByType'],
+            ]);
+        }
     
     /**
      * Displays real yield data for recipes and combos for a specific month and year
