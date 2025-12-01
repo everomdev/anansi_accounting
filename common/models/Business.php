@@ -389,7 +389,7 @@ class Business extends \yii\db\ActiveRecord
     public function getTheoreticalYield($month = null, $year = null)
     {
         // Para rentabilidad teórica no necesitamos mes/año, solo por compatibilidad
-        Yii::info("Calculating theoretical yield for business ID: {$this->id}");
+        Yii::error("Calculating theoretical yield for business ID: {$this->id}");
         if ($month === null) {
             $month = (int)date('n');
         }
