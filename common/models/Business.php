@@ -398,9 +398,11 @@ class Business extends \yii\db\ActiveRecord
         }
 
         // Llamar al stored procedure para obtener sumas y conteos
+        Yii::error("About to call stored procedure for business ID: {$this->id}");
         $summary = Yii::$app->db->createCommand("CALL get_theoretical_yield_summary(:businessId)")
             ->bindValue(':businessId', $this->id)
             ->queryAll();
+        Yii::error("Stored procedure called, processing summary for business ID: {$this->id}");
         // Procesar resultados del procedure
         $totalCostSum = 0;
         $totalItems = 0;
@@ -431,14 +433,17 @@ class Business extends \yii\db\ActiveRecord
         $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
 
         // Populate data with categories and their recipes/combos
-        $data = [];
+        Yii::error("About to load categories for business ID: {$this->id}");
         $categories = \common\models\RecipeCategory::find()
             ->where([
                 'OR',
                 ['business_id' => $this->id],
                 ['business_id' => null]
             ])->all();
+        Yii::error("Loaded " . count($categories) . " categories for business ID: {$this->id}");
+
         foreach ($categories as $category) {
+            Yii::error("Processing category {$category->name} for business ID: {$this->id}");
             $recipes = \common\models\StandardRecipe::find()->where([
                 'business_id' => $this->id,
                 'in_construction' => 0,
@@ -446,6 +451,7 @@ class Business extends \yii\db\ActiveRecord
                 'in_menu' => true,
                 'type_of_recipe' => $category->name
             ])->all();
+            Yii::error("Loaded " . count($recipes) . " recipes for category {$category->name}");
 
             $combos = [];
             if ($category->business_id === null) {
@@ -453,6 +459,7 @@ class Business extends \yii\db\ActiveRecord
                     'business_id' => $this->id,
                     'in_menu' => true,
                 ])->all();
+                Yii::error("Loaded " . count($combos) . " combos for category {$category->name}");
             }
 
             $data[] = [
@@ -461,8 +468,10 @@ class Business extends \yii\db\ActiveRecord
                 'combos' => $combos,
             ];
         }
+        Yii::error("Built data array for business ID: {$this->id}");
 
         // Mantener estructura de retorno
+        Yii::error("Returning theoretical yield for business ID: {$this->id}");
         return [
             'data' => $data,
             'totalCost' => $totalCost,
