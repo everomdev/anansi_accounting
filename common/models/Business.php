@@ -468,7 +468,7 @@ class Business extends \yii\db\ActiveRecord
                 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
                 'in_menu' => true,
                 'type_of_recipe' => $category->name
-            ])->all();
+            ])->with(['ingredientRelations', 'ingredients', 'convoy'])->all();
             $loadTime = microtime(true) - $start;
             $ts = $formatTs(microtime(true));
             Yii::error("[{$ts}] Loaded " . count($recipes) . " recipes for category {$category->name} in {$loadTime} seconds");
