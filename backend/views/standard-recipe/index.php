@@ -254,7 +254,7 @@ $this->registerCss('
                     'data-sort-by' => 'costPercent'
                 ],
             ],
-            [
+            /*[
                 'attribute' => 'ingredientCount',
                 'label' => 'Cantidad<br>Ingredientes',
                 'value' => function ($model) use ($ingredientCount) {
@@ -283,7 +283,7 @@ $this->registerCss('
                     'class' => 'sortable-column',
                     'data-sort-by' => 'subRecipeCount'
                 ],
-            ],
+            ],*/
             [
                 'attribute' => 'type_of_recipe',
                 'label' => 'Categoría',
