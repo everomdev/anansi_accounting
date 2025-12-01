@@ -220,7 +220,7 @@ $this->registerCss('
                     ]) . 
                     '</div>',
             ],            
-            /*[
+            [
                 'attribute' => 'recipeLastPrice',
                 'label' => "Costo",
                 'value' => function($model) {
@@ -254,7 +254,7 @@ $this->registerCss('
                     'class' => 'sortable-column',
                     'data-sort-by' => 'costPercent'
                 ],
-            ],*/
+            ],
             [
                 'attribute' => 'ingredientCount',
                 'label' => 'Cantidad<br>Ingredientes',
