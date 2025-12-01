@@ -11,7 +11,7 @@ use common\models\Expense;
  */
 class ExpenseSearch extends Expense
 {
-    public $categoria;
+    public $provider_name;
 
     /**
      * {@inheritdoc}
@@ -19,9 +19,9 @@ class ExpenseSearch extends Expense
     public function rules()
     {
         return [
-            [['id', 'business_id', 'categoria'], 'integer'],
-            [['name', 'brand', 'presentation', 'um', 'portion_um', 'observations', 'key'], 'safe'],
-            [['quantity', 'yield', 'portions_per_unit', 'min_stock', 'max_stock'], 'number'],
+            [['id', 'business_id', 'provider_id', 'is_active'], 'integer'],
+            [['name', 'description', 'frequency', 'expense_date', 'observations', 'key', 'provider_name'], 'safe'],
+            [['amount'], 'number'],
         ];
     }
 
@@ -43,16 +43,27 @@ class ExpenseSearch extends Expense
      */
     public function search($params)
     {
-        $query = Expense::find();
+        $query = Expense::find()->with('provider');
 
         // add conditions that should always apply here
+        $business = \backend\helpers\RedisKeys::getBusiness();
+        $query->andWhere(['business_id' => $business->id]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 10,
+                'pageSize' => 20,
             ],
+            'sort' => [
+                'defaultOrder' => ['expense_date' => SORT_DESC]
+            ]
         ]);
+
+        // Permitir ordenamiento por nombre del proveedor
+        $dataProvider->sort->attributes['provider_name'] = [
+            'asc' => ['provider.business_name' => SORT_ASC],
+            'desc' => ['provider.business_name' => SORT_DESC],
+        ];
 
         $this->load($params);
 
@@ -66,23 +77,22 @@ class ExpenseSearch extends Expense
         $query->andFilterWhere([
             'id' => $this->id,
             'business_id' => $this->business_id,
-            'quantity' => $this->quantity,
-            'yield' => $this->yield,
-            'portions_per_unit' => $this->portions_per_unit,
-            'min_stock' => $this->min_stock,
-            'max_stock' => $this->max_stock,
+            'provider_id' => $this->provider_id,
+            'amount' => $this->amount,
+            'frequency' => $this->frequency,
+            'expense_date' => $this->expense_date,
+            'is_active' => $this->is_active,
         ]);
 
         $query->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'brand', $this->brand])
-            ->andFilterWhere(['like', 'presentation', $this->presentation])
-            ->andFilterWhere(['like', 'um', $this->um])
-            ->andFilterWhere(['like', 'portion_um', $this->portion_um])
+            ->andFilterWhere(['like', 'description', $this->description])
             ->andFilterWhere(['like', 'key', $this->key])
             ->andFilterWhere(['like', 'observations', $this->observations]);
 
-        if ($this->categoria) {
-            $query->andFilterWhere(['expenses.category_id' => $this->categoria]);
+        // Filtro por nombre del proveedor
+        if ($this->provider_name) {
+            $query->joinWith('provider')
+                ->andFilterWhere(['like', 'provider.business_name', $this->provider_name]);
         }
 
         return $dataProvider;

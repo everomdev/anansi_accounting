@@ -51,7 +51,8 @@ $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center'
 $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
 $kpisControlActive = in_array($currentControllerId, ['control-insumos', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
-$administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business', 'expense']);
+$gastosActive = in_array($currentControllerId, ['expense', 'expense-movement', 'expense-unit-measurement', 'expense-category']);
+$administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo" style="width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; position: relative;">
@@ -133,11 +134,6 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
-                    <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
-                        <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
-                            <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
-                        </a>
-                    </li>
                     <?php if (Yii::$app->user->can('ingredients_list')): ?>
                          <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/provider/ingredients']) ?>" class="menu-link">
@@ -187,6 +183,39 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
+                </ul>
+            </div>
+        </li>
+
+        <!-- Gastos -->
+        <li class="menu-item <?= $gastosActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#gastos" role="button" 
+               aria-expanded="<?= $gastosActive ? 'true' : 'false' ?>" 
+               aria-controls="gastos">
+                <div><?= Yii::t('app', 'Gastos') ?></div>
+            </a>
+            <div class="collapse <?= $gastosActive ? 'show' : '' ?>" id="gastos">
+                <ul class="sub-menu">
+                    <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
+                        </a>
+                    </li>
+                    <li class="menu-item <?= $currentControllerId == 'expense-movement' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense-movement/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Movimientos de Gastos') ?></div>
+                        </a>
+                    </li>
+                    <li class="menu-item <?= $currentControllerId == 'expense-unit-measurement' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense-unit-measurement/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Unidades de Medida') ?></div>
+                        </a>
+                    </li>
+                    <li class="menu-item <?= $currentControllerId == 'expense-category' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense-category/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Categorías de Gastos') ?></div>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </li>

@@ -3,39 +3,35 @@
 namespace common\models;
 
 use Yii;
+use yii\db\ActiveRecord;
+use yii\behaviors\TimestampBehavior;
 
 /**
- * This is the model class for table "expense".
+ * This is the model class for table "expenses".
  *
  * @property int $id
  * @property string $name
- * @property string|null $brand
- * @property string|null $presentation
+ * @property string|null $description
  * @property int $business_id
- * @property float|null $quantity
- * @property string $um
- * @property float|null $yield
- * @property float|null $portions_per_unit
- * @property string|null $portion_um
+ * @property int|null $provider_id
+ * @property float $amount
+ * @property int|null $unit_measurement_id
+ * @property int|null $category_id
+ * @property string $frequency
+ * @property string $expense_date
  * @property string|null $observations
  * @property string $key
- * @property float $final_quantity
- * @property int $category_id
- * @property float|null $min_stock
- * @property float|null $max_stock
+ * @property int|null $is_active
  * @property string|null $created_at
  * @property string|null $updated_at
  *
  * @property Business $business
- * @property Category $category
+ * @property Provider $provider
+ * @property ExpenseUnitMeasurement $unitMeasurement
+ * @property ExpenseCategory $category
  */
-class Expense extends \yii\db\ActiveRecord
+class Expense extends ActiveRecord
 {
-    public $_category;
-    public $price;
-    public $adjustedPrice;
-    public $_key;
-
     /**
      * {@inheritdoc}
      */
@@ -47,19 +43,38 @@ class Expense extends \yii\db\ActiveRecord
     /**
      * {@inheritdoc}
      */
+    public function behaviors()
+    {
+        return [
+            [
+                'class' => TimestampBehavior::class,
+                'createdAtAttribute' => 'created_at',
+                'updatedAtAttribute' => 'updated_at',
+                'value' => new \yii\db\Expression('NOW()'),
+            ]
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function rules()
     {
         return [
-            [['name', 'business_id', 'um', 'key'], 'required'],
-            [['business_id', 'category_id'], 'integer'],
-            [['quantity', 'yield', 'portions_per_unit', 'min_stock', 'max_stock', 'final_quantity'], 'number'],
-            [['observations'], 'string'],
-            [['created_at', 'updated_at'], 'safe'],
-            [['name', 'brand', 'presentation', 'um', 'portion_um'], 'string', 'max' => 255],
+            [['name', 'business_id', 'amount', 'expense_date'], 'required'],
+            [['business_id', 'provider_id', 'unit_measurement_id', 'category_id', 'is_active'], 'integer'],
+            [['amount'], 'number', 'min' => 0],
+            [['expense_date'], 'date', 'format' => 'php:Y-m-d'],
+            [['description', 'observations'], 'string'],
+            [['name'], 'string', 'max' => 255],
+            [['frequency'], 'string', 'max' => 50],
+            [['frequency'], 'in', 'range' => ['unico', 'diario', 'semanal', 'quincenal', 'mensual', 'bimestral', 'trimestral', 'semestral', 'anual']],
             [['key'], 'string', 'max' => 255],
-            [['key'], 'unique', 'targetAttribute' => ['key', 'business_id']],
+            [['key', 'business_id'], 'unique', 'targetAttribute' => ['key', 'business_id']],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::class, 'targetAttribute' => ['business_id' => 'id']],
-            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => Category::class, 'targetAttribute' => ['category_id' => 'id']],
+            [['provider_id'], 'exist', 'skipOnError' => true, 'targetClass' => Provider::class, 'targetAttribute' => ['provider_id' => 'id']],
+            [['unit_measurement_id'], 'exist', 'skipOnError' => true, 'targetClass' => ExpenseUnitMeasurement::class, 'targetAttribute' => ['unit_measurement_id' => 'id']],
+            [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => ExpenseCategory::class, 'targetAttribute' => ['category_id' => 'id']],
         ];
     }
 
@@ -69,39 +84,22 @@ class Expense extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id' => Yii::t('app', 'ID'),
-            'name' => Yii::t('app', 'Nombre del Gasto'),
-            'brand' => Yii::t('app', 'Marca'),
-            'presentation' => Yii::t('app', 'Presentación'),
-            'business_id' => Yii::t('app', 'Negocio'),
-            'quantity' => Yii::t('app', 'Cantidad'),
-            'um' => Yii::t('app', 'Unidad de Medida'),
-            'yield' => Yii::t('app', 'Rendimiento'),
-            'portions_per_unit' => Yii::t('app', 'Porciones por Unidad'),
-            'portion_um' => Yii::t('app', 'Unidad de Porción'),
-            'observations' => Yii::t('app', 'Observaciones'),
-            'key' => Yii::t('app', 'Clave'),
-            'final_quantity' => Yii::t('app', 'Cantidad Final'),
-            'category_id' => Yii::t('app', 'Categoría'),
-            'min_stock' => Yii::t('app', 'Stock Mínimo'),
-            'max_stock' => Yii::t('app', 'Stock Máximo'),
-            'created_at' => Yii::t('app', 'Creado'),
-            'updated_at' => Yii::t('app', 'Actualizado'),
+            'id' => 'ID',
+            'name' => 'Nombre del Gasto',
+            'description' => 'Descripción',
+            'business_id' => 'Negocio',
+            'provider_id' => 'Proveedor',
+            'amount' => 'Monto',
+            'unit_measurement_id' => 'Unidad de Medida',
+            'category_id' => 'Categoría',
+            'frequency' => 'Frecuencia',
+            'expense_date' => 'Fecha del Gasto',
+            'observations' => 'Observaciones',
+            'key' => 'Clave',
+            'is_active' => 'Activo',
+            'created_at' => 'Fecha de Creación',
+            'updated_at' => 'Fecha de Actualización',
         ];
-    }
-
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-
-        if ($insert) {
-            $this->created_at = date('Y-m-d H:i:s');
-        }
-        $this->updated_at = date('Y-m-d H:i:s');
-
-        return true;
     }
 
     /**
@@ -115,51 +113,126 @@ class Expense extends \yii\db\ActiveRecord
     }
 
     /**
+     * Gets query for [[Provider]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProvider()
+    {
+        return $this->hasOne(Provider::class, ['id' => 'provider_id']);
+    }
+
+    /**
+     * Gets query for [[ExpenseMovements]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getExpenseMovements()
+    {
+        return $this->hasMany(ExpenseMovement::class, ['expense_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[UnitMeasurement]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUnitMeasurement()
+    {
+        return $this->hasOne(ExpenseUnitMeasurement::class, ['id' => 'unit_measurement_id']);
+    }
+
+    /**
      * Gets query for [[Category]].
      *
      * @return \yii\db\ActiveQuery
      */
     public function getCategory()
     {
-        if (!empty($this->_category)) {
-            return $this->_category;
-        }
-
-        return $this->hasOne(Category::class, ['id' => 'category_id']);
+        return $this->hasOne(ExpenseCategory::class, ['id' => 'category_id']);
     }
 
-    public static function keyGenerator($categoryId, $businessId)
+    /**
+     * Opciones de frecuencia
+     */
+    public static function getFrequencyOptions()
     {
-        $category = Category::findOne(['id' => $categoryId]);
-        $business = Business::findOne(['id' => $businessId]);
-
-        if (!$category || !$business) {
-            return '';
-        }
-
-        $categoryInitial = strtoupper(substr($category->name, 0, 3));
-        $businessInitial = strtoupper(substr($business->business_name, 0, 3));
-        
-        // Buscar el siguiente número disponible
-        $count = self::find()
-            ->where(['like', 'key', $categoryInitial . $businessInitial])
-            ->andWhere(['business_id' => $businessId])
-            ->count();
-
-        $nextNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
-        
-        return $categoryInitial . $businessInitial . $nextNumber;
+        return [
+            'unico' => 'Único',
+            'diario' => 'Diario',
+            'semanal' => 'Semanal',
+            'quincenal' => 'Quincenal',
+            'mensual' => 'Mensual',
+            'bimestral' => 'Bimestral',
+            'trimestral' => 'Trimestral',
+            'semestral' => 'Semestral',
+            'anual' => 'Anual',
+        ];
     }
 
-    public function getLabel()
+    /**
+     * Calcula el monto prorrateado mensual
+     */
+    public function getMonthlyAmount()
     {
-        $parts = [$this->name];
-        if ($this->brand) {
-            $parts[] = $this->brand;
+        switch ($this->frequency) {
+            case 'diario':
+                return $this->amount * 30; // Aproximación mensual
+            case 'semanal':
+                return $this->amount * 4.33; // Aproximación mensual (52/12)
+            case 'quincenal':
+                return $this->amount * 2;
+            case 'mensual':
+                return $this->amount;
+            case 'bimestral':
+                return $this->amount / 2;
+            case 'trimestral':
+                return $this->amount / 3;
+            case 'semestral':
+                return $this->amount / 6;
+            case 'anual':
+                return $this->amount / 12;
+            case 'unico':
+            default:
+                return $this->amount; // Para gastos únicos, retorna el monto completo
         }
-        if ($this->presentation) {
-            $parts[] = $this->presentation;
+    }
+
+    /**
+     * Genera una clave única para el gasto
+     */
+    public function generateKey()
+    {
+        $business = \backend\helpers\RedisKeys::getBusiness();
+        $this->business_id = $business->id;
+        
+        // Generar clave basada en el nombre y fecha
+        $baseKey = strtoupper(substr(str_replace([' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'], ['_', 'A', 'E', 'I', 'O', 'U', 'N'], $this->name), 0, 10));
+        $dateKey = date('Ymd', strtotime($this->expense_date));
+        
+        $counter = 1;
+        $key = $baseKey . '_' . $dateKey;
+        
+        // Verificar si ya existe y agregar contador si es necesario
+        while (self::find()->where(['key' => $key, 'business_id' => $this->business_id])->andWhere(['!=', 'id', $this->id])->exists()) {
+            $key = $baseKey . '_' . $dateKey . '_' . $counter;
+            $counter++;
         }
-        return implode(' - ', $parts);
+        
+        $this->key = $key;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if (empty($this->key)) {
+                $this->generateKey();
+            }
+            return true;
+        }
+        return false;
     }
 }

@@ -1,28 +1,22 @@
 <?php
 
-use common\models\Category;
+use common\models\Provider;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
+use kartik\date\DatePicker;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Expense */
 /* @var $form yii\widgets\ActiveForm */
 
-$business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+$business = \backend\helpers\RedisKeys::getBusiness();
 
-// Obtener unidades de medida
-$allUms = \common\models\UnitOfMeasurement::find()->where(['business_id' => $business['id']])->all();
-$umOptions = \yii\helpers\ArrayHelper::map($allUms, 'name', 'name');
-
-$categories = \yii\helpers\ArrayHelper::map(
-    Category::find()->where([
-        'or',
-        ['business_id' => $business['id']],
-        ['builtin' => 1]
-    ])->all(),
+// Obtener proveedores del negocio
+$providers = \yii\helpers\ArrayHelper::map(
+    Provider::find()->where(['business_id' => $business->id])->all(),
     'id',
-    'name'
+    'business_name'
 );
 ?>
 
@@ -36,24 +30,24 @@ $categories = \yii\helpers\ArrayHelper::map(
 </style>
 
 <div class="expense-form">
-    <?php $form = ActiveForm::begin([
-        'enableAjaxValidation' => true
-    ]); ?>
+    <?php $form = ActiveForm::begin(); ?>
 
     <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-receipt"></i> 
-                <?= $model->isNewRecord ? 'Nuevo Gasto' : 'Editar Gasto' ?>
-            </h5>
-        </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
                     <?= $form->field($model, 'name')->textInput([
                         'maxlength' => true,
-                        'placeholder' => 'Ej: Electricidad, Agua, Teléfono...'
+                        'placeholder' => 'Ej: Electricidad, Agua, Teléfono, Renta...'
                     ])->label('Nombre del Gasto <span class="required">*</span>') ?>
+                </div>
+                <div class="col-md-3">
+                    <?= $form->field($model, 'amount')->textInput([
+                        'type' => 'number',
+                        'step' => '0.01',
+                        'min' => '0',
+                        'placeholder' => '0.00'
+                    ])->label('Monto <span class="required">*</span>') ?>
                 </div>
                 <div class="col-md-3">
                     <?= $form->field($model, 'key')->textInput([
@@ -62,97 +56,118 @@ $categories = \yii\helpers\ArrayHelper::map(
                         'placeholder' => 'Se genera automáticamente'
                     ])->label('Clave') ?>
                 </div>
-                <div class="col-md-3">
-                    <?= $form->field($model, 'category_id')->widget(Select2::class, [
-                        'data' => $categories,
-                        'options' => [
-                            'placeholder' => 'Seleccionar categoría...',
-                            'id' => 'expense-category_id'
-                        ],
-                        'pluginOptions' => [
-                            'allowClear' => true,
-                            'width' => '100%'
-                        ],
-                    ])->label('Categoría <span class="required">*</span>') ?>
-                </div>
             </div>
 
             <div class="row">
                 <div class="col-md-4">
-                    <?= $form->field($model, 'brand')->textInput([
-                        'maxlength' => true,
-                        'placeholder' => 'Ej: CFE, TELMEX...'
-                    ])->label('Proveedor/Empresa') ?>
+                    <?= $form->field($model, 'expense_date')->widget(DatePicker::class, [
+                        'options' => ['placeholder' => 'Seleccionar fecha...'],
+                        'pluginOptions' => [
+                            'autoclose' => true,
+                            'format' => 'yyyy-mm-dd',
+                            'todayHighlight' => true
+                        ]
+                    ])->label('Fecha del Gasto <span class="required">*</span>') ?>
                 </div>
                 <div class="col-md-4">
-                    <?= $form->field($model, 'presentation')->textInput([
-                        'maxlength' => true,
-                        'placeholder' => 'Ej: Mensual, Anual...'
-                    ])->label('Frecuencia/Tipo') ?>
+                    <?= $form->field($model, 'frequency')->dropDownList(
+                        $model::getFrequencyOptions(),
+                        ['prompt' => 'Seleccionar frecuencia...']
+                    )->label('Frecuencia <span class="required">*</span>') ?>
                 </div>
                 <div class="col-md-4">
-                    <?= $form->field($model, 'um')->widget(Select2::class, [
-                        'data' => $umOptions,
+                    <?= $form->field($model, 'unit_measurement_id')->widget(Select2::class, [
+                        'data' => \yii\helpers\ArrayHelper::map(
+                            \common\models\ExpenseUnitMeasurement::find()
+                                ->where(['business_id' => $business->id])
+                                ->orderBy(['name' => SORT_ASC])
+                                ->all(),
+                            'id',
+                            'name'
+                        ),
                         'options' => [
                             'placeholder' => 'Seleccionar unidad...',
                         ],
                         'pluginOptions' => [
-                            'allowClear' => false,
-                            'width' => '100%'
+                            'allowClear' => true,
+                            'width' => '100%',
                         ],
-                    ])->label('Unidad de Medida <span class="required">*</span>') ?>
+                    ])->label('Unidad de Medida (Opcional)') ?>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col-md-3">
-                    <?= $form->field($model, 'quantity')->textInput([
-                        'type' => 'number',
-                        'step' => '0.001',
-                        'min' => '0',
-                        'placeholder' => '0.000'
-                    ])->label('Cantidad') ?>
+                <div class="col-md-6">
+                    <?= $form->field($model, 'category_id')->widget(Select2::class, [
+                        'data' => \yii\helpers\ArrayHelper::map(
+                            \common\models\ExpenseCategory::find()
+                                ->where(['business_id' => $business->id])
+                                ->orderBy(['name' => SORT_ASC])
+                                ->all(),
+                            'id',
+                            'name'
+                        ),
+                        'options' => [
+                            'placeholder' => 'Seleccionar categoría...',
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'width' => '100%',
+                        ],
+                    ])->label('Categoría (Opcional)') ?>
                 </div>
-                <div class="col-md-3">
-                    <?= $form->field($model, 'min_stock')->textInput([
-                        'type' => 'number',
-                        'step' => '0.001',
-                        'min' => '0',
-                        'placeholder' => '0.000'
-                    ])->label('Mínimo') ?>
-                </div>
-                <div class="col-md-3">
-                    <?= $form->field($model, 'max_stock')->textInput([
-                        'type' => 'number',
-                        'step' => '0.001',
-                        'min' => '0',
-                        'placeholder' => '0.000'
-                    ])->label('Máximo') ?>
-                </div>
-                <div class="col-md-3">
-                    <?= $form->field($model, 'yield')->textInput([
-                        'type' => 'number',
-                        'step' => '0.001',
-                        'min' => '0',
-                        'max' => '1',
-                        'placeholder' => '0.000'
-                    ])->label('Rendimiento %') ?>
+                <div class="col-md-6">
+                    <?= $form->field($model, 'provider_id')->widget(Select2::class, [
+                        'data' => $providers,
+                        'options' => [
+                            'placeholder' => 'Seleccionar proveedor...',
+                            'id' => 'expense-provider_id'
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'width' => '100%',
+                            'ajax' => [
+                                'url' => \yii\helpers\Url::to(['provider-list']),
+                                'dataType' => 'json',
+                                'delay' => 250,
+                                'data' => new \yii\web\JsExpression('function(params) {
+                                    return {
+                                        q: params.term
+                                    };
+                                }'),
+                                'cache' => true
+                            ],
+                            'minimumInputLength' => 1,
+                        ],
+                    ])->label('Proveedor (Opcional)') ?>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-6">
+                    <?= $form->field($model, 'description')->textarea([
+                        'rows' => 3,
+                        'placeholder' => 'Descripción del gasto...'
+                    ])->label('Descripción') ?>
+                </div>
+                <div class="col-md-6">
                     <?= $form->field($model, 'observations')->textarea([
                         'rows' => 3,
                         'placeholder' => 'Observaciones adicionales...'
                     ])->label('Observaciones') ?>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <?= $form->field($model, 'is_active')->checkbox()->label('Gasto Activo') ?>
+                </div>
+            </div>
         </div>
         <div class="card-footer">
             <div class="form-group">
-                <?= Html::submitButton($model->isNewRecord ? 'Crear' : 'Actualizar', [
-                    'class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary'
+                <?= Html::submitButton($model->isNewRecord ? 'Crear Gasto' : 'Actualizar Gasto', [
+                    'class' =>'btn btn-warning'
                 ]) ?>
                 <?= Html::a('Cancelar', ['index'], ['class' => 'btn btn-secondary']) ?>
             </div>
@@ -164,25 +179,56 @@ $categories = \yii\helpers\ArrayHelper::map(
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Generar clave automáticamente cuando se seleccione una categoría
-    const categorySelect = document.getElementById('expense-category_id');
-    const keyInput = document.getElementById('expense-key');
+    // Actualizar el monto prorrateado cuando cambie la frecuencia o el monto
+    const frequencySelect = document.getElementById('expense-frequency');
+    const amountInput = document.getElementById('expense-amount');
     
-    if (categorySelect && keyInput) {
-        categorySelect.addEventListener('change', function() {
-            const categoryId = this.value;
-            if (categoryId) {
-                // Hacer petición AJAX para generar la clave
-                fetch('/expense/generate-key?categoryId=' + categoryId)
-                    .then(response => response.json())
-                    .then(data => {
-                        keyInput.value = data;
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
-            }
-        });
+    function updateMonthlyAmount() {
+        const frequency = frequencySelect ? frequencySelect.value : 'unico';
+        const amount = parseFloat(amountInput ? amountInput.value : 0) || 0;
+        
+        let monthlyAmount = amount;
+        
+        switch (frequency) {
+            case 'diario':
+                monthlyAmount = amount * 30;
+                break;
+            case 'semanal':
+                monthlyAmount = amount * 4.33;
+                break;
+            case 'quincenal':
+                monthlyAmount = amount * 2;
+                break;
+            case 'mensual':
+                monthlyAmount = amount;
+                break;
+            case 'bimestral':
+                monthlyAmount = amount / 2;
+                break;
+            case 'trimestral':
+                monthlyAmount = amount / 3;
+                break;
+            case 'semestral':
+                monthlyAmount = amount / 6;
+                break;
+            case 'anual':
+                monthlyAmount = amount / 12;
+                break;
+        }
+        
+        // // Mostrar el monto prorrateado si existe el elemento
+        // const monthlyAmountElement = document.querySelector('.monthly-amount');
+        // if (monthlyAmountElement) {
+        //     monthlyAmountElement.textContent = '$' + monthlyAmount.toFixed(2);
+        // }
+    }
+    
+    if (frequencySelect) {
+        frequencySelect.addEventListener('change', updateMonthlyAmount);
+    }
+    
+    if (amountInput) {
+        amountInput.addEventListener('input', updateMonthlyAmount);
     }
 });
 </script>
