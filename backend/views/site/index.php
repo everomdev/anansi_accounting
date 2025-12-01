@@ -78,7 +78,6 @@ $this->registerCss("
     }
 ");
 ?>
-<?php /*
 <div class="dashboard-container">
     <!-- Indicadores pequeños en la primera fila -->
     <?php if (Yii::$app->user->can('theoretical_profitability_view')): ?>
@@ -175,5 +174,4 @@ $this->registerCss("
     <?php endif; ?>
     
 </div>
-*/
 ?>
