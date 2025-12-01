@@ -340,6 +340,11 @@ class StandardRecipeController extends Controller
 
             // Eager-load ingredient relations for all recipes in one query (if any)
             $recipesMap = [];
+            $recipesByCategory = [];
+            $combosByCategory = [];
+            // Build category name list for fallback batch query
+            $categoryNames = array_map(function($c){ return $c['category']->name; }, $theoreticalYieldData['data']);
+
             if (!empty($allRecipeIds)) {
                 $loaded = \common\models\StandardRecipe::find()
                     ->where(['id' => $allRecipeIds])
@@ -348,6 +353,34 @@ class StandardRecipeController extends Controller
                     ->all();
                 foreach ($loaded as $id => $model) {
                     $recipesMap[$id] = $model;
+                }
+            } else {
+                // Fallback: batch load all recipes that belong to the categories returned by Business
+                if (!empty($categoryNames)) {
+                    $loaded = \common\models\StandardRecipe::find()
+                        ->where([
+                            'business_id' => $business->id,
+                            'in_construction' => 0,
+                            'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                            'in_menu' => true,
+                            // type_of_recipe IN categoryNames
+                        ])
+                        ->andWhere(['in', 'type_of_recipe', $categoryNames])
+                        ->with(['ingredientRelations.ingredient', 'convoy'])
+                        ->all();
+                    foreach ($loaded as $model) {
+                        $recipesMap[$model->id] = $model;
+                        $recipesByCategory[$model->type_of_recipe][] = $model;
+                    }
+                }
+                // Load combos (menus) once and group by category name
+                $loadedCombos = \common\models\Menu::find()
+                    ->where(['business_id' => $business->id, 'in_menu' => true])
+                    ->with(['category'])
+                    ->all();
+                foreach ($loadedCombos as $menu) {
+                    $catName = $menu->category->name ?? null;
+                    if ($catName) $combosByCategory[$catName][] = $menu;
                 }
             }
 
@@ -359,9 +392,12 @@ class StandardRecipeController extends Controller
                     'combos' => [],
                 ];
 
-                foreach ($cat['recipes'] as $recipe) {
-                    // use preloaded model if available to reduce DB calls
-                    $model = isset($recipesMap[$recipe->id]) ? $recipesMap[$recipe->id] : $recipe;
+                // decide source: use Business-provided list if present, otherwise use batch-loaded maps
+                $sourceRecipes = !empty($cat['recipes']) ? $cat['recipes'] : ($recipesByCategory[$cat['category']->name] ?? []);
+                foreach ($sourceRecipes as $recipe) {
+                    // if recipe is a model or AR proxy, get its id
+                    $id = is_object($recipe) && isset($recipe->id) ? $recipe->id : null;
+                    $model = ($id && isset($recipesMap[$id])) ? $recipesMap[$id] : $recipe;
                     $obj = new \stdClass();
                     $obj->id = $model->id;
                     $obj->title = $model->title;
@@ -372,13 +408,13 @@ class StandardRecipeController extends Controller
                     $c['recipes'][] = $obj;
                 }
 
-                foreach ($cat['combos'] as $combo) {
+                $sourceCombos = !empty($cat['combos']) ? $cat['combos'] : ($combosByCategory[$cat['category']->name] ?? []);
+                foreach ($sourceCombos as $combo) {
                     $obj = new \stdClass();
                     $obj->id = $combo->id;
                     $obj->title = $combo->title ?? $combo->name;
                     $obj->cost = $combo->total_cost ?? $combo->totalCostByLastPrice ?? $combo->total_cost_last_price;
                     $obj->total_price = $combo->total_price ?? $combo->price ?? (method_exists($combo, 'getPrice') ? $combo->getPrice() : null);
-                    // Use available method or attribute for costPercent
                     $obj->costPercent = method_exists($combo, 'getCostPercent') ? $combo->getCostPercent() : ($combo->cost_percent_last_price ?? 0);
                     $c['combos'][] = $obj;
                 }

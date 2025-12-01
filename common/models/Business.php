@@ -461,34 +461,13 @@ class Business extends \yii\db\ActiveRecord
         foreach ($categories as $category) {
             $ts = $formatTs(microtime(true));
             Yii::error("[{$ts}] Processing category {$category->name} for business ID: {$this->id}");
-            $start = microtime(true);
-            $recipes = \common\models\StandardRecipe::find()->where([
-                'business_id' => $this->id,
-                'in_construction' => 0,
-                'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-                'in_menu' => true,
-                'type_of_recipe' => $category->name
-            ])->with(['ingredientRelations', 'ingredients', 'convoy'])->all();
-            $loadTime = microtime(true) - $start;
+            // DON'T load recipes/combos here — controller will fetch and prepare them efficiently
             $ts = $formatTs(microtime(true));
-            Yii::error("[{$ts}] Loaded " . count($recipes) . " recipes for category {$category->name} in {$loadTime} seconds");
-
-            $combos = [];
-            if ($category->business_id === null) {
-                $start = microtime(true);
-                $combos = \common\models\Menu::find()->where([
-                    'business_id' => $this->id,
-                    'in_menu' => true,
-                ])->all();
-                $loadTime = microtime(true) - $start;
-                $ts = $formatTs(microtime(true));
-                Yii::error("[{$ts}] Loaded " . count($combos) . " combos for category {$category->name} in {$loadTime} seconds");
-            }
-
+            Yii::error("[{$ts}] Skipping recipe/combo load for category {$category->name} (delegated to controller)");
             $data[] = [
                 'category' => $category,
-                'recipes' => $recipes,
-                'combos' => $combos,
+                'recipes' => [],
+                'combos' => [],
             ];
         }
         Yii::error("Built data array for business ID: {$this->id}");
