@@ -389,7 +389,11 @@ class Business extends \yii\db\ActiveRecord
     public function getTheoreticalYield($month = null, $year = null)
     {
         // Para rentabilidad teórica no necesitamos mes/año, solo por compatibilidad
-        Yii::error("Calculating theoretical yield for business ID: {$this->id}");
+        $methodStart = microtime(true);
+        $formatTs = function ($t) {
+            return date('Y-m-d H:i:s', (int)$t) . sprintf('.%06d', ($t - floor($t)) * 1000000);
+        };
+        Yii::error("[" . $formatTs($methodStart) . "] Calculating theoretical yield for business ID: {$this->id}");
         if ($month === null) {
             $month = (int)date('n');
         }
@@ -398,11 +402,16 @@ class Business extends \yii\db\ActiveRecord
         }
 
         // Llamar al stored procedure para obtener sumas y conteos
-        Yii::error("About to call stored procedure for business ID: {$this->id}");
+        $ts = $formatTs(microtime(true));
+        Yii::error("[{$ts}] About to call stored procedure for business ID: {$this->id}");
+        $start = microtime(true);
         $summary = Yii::$app->db->createCommand("CALL get_theoretical_yield_summary(:businessId)")
             ->bindValue(':businessId', $this->id)
             ->queryAll();
-        Yii::error("Stored procedure called, processing summary for business ID: {$this->id}");
+        $procTime = microtime(true) - $start;
+        $ts = $formatTs(microtime(true));
+        Yii::error("[{$ts}] Stored procedure called in {$procTime} seconds, processing summary for business ID: {$this->id}");
+        $start = microtime(true);
         // Procesar resultados del procedure
         $totalCostSum = 0;
         $totalItems = 0;
@@ -425,6 +434,9 @@ class Business extends \yii\db\ActiveRecord
             }
             // Combos van a total general, no por tipo
         }
+    $procSummaryTime = microtime(true) - $start;
+    $ts = $formatTs(microtime(true));
+    Yii::error("[{$ts}] Summary processed in {$procSummaryTime} seconds for business ID: {$this->id}");
 
         // Calcular promedios
         $theoricalYield = $totalItems > 0 ? formatPercentage(($totalCostSum / $totalItems) * 100) : null;
@@ -433,17 +445,23 @@ class Business extends \yii\db\ActiveRecord
         $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
 
         // Populate data with categories and their recipes/combos
-        Yii::error("About to load categories for business ID: {$this->id}");
+        $ts = $formatTs(microtime(true));
+        Yii::error("[{$ts}] About to load categories for business ID: {$this->id}");
+        $start = microtime(true);
         $categories = \common\models\RecipeCategory::find()
             ->where([
                 'OR',
                 ['business_id' => $this->id],
                 ['business_id' => null]
             ])->all();
-        Yii::error("Loaded " . count($categories) . " categories for business ID: {$this->id}");
+        $loadCatTime = microtime(true) - $start;
+        $ts = $formatTs(microtime(true));
+        Yii::error("[{$ts}] Loaded " . count($categories) . " categories in {$loadCatTime} seconds for business ID: {$this->id}");
 
         foreach ($categories as $category) {
-            Yii::error("Processing category {$category->name} for business ID: {$this->id}");
+            $ts = $formatTs(microtime(true));
+            Yii::error("[{$ts}] Processing category {$category->name} for business ID: {$this->id}");
+            $start = microtime(true);
             $recipes = \common\models\StandardRecipe::find()->where([
                 'business_id' => $this->id,
                 'in_construction' => 0,
@@ -451,15 +469,20 @@ class Business extends \yii\db\ActiveRecord
                 'in_menu' => true,
                 'type_of_recipe' => $category->name
             ])->all();
-            Yii::error("Loaded " . count($recipes) . " recipes for category {$category->name}");
+            $loadTime = microtime(true) - $start;
+            $ts = $formatTs(microtime(true));
+            Yii::error("[{$ts}] Loaded " . count($recipes) . " recipes for category {$category->name} in {$loadTime} seconds");
 
             $combos = [];
             if ($category->business_id === null) {
+                $start = microtime(true);
                 $combos = \common\models\Menu::find()->where([
                     'business_id' => $this->id,
                     'in_menu' => true,
                 ])->all();
-                Yii::error("Loaded " . count($combos) . " combos for category {$category->name}");
+                $loadTime = microtime(true) - $start;
+                $ts = $formatTs(microtime(true));
+                Yii::error("[{$ts}] Loaded " . count($combos) . " combos for category {$category->name} in {$loadTime} seconds");
             }
 
             $data[] = [
