@@ -179,7 +179,18 @@ class RecipeCategory extends \yii\db\ActiveRecord
             return 0;
         }
         return round($this->getTotalSales($month, $year) / $totalSales, 2);
-    }    public function getRecipes($type)
+    }    
+    public function getSubRecipes($type)
+    {
+        return StandardRecipe::find()
+            ->where(['business_id' => $this->business_id])
+            ->andWhere([
+                'type' => isset($type) ? $type : \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB,
+                'in_construction' => 0,
+                'type_of_recipe' => $this->name
+            ]);
+    }
+    public function getRecipes($type)
     {
         return StandardRecipe::find()
             ->where(['business_id' => $this->business_id])

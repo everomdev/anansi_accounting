@@ -131,6 +131,12 @@ $this->registerCss('
             ],
             [
                 'value' => function ($data) {
+                    return $data->getSubRecipes($data->type)->count();
+                },
+                'label' => "Subrecetas"
+            ],
+            [
+                'value' => function ($data) {
                     return $data->getRecipes($data->type)->count();
                 },
                 'label' => "Recetas"

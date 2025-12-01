@@ -286,7 +286,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'type_of_recipe',
-                'label' => 'Familia',
+                'label' => 'Categoría',
                 'enableSorting' => true,
                 'encodeLabel' => false,
                 'contentOptions' => ['style' => 'text-align: center;'],
