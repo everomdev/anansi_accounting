@@ -83,6 +83,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     </thead>
                     <tbody>
                     <?php foreach ($data as $category): ?>
+                        <?php if (empty($category['recipes']) && empty($category['combos'])) continue; ?>
                         <?php
                         $totalCostPercent = 0;
                         $totalCostCombo = 0;

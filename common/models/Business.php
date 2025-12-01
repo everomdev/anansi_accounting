@@ -396,142 +396,85 @@ class Business extends \yii\db\ActiveRecord
             $year = (int)date('Y');
         }
 
-        $categories = RecipeCategory::find()
-            ->where([
-                'OR',
-                ['business_id' => $this->id], // Categorías específicas del negocio
-                ['business_id' => null]       // Categorías generales (como Combos)
-            ])->all();
+        // Llamar al stored procedure para obtener sumas y conteos
+        $summary = Yii::$app->db->createCommand("CALL get_theoretical_yield_summary(:businessId)")
+            ->bindValue(':businessId', $this->id)
+            ->queryAll();
+        // Procesar resultados del procedure
+        $totalCostSum = 0;
+        $totalItems = 0;
+        $foodCostTotal = 0;
+        $foodCount = 0;
+        $nonFoodCostTotal = 0;
+        $nonFoodCount = 0;
 
-        $data = [];
-        $allRecipes = [];  // Todas las recetas para promedio global
-        $allCombos = [];   // Todos los combos para promedio global
-
-        // Arrays separados para alimentos y bebidas (solo recetas)
-        $foodRecipes = [];
-        $nonFoodRecipes = [];
-
-        // OPTIMIZACIÓN: Obtener todas las recetas en una sola query en lugar de múltiples por categoría
-        $categoryNames = ArrayHelper::getColumn($categories, 'name');
-        $recipes = StandardRecipe::find()->where([
-            'business_id' => $this->id,
-            'in_construction' => 0,
-            'type' => StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
-            'in_menu' => true,
-            'type_of_recipe' => $categoryNames
-        ])->all();
-
-        // OPTIMIZACIÓN: Obtener combos en una sola query
-        $combos = Menu::find()->where([
-            'business_id' => $this->id,
-            'in_menu' => true,
-        ])->all();
-
-        // Agrupar recetas por categoría
-        $recipesByCategory = [];
-        foreach ($recipes as $recipe) {
-            $recipesByCategory[$recipe->type_of_recipe][] = $recipe;
-        }
-
-        // Los combos van solo en la categoría general (business_id = null)
-        $combosByCategory = [];
-        $generalCategory = null;
-        foreach ($categories as $category) {
-            if ($category->business_id === null) {
-                $generalCategory = $category;
-                break;
-            }
-        }
-    $t4 = microtime(true);
-   
-        if ($generalCategory) {
-            $combosByCategory[$generalCategory->name] = $combos;
-        }
-
-        foreach ($categories as $category) {
-            $categoryRecipes = $recipesByCategory[$category->name] ?? [];
-            $categoryCombos = ($category->business_id === null) ? $combos : [];
-
-            if (empty($categoryRecipes) && empty($categoryCombos)) {
-                continue;
-            }
-
-            // Agregar recetas a las listas globales y por tipo
-            foreach ($categoryRecipes as $recipe) {
-                $allRecipes[] = $recipe;
-
-                // Clasificar SOLO las recetas por is_food
-                if ($recipe->is_food) {
-                    $foodRecipes[] = $recipe;
-                } else {
-                    $nonFoodRecipes[] = $recipe;
+        foreach ($summary as $row) {
+            $totalCostSum += $row['total_cost_sum'];
+            $totalItems += $row['total_count'];
+            if ($row['item_type'] === 'recipe') {
+                if ($row['is_food'] == 1) {
+                    $foodCostTotal += $row['total_cost_sum'];
+                    $foodCount += $row['total_count'];
+                } elseif ($row['is_food'] == 0) {
+                    $nonFoodCostTotal += $row['total_cost_sum'];
+                    $nonFoodCount += $row['total_count'];
                 }
             }
+            // Combos van a total general, no por tipo
+        }
 
-            // Agregar combos a la lista global
-            foreach ($categoryCombos as $combo) {
-                $allCombos[] = $combo;
+        // Calcular promedios
+        $theoricalYield = $totalItems > 0 ? formatPercentage(($totalCostSum / $totalItems) * 100) : null;
+        $foodTheoricalYield = $foodCount > 0 ? formatPercentage(($foodCostTotal / $foodCount) * 100) : null;
+        $nonFoodTheoricalYield = $nonFoodCount > 0 ? formatPercentage(($nonFoodCostTotal / $nonFoodCount) * 100) : null;
+        $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
+
+        // Populate data with categories and their recipes/combos
+        $data = [];
+        $categories = \common\models\RecipeCategory::find()
+            ->where([
+                'OR',
+                ['business_id' => $this->id],
+                ['business_id' => null]
+            ])->all();
+        foreach ($categories as $category) {
+            $recipes = \common\models\StandardRecipe::find()->where([
+                'business_id' => $this->id,
+                'in_construction' => 0,
+                'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                'in_menu' => true,
+                'type_of_recipe' => $category->name
+            ])->all();
+
+            $combos = [];
+            if ($category->business_id === null) {
+                $combos = \common\models\Menu::find()->where([
+                    'business_id' => $this->id,
+                    'in_menu' => true,
+                ])->all();
             }
 
             $data[] = [
                 'category' => $category,
-                'recipes' => $categoryRecipes,
-                'combos' => $categoryCombos,
+                'recipes' => $recipes,
+                'combos' => $combos,
             ];
         }
 
-        // Calcular rendimiento teórico global (promedio simple de todos los cost percent)
-        $theoricalYield = null;
-        $totalCostSum = 0;
-        $totalItems = 0;
-
-        foreach ($allRecipes as $recipe) {
-            $totalCostSum += $recipe->costPercent;
-            $totalItems++;
-        }
-
-        foreach ($allCombos as $combo) {
-            $totalCostSum += $combo->costPercent;
-            $totalItems++;
-        }
-          if ($totalItems > 0) {
-            $averageCost = $totalCostSum / $totalItems;
-            $theoricalYield = formatPercentage($averageCost*100);
-        }
-        
-          // Calcular rendimiento teórico para recetas de alimentos (is_food = true)
-        $foodTheoricalYield = null;
-        if (!empty($foodRecipes)) {
-            $foodCostTotal = array_sum(ArrayHelper::getColumn($foodRecipes, 'costPercent'));
-            $foodCostAvg = $foodCostTotal / count($foodRecipes);
-            $foodTheoricalYield = formatPercentage($foodCostAvg*100);
-        }
-          // Calcular rendimiento teórico para recetas de bebidas (is_food = false)
-        $nonFoodTheoricalYield = null;
-        if (!empty($nonFoodRecipes)) {
-            $nonFoodCostTotal = array_sum(ArrayHelper::getColumn($nonFoodRecipes, 'costPercent'));
-            $nonFoodCostAvg = $nonFoodCostTotal / count($nonFoodRecipes);
-            $nonFoodTheoricalYield = formatPercentage($nonFoodCostAvg*100);
-        }
-
-        // Costo total promedio para compatibilidad
-        $totalCost = $totalItems > 0 ? $totalCostSum / $totalItems : 0;
-    
-//die(var_dump("getTheoreticalYield: grouping done", $totalCost,$theoricalYield,  ));
-    return [
+        // Mantener estructura de retorno
+        return [
             'data' => $data,
             'totalCost' => $totalCost,
             'theoricalTotal' => $theoricalYield,
             'month' => $month,
             'year' => $year,
-            // Datos para recetas agrupados por is_food (solo promedios de costos)
             'recipesByType' => [
                 'food' => [
-                    'count' => count($foodRecipes),
+                    'count' => $foodCount,
                     'theoricalYield' => $foodTheoricalYield,
                 ],
                 'nonFood' => [
-                    'count' => count($nonFoodRecipes),
+                    'count' => $nonFoodCount,
                     'theoricalYield' => $nonFoodTheoricalYield,
                 ]
             ]
