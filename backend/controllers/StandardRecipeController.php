@@ -327,7 +327,7 @@ class StandardRecipeController extends Controller
         $business = RedisKeys::getBusiness();
 
         $theoreticalYieldData = $business->getTheoreticalYield();
-        
+        die(var_dump('termino'));
         return $this->render('theoretical_yield', [
             'data' => $theoreticalYieldData['data'],
             'totalCost' => $theoreticalYieldData['totalCost'],
