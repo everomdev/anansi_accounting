@@ -184,7 +184,6 @@ class Business extends \yii\db\ActiveRecord
             ["Mezclas simples", $this->id, RecipeCategory::TYPE_SUB],
             ["Preparados", $this->id, RecipeCategory::TYPE_SUB],
             ["Conservados", $this->id, RecipeCategory::TYPE_SUB],
-            ["Mezcla simples", $this->id, RecipeCategory::TYPE_SUB],
             ["Coberturas", $this->id, RecipeCategory::TYPE_SUB],
             ["Bebidas base", $this->id, RecipeCategory::TYPE_SUB],
             ["Decoraciones comestibles", $this->id, RecipeCategory::TYPE_SUB],
