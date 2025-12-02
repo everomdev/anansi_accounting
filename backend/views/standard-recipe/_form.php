@@ -33,7 +33,10 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/form.js"), [
 ]);
 $this->registerCssFile(Yii::getAlias("@web/css/flowchart.css"));
 
-$recipesCategories = \common\models\RecipeCategory::find()->where(['business_id' => $business['id'], 'type' => $model->type])->all();
+$recipesCategories = \common\models\RecipeCategory::find()
+    ->where(['business_id' => $business['id'], 'type' => $model->type])
+    ->orderBy(['name' => SORT_ASC])
+    ->all();
 
 $businessObj = \common\models\Business::findOne(['id' => $business['id']]);
 
