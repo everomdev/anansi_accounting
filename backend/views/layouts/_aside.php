@@ -462,6 +462,8 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     </li>
                 </ul>
             </div>
+<!-- Espacio en blanco debajo del último menú -->
+<div class="menu-spacer" aria-hidden="true" style="height:24px; width:100%;"></div>
         </li>
     </ul>
 </aside>
