@@ -39,6 +39,7 @@ class SneatAsset extends AssetBundle
         "vendors/sneat/assets/css/demo.css",
         "vendors/sneat/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css",
         "vendors/sneat/assets/vendor/libs/apex-charts/apex-charts.css",
+        "css/custom-scrollbar.css", // CSS personalizado para scrollbar - debe cargarse al final
 
     ];
     public $js = [

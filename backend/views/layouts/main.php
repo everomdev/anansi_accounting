@@ -95,11 +95,125 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php endif; ?>
+
+<script>
+// FORZAR SCROLLBAR NATIVO - Deshabilitar Perfect Scrollbar completamente en el menú
+(function() {
+    function forceNativeScrollbar() {
+        var menuElement = document.getElementById('layout-menu');
+        
+        if (menuElement) {
+            // Remover clases de Perfect Scrollbar
+            menuElement.classList.remove('ps', 'ps--active-y', 'ps--active-x', 'ps--scrolling-y');
+            
+            // Remover elementos del DOM de Perfect Scrollbar
+            var psRails = menuElement.querySelectorAll('.ps__rail-y, .ps__rail-x, .ps__thumb-y, .ps__thumb-x');
+            psRails.forEach(function(rail) {
+                if (rail && rail.parentNode) {
+                    rail.parentNode.removeChild(rail);
+                }
+            });
+            
+            // Forzar scrollbar nativo con !important via inline style
+            menuElement.style.setProperty('overflow-y', 'scroll', 'important');
+            menuElement.style.setProperty('overflow-x', 'hidden', 'important');
+            menuElement.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+            
+            // Remover estilos de Perfect Scrollbar en menu-inner
+            var menuInner = menuElement.querySelector('.menu-inner');
+            if (menuInner) {
+                menuInner.classList.remove('ps', 'ps--active-y');
+                menuInner.style.overflow = '';
+                menuInner.style.position = '';
+                menuInner.style.overflowY = '';
+            }
+            
+            console.log('✓ Scrollbar nativo activado en el menú');
+        }
+    }
+    
+    // Ejecutar inmediatamente
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', forceNativeScrollbar);
+    } else {
+        forceNativeScrollbar();
+    }
+    
+    // Ejecutar después de cargar todo
+    window.addEventListener('load', function() {
+        forceNativeScrollbar();
+        
+        // Ejecutar una vez más después de un delay para asegurar
+        setTimeout(forceNativeScrollbar, 100);
+        setTimeout(forceNativeScrollbar, 500);
+        setTimeout(forceNativeScrollbar, 1000);
+    });
+    
+    // Observar cambios en el DOM por si Perfect Scrollbar intenta reinicializarse
+    if (window.MutationObserver) {
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                    var menuElement = document.getElementById('layout-menu');
+                    if (menuElement && menuElement.classList.contains('ps')) {
+                        forceNativeScrollbar();
+                    }
+                }
+            });
+        });
+        
+        setTimeout(function() {
+            var menuElement = document.getElementById('layout-menu');
+            if (menuElement) {
+                observer.observe(menuElement, {
+                    attributes: true,
+                    childList: true,
+                    subtree: true,
+                    attributeFilter: ['class', 'style']
+                });
+            }
+        }, 100);
+    }
+})();
+</script>
+
 <?php $this->endBody() ?>
 </body>
 
 </html>
 <style>
+    /* SCROLLBAR PERSONALIZADO - SIEMPRE VISIBLE */
+    /* Forzar scrollbar visible en todos los navegadores webkit (Chrome, Edge, Safari) */
+    #layout-menu::-webkit-scrollbar {
+        width: 6px !important;
+        -webkit-appearance: none !important;
+    }
+
+    #layout-menu::-webkit-scrollbar-track {
+        background: rgba(236, 240, 241, 0.5) !important;
+        border-radius: 10px !important;
+        -webkit-box-shadow: none !important;
+    }
+
+    #layout-menu::-webkit-scrollbar-thumb {
+        background-color: rgba(52, 152, 219, 0.5) !important;
+        border-radius: 10px !important;
+        min-height: 40px !important;
+        -webkit-box-shadow: none !important;
+    }
+
+    #layout-menu::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(52, 152, 219, 0.7) !important;
+    }
+
+    /* Para Firefox */
+    @-moz-document url-prefix() {
+        #layout-menu {
+            scrollbar-width: thin !important;
+            scrollbar-color: rgba(52, 152, 219, 0.5) rgba(236, 240, 241, 0.5) !important;
+        }
+    }
+
     @media (min-width: 992px) {
     #layout-menu {
         position: fixed;
@@ -107,7 +221,8 @@ document.addEventListener('DOMContentLoaded', function() {
         left: 0;
         height: 100vh;
         width: 260px;
-        overflow-y: auto;
+        overflow-y: scroll !important; /* Cambiado de auto a scroll para forzar scrollbar */
+        overflow-x: hidden;
         z-index: 1050;
         box-shadow: 0 2px 6px rgba(67, 89, 113, 0.2);
     }
@@ -128,6 +243,8 @@ document.addEventListener('DOMContentLoaded', function() {
         z-index: 1090;
         transform: translateX(-100%);
         transition: transform 0.3s, box-shadow 0.3s;
+        overflow-y: auto !important;
+        overflow-x: hidden;
     }
     
     .layout-menu-expanded #layout-menu {
@@ -155,21 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
     .layout-page {
         margin-left: 0 !important;
     }
-}
-
-/* Ocultar scrollbar pero permitir scroll */
-#layout-menu {
-    scrollbar-width: thin;
-    -ms-overflow-style: none;
-}
-
-#layout-menu::-webkit-scrollbar {
-    width: 4px;
-}
-
-#layout-menu::-webkit-scrollbar-thumb {
-    background-color: rgba(0,0,0,0.2);
-    border-radius: 4px;
 }
 
 /* Estilos adicionales para resolver problemas de interacción */
