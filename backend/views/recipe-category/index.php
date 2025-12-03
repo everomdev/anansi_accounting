@@ -68,6 +68,36 @@ $this->registerCss('
         white-space: normal;
         vertical-align: middle;
     }
+    
+    /* Estilos para botones de limpiar filtros */
+    .filter-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .clear-filter-btn {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    .clear-filter-btn:hover {
+        color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+        border-radius: 50%;
+    }
 ');
 ?>
 <div class="recipe-category-index">
@@ -105,13 +135,44 @@ $this->registerCss('
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-            'name',
+            [
+                'attribute' => 'name',
+                'filter' => '<div style="position: relative;">' . 
+                    Html::textInput('RecipeCategorySearch[name]', $searchModel->name, [
+                        'class' => 'form-control',
+                        'placeholder' => 'Buscar por nombre...',
+                        'id' => 'name-filter',
+                        'style' => 'padding-right: 30px;'
+                    ]) . 
+                    Html::button('×', [
+                        'class' => 'btn btn-sm',
+                        'id' => 'clear-name-btn',
+                        'onclick' => 'clearNameFilter()',
+                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->name) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                        'title' => 'Limpiar filtro'
+                    ]) . 
+                    '</div>',
+            ],
             [
                 'attribute' => 'type',
                 'value' => function ($data) {
                     return \common\models\RecipeCategory::getFormattedTypes()[$data->type];
                 },
-                'filter' => \yii\bootstrap5\Html::activeDropDownList($searchModel, 'type', \common\models\RecipeCategory::getFormattedTypes(), ['class' => 'form-control', 'prompt' => Yii::t('app', "All")])
+                'filter' => '<div style="position: relative;">' .
+                    \yii\bootstrap5\Html::activeDropDownList($searchModel, 'type', \common\models\RecipeCategory::getFormattedTypes(), [
+                        'class' => 'form-control', 
+                        'prompt' => Yii::t('app', "All"),
+                        'id' => 'type-filter',
+                        'style' => 'padding-right: 30px;'
+                    ]) .
+                    Html::button('×', [
+                        'class' => 'btn btn-sm',
+                        'id' => 'clear-type-btn',
+                        'onclick' => 'clearTypeFilter()',
+                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($searchModel->type) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                        'title' => 'Limpiar filtro'
+                    ]) .
+                    '</div>'
             ],
             [
                 'attribute' => 'custom',
@@ -192,6 +253,96 @@ $this->registerCss('
 echo '<div id="form-recipe-category-container"></div>';
 
 \yii\bootstrap5\Modal::end();
+?>
+<?php
+// Definir las funciones globales primero
+$this->registerJs("
+// Funciones globales para limpiar filtros
+window.clearNameFilter = function() {
+    document.getElementById('name-filter').value = '';
+    document.getElementById('clear-name-btn').style.display = 'none';
+    
+    // Construir URL con filtros actuales, excluyendo el nombre
+    let url = new URL(window.location);
+    url.searchParams.delete('RecipeCategorySearch[name]');
+    
+    // Recargar la tabla
+    $.pjax.reload({
+        container: '#category-pjax',
+        url: url.toString(),
+        timeout: 10000
+    }).done(function() {
+        setupFilterButtons(); // Reconfigurar botones después de la recarga
+    });
+};
+
+window.clearTypeFilter = function() {
+    document.getElementById('type-filter').value = '';
+    document.getElementById('clear-type-btn').style.display = 'none';
+    
+    // Construir URL con filtros actuales, excluyendo el tipo
+    let url = new URL(window.location);
+    url.searchParams.delete('RecipeCategorySearch[type]');
+    
+    // Recargar la tabla
+    $.pjax.reload({
+        container: '#category-pjax',
+        url: url.toString(),
+        timeout: 10000
+    }).done(function() {
+        setupFilterButtons(); // Reconfigurar botones después de la recarga
+    });
+};
+
+// Handlers para los eventos
+window.nameInputHandler = function() {
+    const clearNameBtn = document.getElementById('clear-name-btn');
+    if (clearNameBtn) {
+        clearNameBtn.style.display = this.value ? 'block' : 'none';
+    }
+};
+
+window.typeSelectHandler = function() {
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    if (clearTypeBtn) {
+        clearTypeBtn.style.display = this.value ? 'block' : 'none';
+    }
+};
+
+// Función global para configurar botones de filtros
+window.setupFilterButtons = function() {
+    const nameInput = document.getElementById('name-filter');
+    const typeSelect = document.getElementById('type-filter');
+    const clearNameBtn = document.getElementById('clear-name-btn');
+    const clearTypeBtn = document.getElementById('clear-type-btn');
+    
+    if (nameInput && clearNameBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearNameBtn.style.display = nameInput.value ? 'block' : 'none';
+        
+        // Remover listeners anteriores y agregar nuevo
+        nameInput.removeEventListener('input', nameInputHandler);
+        nameInput.addEventListener('input', nameInputHandler);
+    }
+    
+    if (typeSelect && clearTypeBtn) {
+        // Mostrar/ocultar botón según el estado actual
+        clearTypeBtn.style.display = typeSelect.value ? 'block' : 'none';
+        
+        // Remover listeners anteriores y agregar nuevo
+        typeSelect.removeEventListener('change', typeSelectHandler);
+        typeSelect.addEventListener('change', typeSelectHandler);
+    }
+};
+
+// Configurar al cargar la página
+setupFilterButtons();
+
+// Reconfigurar después de PJAX
+$(document).on('pjax:complete', '#category-pjax', function() {
+    setupFilterButtons();
+});
+", \yii\web\View::POS_HEAD);
 ?>
 <script>
     // Función para guardar elementos por página en localStorage

@@ -79,25 +79,17 @@ $this->registerCss("
 ");
 ?>
 <div class="dashboard-container">
-    <!-- Indicadores pequeños en la primera fila -->
+    <!-- Indicadores en la primera fila (3 tarjetas de 4 columnas cada una) -->
     <?php if (Yii::$app->user->can('theoretical_profitability_view')): ?>
-        <div class="dashboard-card-small">
+        <div class="dashboard-card-medium" style="grid-column: span 4;">
             <div class="dashboard-card-content">
                 <?= $this->render('cards/_theoretical_yield', ['business' => $business]) ?>
             </div>
         </div>
     <?php endif; ?>
     
-    <?php if (Yii::$app->user->can('real_profitability_view')): ?>
-        <div class="dashboard-card-small">
-            <div class="dashboard-card-content">
-                <?= $this->render('cards/_real_yield', ['business' => $business]) ?>
-            </div>
-        </div>
-    <?php endif; ?>
-    
     <?php if (Yii::$app->user->can('storage_list')): ?>
-        <div class="dashboard-card-small">
+        <div class="dashboard-card-medium" style="grid-column: span 4;">
             <div class="dashboard-card-content">
                 <?= $this->render('cards/_value_in_storage', ['business' => $business]) ?>
             </div>
@@ -105,7 +97,7 @@ $this->registerCss("
     <?php endif; ?>
     
     <?php if (Yii::$app->user->can('movements_list')): ?>
-        <div class="dashboard-card-small">
+        <div class="dashboard-card-medium" style="grid-column: span 4;">
             <div class="dashboard-card-content">
                 <?= $this->render('cards/_last_three_days', ['business' => $business]) ?>
             </div>

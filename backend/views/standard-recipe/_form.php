@@ -9,6 +9,29 @@ $this->registerCss("
         content: '*';
         color: red;
     }
+    
+    /* Estilos para secciones colapsables */
+    .card-header .btn-link {
+        color: #333;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+    
+    .card-header .btn-link:hover {
+        color: #007bff;
+    }
+    
+    .card-header .btn-link .fa-chevron-down {
+        transition: transform 0.3s ease;
+    }
+    
+    .card-header .btn-link:not(.collapsed) .fa-chevron-down {
+        transform: rotate(180deg);
+    }
+    
+    .card-header .btn-link:focus {
+        box-shadow: none;
+    }
 ");
 
 /* @var $this yii\web\View */
@@ -311,56 +334,90 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                 'model' => $model
             ]) ?>
             <br>
-            <?= $form->field($model, 'mainImage')->widget(\kartik\file\FileInput::class, [
-                'id' => 'mainImageInput',
-                'options' => [
-                    'multiple' => false,
-                    'accept' => 'image/*'
-                ],
-                'pluginOptions' => [
-                    'initialPreview' => empty(($url = $model->getMainImageUrl())) ? [] : [$url],
-                    'initialPreviewConfig' => empty(($id = $model->getMainImageId())) ? [] : [$id],
-                    'initialPreviewAsData' => true,
-                    'overwriteInitial' => false,
-                    'maxFileSize' => 3072,
-                    'showRotate' => false,
-                    'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id]),
-                    'msgSizeTooLarge' => Yii::t('app', 'El archivo seleccionado es demasiado grande. El tamaño máximo permitido es de 3MB.'),
-                    'showUpload' => false, // Disable upload button
-                    'browseLabel' => Yii::t('app', 'Seleccionar imagen (máx. 3MB)'), // Custom label for the browse button
-                ],
-            ]) ?>
-            <br>
-            <?= $this->render('create/_steps', [
-                'model' => $model
-            ]) ?>
-
-            <br>
-            <div class="card mb-4">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-utensils me-2"></i><?= Yii::t('app', 'Equipos y utensilios') ?></h5>
-                    <button type="button" class="btn btn-sm btn-primary" id="add-equipment-btn">
-                        <i class="fas fa-plus me-1"></i> <?= Yii::t('app', 'Añadir equipo') ?>
+            
+            <!-- Sección colapsable: Imagen de la receta -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMainImage" aria-expanded="false" aria-controls="collapseMainImage">
+                        <i class="fas fa-image me-2"></i><?= Yii::t('app', 'Imagen de la receta') ?>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
                     </button>
                 </div>
-                <div class="card-body">
-                    <div id="equipment-container" class="mb-3">
-                        <!-- Los equipos se mostrarán aquí -->
+                <div id="collapseMainImage" class="collapse">
+                    <div class="card-body">
+                        <?= $form->field($model, 'mainImage')->widget(\kartik\file\FileInput::class, [
+                            'id' => 'mainImageInput',
+                            'options' => [
+                                'multiple' => false,
+                                'accept' => 'image/*'
+                            ],
+                            'pluginOptions' => [
+                                'initialPreview' => empty(($url = $model->getMainImageUrl())) ? [] : [$url],
+                                'initialPreviewConfig' => empty(($id = $model->getMainImageId())) ? [] : [$id],
+                                'initialPreviewAsData' => true,
+                                'overwriteInitial' => false,
+                                'maxFileSize' => 3072,
+                                'showRotate' => false,
+                                'deleteUrl' => \yii\helpers\Url::to(['standard-recipe/delete-image', 'id' => $model->id]),
+                                'msgSizeTooLarge' => Yii::t('app', 'El archivo seleccionado es demasiado grande. El tamaño máximo permitido es de 3MB.'),
+                                'showUpload' => false,
+                                'browseLabel' => Yii::t('app', 'Seleccionar imagen (máx. 3MB)'),
+                            ],
+                        ]) ?>
                     </div>
-                    <div class="alert alert-info" id="no-equipment-message">
-                        <i class="fas fa-info-circle me-2"></i> <?= Yii::t('app', 'Añada los equipos y utensilios necesarios para la receta') ?>
+                </div>
+            </div>
+            
+            <!-- Sección colapsable: Procedimiento -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSteps" aria-expanded="false" aria-controls="collapseSteps">
+                        <i class="fas fa-list-ol me-2"></i><?= Yii::t('app', 'Procedimiento') ?>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </div>
+                <div id="collapseSteps" class="collapse">
+                    <div class="card-body">
+                        <?= $this->render('create/_steps', [
+                            'model' => $model
+                        ]) ?>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Vista previa del texto completo -->
-                    <div class="mt-4 border-top pt-3">
-                        <h6><i class="fas fa-eye me-2"></i><?= Yii::t('app', 'Vista previa') ?></h6>
-                        <div id="equipment-preview" class="p-3 bg-light rounded">
-                            <!-- La vista previa se mostrará aquí -->
+            <!-- Sección colapsable: Equipos y utensilios -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEquipment" aria-expanded="false" aria-controls="collapseEquipment">
+                        <i class="fas fa-utensils me-2"></i><?= Yii::t('app', 'Equipos y utensilios') ?>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </div>
+                <div id="collapseEquipment" class="collapse">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button type="button" class="btn btn-sm btn-primary" id="add-equipment-btn">
+                                <i class="fas fa-plus me-1"></i> <?= Yii::t('app', 'Añadir equipo') ?>
+                            </button>
                         </div>
-                    </div>
+                        <div id="equipment-container" class="mb-3">
+                            <!-- Los equipos se mostrarán aquí -->
+                        </div>
+                        <div class="alert alert-info" id="no-equipment-message">
+                            <i class="fas fa-info-circle me-2"></i> <?= Yii::t('app', 'Añada los equipos y utensilios necesarios para la receta') ?>
+                        </div>
 
-                    <!-- Campo oculto para almacenar los equipos -->
-                    <?= $form->field($model, 'equipment')->hiddenInput(['id' => 'equipment-hidden'])->label(false) ?>
+                        <!-- Vista previa del texto completo -->
+                        <div class="mt-4 border-top pt-3">
+                            <h6><i class="fas fa-eye me-2"></i><?= Yii::t('app', 'Vista previa') ?></h6>
+                            <div id="equipment-preview" class="p-3 bg-light rounded">
+                                <!-- La vista previa se mostrará aquí -->
+                            </div>
+                        </div>
+
+                        <!-- Campo oculto para almacenar los equipos -->
+                        <?= $form->field($model, 'equipment')->hiddenInput(['id' => 'equipment-hidden'])->label(false) ?>
+                    </div>
                 </div>
             </div>
 
@@ -401,20 +458,58 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                 </div>
             </div>
 
-            <?= $this->render('create/_special_steps', [
-                'model' => $model
-            ]) ?>
-            <br>
-            <?= $form->field($model, 'other_specs')->widget(Summernote::class, [
-                'useKrajeePresets' => true,
-                'useKrajeeStyle' => false,
-                'pluginOptions' => [
-                    'height' => 200
-                ]
-                // other widget settings
-            ]) ?>
-            <br>
-            <?= $this->render('create/allergies', ['model' => $model, 'form' => $form]) ?>
+            <!-- Sección colapsable: Cuidados y medidas especiales -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSpecialSteps" aria-expanded="false" aria-controls="collapseSpecialSteps">
+                        <i class="fas fa-exclamation-triangle me-2"></i><?= Yii::t('app', 'Cuidados y medidas especiales') ?>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </div>
+                <div id="collapseSpecialSteps" class="collapse">
+                    <div class="card-body">
+                        <?= $this->render('create/_special_steps', [
+                            'model' => $model
+                        ]) ?>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección colapsable: Otras especificaciones -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOtherSpecs" aria-expanded="false" aria-controls="collapseOtherSpecs">
+                        <i class="fas fa-clipboard-list me-2"></i><?= Yii::t('app', 'Otras especificaciones') ?>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </div>
+                <div id="collapseOtherSpecs" class="collapse">
+                    <div class="card-body">
+                        <?= $form->field($model, 'other_specs')->widget(Summernote::class, [
+                            'useKrajeePresets' => true,
+                            'useKrajeeStyle' => false,
+                            'pluginOptions' => [
+                                'height' => 200
+                            ]
+                        ]) ?>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección colapsable: Alérgenos -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAllergies" aria-expanded="false" aria-controls="collapseAllergies">
+                        <i class="fas fa-allergies me-2"></i><?= Yii::t('app', 'Alérgenos') ?>
+                        <i class="fas fa-chevron-down float-end mt-1"></i>
+                    </button>
+                </div>
+                <div id="collapseAllergies" class="collapse">
+                    <div class="card-body">
+                        <?= $this->render('create/allergies', ['model' => $model, 'form' => $form]) ?>
+                    </div>
+                </div>
+            </div>
 
 
             <br>
