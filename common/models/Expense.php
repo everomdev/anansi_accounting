@@ -22,6 +22,7 @@ use yii\behaviors\TimestampBehavior;
  * @property string|null $observations
  * @property string $key
  * @property int|null $is_active
+ * @property int|null $is_recurring
  * @property string|null $created_at
  * @property string|null $updated_at
  *
@@ -61,9 +62,14 @@ class Expense extends ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'business_id', 'amount', 'expense_date'], 'required'],
-            [['business_id', 'provider_id', 'unit_measurement_id', 'category_id', 'is_active'], 'integer'],
+            [['name', 'business_id'], 'required'],
+            [['business_id', 'provider_id', 'unit_measurement_id', 'category_id', 'is_active', 'is_recurring'], 'integer'],
             [['amount'], 'number', 'min' => 0],
+            [['amount', 'frequency', 'expense_date'], 'required', 'when' => function($model) {
+                return $model->is_recurring == 1;
+            }, 'whenClient' => "function (attribute, value) {
+                return $('#expense-is_recurring').is(':checked');
+            }"],
             [['expense_date'], 'date', 'format' => 'php:Y-m-d'],
             [['description', 'observations'], 'string'],
             [['name'], 'string', 'max' => 255],
@@ -97,6 +103,7 @@ class Expense extends ActiveRecord
             'observations' => 'Observaciones',
             'key' => 'Clave',
             'is_active' => 'Activo',
+            'is_recurring' => 'Gasto Frecuente',
             'created_at' => 'Fecha de Creación',
             'updated_at' => 'Fecha de Actualización',
         ];
@@ -206,16 +213,25 @@ class Expense extends ActiveRecord
         $business = \backend\helpers\RedisKeys::getBusiness();
         $this->business_id = $business->id;
         
-        // Generar clave basada en el nombre y fecha
+        // Generar clave basada en el nombre y fecha (si es recurrente) o solo nombre
         $baseKey = strtoupper(substr(str_replace([' ', 'á', 'é', 'í', 'ó', 'ú', 'ñ'], ['_', 'A', 'E', 'I', 'O', 'U', 'N'], $this->name), 0, 10));
-        $dateKey = date('Ymd', strtotime($this->expense_date));
+        
+        if ($this->is_recurring && $this->expense_date) {
+            $dateKey = date('Ymd', strtotime($this->expense_date));
+            $key = $baseKey . '_' . $dateKey;
+        } else {
+            $key = $baseKey;
+        }
         
         $counter = 1;
-        $key = $baseKey . '_' . $dateKey;
         
         // Verificar si ya existe y agregar contador si es necesario
         while (self::find()->where(['key' => $key, 'business_id' => $this->business_id])->andWhere(['!=', 'id', $this->id])->exists()) {
-            $key = $baseKey . '_' . $dateKey . '_' . $counter;
+            if ($this->is_recurring && $this->expense_date) {
+                $key = $baseKey . '_' . date('Ymd', strtotime($this->expense_date)) . '_' . $counter;
+            } else {
+                $key = $baseKey . '_' . $counter;
+            }
             $counter++;
         }
         

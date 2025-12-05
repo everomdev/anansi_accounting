@@ -34,6 +34,25 @@ $providers = \yii\helpers\ArrayHelper::map(
 
     <div class="card">
         <div class="card-body">
+            <!-- Checkbox para gasto frecuente -->
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="form-check form-switch">
+                        <?= Html::activeCheckbox($model, 'is_recurring', [
+                            'class' => 'form-check-input',
+                            'id' => 'expense-is_recurring',
+                            'label' => false
+                        ]) ?>
+                        <label class="form-check-label fw-bold" for="expense-is_recurring">
+                            <i class="fas fa-repeat"></i> Gasto Frecuente (se genera automáticamente)
+                        </label>
+                        <small class="form-text text-muted d-block">
+                            Marca esta opción si el gasto se repite con una frecuencia específica
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-md-6">
                     <?= $form->field($model, 'name')->textInput([
@@ -41,13 +60,13 @@ $providers = \yii\helpers\ArrayHelper::map(
                         'placeholder' => 'Ej: Electricidad, Agua, Teléfono, Renta...'
                     ])->label('Nombre del Gasto <span class="required">*</span>') ?>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 recurring-field" style="<?= $model->is_recurring ? '' : 'display:none;' ?>">
                     <?= $form->field($model, 'amount')->textInput([
                         'type' => 'number',
                         'step' => '0.01',
                         'min' => '0',
                         'placeholder' => '0.00'
-                    ])->label('Monto <span class="required">*</span>') ?>
+                    ])->label('Monto <span class="required recurring-required">*</span>') ?>
                 </div>
                 <div class="col-md-3">
                     <?= $form->field($model, 'key')->textInput([
@@ -58,8 +77,9 @@ $providers = \yii\helpers\ArrayHelper::map(
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-4">
+            <!-- Campos solo para gastos frecuentes -->
+            <div class="row recurring-field" style="<?= $model->is_recurring ? '' : 'display:none;' ?>">
+                <div class="col-md-6">
                     <?= $form->field($model, 'expense_date')->widget(DatePicker::class, [
                         'options' => ['placeholder' => 'Seleccionar fecha...'],
                         'pluginOptions' => [
@@ -67,32 +87,13 @@ $providers = \yii\helpers\ArrayHelper::map(
                             'format' => 'yyyy-mm-dd',
                             'todayHighlight' => true
                         ]
-                    ])->label('Fecha del Gasto <span class="required">*</span>') ?>
+                    ])->label('Fecha del Gasto <span class="required recurring-required">*</span>') ?>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <?= $form->field($model, 'frequency')->dropDownList(
                         $model::getFrequencyOptions(),
                         ['prompt' => 'Seleccionar frecuencia...']
-                    )->label('Frecuencia <span class="required">*</span>') ?>
-                </div>
-                <div class="col-md-4">
-                    <?= $form->field($model, 'unit_measurement_id')->widget(Select2::class, [
-                        'data' => \yii\helpers\ArrayHelper::map(
-                            \common\models\ExpenseUnitMeasurement::find()
-                                ->where(['business_id' => $business->id])
-                                ->orderBy(['name' => SORT_ASC])
-                                ->all(),
-                            'id',
-                            'name'
-                        ),
-                        'options' => [
-                            'placeholder' => 'Seleccionar unidad...',
-                        ],
-                        'pluginOptions' => [
-                            'allowClear' => true,
-                            'width' => '100%',
-                        ],
-                    ])->label('Unidad de Medida (Opcional)') ?>
+                    )->label('Frecuencia <span class="required recurring-required">*</span>') ?>
                 </div>
             </div>
 
@@ -116,6 +117,28 @@ $providers = \yii\helpers\ArrayHelper::map(
                         ],
                     ])->label('Categoría (Opcional)') ?>
                 </div>
+                <div class="col-md-6">
+                    <?= $form->field($model, 'unit_measurement_id')->widget(Select2::class, [
+                        'data' => \yii\helpers\ArrayHelper::map(
+                            \common\models\ExpenseUnitMeasurement::find()
+                                ->where(['business_id' => $business->id])
+                                ->orderBy(['name' => SORT_ASC])
+                                ->all(),
+                            'id',
+                            'name'
+                        ),
+                        'options' => [
+                            'placeholder' => 'Seleccionar unidad...',
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'width' => '100%',
+                        ],
+                    ])->label('Unidad de Medida (Opcional)') ?>
+                </div>
+            </div>
+
+            <div class="row">
                 <div class="col-md-6">
                     <?= $form->field($model, 'provider_id')->widget(Select2::class, [
                         'data' => $providers,
@@ -179,11 +202,29 @@ $providers = \yii\helpers\ArrayHelper::map(
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const recurringCheckbox = document.getElementById('expense-is_recurring');
+    const recurringFields = document.querySelectorAll('.recurring-field');
+    
+    // Función para mostrar/ocultar campos de gasto frecuente
+    function toggleRecurringFields() {
+        const isRecurring = recurringCheckbox.checked;
+        recurringFields.forEach(field => {
+            field.style.display = isRecurring ? '' : 'none';
+        });
+    }
+    
+    // Evento al cambiar el checkbox
+    if (recurringCheckbox) {
+        recurringCheckbox.addEventListener('change', toggleRecurringFields);
+    }
+    
     // Actualizar el monto prorrateado cuando cambie la frecuencia o el monto
     const frequencySelect = document.getElementById('expense-frequency');
     const amountInput = document.getElementById('expense-amount');
     
     function updateMonthlyAmount() {
+        if (!recurringCheckbox.checked) return;
+        
         const frequency = frequencySelect ? frequencySelect.value : 'unico';
         const amount = parseFloat(amountInput ? amountInput.value : 0) || 0;
         
@@ -215,12 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 monthlyAmount = amount / 12;
                 break;
         }
-        
-        // // Mostrar el monto prorrateado si existe el elemento
-        // const monthlyAmountElement = document.querySelector('.monthly-amount');
-        // if (monthlyAmountElement) {
-        //     monthlyAmountElement.textContent = '$' + monthlyAmount.toFixed(2);
-        // }
     }
     
     if (frequencySelect) {

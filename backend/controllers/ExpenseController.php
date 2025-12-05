@@ -87,13 +87,29 @@ class ExpenseController extends Controller
         $business = RedisKeys::getBusiness();
         $model = new Expense();
         $model->business_id = $business->id;
-        $model->frequency = 'unico';
-        $model->expense_date = date('Y-m-d');
+        $model->is_recurring = 0; // Por defecto no es recurrente
         $model->is_active = true;
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Gasto creado exitosamente.');
-            return $this->redirect(['index']);
+        if ($model->load(Yii::$app->request->post())) {
+            // Si no es recurrente, limpiar campos relacionados
+            if (!$model->is_recurring) {
+                $model->amount = null;
+                $model->frequency = null;
+                $model->expense_date = null;
+            } else {
+                // Si es recurrente, establecer frecuencia por defecto si no se especificó
+                if (empty($model->frequency)) {
+                    $model->frequency = 'mensual';
+                }
+                if (empty($model->expense_date)) {
+                    $model->expense_date = date('Y-m-d');
+                }
+            }
+            
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Gasto creado exitosamente.');
+                return $this->redirect(['index']);
+            }
         }
 
         return $this->render('create', [
@@ -112,11 +128,20 @@ class ExpenseController extends Controller
     {
         $model = $this->findModel($id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Gasto actualizado exitosamente.');
-            return $this->redirect(['index']);
-        } elseif ($model->hasErrors()) {
-            Yii::$app->session->setFlash('error', 'Error al actualizar el gasto.');
+        if ($model->load(Yii::$app->request->post())) {
+            // Si no es recurrente, limpiar campos relacionados
+            if (!$model->is_recurring) {
+                $model->amount = null;
+                $model->frequency = null;
+                $model->expense_date = null;
+            }
+            
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Gasto actualizado exitosamente.');
+                return $this->redirect(['index']);
+            } else {
+                Yii::$app->session->setFlash('error', 'Error al actualizar el gasto.');
+            }
         }
 
         return $this->render('update', [

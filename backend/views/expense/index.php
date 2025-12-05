@@ -132,6 +132,12 @@ $this->registerCss('
                     'format' => 'raw',
                     'value' => function($model) {
                         $html = '<strong>' . Html::encode($model->name) . '</strong>';
+                        
+                        // Badge para indicar si es recurrente
+                        if ($model->is_recurring) {
+                            $html .= ' <span class="badge bg-info" style="font-size: 10px;"><i class="fas fa-repeat"></i> Frecuente</span>';
+                        }
+                        
                         if ($model->description) {
                             $html .= '<br><small class="text-muted">' . Html::encode(substr($model->description, 0, 60)) . 
                                      (strlen($model->description) > 60 ? '...' : '') . '</small>';
@@ -143,9 +149,15 @@ $this->registerCss('
                 [
                     'attribute' => 'amount',
                     'label' => 'Monto',
-                    'format' => 'currency',
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        if ($model->is_recurring && $model->amount) {
+                            return '<span class="text-primary fw-bold">$' . number_format($model->amount, 2) . '</span>';
+                        }
+                        return '<span class="text-muted">-</span>';
+                    },
                     'headerOptions' => ['style' => 'width: 100px; text-align: center;'],
-                    'contentOptions' => ['style' => 'text-align: right; font-weight: bold;'],
+                    'contentOptions' => ['style' => 'text-align: right;'],
                 ],
                 
                 [
@@ -173,6 +185,9 @@ $this->registerCss('
                     'label' => 'Frecuencia',
                     'format' => 'raw',
                     'value' => function($model) {
+                        if (!$model->is_recurring) {
+                            return '<span class="text-muted">-</span>';
+                        }
                         $frequencies = $model::getFrequencyOptions();
                         $frequency = $frequencies[$model->frequency] ?? $model->frequency;
                         $cssClass = 'frequency-' . $model->frequency;
@@ -195,7 +210,13 @@ $this->registerCss('
                 [
                     'attribute' => 'expense_date',
                     'label' => 'Fecha del Gasto',
-                    'format' => 'date',
+                    'format' => 'raw',
+                    'value' => function($model) {
+                        if ($model->is_recurring && $model->expense_date) {
+                            return Yii::$app->formatter->asDate($model->expense_date);
+                        }
+                        return '<span class="text-muted">-</span>';
+                    },
                     'headerOptions' => ['style' => 'width: 120px; text-align: center;'],
                     'contentOptions' => ['style' => 'text-align: center;'],
                 ],
@@ -213,8 +234,11 @@ $this->registerCss('
                     'label' => 'Monto Mensual',
                     'format' => 'raw',
                     'value' => function($model) {
-                        $monthly = $model->getMonthlyAmount();
-                        return '<span class="text-primary font-weight-bold">$' . number_format($monthly, 2) . '</span>';
+                        if ($model->is_recurring && $model->amount) {
+                            $monthly = $model->getMonthlyAmount();
+                            return '<span class="text-primary font-weight-bold">$' . number_format($monthly, 2) . '</span>';
+                        }
+                        return '<span class="text-muted">-</span>';
                     },
                     'headerOptions' => ['style' => 'width: 100px; text-align: center;'],
                     'contentOptions' => ['style' => 'text-align: right;'],
