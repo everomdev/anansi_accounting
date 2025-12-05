@@ -4,10 +4,18 @@
 /** @var $families \common\models\RecipeCategory[] */
 
 // Obtener el valor de rentabilidad real
-$month = (int)date('n');
-$year = (int)date('Y');
+$month = (int)date('n') === 1 ? 12 : (int)date('n') - 1;
+$year = (int)date('n') === 1 ? (int)date('Y') - 1 : (int)date('Y');
 $realYield = $business->getRealYield($month, $year)['totalPcr'];
 $yieldPercentage = formatPercentage($realYield*100);
+
+// Obtener el nombre del mes en español
+$monthNames = [
+    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+];
+$monthName = $monthNames[$month];
 
 // Determinar el estado de la rentabilidad para el color
 $yieldStatus = 'success'; // Por defecto, asumimos buena rentabilidad
@@ -31,6 +39,9 @@ $this->registerCss("
         padding-bottom: 0.75rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     
     .real-yield-stats-header h5 {
@@ -39,6 +50,12 @@ $this->registerCss("
         color: #2c3e50;
         margin-bottom: 0;
         font-size: 1.15rem;
+    }
+    
+    .real-yield-period-header {
+        font-size: 0.85rem;
+        color: #95a5a6;
+        font-weight: 500;
     }
     
     .real-yield-content {
@@ -106,6 +123,7 @@ $this->registerCss("
 <div class="real-yield-stats-container">
     <div class="real-yield-stats-header">
         <h5>Rentabilidad Real</h5>
+        <span class="real-yield-period-header"><?= $monthName ?> <?= $year ?></span>
     </div>
     
     <div class="real-yield-content">
@@ -120,7 +138,6 @@ $this->registerCss("
         </div>
         <div class="real-yield-info">
             <div class="real-yield-percentage text-<?= $yieldStatus ?>"><?= $yieldPercentage ?></div>
-            
         </div>
     </div>
 </div>

@@ -87,11 +87,27 @@ $this->registerCss("
             </div>
         </div>
     <?php endif; ?>
+
+    <?php if (Yii::$app->user->can('real_profitability_view')): ?>
+        <div class="dashboard-card-medium" style="grid-column: span 4;">
+            <div class="dashboard-card-content">
+                <?= $this->render('cards/_real_yield', ['business' => $business]) ?>
+            </div>
+        </div>
+    <?php endif; ?>
     
     <?php if (Yii::$app->user->can('storage_list')): ?>
         <div class="dashboard-card-medium" style="grid-column: span 4;">
             <div class="dashboard-card-content">
                 <?= $this->render('cards/_value_in_storage', ['business' => $business]) ?>
+            </div>
+        </div>
+    <?php endif; ?>
+     <!-- Componente de estadísticas si está disponible -->
+    <?php if (Yii::$app->user->can('recipe_list')): ?>
+        <div class="dashboard-card-medium">
+            <div class="dashboard-card-content">
+                <?= $this->render('cards/_number_of_subrecipe_recipes_combos', ['business' => $business]) ?>
             </div>
         </div>
     <?php endif; ?>
@@ -105,14 +121,6 @@ $this->registerCss("
     <?php endif; ?>
     
     
-    <!-- Componente de estadísticas si está disponible -->
-    <?php if (Yii::$app->user->can('recipe_list')): ?>
-        <div class="dashboard-card-medium">
-            <div class="dashboard-card-content">
-                <?= $this->render('cards/_number_of_subrecipe_recipes_combos', ['business' => $business]) ?>
-            </div>
-        </div>
-    <?php endif; ?>
     <?php if (Yii::$app->user->can('movements_list')): ?>
         <div class="dashboard-card-medium">
             <div class="dashboard-card-content">
@@ -138,13 +146,7 @@ $this->registerCss("
         </div>
     <?php endif; ?>
     
-    <?php if (Yii::$app->user->can('providers_list')): ?>
-        <div class="dashboard-card-medium">
-            <div class="dashboard-card-content">
-                <?= $this->render('cards/_providers', ['business' => $business]) ?>
-            </div>
-        </div>
-    <?php endif; ?>
+   
     
     <!-- Cuarta fila - Componentes grandes -->
     <?php if (Yii::$app->user->can('matrix_bcg')): ?>
@@ -164,6 +166,12 @@ $this->registerCss("
             </div>
         </div>
     <?php endif; ?>
+     <?php if (Yii::$app->user->can('providers_list')): ?>
+        <div class="dashboard-card-medium">
+            <div class="dashboard-card-content">
+                <?= $this->render('cards/_providers', ['business' => $business]) ?>
+            </div>
+        </div>
+    <?php endif; ?>
     
 </div>
-?>
