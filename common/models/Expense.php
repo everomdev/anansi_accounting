@@ -62,7 +62,7 @@ class Expense extends ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'business_id'], 'required'],
+            [['name', 'business_id', 'category_id'], 'required'],
             [['business_id', 'provider_id', 'unit_measurement_id', 'category_id', 'is_active', 'is_recurring'], 'integer'],
             [['amount'], 'number', 'min' => 0],
             [['amount', 'frequency', 'expense_date'], 'required', 'when' => function($model) {

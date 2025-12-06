@@ -115,7 +115,7 @@ $providers = \yii\helpers\ArrayHelper::map(
                             'allowClear' => true,
                             'width' => '100%',
                         ],
-                    ])->label('Categoría (Opcional)') ?>
+                    ])->label('Categoría <span class="required">*</span>') ?>
                 </div>
                 <div class="col-md-6">
                     <?= $form->field($model, 'unit_measurement_id')->widget(Select2::class, [
