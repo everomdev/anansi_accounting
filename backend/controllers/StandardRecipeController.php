@@ -3216,7 +3216,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      
      $insumosRow = 2;
      foreach ($ingredientStock as $ingredient) {
-         $insumosSheet->setCellValue('A'.$insumosRow, $ingredient->ingredient);
+         // Insumos en minúsculas
+         $insumosSheet->setCellValue('A'.$insumosRow, strtolower($ingredient->ingredient));
          $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
          $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->portion_um);
          $insumosSheet->setCellValue('D'.$insumosRow, number_format($ingredient->lastUnitPrice / $ingredient->portions_per_unit, 2, '.', ''));
@@ -3224,8 +3225,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
      }
       $subrecetaRow = 2;
      foreach ($subrecetas as $subreceta) {
-        // Corregir: estaba usando $ingredient en lugar de $subreceta
-        $subrecipesSheet->setCellValue('A'.$subrecetaRow, $subreceta->title);
+        // Subrecetas en MAYÚSCULAS
+        $subrecipesSheet->setCellValue('A'.$subrecetaRow, strtoupper($subreceta->title));
         $subrecipesSheet->setCellValue('B'.$subrecetaRow, $subreceta->portions);
         $subrecipesSheet->setCellValue('C'.$subrecetaRow, $subreceta->um);
         $subrecipesSheet->setCellValue('D'.$subrecetaRow, $subreceta->custom_cost);
