@@ -146,12 +146,25 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                                     ]
                                 )
                                 ?>
+                                <?php
+                                // Determinar el valor por defecto para time_unit
+                                $timeUnitValue = '';
+                                if ($model->time_of_preparation) {
+                                    // Si hay datos, detectar la unidad
+                                    if (strpos($model->time_of_preparation, 'día') !== false) {
+                                        $timeUnitValue = 'días';
+                                    } elseif (strpos($model->time_of_preparation, 'hora') !== false) {
+                                        $timeUnitValue = 'horas';
+                                    } elseif (strpos($model->time_of_preparation, 'minuto') !== false) {
+                                        $timeUnitValue = 'minutos';
+                                    }
+                                }
+                                ?>
                                 <?= Html::dropDownList(
                                     'time_unit',
-                                    $model->time_of_preparation ?
-                                        (strpos($model->time_of_preparation, 'día') !== false ? 'días' : (strpos($model->time_of_preparation, 'hora') !== false ? 'horas' : 'minutos')) :
-                                        'minutos',
+                                    $timeUnitValue,
                                     [
+                                        '' => Yii::t('app', 'Seleccionar...'),
                                         'minutos' => Yii::t('app', 'minutos'),
                                         'horas' => Yii::t('app', 'horas'),
                                         'días' => Yii::t('app', 'días')
@@ -258,12 +271,25 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                                     ]
                                 )
                                 ?>
+                                <?php
+                                // Determinar el valor por defecto para lifetime_unit
+                                $lifetimeUnitValue = '';
+                                if ($model->lifetime) {
+                                    // Si hay datos, detectar la unidad
+                                    if (strpos($model->lifetime, 'día') !== false) {
+                                        $lifetimeUnitValue = 'días';
+                                    } elseif (strpos($model->lifetime, 'hora') !== false) {
+                                        $lifetimeUnitValue = 'horas';
+                                    } elseif (strpos($model->lifetime, 'minuto') !== false) {
+                                        $lifetimeUnitValue = 'minutos';
+                                    }
+                                }
+                                ?>
                                 <?= Html::dropDownList(
                                     'lifetime_unit',
-                                    $model->lifetime ?
-                                        (strpos($model->lifetime, 'día') !== false ? 'días' : (strpos($model->lifetime, 'hora') !== false ? 'horas' : 'minutos')) :
-                                        'días',
+                                    $lifetimeUnitValue,
                                     [
+                                        '' => Yii::t('app', 'Seleccionar...'),
                                         'minutos' => Yii::t('app', 'minutos'),
                                         'horas' => Yii::t('app', 'horas'),
                                         'días' => Yii::t('app', 'días')

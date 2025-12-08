@@ -2832,7 +2832,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         foreach ($recipes as $recipe) {
             // CORRECCIÓN: Mejorar la extracción del tiempo de preparación - más robusto
             $timeValue = '';
-            $timeUnit = 'minutos'; // Valor predeterminado
+            $timeUnit = ''; // Valor predeterminado
     
             if (!empty($recipe->time_of_preparation)) {
                 if (preg_match('/^(\d+(?:\.\d+)?)\s*(\w+.*)?$/', trim($recipe->time_of_preparation), $matches)) {
@@ -2861,7 +2861,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             
             // CORRECCIÓN: Mejorar la extracción de la duración - más robusto
             $durationValue = '';
-            $durationUnit = 'días'; // Valor predeterminado
+           $durationUnit = ''; // Valor predeterminado
     
             if (!empty($recipe->lifetime)) {
                 if (preg_match('/^(\d+(?:\.\d+)?)\s*(\w+.*)?$/', trim($recipe->lifetime), $matches)) {
