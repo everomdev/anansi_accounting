@@ -78,6 +78,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
 
         <!-- Configuración Base -->
+        <?php if (Yii::$app->user->identity->canMultiple(['ingredients_list', 'recipe_list', 'subrecipe_list'])): ?>
         <li class="menu-item <?= $configBaseActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#configuracionBase" role="button" 
                aria-expanded="<?= $configBaseActive ? 'true' : 'false' ?>" 
@@ -110,8 +111,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Gestión de Insumos y Proveedores -->
+        <?php if (Yii::$app->user->identity->canMultiple(['providers_list', 'ingredients_list'])): ?>
         <li class="menu-item <?= $gestionInsumosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#gestionInsumos" role="button" 
                aria-expanded="<?= $gestionInsumosActive ? 'true' : 'false' ?>" 
@@ -145,8 +148,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Costeo -->
+        <?php if (Yii::$app->user->identity->canMultiple(['subrecipe_list', 'recipe_list', 'convoy_list', 'combo_list'])): ?>
         <li class="menu-item <?= $costeoActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#costeo" role="button" 
                aria-expanded="<?= $costeoActive ? 'true' : 'false' ?>" 
@@ -186,8 +191,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Gastos -->
+        <?php if (Yii::$app->user->identity->canMultiple(['expense_list', 'expense_movements_list'])): ?>
         <li class="menu-item <?= $gastosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#gastos" role="button" 
                aria-expanded="<?= $gastosActive ? 'true' : 'false' ?>" 
@@ -196,31 +203,41 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $gastosActive ? 'show' : '' ?>" id="gastos">
                 <ul class="sub-menu">
+                    <?php if (Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (Yii::$app->user->can('expense_movements_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-movement' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-movement/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Movimientos de Gastos') ?></div>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-unit-measurement' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-unit-measurement/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Unidades de Medida') ?></div>
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if (Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-category' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-category/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Categorías de Gastos') ?></div>
                         </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Menú y Ventas -->
+        <?php if (Yii::$app->user->identity->canMultiple(['menu_view', 'sales_view'])): ?>
         <li class="menu-item <?= $menuVentasActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#menuVentas" role="button" 
                aria-expanded="<?= $menuVentasActive ? 'true' : 'false' ?>" 
@@ -253,8 +270,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Almacén y Movimientos -->
+        <?php if (Yii::$app->user->identity->canMultiple(['movements_list', 'storage_list', 'price_trend_view'])): ?>
         <li class="menu-item <?= $almacenMovimientosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" 
                aria-expanded="<?= $almacenMovimientosActive ? 'true' : 'false' ?>" 
@@ -284,11 +303,13 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                             </a>
                         </li>
                     <?php endif; ?>
+                    <?php if (Yii::$app->user->can('storage_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'inventory' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/inventory/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Inventario') ?></div>
                         </a>
                     </li>
+                    <?php endif; ?>
                     <?php if (Yii::$app->user->can('price_trend_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'price-trend' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/price-trend']) ?>" class="menu-link">
@@ -299,8 +320,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Rentabilidad y Análisis -->
+        <?php if (Yii::$app->user->identity->canMultiple(['theoretical_profitability_view', 'real_profitability_view', 'charts_view', 'menu_analysis_view', 'menu_improvements_view', 'profitability_view', 'matrix_bcg'])): ?>
         <li class="menu-item <?= $rentabilidadAnalisisActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#rentabilidadAnalisis" role="button" 
                aria-expanded="<?= $rentabilidadAnalisisActive ? 'true' : 'false' ?>" 
@@ -361,7 +384,9 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
         <!-- KPI's y Control -->
+        <?php if (Yii::$app->user->can('movements_list')): ?>
         <li class="menu-item <?= $kpisControlActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#kpisControl" role="button" 
                aria-expanded="<?= $kpisControlActive ? 'true' : 'false' ?>" 
@@ -438,8 +463,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                 </ul>
             </div>
         </li>
+        <?php endif; ?>
 
         <!-- Administración y Configuración -->
+        <?php if (Yii::$app->user->can('manage_users') or true): ?>
         <li class="menu-item <?= $administracionConfiguracionActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#administracionConfiguracion" role="button" 
                aria-expanded="<?= $administracionConfiguracionActive ? 'true' : 'false' ?>" 
@@ -465,6 +492,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
 <!-- Espacio en blanco debajo del último menú -->
 <div class="menu-spacer" aria-hidden="true" style="height:24px; width:100%;"></div>
         </li>
+        <?php endif; ?>
     </ul>
 </aside>
 
