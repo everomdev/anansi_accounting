@@ -115,9 +115,15 @@ $yield = $countData == 0 ? 0 : round($sum / $countData , 2);
                     <tr>
                         <td><?= $item['model']->name ?></td>
                         <td>
+                            <?php
+                            // Obtener el precio correcto según el tipo de modelo
+                            $costValue = get_class($item['model']) == StandardRecipe::class 
+                                ? $item['model']->recipeLastPrice 
+                                : $item['model']->total_cost_last_price;
+                            ?>
                             <?= \yii\bootstrap5\Html::activeInput('text', $item['model'], 'custom_cost', [
                                 'class' => 'form-control modify-custom-field',
-                                'value' => formatCost($item['model']->recipeLastPrice,2),
+                                'value' => formatCost($costValue, 2),
                                 'data-url' => get_class($item['model']) == StandardRecipe::class ? 
                                     \yii\helpers\Url::to(['standard-recipe/save-sales', 'id' => $item['model']->id]) : 
                                     \yii\helpers\Url::to(['menu/save-sales', 'id' => $item['model']->id])
