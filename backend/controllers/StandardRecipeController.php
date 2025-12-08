@@ -2911,7 +2911,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             // Llenar hoja de Ingredientes
             foreach ($recipe->ingredientRelations as $ingredientRelation) {
                 $ingredientsSheet->setCellValue('A'.$ingredientsRow, $recipe->title);
-                $ingredientsSheet->setCellValue('B'.$ingredientsRow, $ingredientRelation->ingredient->ingredient);
+                // Insumos en minúsculas
+                $ingredientsSheet->setCellValue('B'.$ingredientsRow, strtolower($ingredientRelation->ingredient->ingredient));
                 $ingredientsSheet->setCellValue('C'.$ingredientsRow, $ingredientRelation->quantity);
                 $ingredientsSheet->setCellValue('D'.$ingredientsRow, $ingredientRelation->ingredient->portion_um);
                 $ingredientsSheet->setCellValue('E'.$ingredientsRow, $ingredientRelation->lastPrice);
@@ -2921,7 +2922,8 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             foreach ($recipe->getSubStandardRecipes()->all() as $subrecipeRelation) {
                 $ingredientsSheet->setCellValue('A'.$ingredientsRow, $recipe->title);
                 //die(var_dump($subrecipeRelation->title));
-                $ingredientsSheet->setCellValue('B'.$ingredientsRow, $subrecipeRelation->title);
+                // Subrecetas en MAYÚSCULAS
+                $ingredientsSheet->setCellValue('B'.$ingredientsRow, strtoupper($subrecipeRelation->title));
                 // die(var_dump($recipe->id));
                 $ingredientsSheet->setCellValue('C'.$ingredientsRow, $subrecipeRelation->getQuantityLinked($recipe->id));
                 $ingredientsSheet->setCellValue('D'.$ingredientsRow, $subrecipeRelation->um);
