@@ -9,6 +9,10 @@ $currentControllerId = $this->context->action->controller->id;
 $business = \backend\helpers\RedisKeys::getBusiness();
 $plan = $business->user->plan;
 $action = $this->context->action->id;
+
+// Verificar si el usuario es administrador
+$isAdmin = Yii::$app->user->identity && in_array(Yii::$app->user->identity->role, ['admin', 'administrador']);
+
 $actions = [
     'price-trend',
     'storage',
@@ -78,7 +82,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
 
         <!-- Configuración Base -->
-        <?php if (Yii::$app->user->identity->canMultiple(['ingredients_list', 'recipe_list', 'subrecipe_list'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['ingredients_list', 'recipe_list', 'subrecipe_list'])): ?>
         <li class="menu-item <?= $configBaseActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#configuracionBase" role="button" 
                aria-expanded="<?= $configBaseActive ? 'true' : 'false' ?>" 
@@ -87,21 +91,21 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $configBaseActive ? 'show' : '' ?>" id="configuracionBase">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('ingredients_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/category/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Familias de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->identity->canMultiple(['recipe_list', 'subrecipe_list'])): ?>
+                    <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['recipe_list', 'subrecipe_list'])): ?>
                         <li class="menu-item <?= $currentControllerId == 'recipe-category' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/recipe-category/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Categorías de recetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('ingredients_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'unit-of-measurement' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/unit-of-measurement/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Unidades de medida') ?></div>
@@ -114,7 +118,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Gestión de Insumos y Proveedores -->
-        <?php if (Yii::$app->user->identity->canMultiple(['providers_list', 'ingredients_list'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['providers_list', 'ingredients_list'])): ?>
         <li class="menu-item <?= $gestionInsumosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#gestionInsumos" role="button" 
                aria-expanded="<?= $gestionInsumosActive ? 'true' : 'false' ?>" 
@@ -123,21 +127,21 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $gestionInsumosActive ? 'show' : '' ?>" id="gestionInsumos">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('providers_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('providers_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'provider' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/provider/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Providers') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('ingredients_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('ingredients_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'ingredient-stock' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Catálogo de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('ingredients_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('ingredients_list')): ?>
                          <li class="menu-item <?= $currentControllerId == 'ingredients' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/provider/ingredients']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Insumos por Proveedores') ?></div>
@@ -151,7 +155,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Costeo -->
-        <?php if (Yii::$app->user->identity->canMultiple(['subrecipe_list', 'recipe_list', 'convoy_list', 'combo_list'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['subrecipe_list', 'recipe_list', 'convoy_list', 'combo_list'])): ?>
         <li class="menu-item <?= $costeoActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#costeo" role="button" 
                aria-expanded="<?= $costeoActive ? 'true' : 'false' ?>" 
@@ -160,28 +164,28 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $costeoActive ? 'show' : '' ?>" id="costeo">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('subrecipe_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('subrecipe_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sub-standard-recipe' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/sub-standard-recipe/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Subrecetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('recipe_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('recipe_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'standard-recipe' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Recipes') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('convoy_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('convoy_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'convoy' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/convoy/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Convoy') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('combo_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('combo_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/menu/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Combos') ?></div>
@@ -194,7 +198,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Gastos -->
-        <?php if (Yii::$app->user->identity->canMultiple(['expense_list', 'expense_movements_list'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['expense_list', 'expense_movements_list'])): ?>
         <li class="menu-item <?= $gastosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#gastos" role="button" 
                aria-expanded="<?= $gastosActive ? 'true' : 'false' ?>" 
@@ -203,28 +207,28 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $gastosActive ? 'show' : '' ?>" id="gastos">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('expense_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('expense_movements_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('expense_movements_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-movement' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-movement/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Movimientos de Gastos') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('expense_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-unit-measurement' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-unit-measurement/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Unidades de Medida') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('expense_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-category' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-category/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Categorías de Gastos') ?></div>
@@ -237,7 +241,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Menú y Ventas -->
-        <?php if (Yii::$app->user->identity->canMultiple(['menu_view', 'sales_view'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['menu_view', 'sales_view'])): ?>
         <li class="menu-item <?= $menuVentasActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#menuVentas" role="button" 
                aria-expanded="<?= $menuVentasActive ? 'true' : 'false' ?>" 
@@ -246,21 +250,21 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $menuVentasActive ? 'show' : '' ?>" id="menuVentas">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('menu_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('menu_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu-recipes' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/menu-recipes']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menú') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('menu_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('menu_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'saved-menus' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/menu/saved-menus']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menú histórico') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('sales_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('sales_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'sales' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/sales']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Ventas') ?></div>
@@ -273,7 +277,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Almacén y Movimientos -->
-        <?php if (Yii::$app->user->identity->canMultiple(['movements_list', 'storage_list', 'price_trend_view'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['movements_list', 'storage_list', 'price_trend_view'])): ?>
         <li class="menu-item <?= $almacenMovimientosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" 
                aria-expanded="<?= $almacenMovimientosActive ? 'true' : 'false' ?>" 
@@ -282,35 +286,35 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $almacenMovimientosActive ? 'show' : '' ?>" id="almacenMovimientos">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->identity->canMultiple(['movements_list'])): ?>
+                    <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['movements_list'])): ?>
                         <li class="menu-item <?= $currentControllerId == 'consumption-center' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/consumption-center/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Consumption Centers') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('storage_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('storage_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'storage' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/storage']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Storage') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('movements_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('movements_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'movement' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/movement/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Movements') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('storage_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('storage_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'inventory' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/inventory/index']) ?>" class="menu-link">
                             <div><?= Yii::t('app', 'Inventario') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('price_trend_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('price_trend_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'price-trend' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/ingredient-stock/price-trend']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Price Trend') ?></div>
@@ -323,7 +327,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Rentabilidad y Análisis -->
-        <?php if (Yii::$app->user->identity->canMultiple(['theoretical_profitability_view', 'real_profitability_view', 'charts_view', 'menu_analysis_view', 'menu_improvements_view', 'profitability_view', 'matrix_bcg'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['theoretical_profitability_view', 'real_profitability_view', 'charts_view', 'menu_analysis_view', 'menu_improvements_view', 'profitability_view', 'matrix_bcg'])): ?>
         <li class="menu-item <?= $rentabilidadAnalisisActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#rentabilidadAnalisis" role="button" 
                aria-expanded="<?= $rentabilidadAnalisisActive ? 'true' : 'false' ?>" 
@@ -332,49 +336,49 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $rentabilidadAnalisisActive ? 'show' : '' ?>" id="rentabilidadAnalisis">
                 <ul class="sub-menu">
-                    <?php if (Yii::$app->user->can('theoretical_profitability_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('theoretical_profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'theoretical-yield' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/theoretical-yield']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Rentabilidad Teórica del Menú') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('real_profitability_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('real_profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'real-yield' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/real-yield']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Rentabilidad Real del Menú') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('charts_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('charts_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'charts' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/charts']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Charts') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('menu_analysis_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('menu_analysis_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'analytics' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/analytics']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menu Analysis') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('menu_improvements_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('menu_improvements_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'menu-improvement' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/menu-improvement']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Menu improvements') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('profitability_view')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('profitability_view')): ?>
                         <li class="menu-item <?= $currentControllerId == 'profit-comparison' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/profit-comparison']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Profit comparison') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if (Yii::$app->user->can('matrix_bcg')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('matrix_bcg')): ?>
                         <li class="menu-item <?= $currentControllerId == 'matrix-bcg' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/standard-recipe/matrix-bcg']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Matriz BCG') ?></div>
@@ -386,7 +390,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
         <?php endif; ?>
         <!-- KPI's y Control -->
-        <?php if (Yii::$app->user->can('movements_list')): ?>
+        <?php if ($isAdmin || Yii::$app->user->can('movements_list')): ?>
         <li class="menu-item <?= $kpisControlActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#kpisControl" role="button" 
                aria-expanded="<?= $kpisControlActive ? 'true' : 'false' ?>" 
@@ -396,7 +400,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             <div class="collapse <?= $kpisControlActive ? 'show' : '' ?>" id="kpisControl">
                 <ul class="sub-menu">
                     <!-- Control de Insumos - HABILITADO -->
-                    <?php if (Yii::$app->user->can('movements_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('movements_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'control-insumos' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/kpi/control-insumos']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Control de Insumos') ?></div>
