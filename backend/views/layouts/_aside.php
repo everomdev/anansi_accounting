@@ -11,7 +11,7 @@ $plan = $business->user->plan;
 $action = $this->context->action->id;
 
 // Verificar si el usuario es administrador
-$isAdmin = Yii::$app->user->identity && in_array(Yii::$app->user->identity->role, ['admin', 'administrador']);
+$isAdmin = Yii::$app->user->identity && Yii::$app->user->can('administrator');
 
 $actions = [
     'price-trend',
