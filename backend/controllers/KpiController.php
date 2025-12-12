@@ -35,7 +35,7 @@ class KpiController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => ['control-insumos', 'proyeccion-compras', 'comparar-insumos', 'comparacion-insumos','ajustar-existencia', 'historial-ajustes','ajustar-inventario-completo', 'ajustar-existencia-masivo'],
+                        'actions' => ['control-insumos', 'control-almacen', 'compras-vs-consumo', 'proyeccion-compras', 'comparar-insumos', 'comparacion-insumos','ajustar-existencia', 'historial-ajustes','ajustar-inventario-completo', 'ajustar-existencia-masivo'],
                         'allow' => true,
                         'roles' => ['kpi_access'],
                     ],
@@ -51,9 +51,73 @@ class KpiController extends Controller
     }
 
     /**
-     * Displays the control de insumos page
+     * Displays the control de insumos page (MANTENER POR COMPATIBILIDAD)
      */
     public function actionControlInsumos()
+    {
+        // Redirigir al nuevo KPI de Compras vs Consumo
+        return $this->redirect(['kpi/compras-vs-consumo']);
+    }
+    
+    /**
+     * KPI: Control de Almacén (Inventario vs Mínimos y Máximos)
+     */
+    public function actionControlAlmacen()
+    {
+        $business = RedisKeys::getBusiness();
+        
+        // Obtener todos los ingredientes activos del negocio
+        $ingredientes = IngredientStock::find()
+            ->where(['business_id' => $business->id])
+            ->orderBy('ingredient ASC')
+            ->all();
+        
+        $datosControl = [];
+        
+        foreach ($ingredientes as $ingrediente) {
+            $inventario = $ingrediente->quantity ?: 0;
+            $alertaStock = $this->analizarAlertasStock($ingrediente, $inventario);
+            
+            $datosControl[] = [
+                'id' => $ingrediente->id,
+                'nombre' => $ingrediente->ingredient,
+                'unidad' => $ingrediente->um,
+                'inventario' => round($inventario, 2),
+                'min_stock' => $ingrediente->min_stock,
+                'max_stock' => $ingrediente->max_stock,
+                'alerta_stock' => $alertaStock['tipo'],
+                'nivel_critico' => $alertaStock['critico'],
+                'porcentaje_stock' => $alertaStock['porcentaje'],
+                'mensaje_alerta' => $alertaStock['mensaje'],
+            ];
+        }
+        
+        // Crear el data provider
+        $dataProvider = new ArrayDataProvider([
+            'allModels' => $datosControl,
+            'pagination' => [
+                'pageSize' => 20,
+            ],
+            'sort' => [
+                'attributes' => [
+                    'nombre',
+                    'inventario',
+                    'min_stock',
+                    'max_stock',
+                    'alerta_stock',
+                ],
+            ],
+        ]);
+        
+        return $this->render('control-almacen', [
+            'dataProvider' => $dataProvider,
+        ]);
+    }
+    
+    /**
+     * KPI: Compras vs Consumo Teórico
+     */
+    public function actionComprasVsConsumo()
     {
         $business = RedisKeys::getBusiness();
         
@@ -71,7 +135,7 @@ class KpiController extends Controller
         
         // Obtener todos los ingredientes activos del negocio
         $ingredientes = IngredientStock::find()
-            ->where(['business_id' => $business->id])//, 'id' => 1593
+            ->where(['business_id' => $business->id])
             ->orderBy('ingredient ASC')
             ->all();
         
@@ -79,29 +143,49 @@ class KpiController extends Controller
         
         foreach ($ingredientes as $ingrediente) {
             $datos = $this->calcularDatosInsumo($ingrediente, $selectedMonth, $selectedYear, $debug);
-            $datosControl[] = $datos;
+            
+            // Calcular estado basado en (Comprado - Consumido) vs Inventario
+            $esperado = $datos['comprado'] - $datos['consumido_real'];
+            $diferencia = $esperado - $datos['inventario'];
+            
+            $estadoDiferencia = 'equilibrado';
+            if (abs($diferencia) < 0.01) {
+                $estadoDiferencia = 'equilibrado';
+            } elseif ($diferencia < 0) {
+                $estadoDiferencia = 'faltante'; // El inventario es MENOR a lo esperado
+            } else {
+                $estadoDiferencia = 'sobrante'; // El inventario es MAYOR a lo esperado
+            }
+            
+            $datosControl[] = [
+                'id' => $datos['id'],
+                'nombre' => $datos['nombre'],
+                'unidad' => $datos['unidad'],
+                'comprado' => round($datos['comprado'], 2),
+                'consumido_real' => round($datos['consumido_real'], 2),
+                'inventario' => round($datos['inventario'], 2),
+                'estado_diferencia' => $estadoDiferencia,
+                'diferencia' => round($diferencia, 2),
+            ];
         }
         
         // Crear el data provider
         $dataProvider = new ArrayDataProvider([
             'allModels' => $datosControl,
             'pagination' => [
-                'pageSize' => 10,
+                'pageSize' => 20,
             ],
             'sort' => [
                 'attributes' => [
                     'nombre',
-                    'consumido',
-                    'consumido_real',
                     'comprado',
+                    'consumido_real',
                     'inventario',
-                    'diferencia',
-                    'estado',
                 ],
             ],
         ]);
         
-        return $this->render('control-insumos', [
+        return $this->render('compras-vs-consumo', [
             'dataProvider' => $dataProvider,
             'selectedMonth' => $selectedMonth,
             'selectedYear' => $selectedYear,

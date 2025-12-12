@@ -29,6 +29,8 @@ $actions = [
     'ingredients',
     'users',
     'control-insumos',
+    'control-almacen',
+    'compras-vs-consumo',
     'planeacion-compras',
     'comparativa-costo',
     'eficiencia-uso',
@@ -54,7 +56,7 @@ $costeoActive = in_array($currentControllerId, ['sub-standard-recipe', 'standard
 $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center', 'storage', 'movement', 'price-trend']);
 $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
-$kpisControlActive = in_array($currentControllerId, ['control-insumos', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
+$kpisControlActive = in_array($currentControllerId, ['control-insumos', 'control-almacen', 'compras-vs-consumo', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
 $gastosActive = in_array($currentControllerId, ['expense', 'expense-movement', 'expense-unit-measurement', 'expense-category']);
 $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
@@ -390,7 +392,8 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
         <?php endif; ?>
         <!-- KPI's y Control -->
-        <?php if ($isAdmin || Yii::$app->user->can('movements_list')): ?>
+        <!-- KPI's y Control -->
+        <?php if ($isAdmin || Yii::$app->user->can('kpi_access')): ?>
         <li class="menu-item <?= $kpisControlActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#kpisControl" role="button" 
                aria-expanded="<?= $kpisControlActive ? 'true' : 'false' ?>" 
@@ -399,11 +402,20 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $kpisControlActive ? 'show' : '' ?>" id="kpisControl">
                 <ul class="sub-menu">
-                    <!-- Control de Insumos - HABILITADO -->
-                    <?php if ($isAdmin || Yii::$app->user->can('movements_list')): ?>
-                        <li class="menu-item <?= $currentControllerId == 'control-insumos' ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['/kpi/control-insumos']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Control de Insumos') ?></div>
+                    <!-- Control de Almacén (Inventario vs Min/Max) -->
+                    <?php if ($isAdmin || Yii::$app->user->can('kpi_access')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'control-almacen' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['/kpi/control-almacen']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Control de Almacén') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <!-- Compras vs Consumo -->
+                    <?php if ($isAdmin || Yii::$app->user->can('kpi_access')): ?>
+                        <li class="menu-item <?= $currentControllerId == 'compras-vs-consumo' ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['/kpi/compras-vs-consumo']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Compras vs Consumo') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
