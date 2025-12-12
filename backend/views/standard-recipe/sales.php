@@ -318,29 +318,6 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
     </div>
 </div>
 
-<!-- Modal para resultados de importación -->
-<div class="modal fade" id="importResultModal" tabindex="-1" aria-labelledby="importResultModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="importResultModalLabel">Resultado de la Importación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="import-result-content">
-                    <!-- El contenido será cargado dinámicamente -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <!-- <button type="button" class="btn btn-success" id="reload-page-btn" style="display: none;">
-                    <i class="fas fa-sync-alt"></i> Recargar página
-                </button> -->
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?= Html::beginForm(['save-monthly-sales'], 'post', ['id' => 'sales-form']) ?>
     <?= Html::hiddenInput('month', $selectedMonth, ['id' => 'month-hidden']) ?>
     <?= Html::hiddenInput('year', $selectedYear, ['id' => 'year-hidden']) ?>
@@ -810,7 +787,19 @@ $(document).ready(function() {
             return false;
         }
         
-        // Mostrar spinner de carga
+        // Mostrar spinner de carga con SweetAlert2
+        Swal.fire({
+            title: 'Importando...',
+            text: 'Por favor espera mientras se procesan los datos.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Deshabilitar botón
         $('#btn-import-excel').prop('disabled', true).html(
             '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importando...'
         );
@@ -824,16 +813,54 @@ $(document).ready(function() {
             data: formData,
             processData: false,
             contentType: false,
+            dataType: 'html',
             success: function(response) {
-                // Mostrar el resultado en el modal
-                $('#import-result-content').html(response);
-                $('#importResultModal').modal('show');
+                // Verificar si fue exitoso
+                const isSuccess = response.includes('alert-success') || response.includes('Importación completada');
+                const hasErrors = response.includes('alert-danger') || response.includes('Errores encontrados');
                 
-                // Mostrar botón de recarga si la importación fue exitosa
-                if (response.includes('alert-success') || response.includes('Importación completada')) {
-                    $('#reload-page-btn').show();
+                if (isSuccess && !hasErrors) {
+                    // Éxito total - mostrar SweetAlert con auto-recarga
+                    Swal.fire({
+                        title: 'Importación Exitosa',
+                        html: response,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        willClose: () => {
+                            location.reload();
+                        }
+                    }).then((result) => {
+                        // Si el usuario hace clic en OK antes de los 3 segundos, también recargar
+                        if (result.isConfirmed || result.isDismissed) {
+                            location.reload();
+                        }
+                    });
+                } else if (hasErrors) {
+                    // Hubo errores - mostrar SweetAlert de advertencia sin auto-recarga
+                    Swal.fire({
+                        title: 'Importación con Errores',
+                        html: response,
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        width: '700px',
+                        customClass: {
+                            popup: 'import-result-popup'
+                        }
+                    });
                 } else {
-                    $('#reload-page-btn').hide();
+                    // Respuesta inesperada - mostrar como información
+                    Swal.fire({
+                        title: 'Resultado de la Importación',
+                        html: response,
+                        icon: 'info',
+                        confirmButtonText: 'OK',
+                        width: '700px',
+                        customClass: {
+                            popup: 'import-result-popup'
+                        }
+                    });
                 }
                 
                 // Limpiar el formulario
@@ -841,17 +868,26 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 let errorMessage = 'Error al procesar el archivo: ' + error;
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
+                
+                // Intentar obtener el mensaje de error del servidor
+                if (xhr.responseText) {
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else {
+                        // Intentar extraer el mensaje de error del HTML
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = xhr.responseText;
+                        const errorText = tempDiv.textContent || tempDiv.innerText || errorMessage;
+                        errorMessage = errorText.substring(0, 300);
+                    }
                 }
                 
-                const errorHtml = '<div class="alert alert-danger">' +
-                    '<h6><i class="fas fa-exclamation-triangle"></i> Error</h6>' +
-                    '<p>' + errorMessage + '</p>' +
-                    '</div>';
-                
-                $('#import-result-content').html(errorHtml);
-                $('#importResultModal').modal('show');
+                Swal.fire({
+                    title: 'Error al Importar',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             },
             complete: function() {
                 // Restaurar botón
@@ -860,16 +896,6 @@ $(document).ready(function() {
         });
         
         return false;
-    });
-    
-    // Configurar botón de recarga de página
-    $('#reload-page-btn').on('click', function() {
-        location.reload();
-    });
-    
-    // Ocultar botón de recarga cuando se cierre el modal
-    $('#importResultModal').on('hidden.bs.modal', function() {
-        $('#reload-page-btn').hide();
     });
 });
 
@@ -1251,91 +1277,186 @@ $css = <<<CSS
     padding-right: 30px !important;
 }
 
-/* Estilos para el modal de resultados de importación */
-#importResultModal .modal-dialog {
-    max-width: 700px;
+/* Estilos personalizados para SweetAlert2 con contenido de importación */
+.import-result-popup .swal2-html-container {
+    max-height: 400px;
+    overflow-y: auto;
+    text-align: left;
 }
 
-#importResultModal .modal-body {
-    padding: 1.5rem;
-}
-
-#importResultModal .alert {
+.import-result-popup .alert {
     border: none;
-    border-left: 4px solid;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    text-align: left;
 }
 
-#importResultModal .alert-success {
-    border-left-color: #28a745;
-    background-color: #d4f6d4;
+.import-result-popup .alert-success {
+    background: linear-gradient(135deg, #d4f6d4 0%, #a8e6a8 100%);
     color: #155724;
+    border-left: 5px solid #28a745;
 }
 
-#importResultModal .alert-warning {
-    border-left-color: #ffc107;
-    background-color: #fff3cd;
+.import-result-popup .alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffe5a0 100%);
     color: #856404;
+    border-left: 5px solid #ffc107;
 }
 
-#importResultModal .alert-info {
-    border-left-color: #17a2b8;
-    background-color: #d1ecf1;
+.import-result-popup .alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #a8d8e0 100%);
     color: #0c5460;
+    border-left: 5px solid #17a2b8;
 }
 
-#importResultModal .alert-danger {
-    border-left-color: #dc3545;
-    background-color: #f8d7da;
+.import-result-popup .alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
     color: #721c24;
+    border-left: 5px solid #dc3545;
 }
 
-#importResultModal .alert h6 {
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+.import-result-popup .alert h6 {
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
 }
 
-#importResultModal .alert-content {
+.import-result-popup .alert p {
+    margin-bottom: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.import-result-popup .alert i {
+    margin-right: 0.5rem;
+}
+
+.import-result-popup .alert-content {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 0.875rem;
-    line-height: 1.4;
-    max-height: 200px;
+    line-height: 1.5;
+    max-height: 250px;
     overflow-y: auto;
     border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    padding: 0.75rem;
+    border-radius: 0.5rem;
+    padding: 1rem;
     background-color: #ffffff;
+    margin-top: 0.75rem;
 }
 
-#importResultModal .alert-content::-webkit-scrollbar {
-    width: 8px;
+.import-result-popup .alert-content::-webkit-scrollbar {
+    width: 10px;
 }
 
-#importResultModal .alert-content::-webkit-scrollbar-track {
+.import-result-popup .alert-content::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 4px;
+    border-radius: 5px;
 }
 
-#importResultModal .alert-content::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+.import-result-popup .alert-content::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #c1c1c1 0%, #a8a8a8 100%);
+    border-radius: 5px;
 }
 
-#importResultModal .alert-content::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+.import-result-popup .alert-content::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #a8a8a8 0%, #8e8e8e 100%);
 }
 
-#importResultModal .alert-content .small {
-    color: #6c757d;
-    margin-bottom: 0.25rem;
-    padding: 0.25rem 0;
+.import-result-popup .alert-content .small {
+    color: #495057;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
     border-bottom: 1px solid #f8f9fa;
+    background-color: #fff;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease;
+    display: block;
 }
 
-#importResultModal .alert-content .small:last-child {
+.import-result-popup .alert-content .small:hover {
+    background-color: #f8f9fa;
+}
+
+.import-result-popup .alert-content .small:last-child {
     border-bottom: none;
     margin-bottom: 0;
+}
+
+.import-result-popup .alert-content .small strong {
+    color: #007bff;
+    margin-right: 0.5rem;
+}
+
+.import-result-popup .d-flex {
+    display: flex !important;
+}
+
+.import-result-popup .align-items-center {
+    align-items: center !important;
+}
+
+.import-result-popup .mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+.import-result-popup .mb-1 {
+    margin-bottom: 0.25rem !important;
+}
+
+.import-result-popup .mb-0 {
+    margin-bottom: 0 !important;
+}
+
+.import-result-popup .mb-2 {
+    margin-bottom: 0.5rem !important;
+}
+
+.import-result-popup .me-3 {
+    margin-right: 1rem !important;
+}
+
+.import-result-popup .me-2 {
+    margin-right: 0.5rem !important;
+}
+
+.import-result-popup .fs-4 {
+    font-size: 2rem !important;
+}
+
+.import-result-popup .fw-bold {
+    font-weight: 700 !important;
+}
+
+.import-result-popup .text-success {
+    color: #28a745 !important;
+}
+
+.import-result-popup .text-warning {
+    color: #ffc107 !important;
+}
+
+.import-result-popup .text-danger {
+    color: #dc3545 !important;
+}
+
+.import-result-popup .text-muted {
+    color: #6c757d !important;
+}
+
+.import-result-popup .border {
+    border: 1px solid #dee2e6 !important;
+}
+
+.import-result-popup .rounded {
+    border-radius: 0.25rem !important;
+}
+
+.import-result-popup .p-2 {
+    padding: 0.5rem !important;
 }
 
 /* Mejoras visuales para el separador */
