@@ -45,13 +45,10 @@ $this->params['breadcrumbs'][] = $this->title;
 </style>
 
 <div class="inventory-edit">
-    <h2>Editar Inventario del <?= date('d/m/Y H:i', strtotime($dateEnd)) ?></h2>
-    <?php if (!empty($dateEnd)) : ?>
-        <div class="text-muted" style="font-size:16px;margin-bottom:8px;">Iniciado el <?= date('d/m/Y H:i', strtotime($fecha)) ?></div>
-    <?php endif; ?>
+    <h2>Editar Inventario</h2>
     
     <div class="alert alert-warning" style="margin-bottom:18px;">
-        <strong><i class="fas fa-edit"></i> Modo Edición:</strong> Modifica las cantidades según necesites y haz clic en "Guardar Cambios" al final.
+        <strong><i class="fas fa-edit"></i> Modo Edición:</strong> Modifica las fechas y cantidades según necesites y haz clic en "Guardar Cambios" al final.
         <br><strong>Nota:</strong> Se muestran todos los insumos sin paginación para asegurar que todos los cambios se guarden correctamente.
     </div>
 
@@ -60,6 +57,35 @@ $this->params['breadcrumbs'][] = $this->title;
         'action' => ['edit', 'fecha' => $fecha],
         'method' => 'post'
     ]); ?>
+
+    <div class="row" style="margin-bottom: 20px;">
+        <div class="col-md-6">
+            <label for="fecha-inicial" class="form-label">
+                <i class="fas fa-calendar-plus"></i> Fecha Inicial
+            </label>
+            <?= Html::input('datetime-local', 'fecha_inicial', 
+                date('Y-m-d\TH:i', strtotime($fecha)), 
+                [
+                    'class' => 'form-control',
+                    'id' => 'fecha-inicial',
+                    'required' => true
+                ]
+            ) ?>
+        </div>
+        <div class="col-md-6">
+            <label for="fecha-final" class="form-label">
+                <i class="fas fa-calendar-check"></i> Fecha Final
+            </label>
+            <?= Html::input('datetime-local', 'fecha_final', 
+                date('Y-m-d\TH:i', strtotime($dateEnd)), 
+                [
+                    'class' => 'form-control',
+                    'id' => 'fecha-final',
+                    'required' => true
+                ]
+            ) ?>
+        </div>
+    </div>
 
     <div class="table-responsive sticky-header-container" style="overflow-x:auto;">
     <?php
@@ -241,8 +267,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Validación de fechas
+    const fechaInicial = document.getElementById('fecha-inicial');
+    const fechaFinal = document.getElementById('fecha-final');
+    
+    function validarFechas() {
+        if (fechaInicial.value && fechaFinal.value) {
+            const inicial = new Date(fechaInicial.value);
+            const final = new Date(fechaFinal.value);
+            
+            if (final < inicial) {
+                fechaFinal.setCustomValidity('La fecha final no puede ser anterior a la fecha inicial');
+                return false;
+            } else {
+                fechaFinal.setCustomValidity('');
+                return true;
+            }
+        }
+        return true;
+    }
+    
+    fechaInicial.addEventListener('change', validarFechas);
+    fechaFinal.addEventListener('change', validarFechas);
+    
     // Confirmación antes de guardar
     document.getElementById('btn-guardar-inventario').addEventListener('click', function(e) {
+        if (!validarFechas()) {
+            e.preventDefault();
+            alert('La fecha final no puede ser anterior a la fecha inicial.');
+            return;
+        }
+        
         if (!confirm('¿Estás seguro de que quieres guardar los cambios en este inventario?')) {
             e.preventDefault();
         }

@@ -158,7 +158,19 @@ public function actionCreate()
         if (Yii::$app->request->isPost) {
             $post = Yii::$app->request->post();
             $inventarios = $post['inventario'] ?? [];
+            $fechaInicial = $post['fecha_inicial'] ?? null;
+            $fechaFinal = $post['fecha_final'] ?? null;
             $errors = [];
+            
+            // Validar que las fechas estén presentes
+            if (!$fechaInicial || !$fechaFinal) {
+                Yii::$app->session->setFlash('error', 'Las fechas inicial y final son obligatorias.');
+                return $this->redirect(['edit', 'fecha' => $fecha]);
+            }
+            
+            // Convertir fechas al formato correcto
+            $fechaInicialFormatted = date('Y-m-d H:i:s', strtotime($fechaInicial));
+            $fechaFinalFormatted = date('Y-m-d H:i:s', strtotime($fechaFinal));
             
             // Eliminar registros existentes para esta fecha
             $existingInventories = Inventory::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->all();
@@ -169,15 +181,14 @@ public function actionCreate()
             
             // Obtener centros de consumo del negocio
             $consumptionCenters = ConsumptionCenter::find()->where(['business_id' => $businessId])->all();
-            $dateEnd = date('Y-m-d H:i:s');
             
             // Guardar nuevos datos
             foreach ($inventarios as $ingredientId => $data) {
                 $inv = new Inventory();
                 $inv->ingredient_stock_id = $ingredientId;
                 $inv->business_id = $businessId;
-                $inv->fecha = $fecha;
-                $inv->date_end = $dateEnd;
+                $inv->fecha = $fechaInicialFormatted;
+                $inv->date_end = $fechaFinalFormatted;
                 
                 if ($inv->save()) {
                     foreach ($consumptionCenters as $center) {
@@ -197,7 +208,7 @@ public function actionCreate()
             
             if (empty($errors)) {
                 Yii::$app->session->setFlash('success', 'Inventario actualizado correctamente.');
-                return $this->redirect(['detalle', 'fecha' => $fecha]);
+                return $this->redirect(['detalle', 'fecha' => $fechaInicialFormatted]);
             } else {
                 Yii::$app->session->setFlash('error', 'Error al actualizar el inventario.');
             }

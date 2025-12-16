@@ -73,6 +73,8 @@ class MovementController extends Controller
                         'allow' => true,
                         'roles' => [
                             'manage_account',
+                            'admin',
+                            'administrator',
                         ],
                     ],
                     [

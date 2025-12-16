@@ -2720,9 +2720,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
     
         // 2. Configurar cabeceras para la hoja principal según el tipo
         $recipesHeaders = $isSubrecipe ? 
-            ['Nombre', 'Tipo de Subreceta', 'Tiempo de preparación', 'Unidad de tiempo', 
+            ['Nombre', 'Categoría', 'Tiempo de preparación', 'Unidad de tiempo', 
              'Rendimiento', 'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 'Unidad de medida final', 'Costo', '% Costo'] :
-            ['Nombre', 'Tipo de Receta', 'Tiempo de preparación', 'Unidad de tiempo', 
+            ['Nombre', 'Categoría', 'Tiempo de preparación', 'Unidad de tiempo', 
              'Rendimiento', 'Rendimiento UM', 'Porciones', 'Duración', 'Unidad de duración', 
              'Precio', 'Alimento o Bebida', 'Convoy', 'Unidad de medida final', 'Costo', '% Costo'];
     

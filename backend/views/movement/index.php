@@ -309,7 +309,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     },
                     'update' => function ($url, $model, $key) {
                         // Solo mostrar el botón de editar si el usuario es administrador
-                        if (Yii::$app->user->can('manage_account')) {
+                        if (Yii::$app->user->can('manage_account') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator')) {
                             return \yii\bootstrap5\Html::a(
                                 '<i class="bx bx-edit-alt"></i>',
                                 ['update', 'id' => $model->id],
