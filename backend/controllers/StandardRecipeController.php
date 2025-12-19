@@ -2915,7 +2915,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
                 $ingredientsSheet->setCellValue('B'.$ingredientsRow, strtolower($ingredientRelation->ingredient->ingredient));
                 $ingredientsSheet->setCellValue('C'.$ingredientsRow, $ingredientRelation->quantity);
                 $ingredientsSheet->setCellValue('D'.$ingredientsRow, $ingredientRelation->ingredient->portion_um);
-                $ingredientsSheet->setCellValue('E'.$ingredientsRow, $ingredientRelation->lastPrice);
+                $ingredientsSheet->setCellValue('E'.$ingredientsRow, $ingredientRelation->lastUnitPrice);
                 $ingredientsRow++;
             }
            //die(var_dump($recipe->getSubStandardRecipes()->all()));
