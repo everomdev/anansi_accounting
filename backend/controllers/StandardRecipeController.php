@@ -2821,7 +2821,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $insumosSheet->setCellValue('A' . $insumosRow, $ingredient->ingredient);
             $insumosSheet->setCellValue('B' . $insumosRow, $ingredient->quantity);
             $insumosSheet->setCellValue('C' . $insumosRow, $ingredient->um);
-            $insumosSheet->setCellValue('D' . $insumosRow, number_format($ingredient->lastPrice / $ingredient->portions_per_unit, 2, '.', ''));
+            $insumosSheet->setCellValue('D' . $insumosRow, number_format($ingredient->lastUnitPrice / $ingredient->portions_per_unit, 2, '.', ''));
             $insumosRow++;
         }
     
