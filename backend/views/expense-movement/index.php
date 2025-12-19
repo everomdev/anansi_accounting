@@ -9,7 +9,7 @@ use common\models\ExpenseMovement;
 /* @var $searchModel common\models\ExpenseMovementSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Movimientos de Gastos';
+$this->title = 'Registro de Gastos';
 $this->params['breadcrumbs'][] = $this->title;
 
 $this->registerJsFile(Yii::getAlias("@web/js/expense-movement/index.js"), [
