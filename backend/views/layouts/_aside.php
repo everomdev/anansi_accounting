@@ -219,7 +219,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <?php if ($isAdmin || Yii::$app->user->can('expense_movements_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-movement' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-movement/index']) ?>" class="menu-link">
-                            <div><?= Yii::t('app', 'Movimientos de Gastos') ?></div>
+                            <div><?= Yii::t('app', 'Registro de Gastos') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>
