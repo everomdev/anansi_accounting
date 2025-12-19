@@ -118,18 +118,25 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         <div class="p-2">
             <?= Html::a(Yii::t('app', 'Balance'), "#", ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-balance']) ?>
         </div>
+        <div class="p-2">
+            <?php if (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator') || Yii::$app->user->can('storage_admin')): ?>
+                <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
+                    ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'btn-delete-movements']) ?>
+            <?php endif; ?>
+        </div>
     </div>
 
 
-    <?php Pjax::begin(); ?>
+    <?php Pjax::begin(['id' => 'movements-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
     <?= GridView::widget([
+        'id' => 'movements-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+            ['class' => \yii\grid\CheckboxColumn::class],
 
             [
                 'attribute' => 'type',
@@ -309,7 +316,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     },
                     'update' => function ($url, $model, $key) {
                         // Solo mostrar el botón de editar si el usuario es administrador
-                        if (Yii::$app->user->can('manage_account') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator')) {
+                        if (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator')) {
                             return \yii\bootstrap5\Html::a(
                                 '<i class="bx bx-edit-alt"></i>',
                                 ['update', 'id' => $model->id],
@@ -395,5 +402,68 @@ echo "<div id='balance-container'></div>";
 
 \yii\bootstrap5\Modal::end();
 
-
+// MODALES PARA ELIMINACIÓN MÚLTIPLE
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-bulk-remove-movements',
+    'title' => Yii::t('app', "Eliminar movimientos seleccionados"),
+]);
 ?>
+<p>¿Deseas eliminar todos los movimientos seleccionados o solo los de la página actual?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar las seleccionadas'), [
+        'class' => 'btn btn-danger',
+        'id' => 'delete-current-page-movements'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar todas'), [
+        'class' => 'btn btn-danger',
+        'id' => 'delete-all-movements'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para mostrar error cuando no hay elementos seleccionados
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-no-selection-movements',
+    'title' => Yii::t('app', "Selección vacía"),
+]);
+?>
+<p>No has seleccionado ningún movimiento para eliminar. Por favor, selecciona al menos un movimiento.</p>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para confirmar la eliminación de elementos específicos
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-confirm-selected-remove-movements',
+    'title' => Yii::t('app', "Confirmar eliminación"),
+]);
+?>
+<p>¿Estás seguro de que deseas eliminar <span id="selected-count-message-movements"></span> movimientos?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
+        'class' => 'btn btn-danger',
+        'id' => 'confirm-delete-selected-movements'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+

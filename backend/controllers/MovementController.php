@@ -35,6 +35,8 @@ class MovementController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                    'delete-by-id' => ['POST'],
+                    'delete-by-fecha' => ['POST'],
                 ],
             ],
             'access' => [
@@ -79,12 +81,13 @@ class MovementController extends Controller
                     ],
                     [
                         'actions' => [
-                            'balance',
-                            'register-balance',
+                            'delete',
+                            'delete-by-id',
+                            'delete-by-fecha',
                         ],
                         'allow' => true,
                         'roles' => [
-                            'movements_manage_balance',
+                            'movements_list',
                         ],
                     ],
                 ],
@@ -282,14 +285,89 @@ class MovementController extends Controller
     /**
      * Deletes an existing Movement model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @return mixed
+     */
+    public function actionDelete()
+    {
+        if (Yii::$app->request->isPost) {
+            $ids = Yii::$app->request->post('keys'); // Recibir los IDs enviados desde el frontend
+    
+            try {
+                if ($ids === 'all') {
+                    // Delete all movements for the current business
+                    $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+                    $business = Business::findOne(['id' => $businessData['id']]);
+                    Movement::deleteAll([
+                        'business_id' => $business->id
+                    ]);
+                    return $this->asJson(['success' => true]);
+                } else if (!empty($ids)) {
+                    // Delete selected movements
+                    foreach ($ids as $id) {
+                        $model = $this->findModel($id);
+                        if ($model) {
+                            $model->delete(); 
+                        }
+                    }
+                    return $this->asJson(['success' => true]);
+                }
+            } catch (\Exception $e) {
+                Yii::error('Error deleting movements: ' . $e->getMessage(), __METHOD__);
+                return $this->asJson([
+                    'success' => false, 
+                    'message' => 'Error al eliminar los movimientos: ' . $e->getMessage()
+                ]);
+            }
+        }
+        
+        return $this->asJson([
+            'success' => false, 
+            'message' => 'Solicitud inválida'
+        ]);
+    }
+
+    /**
+     * Deletes an existing Movement model by ID (single deletion).
+     * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id)
+    public function actionDeleteById($id)
     {
         $this->findModel($id)->delete();
 
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Deletes existing Movement models by date.
+     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @param string $fecha
+     * @return mixed
+     */
+    public function actionDeleteByFecha($fecha)
+    {
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $businessId = $businessData['id'] ?? null;
+        
+        // Buscar todos los movimientos para esta fecha y negocio
+        $movements = Movement::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->all();
+        
+        if (empty($movements)) {
+            Yii::$app->session->setFlash('error', 'No se encontraron movimientos para la fecha especificada.');
+            return $this->redirect(['index']);
+        }
+        
+        $deletedCount = 0;
+        
+        // Eliminar cada movimiento
+        foreach ($movements as $movement) {
+            $movement->delete();
+            $deletedCount++;
+        }
+        
+        Yii::$app->session->setFlash('success', "Se eliminaron {$deletedCount} movimientos de la fecha {$fecha}.");
         return $this->redirect(['index']);
     }
 
