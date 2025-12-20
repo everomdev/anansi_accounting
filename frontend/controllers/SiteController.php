@@ -294,16 +294,16 @@ protected function getTopIngredients()
     // Esta consulta dependerá de tu estructura específica de base de datos
     // Aquí hay un ejemplo que podrías adaptar:
     $topIngredients = Yii::$app->db->createCommand("
-        SELECT 
-            ingredient_id,
-            ingredient,
-            SUM(ingredient_standard_recipe.quantity) as total_quantity,
-            COUNT(*) as usage_count
-        FROM ingredient_standard_recipe
-        JOIN ingredient_stock i ON i.id = ingredient_id
-        GROUP BY ingredient_standard_recipe.ingredient_id, i.ingredient
-        ORDER BY total_quantity DESC
-        LIMIT 10
+        SELECT
+    i.ingredient,
+    ROUND(SUM(isr.quantity), 2) AS total_quantity,
+    COUNT(*) AS usage_count
+FROM ingredient_standard_recipe isr
+JOIN ingredient_stock i ON i.id = isr.ingredient_id
+GROUP BY 
+    i.ingredient
+ORDER BY total_quantity DESC
+LIMIT 10
     ")->queryAll();
     // Si no hay datos, devolver valores predeterminados
     if (empty($topIngredients)) {
