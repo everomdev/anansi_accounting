@@ -78,7 +78,7 @@ class Movement extends \yii\db\ActiveRecord
      */
     public function rules()
     {        return [            
-            [['type', 'quantity', 'ingredient_id', 'business_id'], 'required'],
+            [['type', 'quantity', 'ingredient_id', 'business_id', 'created_at', 'amount'], 'required'],
             [['quantity'], 'number', 'min' => 0.01, 'message' => 'La cantidad debe ser un número mayor a 0'],
             [['amount'], 'number', 'min' => 0, 'message' => 'El precio de compra debe ser un número válido'],
             [['tax', 'retention'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],

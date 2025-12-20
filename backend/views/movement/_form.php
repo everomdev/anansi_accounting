@@ -88,7 +88,9 @@ $providerNames = array_values(
             <div class="row g-3">
                 <!-- Primera fila: Insumo y Fecha -->
                 <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8">
-                    <?= $form->field($model, 'ingredient_id')->widget(\kartik\select2\Select2::class, [
+                    <?= $form->field($model, 'ingredient_id', [
+                        'template' => "{label}<span style=\"color: red;\">*</span>\n{input}\n{hint}\n{error}"
+                    ])->widget(\kartik\select2\Select2::class, [
                         'data' => \yii\helpers\ArrayHelper::map($stock, 'id', 'label'),
                         'options' => [
                             'data-setting' => 'all',
@@ -116,7 +118,9 @@ $providerNames = array_values(
 
                 <!-- Campo para seleccionar fecha de creación -->
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'created_at')->widget(\kartik\datetime\DateTimePicker::class, [
+                    <?= $form->field($model, 'created_at', [
+                        'template' => "{label}<span style=\"color: red;\">*</span>\n{input}\n{hint}\n{error}"
+                    ])->widget(\kartik\datetime\DateTimePicker::class, [
                         'options' => [
                             'placeholder' => 'Seleccionar fecha y hora...',
                             'data-setting' => 'all'
@@ -405,7 +409,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <?php endif; ?>
 
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'quantity')->textInput(['data-setting' => 'all']) ?>
+                    <?= $form->field($model, 'quantity', [
+                        'template' => "{label}<span style=\"color: red;\">*</span>\n{input}\n{hint}\n{error}"
+                    ])->textInput(['data-setting' => 'all']) ?>
                 </div>
 
                 <!-- Tercera fila: Los campos financieros (5 elementos) -->  
@@ -417,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="col-sm-12 col-md-6 col-lg-4 col-xl-2">
                         <?= $form->field($model, 'amount',
                             [
-                                'template' => "{label}<br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>"
+                                'template' => "{label}<span style=\"color: red;\">*</span><br><div class='input-group'><span class='input-group-text'>${currencySymbol}</span>{input} </div>\n{hint}\n{error}"
                             ]
                         )->textInput(['data-setting' => 'input']) ?>
                     </div>
