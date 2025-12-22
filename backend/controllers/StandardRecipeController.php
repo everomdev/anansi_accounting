@@ -206,6 +206,7 @@ class StandardRecipeController extends Controller
                     [
                         'actions' => [
                             'real-yield',
+                            'export-real-yield-excel',
                         ],
                         'allow' => true,
                         'roles' => [
@@ -463,6 +464,211 @@ class StandardRecipeController extends Controller
             'year' => $realYieldData['year'],
             'recipesByType' => $realYieldData['recipesByType'],
         ]);
+    }
+
+    public function actionExportRealYieldExcel($month = null, $year = null)
+    {
+        $business = RedisKeys::getBusiness();
+
+        // Si no se especifica mes, usar el actual
+        if ($month === null) {
+            $month = (int)date('n');
+        }
+
+        // Si no se especifica año, usar el actual
+        if ($year === null) {
+            $year = (int)date('Y');
+        }
+
+        $realYieldData = $business->getRealYield($month, $year);
+
+        // Crear el archivo Excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Rentabilidad Real');
+
+        // Configurar estilos
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4CAF50'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        $categoryStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '2196F3'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        $dataStyle = [
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        // Configurar anchos de columna
+        $sheet->getColumnDimension('A')->setWidth(40); // Nombre
+        $sheet->getColumnDimension('B')->setWidth(15); // Costo
+        $sheet->getColumnDimension('C')->setWidth(15); // Precio
+        $sheet->getColumnDimension('D')->setWidth(20); // Costo %
+        $sheet->getColumnDimension('E')->setWidth(15); // Ventas
+        $sheet->getColumnDimension('F')->setWidth(15); // % Ventas
+        $sheet->getColumnDimension('G')->setWidth(15); // Tipo
+
+        // Alinear columna A (nombres) a la izquierda
+        $sheet->getStyle('A:A')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+        // Agregar información general
+        $sheet->setCellValue('A1', 'Rentabilidad Real');
+        $sheet->mergeCells('A1:G1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Información del período
+        $months = [
+            '1' => 'Enero', '2' => 'Febrero', '3' => 'Marzo', '4' => 'Abril', '5' => 'Mayo', '6' => 'Junio',
+            '7' => 'Julio', '8' => 'Agosto', '9' => 'Septiembre', '10' => 'Octubre', '11' => 'Noviembre', '12' => 'Diciembre'
+        ];
+        $sheet->setCellValue('A2', 'Período: ' . $months[$month] . ' ' . $year);
+        $sheet->mergeCells('A2:G2');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Total de ventas
+        $sheet->setCellValue('A3', 'Total de ventas: ' . number_format($realYieldData['totalSales'], 2));
+        $sheet->mergeCells('A3:G3');
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Rentabilidad total
+        if ($realYieldData['totalPcr'] !== null) {
+            $totalPcrValue = is_numeric($realYieldData['totalPcr'])
+                ? (float)$realYieldData['totalPcr']
+                : (float)str_replace(['%', ','], ['', '.'], $realYieldData['totalPcr']);
+            $sheet->setCellValue('A4', 'Rentabilidad Total: ' . number_format($totalPcrValue * 100, 2) . '%');
+            $sheet->mergeCells('A4:G4');
+            $sheet->getStyle('A4')->getFont()->setBold(true);
+            $sheet->getStyle('A4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        }
+
+        // Fecha de generación
+        $sheet->setCellValue('A5', 'Fecha de generación: ' . date('d/m/Y'));
+        $sheet->mergeCells('A5:G5');
+        $sheet->getStyle('A5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Headers de la tabla
+        $sheet->setCellValue('A7', 'Nombre');
+        $sheet->setCellValue('B7', 'Costo');
+        $sheet->setCellValue('C7', 'Precio');
+        $sheet->setCellValue('D7', 'Costo %');
+        $sheet->setCellValue('E7', 'Ventas');
+        $sheet->setCellValue('F7', '% Ventas');
+        $sheet->setCellValue('G7', 'Tipo');
+
+        $sheet->getStyle('A7:G7')->applyFromArray($headerStyle);
+
+        $row = 8; // Comenzar después de los headers
+
+        foreach ($realYieldData['data'] as $category) {
+            // Calcular CPR de la categoría usando los datos actuales con ventas históricas
+            $categoryTotalPcr = 0;
+            foreach ($category['recipes'] as $recipe) {
+                $categoryTotalPcr += $recipe->getCpr($realYieldData['totalSales']);
+            }
+            foreach ($category['combos'] as $combo) {
+                $categoryTotalPcr += $combo->getCpr($realYieldData['totalSales']);
+            }
+
+            // Agregar fila de categoría
+            $sheet->setCellValue('A'.$row, $category['category']->name . ': ' . number_format($categoryTotalPcr * 100, 2) . '%');
+            $sheet->mergeCells('A'.$row.':G'.$row);
+            $sheet->getStyle('A'.$row.':G'.$row)->applyFromArray($categoryStyle);
+            $row++;
+
+            // Agregar recetas
+            foreach ($category['recipes'] as $recipe) {
+                $costPercentValue = is_numeric($recipe->costPercent)
+                    ? (float)$recipe->costPercent
+                    : (float)str_replace(['%', ','], ['', '.'], $recipe->costPercent);
+
+                $sheet->setCellValue('A'.$row, $recipe->title);
+                $sheet->setCellValue('B'.$row, number_format((float)$recipe->cost, 2));
+                $sheet->setCellValue('C'.$row, number_format((float)$recipe->price, 2));
+                $sheet->setCellValue('D'.$row, number_format($costPercentValue * 100, 2) . '%');
+                $sheet->setCellValue('E'.$row, number_format((float)$recipe->sales, 2));
+                $sheet->setCellValue('F'.$row, number_format($recipe->getSalesPercent($realYieldData['totalSales']) * 100, 2) . '%');
+                $sheet->setCellValue('G'.$row, $recipe->is_food ? 'Alimento' : 'Bebida');
+
+                $sheet->getStyle('A'.$row.':G'.$row)->applyFromArray($dataStyle);
+                $row++;
+            }
+
+            // Agregar combos
+            foreach ($category['combos'] as $combo) {
+                $costPercentValue = is_numeric($combo->costPercent)
+                    ? (float)$combo->costPercent
+                    : (float)str_replace(['%', ','], ['', '.'], $combo->costPercent);
+
+                $sheet->setCellValue('A'.$row, $combo->title);
+                $sheet->setCellValue('B'.$row, number_format((float)$combo->cost, 2));
+                $sheet->setCellValue('C'.$row, number_format((float)$combo->total_price, 2));
+                $sheet->setCellValue('D'.$row, number_format($costPercentValue * 100, 2) . '%');
+                $sheet->setCellValue('E'.$row, number_format((float)$combo->sales, 2));
+                $sheet->setCellValue('F'.$row, number_format($combo->getSalesPercent($realYieldData['totalSales']) * 100, 2) . '%');
+                $sheet->setCellValue('G'.$row, 'Combo');
+
+                $sheet->getStyle('A'.$row.':G'.$row)->applyFromArray($dataStyle);
+                $row++;
+            }
+
+            // Agregar fila vacía entre categorías
+            $row++;
+        }
+
+        // Formato de moneda para columnas B y C
+        $lastRow = $row - 1;
+        $sheet->getStyle('B8:B'.$lastRow)->getNumberFormat()->setFormatCode('$#,##0.00');
+        $sheet->getStyle('C8:C'.$lastRow)->getNumberFormat()->setFormatCode('$#,##0.00');
+
+        // Crear y enviar el archivo
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $filename = 'Rentabilidad_Real_' . $months[$month] . '_' . $year . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), $filename);
+        $writer->save($tempFile);
+
+        return Yii::$app->response->sendFile($tempFile, $filename);
     }
 
 

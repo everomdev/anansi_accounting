@@ -123,7 +123,25 @@ $months = [
 
     <div class="card">
         <div class="card-body">
-            <?= \yii\bootstrap5\Html::textInput('search-box', null, ['class' => 'form-control', 'placeholder' => 'Buscar']) ?>
+            <div class="input-group mb-3">
+                <?= \yii\bootstrap5\Html::textInput('search-box', null, [
+                    'class' => 'form-control', 
+                    'placeholder' => 'Buscar',
+                    'id' => 'search-box'
+                ]) ?>
+                <button class="btn btn-outline-secondary" type="button" id="clear-search">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-3">
+                <?= Html::a('<i class="fas fa-download"></i> Descargar Excel', [
+                    'export-real-yield-excel', 
+                    'month' => $selectedMonth, 
+                    'year' => $selectedYear
+                ], [
+                    'class' => 'btn btn-success'
+                ]) ?>
+            </div>
             <div class="table-responsive">
                 <table class="table">
                     <thead>
@@ -281,6 +299,12 @@ $(document).on('keyup', 'input[name="search-box"]', (event) => {
             row.style.display = 'none';
         }
     });
+});
+
+$(document).on('click', '#clear-search', (event) => {
+    $('#search-box').val('');
+    // Trigger the search to show all rows
+    $('#search-box').trigger('keyup');
 });
 JS;
 $this->registerJs($js);
