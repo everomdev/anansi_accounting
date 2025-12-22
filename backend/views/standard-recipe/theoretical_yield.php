@@ -73,6 +73,11 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+            <div class="mb-3">
+                <?= Html::a('<i class="fas fa-download"></i> Descargar Excel', ['export-theoretical-yield-excel'], [
+                    'class' => 'btn btn-success'
+                ]) ?>
+            </div>
             <div class="table-responsive">
                 <table class="table">
                     <thead>

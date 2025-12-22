@@ -215,6 +215,7 @@ class StandardRecipeController extends Controller
                     [
                         'actions' => [
                             'theoretical-yield',
+                            'export-theoretical-yield-excel',
                         ],
                         'allow' => true,
                         'roles' => [
@@ -4057,6 +4058,278 @@ public function actionEditStep()
         // Crear el archivo en temporal y enviarlo
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $filename = 'Plantilla_Importar_Ventas_' . date('Y-m-d_H-i-s') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), $filename);
+        $writer->save($tempFile);
+
+        return Yii::$app->response->sendFile($tempFile, $filename);
+    }
+
+    public function actionExportTheoreticalYieldExcel()
+    {
+        $business = RedisKeys::getBusiness();
+
+        // Obtener los mismos datos que la vista
+        $theoreticalYieldData = $business->getTheoreticalYield();
+
+        // Preparar datos ligeros igual que en actionTheoreticalYield
+        $preparedData = [];
+        $allRecipeIds = [];
+        foreach ($theoreticalYieldData['data'] as $cat) {
+            foreach ($cat['recipes'] as $r) {
+                if (!empty($r->id)) $allRecipeIds[] = $r->id;
+            }
+        }
+
+        $recipesMap = [];
+        $recipesByCategory = [];
+        $combosByCategory = [];
+        $categoryNames = array_map(function($c){ return $c['category']->name; }, $theoreticalYieldData['data']);
+
+        if (!empty($allRecipeIds)) {
+            $loaded = \common\models\StandardRecipe::find()
+                ->where(['id' => $allRecipeIds])
+                ->with(['ingredientRelations.ingredient', 'convoy'])
+                ->indexBy('id')
+                ->all();
+            foreach ($loaded as $id => $model) {
+                $recipesMap[$id] = $model;
+            }
+        } else {
+            if (!empty($categoryNames)) {
+                $loaded = \common\models\StandardRecipe::find()
+                    ->where([
+                        'business_id' => $business->id,
+                        'in_construction' => 0,
+                        'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN,
+                        'in_menu' => true,
+                    ])
+                    ->andWhere(['in', 'type_of_recipe', $categoryNames])
+                    ->with(['ingredientRelations.ingredient', 'convoy'])
+                    ->all();
+                foreach ($loaded as $model) {
+                    $recipesMap[$model->id] = $model;
+                    $recipesByCategory[$model->type_of_recipe][] = $model;
+                }
+            }
+
+            $loadedCombos = \common\models\Menu::find()
+                ->where(['business_id' => $business->id, 'in_menu' => true])
+                ->with(['category'])
+                ->all();
+            foreach ($loadedCombos as $menu) {
+                $catName = $menu->category->name ?? null;
+                if ($catName) $combosByCategory[$catName][] = $menu;
+            }
+        }
+
+        foreach ($theoreticalYieldData['data'] as $cat) {
+            $c = [
+                'category' => $cat['category'],
+                'recipes' => [],
+                'combos' => [],
+            ];
+
+            $sourceRecipes = !empty($cat['recipes']) ? $cat['recipes'] : ($recipesByCategory[$cat['category']->name] ?? []);
+            foreach ($sourceRecipes as $recipe) {
+                $id = is_object($recipe) && isset($recipe->id) ? $recipe->id : null;
+                $model = ($id && isset($recipesMap[$id])) ? $recipesMap[$id] : $recipe;
+                $obj = new \stdClass();
+                $obj->id = $model->id;
+                $obj->title = $model->title;
+                $obj->recipeLastPrice = $model->recipeLastPrice;
+                $obj->price = $model->price;
+                $obj->costPercent = $model->getCostPercent();
+                $obj->is_food = $model->is_food;
+                $c['recipes'][] = $obj;
+            }
+
+            $sourceCombos = !empty($cat['combos']) ? $cat['combos'] : ($combosByCategory[$cat['category']->name] ?? []);
+            foreach ($sourceCombos as $combo) {
+                $obj = new \stdClass();
+                $obj->id = $combo->id;
+                $obj->title = $combo->title ?? $combo->name;
+                $obj->cost = $combo->total_cost ?? $combo->totalCostByLastPrice ?? $combo->total_cost_last_price;
+                $obj->total_price = $combo->total_price ?? $combo->price ?? (method_exists($combo, 'getPrice') ? $combo->getPrice() : null);
+                $obj->costPercent = method_exists($combo, 'getCostPercent') ? $combo->getCostPercent() : ($combo->cost_percent_last_price ?? 0);
+                $c['combos'][] = $obj;
+            }
+
+            $preparedData[] = $c;
+        }
+
+        // Crear el archivo Excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Rentabilidad Teórica');
+
+        // Configurar estilos
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4CAF50'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        $categoryStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '2196F3'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        $dataStyle = [
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                ],
+            ],
+        ];
+
+        // Configurar anchos de columna
+        $sheet->getColumnDimension('A')->setWidth(40); // Nombre
+        $sheet->getColumnDimension('B')->setWidth(15); // Costo
+        $sheet->getColumnDimension('C')->setWidth(15); // Precio
+        $sheet->getColumnDimension('D')->setWidth(20); // Costo %
+        $sheet->getColumnDimension('E')->setWidth(15); // Tipo
+
+        // Alinear columna A (nombres) a la izquierda
+        $sheet->getStyle('A:A')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+
+        // Agregar información general
+        $sheet->setCellValue('A1', 'Rentabilidad Teórica');
+        $sheet->mergeCells('A1:E1');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        if ($theoreticalYieldData['theoricalTotal'] !== null) {
+            $totalValue = is_numeric($theoreticalYieldData['theoricalTotal']) 
+                ? (float)$theoreticalYieldData['theoricalTotal'] 
+                : (float)str_replace(['%', ','], ['', '.'], $theoreticalYieldData['theoricalTotal']);
+            $sheet->setCellValue('A2', 'Rentabilidad Total: ' . number_format($totalValue, 2) . '%');
+            $sheet->mergeCells('A2:E2');
+            $sheet->getStyle('A2')->getFont()->setBold(true);
+            $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        }
+
+        // Agregar fecha
+        $sheet->setCellValue('A3', 'Fecha de generación: ' . date('d/m/Y'));
+        $sheet->mergeCells('A3:E3');
+        $sheet->getStyle('A3')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Headers de la tabla
+        $sheet->setCellValue('A5', 'Nombre');
+        $sheet->setCellValue('B5', 'Costo');
+        $sheet->setCellValue('C5', 'Precio');
+        $sheet->setCellValue('D5', 'Costo %');
+        $sheet->setCellValue('E5', 'Tipo');
+
+        $sheet->getStyle('A5:E5')->applyFromArray($headerStyle);
+
+        $row = 6; // Comenzar después de los headers
+
+        foreach ($preparedData as $category) {
+            if (empty($category['recipes']) && empty($category['combos'])) continue;
+
+            // Calcular promedio de costo porcentual para la categoría
+            $totalCostPercent = 0;
+            $totalItems = 0;
+
+            foreach ($category['recipes'] as $recipe) {
+                $costPercentValue = is_numeric($recipe->costPercent) 
+                    ? (float)$recipe->costPercent 
+                    : (float)str_replace(['%', ','], ['', '.'], $recipe->costPercent);
+                $totalCostPercent += $costPercentValue;
+                $totalItems++;
+            }
+
+            foreach ($category['combos'] as $combo) {
+                $costPercentValue = is_numeric($combo->costPercent) 
+                    ? (float)$combo->costPercent 
+                    : (float)str_replace(['%', ','], ['', '.'], $combo->costPercent);
+                $totalCostPercent += $costPercentValue;
+                $totalItems++;
+            }
+
+            $averageCostPercent = $totalItems > 0 ? $totalCostPercent / $totalItems : 0;
+
+            // Agregar fila de categoría
+            $sheet->setCellValue('A'.$row, $category['category']->name . ': ' . number_format($averageCostPercent * 100, 2) . '%');
+            $sheet->mergeCells('A'.$row.':E'.$row);
+            $sheet->getStyle('A'.$row.':E'.$row)->applyFromArray($categoryStyle);
+            $row++;
+
+            // Agregar recetas
+            foreach ($category['recipes'] as $recipe) {
+                $costPercentValue = is_numeric($recipe->costPercent) 
+                    ? (float)$recipe->costPercent 
+                    : (float)str_replace(['%', ','], ['', '.'], $recipe->costPercent);
+                $sheet->setCellValue('A'.$row, $recipe->title);
+                $sheet->setCellValue('B'.$row, number_format((float)$recipe->recipeLastPrice, 2));
+                $sheet->setCellValue('C'.$row, number_format((float)$recipe->price, 2));
+                $sheet->setCellValue('D'.$row, number_format($costPercentValue * 100, 2) . '%');
+                $sheet->setCellValue('E'.$row, $recipe->is_food ? 'Alimento' : 'Bebida');
+
+                $sheet->getStyle('A'.$row.':E'.$row)->applyFromArray($dataStyle);
+                $row++;
+            }
+
+            // Agregar combos
+            foreach ($category['combos'] as $combo) {
+                $costPercentValue = is_numeric($combo->costPercent) 
+                    ? (float)$combo->costPercent 
+                    : (float)str_replace(['%', ','], ['', '.'], $combo->costPercent);
+                $sheet->setCellValue('A'.$row, $combo->title);
+                $sheet->setCellValue('B'.$row, number_format((float)$combo->cost, 2));
+                $sheet->setCellValue('C'.$row, number_format((float)$combo->total_price, 2));
+                $sheet->setCellValue('D'.$row, number_format($costPercentValue * 100, 2) . '%');
+                $sheet->setCellValue('E'.$row, 'Combo');
+
+                $sheet->getStyle('A'.$row.':E'.$row)->applyFromArray($dataStyle);
+                $row++;
+            }
+
+            // Agregar fila vacía entre categorías
+            $row++;
+        }
+
+        // Formato de moneda para columnas B y C
+        $lastRow = $row - 1;
+        $sheet->getStyle('B6:B'.$lastRow)->getNumberFormat()->setFormatCode('$#,##0.00');
+        $sheet->getStyle('C6:C'.$lastRow)->getNumberFormat()->setFormatCode('$#,##0.00');
+
+        // Crear y enviar el archivo
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $filename = 'Rentabilidad_Teorica_' . date('Y-m-d_H-i-s') . '.xlsx';
         $tempFile = tempnam(sys_get_temp_dir(), $filename);
         $writer->save($tempFile);
 
