@@ -11,7 +11,7 @@ $plan = $business->user->plan;
 $action = $this->context->action->id;
 
 // Verificar si el usuario es administrador
-$isAdmin = Yii::$app->user->identity && Yii::$app->user->can('administrator');
+$isAdmin = Yii::$app->user->identity && (Yii::$app->user->can('administrator') || Yii::$app->user->can('admin') || Yii::$app->user->can('manage_users'));
 
 $actions = [
     'price-trend',
@@ -200,7 +200,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Gastos -->
-        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['expense_list', 'expense_movements_list'])): ?>
+        <?php if ($isAdmin || Yii::$app->user->identity->canMultiple(['expense_list', 'expense_movements_list','manage_users'])): ?>
         <li class="menu-item <?= $gastosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#gastos" role="button" 
                aria-expanded="<?= $gastosActive ? 'true' : 'false' ?>" 

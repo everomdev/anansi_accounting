@@ -76,6 +76,9 @@ $this->registerCss('
         <div class="p-2">
             <?= Html::a('Nuevo Gasto', ['create'], ['class' => 'btn btn-warning']) ?>
         </div>
+        <div class="p-2">
+            <?= Html::a('<i class="fas fa-chart-pie"></i> Análisis ABC', ['abc-analysis'], ['class' => 'btn btn-warning']) ?>
+        </div>
         <!-- <div class="p-2">
             <?= Html::a('<i class="fas fa-file-export"></i> Exportar Gastos', ['export'], ['class' => 'btn btn-warning']) ?>
         </div>

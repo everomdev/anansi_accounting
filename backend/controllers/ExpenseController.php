@@ -27,6 +27,17 @@ class ExpenseController extends Controller
                 'class' => VerbFilter::class,
                 'actions' => [
                     'delete' => ['POST'],
+                    'bulk-remove' => ['POST'],
+                ],
+            ],
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'rules' => [
+                    [
+                        'actions' => ['index', 'view', 'create', 'update', 'delete', 'bulk-remove', 'provider-list', 'abc-analysis'],
+                        'allow' => true,
+                        'roles' => ['@'], // Cualquier usuario autenticado
+                    ],
                 ],
             ],
         ];
@@ -224,6 +235,132 @@ class ExpenseController extends Controller
             'results' => $results,
             'pagination' => ['more' => false]
         ]);
+    }
+
+    /**
+     * ABC Analysis for expenses
+     */
+    public function actionAbcAnalysis()
+    {
+        $business = RedisKeys::getBusiness();
+        
+        // Get all active expenses for the business
+        $expenses = Expense::find()
+            ->where(['business_id' => $business->id, 'is_active' => 1])
+            ->all();
+        
+        $analysis = $this->performAbcAnalysis($expenses);
+        
+        return $this->render('abc-analysis', [
+            'analysis' => $analysis,
+        ]);
+    }
+
+    /**
+     * Performs ABC analysis on expenses
+     */
+    private function performAbcAnalysis($expenses)
+    {
+        $expenseData = [];
+        $totalMonthlyCost = 0;
+        
+        // Calculate monthly amounts and total
+        foreach ($expenses as $expense) {
+            $monthlyAmount = $expense->getMonthlyAmount();
+            $expenseData[] = [
+                'id' => $expense->id,
+                'name' => $expense->name,
+                'monthly_amount' => $monthlyAmount,
+                'category' => $expense->category ? $expense->category->name : 'Sin categoría',
+                'frequency' => $expense->frequency,
+                'is_recurring' => $expense->is_recurring,
+            ];
+            $totalMonthlyCost += $monthlyAmount;
+        }
+        
+        // Sort by monthly amount descending
+        usort($expenseData, function($a, $b) {
+            return $b['monthly_amount'] <=> $a['monthly_amount'];
+        });
+        
+        // Perform ABC analysis with 2 categories (A and B)
+        $cumulativeCost = 0;
+        $analysis = [
+            'A' => ['items' => [], 'total_cost' => 0, 'percentage' => 0, 'count' => 0, 'recommendations' => []],
+            'B' => ['items' => [], 'total_cost' => 0, 'percentage' => 0, 'count' => 0, 'recommendations' => []],
+        ];
+        
+        foreach ($expenseData as $expense) {
+            $cumulativeCost += $expense['monthly_amount'];
+            $cumulativePercentage = ($cumulativeCost / $totalMonthlyCost) * 100;
+            
+            if ($cumulativePercentage <= 80) { // A items: first 80% of cumulative cost
+                $category = 'A';
+            } else { // B items: remaining 20%
+                $category = 'B';
+            }
+            
+            $analysis[$category]['items'][] = $expense;
+            $analysis[$category]['total_cost'] += $expense['monthly_amount'];
+            $analysis[$category]['count']++;
+        }
+        
+        // Calculate percentages
+        foreach ($analysis as $category => &$data) {
+            $data['percentage'] = $totalMonthlyCost > 0 ? ($data['total_cost'] / $totalMonthlyCost) * 100 : 0;
+            $data['recommendations'] = $this->generateRecommendations($category, $data['items']);
+        }
+        
+        return [
+            'categories' => $analysis,
+            'total_monthly_cost' => $totalMonthlyCost,
+            'total_expenses' => count($expenseData),
+        ];
+    }
+    
+    /**
+     * Generate practical recommendations for expense reduction
+     */
+    private function generateRecommendations($category, $expenses)
+    {
+        $recommendations = [];
+        
+        if ($category === 'A') {
+            // High impact expenses - focus on optimization and reduction
+            $recommendations[] = "Revisar contratos y buscar proveedores alternativos para reducir costos.";
+            $recommendations[] = "Implementar controles de consumo más estrictos.";
+            $recommendations[] = "Evaluar si algunos gastos pueden ser eliminados o reducidos sin afectar operaciones.";
+            $recommendations[] = "Negociar mejores condiciones de pago o descuentos por volumen.";
+            
+            // Category-specific recommendations
+            $categories = array_unique(array_column($expenses, 'category'));
+            foreach ($categories as $cat) {
+                if ($cat === 'Servicios Públicos') {
+                    $recommendations[] = "Implementar medidas de ahorro energético (apagar equipos, usar LED, etc.).";
+                } elseif ($cat === 'Alquiler') {
+                    $recommendations[] = "Considerar renegociar contrato de alquiler o buscar espacios más pequeños.";
+                } elseif (strpos($cat, 'Personal') !== false) {
+                    $recommendations[] = "Optimizar horarios de trabajo y evaluar productividad del personal.";
+                }
+            }
+            
+        } elseif ($category === 'B') {
+            // Medium impact expenses - focus on monitoring and gradual reduction
+            $recommendations[] = "Establecer presupuestos mensuales y alertas de gasto.";
+            $recommendations[] = "Buscar alternativas más económicas para suministros.";
+            $recommendations[] = "Implementar compras centralizadas para obtener mejores precios.";
+            $recommendations[] = "Revisar frecuencias de gastos recurrentes y ajustar según necesidad.";
+            
+            // Check for high-frequency expenses
+            $highFrequency = array_filter($expenses, function($expense) {
+                return in_array($expense['frequency'], ['diario', 'semanal']);
+            });
+            if (count($highFrequency) > 0) {
+                $recommendations[] = "Evaluar si algunos gastos de alta frecuencia pueden convertirse a mensual o trimestral.";
+            }
+        }
+        
+        return $recommendations;
     }
 
     /**
