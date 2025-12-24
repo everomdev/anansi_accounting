@@ -11,6 +11,10 @@ $roles = Yii::$app->authManager->getRoles();
 $roles = array_filter($roles, function ($role) {
     return $role->name != 'admin';
 });
+// Ordenar roles por descripción
+usort($roles, function($a, $b) {
+    return strcmp($a->description, $b->description);
+});
 ?>
 
 <div class="card">

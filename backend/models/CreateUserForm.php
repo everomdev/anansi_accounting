@@ -27,15 +27,27 @@ class CreateUserForm extends Model
         if (!empty($this->userId)) {
             $authManager = \Yii::$app->authManager;
             
-            // Cargar rol del usuario
+            // Cargar rol del usuario (tomar el primero por ahora, pero calcular permisos de todos los roles)
             $userRoles = $authManager->getRolesByUser($this->userId);
             $this->role = !empty($userRoles) ? array_keys($userRoles)[0] : null;
             
-            // Cargar TODOS los permisos del usuario (incluyendo los del rol)
-            $allPermissions = $authManager->getPermissionsByUser($this->userId);
-            $this->_permissions = array_map(function ($permission) {
-                return $permission->name;
-            }, $allPermissions);
+            // Calcular permisos de todos los roles del usuario
+            $allRolePermissions = [];
+            foreach ($userRoles as $roleName => $roleObj) {
+                $rolePerms = $authManager->getPermissionsByRole($roleName);
+                $allRolePermissions = array_merge($allRolePermissions, array_keys($rolePerms));
+            }
+            $allRolePermissions = array_unique($allRolePermissions);
+            
+            // Cargar permisos adicionales (los que tiene el usuario pero no están en ninguno de sus roles)
+            $allUserPermissions = $authManager->getPermissionsByUser($this->userId);
+            $userPermissionNames = array_keys($allUserPermissions);
+            
+            // Permisos adicionales = permisos del usuario - permisos de todos los roles
+            $this->_permissions = array_diff($userPermissionNames, $allRolePermissions);
+            \Yii::info('Permisos del usuario: ' . json_encode($userPermissionNames), 'user_permissions');
+            \Yii::info('Permisos de todos los roles: ' . json_encode($allRolePermissions), 'user_permissions');
+            \Yii::info('Permisos adicionales calculados: ' . json_encode($this->_permissions), 'user_permissions');
 
             $this->user = User::findOne(['id' => $this->userId]);
         }
@@ -160,12 +172,17 @@ class CreateUserForm extends Model
                 }
                 
                 // Asignar permisos adicionales (solo los que no están incluidos en el rol)
+                if (is_string($this->_permissions)) {
+                    $this->_permissions = json_decode($this->_permissions, true) ?: [];
+                }
+                \Yii::info('Permisos adicionales a asignar: ' . json_encode($this->_permissions), 'user_permissions');
                 if (!empty($this->_permissions)) {
                     foreach ($this->_permissions as $permissionName) {
                         if (!isset($rolePermissions[$permissionName])) {
                             $permission = $authManager->getPermission($permissionName);
                             if ($permission) {
                                 $authManager->assign($permission, $this->userId);
+                                \Yii::info('Asignando permiso adicional: ' . $permissionName, 'user_permissions');
                             }
                         }
                     }

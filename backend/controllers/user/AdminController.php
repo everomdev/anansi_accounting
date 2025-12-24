@@ -107,6 +107,11 @@ class AdminController extends Controller
                     ],
                     [
                         'allow' => true,
+                        'actions' => ['role-permissions'],
+                        'roles' => ['manage_users'],
+                    ],
+                    [
+                        'allow' => true,
                         'roles' => ['admin'],
                     ],
                     [
@@ -412,6 +417,27 @@ class AdminController extends Controller
         return $this->render('update_user', [
             'model' => $form
         ]);
+    }
+
+    /**
+     * Returns JSON list of permission names for a given role.
+     * Used by AJAX in the user update form to preload permissions when role changes.
+     * @param string $role
+     * @return array
+     */
+    public function actionRolePermissions($role)
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $auth = \Yii::$app->authManager;
+        if (empty($role)) {
+            return [];
+        }
+        $perms = $auth->getPermissionsByRole($role);
+        $permNames = [];
+        foreach ($perms as $perm) {
+            $permNames[] = is_object($perm) ? $perm->name : $perm;
+        }
+        return $permNames;
     }
 
     public function actionUsers()
