@@ -127,8 +127,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 menuInner.style.position = '';
                 menuInner.style.overflowY = '';
             }
-            
-            console.log('✓ Scrollbar nativo activado en el menú');
         }
     }
     

@@ -13,7 +13,7 @@ array_walk($data, function ($item) use (&$totalCostEffectiveness) {
     $totalCostEffectiveness += ($item->sales * $item->price) - ($item->sales * $item->cost);
 });
 if (!empty($totalSales)) {
-    $popularityAxis = round(0.7 * (100 / $totalSales) * 100, 2);
+    $popularityAxis = 50; // Eje en 50% para BCG estándar
     $costEffectivenessAxis = round($totalCostEffectiveness / $totalSales, 2);
 } else {
     $popularityAxis = 0;
@@ -22,7 +22,7 @@ if (!empty($totalSales)) {
 
 $chartData = \yii\helpers\ArrayHelper::getColumn($data, function ($item) use ($totalSales, $business) {
     return [
-        "x" => ($item->sales - $item->cost),
+        "x" => ($item->price - $item->cost),
         "y" => $item->getSalesPercent($totalSales) * 100,
         "r" => 5
     ];
@@ -40,6 +40,7 @@ $this->registerJsVar('chartData', $chartData);
 $this->registerJsVar('popularityAxis', $popularityAxis);
 $this->registerJsVar('costEffectivenessAxis', $costEffectivenessAxis);
 $this->registerJsVar('currencySymbol', \common\helpers\NumberFormatter::getFormatConfig()['currency_symbol']);
+$this->registerJsVar('currencyCode', \common\helpers\NumberFormatter::getFormatConfig()['currency_code']);
 $this->registerJsVar('locale', 'en-US'); // You can make this dynamic if needed
 
 $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
@@ -113,7 +114,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/matrix.js"), [
                         <td><?= $item->sales ?></td>
                         <td><?= formatPrice($item->cost) ?></td>
                         <td><?= formatPrice($item->price) ?></td>
-                        <td><?= formatPercentage($item->getSalesPercent($totalSales)) ?></td>
+                        <td><?= formatPercentage($item->getSalesPercent($totalSales) * 100) ?></td>
                         <td><?= formatPercentage($item->costPercent) ?></td>
                         <td><?= formatPrice($item->price - $item->cost) ?></td>
                         <td><?= formatPrice($item->sales * $item->cost) ?></td>

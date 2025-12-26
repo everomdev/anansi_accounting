@@ -11,6 +11,15 @@ class RbacController extends Controller
     {
         $authManager = \Yii::$app->authManager;
 
+        // Helper function to safely add child
+        $addChildSafely = function($parent, $child) use ($authManager) {
+            try {
+                $authManager->addChild($parent, $child);
+            } catch (\yii\db\IntegrityException $e) {
+                // Ignore if already exists
+            }
+        };
+
         // Remove only if you want to reset everything, but for now, preserve existing assignments
         // $authManager->removeAll();
 
@@ -522,201 +531,201 @@ class RbacController extends Controller
         // add permissions to roles
         // Role Storage
         $authManager->removeChildren($roleStorage);
-        $authManager->addChild($roleStorage, $permissionMovementsList);
-        $authManager->addChild($roleStorage, $permissionMovementsCreate);
-        $authManager->addChild($roleStorage, $permissionMovementsView);
-        $authManager->addChild($roleStorage, $permissionIngredientsList);
-        $authManager->addChild($roleStorage, $permissionIngredientsView);
-        $authManager->addChild($roleStorage, $permissionIngredientsCreate);
-        $authManager->addChild($roleStorage, $permissionIngredientsUpdate);
-        $authManager->addChild($roleStorage, $permissionIngredientsDelete);
-        $authManager->addChild($roleStorage, $permissionProvidersList);
-        $authManager->addChild($roleStorage, $permissionProvidersView);
-        $authManager->addChild($roleStorage, $permissionPriceTrendView);
+        $addChildSafely($roleStorage, $permissionMovementsList);
+        $addChildSafely($roleStorage, $permissionMovementsCreate);
+        $addChildSafely($roleStorage, $permissionMovementsView);
+        $addChildSafely($roleStorage, $permissionIngredientsList);
+        $addChildSafely($roleStorage, $permissionIngredientsView);
+        $addChildSafely($roleStorage, $permissionIngredientsCreate);
+        $addChildSafely($roleStorage, $permissionIngredientsUpdate);
+        $addChildSafely($roleStorage, $permissionIngredientsDelete);
+        $addChildSafely($roleStorage, $permissionProvidersList);
+        $addChildSafely($roleStorage, $permissionProvidersView);
+        $addChildSafely($roleStorage, $permissionPriceTrendView);
 
         // Role Storage Admin
         $authManager->removeChildren($roleStorageAdmin);
-        $authManager->addChild($roleStorageAdmin, $permissionMovementsList);
-        $authManager->addChild($roleStorageAdmin, $permissionMovementsCreate);
-        $authManager->addChild($roleStorageAdmin, $permissionMovementsView);
-        $authManager->addChild($roleStorageAdmin, $permissionIngredientsList);
-        $authManager->addChild($roleStorageAdmin, $permissionIngredientsView);
-        $authManager->addChild($roleStorageAdmin, $permissionIngredientsCreate);
-        $authManager->addChild($roleStorageAdmin, $permissionIngredientsUpdate);
-        $authManager->addChild($roleStorageAdmin, $permissionIngredientsDelete);
-        $authManager->addChild($roleStorageAdmin, $permissionProvidersList);
-        $authManager->addChild($roleStorageAdmin, $permissionProvidersView);
-        $authManager->addChild($roleStorageAdmin, $permissionProvidersCreate);
-        $authManager->addChild($roleStorageAdmin, $permissionProvidersUpdate);
-        $authManager->addChild($roleStorageAdmin, $permissionProvidersDelete);
-        $authManager->addChild($roleStorageAdmin, $permissionPriceTrendView);
+        $addChildSafely($roleStorageAdmin, $permissionMovementsList);
+        $addChildSafely($roleStorageAdmin, $permissionMovementsCreate);
+        $addChildSafely($roleStorageAdmin, $permissionMovementsView);
+        $addChildSafely($roleStorageAdmin, $permissionIngredientsList);
+        $addChildSafely($roleStorageAdmin, $permissionIngredientsView);
+        $addChildSafely($roleStorageAdmin, $permissionIngredientsCreate);
+        $addChildSafely($roleStorageAdmin, $permissionIngredientsUpdate);
+        $addChildSafely($roleStorageAdmin, $permissionIngredientsDelete);
+        $addChildSafely($roleStorageAdmin, $permissionProvidersList);
+        $addChildSafely($roleStorageAdmin, $permissionProvidersView);
+        $addChildSafely($roleStorageAdmin, $permissionProvidersCreate);
+        $addChildSafely($roleStorageAdmin, $permissionProvidersUpdate);
+        $addChildSafely($roleStorageAdmin, $permissionProvidersDelete);
+        $addChildSafely($roleStorageAdmin, $permissionPriceTrendView);
 
         // Role Chef
         $authManager->removeChildren($roleChef);
-        $authManager->addChild($roleChef, $permissionIngredientsList);
-        $authManager->addChild($roleChef, $permissionIngredientsView);
-        $authManager->addChild($roleChef, $permissionSubrecipeList);
-        $authManager->addChild($roleChef, $permissionSubrecipeView);
-        $authManager->addChild($roleChef, $permissionSubrecipeCreate);
-        $authManager->addChild($roleChef, $permissionSubrecipeUpdate);
-        $authManager->addChild($roleChef, $permissionSubrecipeDelete);
-        $authManager->addChild($roleChef, $permissionRecipeList);
-        $authManager->addChild($roleChef, $permissionRecipeView);
-        $authManager->addChild($roleChef, $permissionRecipeCreate);
-        $authManager->addChild($roleChef, $permissionRecipeUpdate);
-        $authManager->addChild($roleChef, $permissionRecipeDelete);
-        $authManager->addChild($roleChef, $permissionConvoyList);
-        $authManager->addChild($roleChef, $permissionConvoyView);
-        $authManager->addChild($roleChef, $permissionConvoyCreate);
-        $authManager->addChild($roleChef, $permissionConvoyUpdate);
-        $authManager->addChild($roleChef, $permissionConvoyDelete);
-        $authManager->addChild($roleChef, $permissionMenuView);
-        $authManager->addChild($roleChef, $permissionMenuUpdate);
-        $authManager->addChild($roleChef, $permissionMenuAddItem);
-        $authManager->addChild($roleChef, $permissionMenuRemoveItem);
+        $addChildSafely($roleChef, $permissionIngredientsList);
+        $addChildSafely($roleChef, $permissionIngredientsView);
+        $addChildSafely($roleChef, $permissionSubrecipeList);
+        $addChildSafely($roleChef, $permissionSubrecipeView);
+        $addChildSafely($roleChef, $permissionSubrecipeCreate);
+        $addChildSafely($roleChef, $permissionSubrecipeUpdate);
+        $addChildSafely($roleChef, $permissionSubrecipeDelete);
+        $addChildSafely($roleChef, $permissionRecipeList);
+        $addChildSafely($roleChef, $permissionRecipeView);
+        $addChildSafely($roleChef, $permissionRecipeCreate);
+        $addChildSafely($roleChef, $permissionRecipeUpdate);
+        $addChildSafely($roleChef, $permissionRecipeDelete);
+        $addChildSafely($roleChef, $permissionConvoyList);
+        $addChildSafely($roleChef, $permissionConvoyView);
+        $addChildSafely($roleChef, $permissionConvoyCreate);
+        $addChildSafely($roleChef, $permissionConvoyUpdate);
+        $addChildSafely($roleChef, $permissionConvoyDelete);
+        $addChildSafely($roleChef, $permissionMenuView);
+        $addChildSafely($roleChef, $permissionMenuUpdate);
+        $addChildSafely($roleChef, $permissionMenuAddItem);
+        $addChildSafely($roleChef, $permissionMenuRemoveItem);
 
         // Role Executive Chef
         $authManager->removeChildren($roleExecutiveChef);
-        $authManager->addChild($roleExecutiveChef, $permissionIngredientsList);
-        $authManager->addChild($roleExecutiveChef, $permissionIngredientsView);
-        $authManager->addChild($roleExecutiveChef, $permissionIngredientsCreate);
-        $authManager->addChild($roleExecutiveChef, $permissionIngredientsUpdate);
-        $authManager->addChild($roleExecutiveChef, $permissionIngredientsDelete);
-        $authManager->addChild($roleExecutiveChef, $permissionSubrecipeList);
-        $authManager->addChild($roleExecutiveChef, $permissionSubrecipeView);
-        $authManager->addChild($roleExecutiveChef, $permissionSubrecipeCreate);
-        $authManager->addChild($roleExecutiveChef, $permissionSubrecipeUpdate);
-        $authManager->addChild($roleExecutiveChef, $permissionSubrecipeDelete);
-        $authManager->addChild($roleExecutiveChef, $permissionRecipeList);
-        $authManager->addChild($roleExecutiveChef, $permissionRecipeView);
-        $authManager->addChild($roleExecutiveChef, $permissionRecipeCreate);
-        $authManager->addChild($roleExecutiveChef, $permissionRecipeUpdate);
-        $authManager->addChild($roleExecutiveChef, $permissionRecipeDelete);
-        $authManager->addChild($roleExecutiveChef, $permissionConvoyList);
-        $authManager->addChild($roleExecutiveChef, $permissionConvoyView);
-        $authManager->addChild($roleExecutiveChef, $permissionConvoyCreate);
-        $authManager->addChild($roleExecutiveChef, $permissionConvoyUpdate);
-        $authManager->addChild($roleExecutiveChef, $permissionConvoyDelete);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuView);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuUpdate);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuAddItem);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuRemoveItem);
-        $authManager->addChild($roleExecutiveChef, $permissionProfitabilityView);
-        $authManager->addChild($roleExecutiveChef, $permissionTheoreticalProfitabilityView);
-        $authManager->addChild($roleExecutiveChef, $permissionRealProfitabilityView);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuAnalysisView);
-        $authManager->addChild($roleExecutiveChef, $permissionAbcAnalysisView);
-        $authManager->addChild($roleExecutiveChef, $permissionChartsView);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuImprovementsView);
-        $authManager->addChild($roleExecutiveChef, $permissionMenuImprovementsUpdate);
+        $addChildSafely($roleExecutiveChef, $permissionIngredientsList);
+        $addChildSafely($roleExecutiveChef, $permissionIngredientsView);
+        $addChildSafely($roleExecutiveChef, $permissionIngredientsCreate);
+        $addChildSafely($roleExecutiveChef, $permissionIngredientsUpdate);
+        $addChildSafely($roleExecutiveChef, $permissionIngredientsDelete);
+        $addChildSafely($roleExecutiveChef, $permissionSubrecipeList);
+        $addChildSafely($roleExecutiveChef, $permissionSubrecipeView);
+        $addChildSafely($roleExecutiveChef, $permissionSubrecipeCreate);
+        $addChildSafely($roleExecutiveChef, $permissionSubrecipeUpdate);
+        $addChildSafely($roleExecutiveChef, $permissionSubrecipeDelete);
+        $addChildSafely($roleExecutiveChef, $permissionRecipeList);
+        $addChildSafely($roleExecutiveChef, $permissionRecipeView);
+        $addChildSafely($roleExecutiveChef, $permissionRecipeCreate);
+        $addChildSafely($roleExecutiveChef, $permissionRecipeUpdate);
+        $addChildSafely($roleExecutiveChef, $permissionRecipeDelete);
+        $addChildSafely($roleExecutiveChef, $permissionConvoyList);
+        $addChildSafely($roleExecutiveChef, $permissionConvoyView);
+        $addChildSafely($roleExecutiveChef, $permissionConvoyCreate);
+        $addChildSafely($roleExecutiveChef, $permissionConvoyUpdate);
+        $addChildSafely($roleExecutiveChef, $permissionConvoyDelete);
+        $addChildSafely($roleExecutiveChef, $permissionMenuView);
+        $addChildSafely($roleExecutiveChef, $permissionMenuUpdate);
+        $addChildSafely($roleExecutiveChef, $permissionMenuAddItem);
+        $addChildSafely($roleExecutiveChef, $permissionMenuRemoveItem);
+        $addChildSafely($roleExecutiveChef, $permissionProfitabilityView);
+        $addChildSafely($roleExecutiveChef, $permissionTheoreticalProfitabilityView);
+        $addChildSafely($roleExecutiveChef, $permissionRealProfitabilityView);
+        $addChildSafely($roleExecutiveChef, $permissionMenuAnalysisView);
+        $addChildSafely($roleExecutiveChef, $permissionAbcAnalysisView);
+        $addChildSafely($roleExecutiveChef, $permissionChartsView);
+        $addChildSafely($roleExecutiveChef, $permissionMenuImprovementsView);
+        $addChildSafely($roleExecutiveChef, $permissionMenuImprovementsUpdate);
 
         // Role Owner
         $authManager->removeChildren($roleOwner);
-        $authManager->addChild($roleOwner, $permissionStorageList);
-        $authManager->addChild($roleOwner, $permissionStorageView);
-        $authManager->addChild($roleOwner, $permissionSubrecipeList);
-        $authManager->addChild($roleOwner, $permissionSubrecipeView);
-        $authManager->addChild($roleOwner, $permissionSubrecipeCreate);
-        $authManager->addChild($roleOwner, $permissionSubrecipeUpdate);
-        $authManager->addChild($roleOwner, $permissionSubrecipeDelete);
-        $authManager->addChild($roleOwner, $permissionRecipeList);
-        $authManager->addChild($roleOwner, $permissionRecipeView);
-        $authManager->addChild($roleOwner, $permissionRecipeCreate);
-        $authManager->addChild($roleOwner, $permissionRecipeUpdate);
-        $authManager->addChild($roleOwner, $permissionRecipeDelete);
-        $authManager->addChild($roleOwner, $permissionConvoyList);
-        $authManager->addChild($roleOwner, $permissionConvoyView);
-        $authManager->addChild($roleOwner, $permissionConvoyCreate);
-        $authManager->addChild($roleOwner, $permissionConvoyUpdate);
-        $authManager->addChild($roleOwner, $permissionConvoyDelete);
-        $authManager->addChild($roleOwner, $permissionComboList);
-        $authManager->addChild($roleOwner, $permissionComboView);
-        $authManager->addChild($roleOwner, $permissionComboCreate);
-        $authManager->addChild($roleOwner, $permissionComboUpdate);
-        $authManager->addChild($roleOwner, $permissionComboDelete);
-        $authManager->addChild($roleOwner, $permissionPriceTrendView);
-        $authManager->addChild($roleOwner, $permissionChartsView);
-        $authManager->addChild($roleOwner, $permissionIngredientsList);
-        $authManager->addChild($roleOwner, $permissionIngredientsView);
-        $authManager->addChild($roleOwner, $permissionIngredientsCreate);
-        $authManager->addChild($roleOwner, $permissionIngredientsUpdate);
-        $authManager->addChild($roleOwner, $permissionIngredientsDelete);
-        $authManager->addChild($roleOwner, $permissionProvidersList);
-        $authManager->addChild($roleOwner, $permissionProvidersView);
-        $authManager->addChild($roleOwner, $permissionProvidersCreate);
-        $authManager->addChild($roleOwner, $permissionProvidersUpdate);
-        $authManager->addChild($roleOwner, $permissionProvidersDelete);
-        $authManager->addChild($roleOwner, $permissionMenuView);
-        $authManager->addChild($roleOwner, $permissionMenuUpdate);
-        $authManager->addChild($roleOwner, $permissionMenuAddItem);
-        $authManager->addChild($roleOwner, $permissionMenuRemoveItem);
-        $authManager->addChild($roleOwner, $permissionProfitabilityView);
-        $authManager->addChild($roleOwner, $permissionTheoreticalProfitabilityView);
-        $authManager->addChild($roleOwner, $permissionRealProfitabilityView);
-        $authManager->addChild($roleOwner, $permissionMenuAnalysisView);
-        $authManager->addChild($roleOwner, $permissionMenuAnalysisUpdate);
-        $authManager->addChild($roleOwner, $permissionMenuImprovementsView);
-        $authManager->addChild($roleOwner, $permissionMenuImprovementsUpdate);
-        $authManager->addChild($roleOwner, $permissionAbcAnalysisView);
-        $authManager->addChild($roleOwner, $permissionMovementsList);
-        $authManager->addChild($roleOwner, $permissionMovementsView);
-        $authManager->addChild($roleOwner, $permissionMovementsCreate);
-        $authManager->addChild($roleOwner, $permissionMovementsUpdate);
-        $authManager->addChild($roleOwner, $permissionMovementsDelete);
+        $addChildSafely($roleOwner, $permissionStorageList);
+        $addChildSafely($roleOwner, $permissionStorageView);
+        $addChildSafely($roleOwner, $permissionSubrecipeList);
+        $addChildSafely($roleOwner, $permissionSubrecipeView);
+        $addChildSafely($roleOwner, $permissionSubrecipeCreate);
+        $addChildSafely($roleOwner, $permissionSubrecipeUpdate);
+        $addChildSafely($roleOwner, $permissionSubrecipeDelete);
+        $addChildSafely($roleOwner, $permissionRecipeList);
+        $addChildSafely($roleOwner, $permissionRecipeView);
+        $addChildSafely($roleOwner, $permissionRecipeCreate);
+        $addChildSafely($roleOwner, $permissionRecipeUpdate);
+        $addChildSafely($roleOwner, $permissionRecipeDelete);
+        $addChildSafely($roleOwner, $permissionConvoyList);
+        $addChildSafely($roleOwner, $permissionConvoyView);
+        $addChildSafely($roleOwner, $permissionConvoyCreate);
+        $addChildSafely($roleOwner, $permissionConvoyUpdate);
+        $addChildSafely($roleOwner, $permissionConvoyDelete);
+        $addChildSafely($roleOwner, $permissionComboList);
+        $addChildSafely($roleOwner, $permissionComboView);
+        $addChildSafely($roleOwner, $permissionComboCreate);
+        $addChildSafely($roleOwner, $permissionComboUpdate);
+        $addChildSafely($roleOwner, $permissionComboDelete);
+        $addChildSafely($roleOwner, $permissionPriceTrendView);
+        $addChildSafely($roleOwner, $permissionChartsView);
+        $addChildSafely($roleOwner, $permissionIngredientsList);
+        $addChildSafely($roleOwner, $permissionIngredientsView);
+        $addChildSafely($roleOwner, $permissionIngredientsCreate);
+        $addChildSafely($roleOwner, $permissionIngredientsUpdate);
+        $addChildSafely($roleOwner, $permissionIngredientsDelete);
+        $addChildSafely($roleOwner, $permissionProvidersList);
+        $addChildSafely($roleOwner, $permissionProvidersView);
+        $addChildSafely($roleOwner, $permissionProvidersCreate);
+        $addChildSafely($roleOwner, $permissionProvidersUpdate);
+        $addChildSafely($roleOwner, $permissionProvidersDelete);
+        $addChildSafely($roleOwner, $permissionMenuView);
+        $addChildSafely($roleOwner, $permissionMenuUpdate);
+        $addChildSafely($roleOwner, $permissionMenuAddItem);
+        $addChildSafely($roleOwner, $permissionMenuRemoveItem);
+        $addChildSafely($roleOwner, $permissionProfitabilityView);
+        $addChildSafely($roleOwner, $permissionTheoreticalProfitabilityView);
+        $addChildSafely($roleOwner, $permissionRealProfitabilityView);
+        $addChildSafely($roleOwner, $permissionMenuAnalysisView);
+        $addChildSafely($roleOwner, $permissionMenuAnalysisUpdate);
+        $addChildSafely($roleOwner, $permissionMenuImprovementsView);
+        $addChildSafely($roleOwner, $permissionMenuImprovementsUpdate);
+        $addChildSafely($roleOwner, $permissionAbcAnalysisView);
+        $addChildSafely($roleOwner, $permissionMovementsList);
+        $addChildSafely($roleOwner, $permissionMovementsView);
+        $addChildSafely($roleOwner, $permissionMovementsCreate);
+        $addChildSafely($roleOwner, $permissionMovementsUpdate);
+        $addChildSafely($roleOwner, $permissionMovementsDelete);
 
         // Role Administrator
         $authManager->removeChildren($roleAdministrator);
-        $authManager->addChild($roleAdministrator, $permissionStorageList);
-        $authManager->addChild($roleAdministrator, $permissionStorageView);
-        $authManager->addChild($roleAdministrator, $permissionSubrecipeList);
-        $authManager->addChild($roleAdministrator, $permissionSubrecipeView);
-        $authManager->addChild($roleAdministrator, $permissionSubrecipeCreate);
-        $authManager->addChild($roleAdministrator, $permissionSubrecipeUpdate);
-        $authManager->addChild($roleAdministrator, $permissionSubrecipeDelete);
-        $authManager->addChild($roleAdministrator, $permissionRecipeList);
-        $authManager->addChild($roleAdministrator, $permissionRecipeView);
-        $authManager->addChild($roleAdministrator, $permissionRecipeCreate);
-        $authManager->addChild($roleAdministrator, $permissionRecipeUpdate);
-        $authManager->addChild($roleAdministrator, $permissionRecipeDelete);
-        $authManager->addChild($roleAdministrator, $permissionConvoyList);
-        $authManager->addChild($roleAdministrator, $permissionConvoyView);
-        $authManager->addChild($roleAdministrator, $permissionConvoyCreate);
-        $authManager->addChild($roleAdministrator, $permissionConvoyUpdate);
-        $authManager->addChild($roleAdministrator, $permissionConvoyDelete);
-        $authManager->addChild($roleAdministrator, $permissionComboList);
-        $authManager->addChild($roleAdministrator, $permissionComboView);
-        $authManager->addChild($roleAdministrator, $permissionComboCreate);
-        $authManager->addChild($roleAdministrator, $permissionComboUpdate);
-        $authManager->addChild($roleAdministrator, $permissionComboDelete);
-        $authManager->addChild($roleAdministrator, $permissionPriceTrendView);
-        $authManager->addChild($roleAdministrator, $permissionChartsView);
-        $authManager->addChild($roleAdministrator, $permissionIngredientsList);
-        $authManager->addChild($roleAdministrator, $permissionIngredientsView);
-        $authManager->addChild($roleAdministrator, $permissionIngredientsCreate);
-        $authManager->addChild($roleAdministrator, $permissionIngredientsUpdate);
-        $authManager->addChild($roleAdministrator, $permissionIngredientsDelete);
-        $authManager->addChild($roleAdministrator, $permissionProvidersList);
-        $authManager->addChild($roleAdministrator, $permissionProvidersView);
-        $authManager->addChild($roleAdministrator, $permissionProvidersCreate);
-        $authManager->addChild($roleAdministrator, $permissionProvidersUpdate);
-        $authManager->addChild($roleAdministrator, $permissionProvidersDelete);
-        $authManager->addChild($roleAdministrator, $permissionMenuView);
-        $authManager->addChild($roleAdministrator, $permissionMenuUpdate);
-        $authManager->addChild($roleAdministrator, $permissionMenuAddItem);
-        $authManager->addChild($roleAdministrator, $permissionMenuRemoveItem);
-        $authManager->addChild($roleAdministrator, $permissionProfitabilityView);
-        $authManager->addChild($roleAdministrator, $permissionTheoreticalProfitabilityView);
-        $authManager->addChild($roleAdministrator, $permissionRealProfitabilityView);
-        $authManager->addChild($roleAdministrator, $permissionMenuAnalysisView);
-        $authManager->addChild($roleAdministrator, $permissionMenuAnalysisUpdate);
-        $authManager->addChild($roleAdministrator, $permissionMenuImprovementsView);
-        $authManager->addChild($roleAdministrator, $permissionMenuImprovementsUpdate);
-        $authManager->addChild($roleAdministrator, $permissionAbcAnalysisView);
-        $authManager->addChild($roleAdministrator, $permissionMovementsList);
-        $authManager->addChild($roleAdministrator, $permissionMovementsView);
-        $authManager->addChild($roleAdministrator, $permissionMovementsCreate);
-        $authManager->addChild($roleAdministrator, $permissionMovementsUpdate);
-        $authManager->addChild($roleAdministrator, $permissionMovementsDelete);
+        $addChildSafely($roleAdministrator, $permissionStorageList);
+        $addChildSafely($roleAdministrator, $permissionStorageView);
+        $addChildSafely($roleAdministrator, $permissionSubrecipeList);
+        $addChildSafely($roleAdministrator, $permissionSubrecipeView);
+        $addChildSafely($roleAdministrator, $permissionSubrecipeCreate);
+        $addChildSafely($roleAdministrator, $permissionSubrecipeUpdate);
+        $addChildSafely($roleAdministrator, $permissionSubrecipeDelete);
+        $addChildSafely($roleAdministrator, $permissionRecipeList);
+        $addChildSafely($roleAdministrator, $permissionRecipeView);
+        $addChildSafely($roleAdministrator, $permissionRecipeCreate);
+        $addChildSafely($roleAdministrator, $permissionRecipeUpdate);
+        $addChildSafely($roleAdministrator, $permissionRecipeDelete);
+        $addChildSafely($roleAdministrator, $permissionConvoyList);
+        $addChildSafely($roleAdministrator, $permissionConvoyView);
+        $addChildSafely($roleAdministrator, $permissionConvoyCreate);
+        $addChildSafely($roleAdministrator, $permissionConvoyUpdate);
+        $addChildSafely($roleAdministrator, $permissionConvoyDelete);
+        $addChildSafely($roleAdministrator, $permissionComboList);
+        $addChildSafely($roleAdministrator, $permissionComboView);
+        $addChildSafely($roleAdministrator, $permissionComboCreate);
+        $addChildSafely($roleAdministrator, $permissionComboUpdate);
+        $addChildSafely($roleAdministrator, $permissionComboDelete);
+        $addChildSafely($roleAdministrator, $permissionPriceTrendView);
+        $addChildSafely($roleAdministrator, $permissionChartsView);
+        $addChildSafely($roleAdministrator, $permissionIngredientsList);
+        $addChildSafely($roleAdministrator, $permissionIngredientsView);
+        $addChildSafely($roleAdministrator, $permissionIngredientsCreate);
+        $addChildSafely($roleAdministrator, $permissionIngredientsUpdate);
+        $addChildSafely($roleAdministrator, $permissionIngredientsDelete);
+        $addChildSafely($roleAdministrator, $permissionProvidersList);
+        $addChildSafely($roleAdministrator, $permissionProvidersView);
+        $addChildSafely($roleAdministrator, $permissionProvidersCreate);
+        $addChildSafely($roleAdministrator, $permissionProvidersUpdate);
+        $addChildSafely($roleAdministrator, $permissionProvidersDelete);
+        $addChildSafely($roleAdministrator, $permissionMenuView);
+        $addChildSafely($roleAdministrator, $permissionMenuUpdate);
+        $addChildSafely($roleAdministrator, $permissionMenuAddItem);
+        $addChildSafely($roleAdministrator, $permissionMenuRemoveItem);
+        $addChildSafely($roleAdministrator, $permissionProfitabilityView);
+        $addChildSafely($roleAdministrator, $permissionTheoreticalProfitabilityView);
+        $addChildSafely($roleAdministrator, $permissionRealProfitabilityView);
+        $addChildSafely($roleAdministrator, $permissionMenuAnalysisView);
+        $addChildSafely($roleAdministrator, $permissionMenuAnalysisUpdate);
+        $addChildSafely($roleAdministrator, $permissionMenuImprovementsView);
+        $addChildSafely($roleAdministrator, $permissionMenuImprovementsUpdate);
+        $addChildSafely($roleAdministrator, $permissionAbcAnalysisView);
+        $addChildSafely($roleAdministrator, $permissionMovementsList);
+        $addChildSafely($roleAdministrator, $permissionMovementsView);
+        $addChildSafely($roleAdministrator, $permissionMovementsCreate);
+        $addChildSafely($roleAdministrator, $permissionMovementsUpdate);
+        $addChildSafely($roleAdministrator, $permissionMovementsDelete);
 
         // Create additional permissions
         $permissionDashboardView = $authManager->getPermission('dashboard_view');
@@ -839,220 +848,252 @@ class RbacController extends Controller
         }
 
         // Create new roles
-        $roleGeneralManager = $authManager->createRole('general_manager');
-        $roleGeneralManager->description = 'Gerente General';
-        $authManager->add($roleGeneralManager);
+        $roleGeneralManager = $authManager->getRole('general_manager');
+        if (!$roleGeneralManager) {
+            $roleGeneralManager = $authManager->createRole('general_manager');
+            $roleGeneralManager->description = 'Gerente General';
+            $authManager->add($roleGeneralManager);
+        }
 
-        $roleSousChef = $authManager->createRole('sous_chef');
-        $roleSousChef->description = 'Sous Chef';
-        $authManager->add($roleSousChef);
+        $roleSousChef = $authManager->getRole('sous_chef');
+        if (!$roleSousChef) {
+            $roleSousChef = $authManager->createRole('sous_chef');
+            $roleSousChef->description = 'Sous Chef';
+            $authManager->add($roleSousChef);
+        }
 
-        $rolePurchasingManager = $authManager->createRole('purchasing_manager');
-        $rolePurchasingManager->description = 'Encargado de compras';
-        $authManager->add($rolePurchasingManager);
+        $rolePurchasingManager = $authManager->getRole('purchasing_manager');
+        if (!$rolePurchasingManager) {
+            $rolePurchasingManager = $authManager->createRole('purchasing_manager');
+            $rolePurchasingManager->description = 'Encargado de compras';
+            $authManager->add($rolePurchasingManager);
+        }
 
-        $roleMaintenanceChief = $authManager->createRole('maintenance_chief');
-        $roleMaintenanceChief->description = 'Jefe de Mantenimiento';
-        $authManager->add($roleMaintenanceChief);
+        $roleMaintenanceChief = $authManager->getRole('maintenance_chief');
+        if (!$roleMaintenanceChief) {
+            $roleMaintenanceChief = $authManager->createRole('maintenance_chief');
+            $roleMaintenanceChief->description = 'Jefe de Mantenimiento';
+            $authManager->add($roleMaintenanceChief);
+        }
 
-        $roleWaiterCaptain = $authManager->createRole('waiter_captain');
-        $roleWaiterCaptain->description = 'Capitán de Meseros';
-        $authManager->add($roleWaiterCaptain);
+        $roleWaiterCaptain = $authManager->getRole('waiter_captain');
+        if (!$roleWaiterCaptain) {
+            $roleWaiterCaptain = $authManager->createRole('waiter_captain');
+            $roleWaiterCaptain->description = 'Capitán de Meseros';
+            $authManager->add($roleWaiterCaptain);
+        }
 
-        $roleAccountant = $authManager->createRole('accountant');
-        $roleAccountant->description = 'Contador';
-        $authManager->add($roleAccountant);
+        $roleAccountant = $authManager->getRole('accountant');
+        if (!$roleAccountant) {
+            $roleAccountant = $authManager->createRole('accountant');
+            $roleAccountant->description = 'Contador';
+            $authManager->add($roleAccountant);
+        }
 
-        $roleWarehouseAssistant = $authManager->createRole('warehouse_assistant');
-        $roleWarehouseAssistant->description = 'Asistente de Almacén';
-        $authManager->add($roleWarehouseAssistant);
+        $roleWarehouseAssistant = $authManager->getRole('warehouse_assistant');
+        if (!$roleWarehouseAssistant) {
+            $roleWarehouseAssistant = $authManager->createRole('warehouse_assistant');
+            $roleWarehouseAssistant->description = 'Asistente de Almacén';
+            $authManager->add($roleWarehouseAssistant);
+        }
 
-        $roleExternalConsultant = $authManager->createRole('external_consultant');
-        $roleExternalConsultant->description = 'Consultor Externo';
-        $authManager->add($roleExternalConsultant);
+        $roleExternalConsultant = $authManager->getRole('external_consultant');
+        if (!$roleExternalConsultant) {
+            $roleExternalConsultant = $authManager->createRole('external_consultant');
+            $roleExternalConsultant->description = 'Consultor Externo';
+            $authManager->add($roleExternalConsultant);
+        }
 
-        $roleAdministrativeAssistant = $authManager->createRole('administrative_assistant');
-        $roleAdministrativeAssistant->description = 'Asistente Administrativo';
-        $authManager->add($roleAdministrativeAssistant);
+        $roleAdministrativeAssistant = $authManager->getRole('administrative_assistant');
+        if (!$roleAdministrativeAssistant) {
+            $roleAdministrativeAssistant = $authManager->createRole('administrative_assistant');
+            $roleAdministrativeAssistant->description = 'Asistente Administrativo';
+            $authManager->add($roleAdministrativeAssistant);
+        }
 
-        $roleMenuManager = $authManager->createRole('menu_manager');
-        $roleMenuManager->description = 'Gerente de Menú';
-        $authManager->add($roleMenuManager);
+        $roleMenuManager = $authManager->getRole('menu_manager');
+        if (!$roleMenuManager) {
+            $roleMenuManager = $authManager->createRole('menu_manager');
+            $roleMenuManager->description = 'Gerente de Menú';
+            $authManager->add($roleMenuManager);
+        }
+
+
 
         // Assign permissions to General Manager
-        $authManager->addChild($roleGeneralManager, $permissionDashboardView);
-        $authManager->addChild($roleGeneralManager, $permissionUsersList);
-        $authManager->addChild($roleGeneralManager, $permissionUsersView);
-        $authManager->addChild($roleGeneralManager, $permissionUsersCreate);
-        $authManager->addChild($roleGeneralManager, $permissionUsersUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionUsersDelete);
-        $authManager->addChild($roleGeneralManager, $permissionRolesList);
-        $authManager->addChild($roleGeneralManager, $permissionRolesView);
-        $authManager->addChild($roleGeneralManager, $permissionRolesCreate);
-        $authManager->addChild($roleGeneralManager, $permissionRolesUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionRolesDelete);
-        $authManager->addChild($roleGeneralManager, $permissionRecipeList);
-        $authManager->addChild($roleGeneralManager, $permissionRecipeView);
-        $authManager->addChild($roleGeneralManager, $permissionRecipeCreate);
-        $authManager->addChild($roleGeneralManager, $permissionRecipeUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionRecipeDelete);
-        $authManager->addChild($roleGeneralManager, $permissionIngredientsList);
-        $authManager->addChild($roleGeneralManager, $permissionIngredientsView);
-        $authManager->addChild($roleGeneralManager, $permissionIngredientsCreate);
-        $authManager->addChild($roleGeneralManager, $permissionIngredientsUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionIngredientsDelete);
-        $authManager->addChild($roleGeneralManager, $permissionProvidersList);
-        $authManager->addChild($roleGeneralManager, $permissionProvidersView);
-        $authManager->addChild($roleGeneralManager, $permissionProvidersCreate);
-        $authManager->addChild($roleGeneralManager, $permissionProvidersUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionProvidersDelete);
-        $authManager->addChild($roleGeneralManager, $permissionInventoryList);
-        $authManager->addChild($roleGeneralManager, $permissionInventoryView);
-        $authManager->addChild($roleGeneralManager, $permissionInventoryCreate);
-        $authManager->addChild($roleGeneralManager, $permissionInventoryUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionInventoryDelete);
-        $authManager->addChild($roleGeneralManager, $permissionMovementsList);
-        $authManager->addChild($roleGeneralManager, $permissionMovementsView);
-        $authManager->addChild($roleGeneralManager, $permissionMovementsCreate);
-        $authManager->addChild($roleGeneralManager, $permissionMovementsUpdate);
-        $authManager->addChild($roleGeneralManager, $permissionMovementsDelete);
+        $addChildSafely($roleGeneralManager, $permissionDashboardView);
+        $addChildSafely($roleGeneralManager, $permissionUsersList);
+        $addChildSafely($roleGeneralManager, $permissionUsersView);
+        $addChildSafely($roleGeneralManager, $permissionUsersCreate);
+        $addChildSafely($roleGeneralManager, $permissionUsersUpdate);
+        $addChildSafely($roleGeneralManager, $permissionUsersDelete);
+        $addChildSafely($roleGeneralManager, $permissionRolesList);
+        $addChildSafely($roleGeneralManager, $permissionRolesView);
+        $addChildSafely($roleGeneralManager, $permissionRolesCreate);
+        $addChildSafely($roleGeneralManager, $permissionRolesUpdate);
+        $addChildSafely($roleGeneralManager, $permissionRolesDelete);
+        $addChildSafely($roleGeneralManager, $permissionRecipeList);
+        $addChildSafely($roleGeneralManager, $permissionRecipeView);
+        $addChildSafely($roleGeneralManager, $permissionRecipeCreate);
+        $addChildSafely($roleGeneralManager, $permissionRecipeUpdate);
+        $addChildSafely($roleGeneralManager, $permissionRecipeDelete);
+        $addChildSafely($roleGeneralManager, $permissionIngredientsList);
+        $addChildSafely($roleGeneralManager, $permissionIngredientsView);
+        $addChildSafely($roleGeneralManager, $permissionIngredientsCreate);
+        $addChildSafely($roleGeneralManager, $permissionIngredientsUpdate);
+        $addChildSafely($roleGeneralManager, $permissionIngredientsDelete);
+        $addChildSafely($roleGeneralManager, $permissionProvidersList);
+        $addChildSafely($roleGeneralManager, $permissionProvidersView);
+        $addChildSafely($roleGeneralManager, $permissionProvidersCreate);
+        $addChildSafely($roleGeneralManager, $permissionProvidersUpdate);
+        $addChildSafely($roleGeneralManager, $permissionProvidersDelete);
+        $addChildSafely($roleGeneralManager, $permissionInventoryList);
+        $addChildSafely($roleGeneralManager, $permissionInventoryView);
+        $addChildSafely($roleGeneralManager, $permissionInventoryCreate);
+        $addChildSafely($roleGeneralManager, $permissionInventoryUpdate);
+        $addChildSafely($roleGeneralManager, $permissionInventoryDelete);
+        $addChildSafely($roleGeneralManager, $permissionMovementsList);
+        $addChildSafely($roleGeneralManager, $permissionMovementsView);
+        $addChildSafely($roleGeneralManager, $permissionMovementsCreate);
+        $addChildSafely($roleGeneralManager, $permissionMovementsUpdate);
+        $addChildSafely($roleGeneralManager, $permissionMovementsDelete);
 
         // Assign permissions to Sous Chef
-        $authManager->addChild($roleSousChef, $permissionDashboardView);
-        $authManager->addChild($roleSousChef, $permissionRecipeList);
-        $authManager->addChild($roleSousChef, $permissionRecipeView);
-        $authManager->addChild($roleSousChef, $permissionRecipeCreate);
-        $authManager->addChild($roleSousChef, $permissionRecipeUpdate);
-        $authManager->addChild($roleSousChef, $permissionRecipeDelete);
-        $authManager->addChild($roleSousChef, $permissionIngredientsList);
-        $authManager->addChild($roleSousChef, $permissionIngredientsView);
-        $authManager->addChild($roleSousChef, $permissionIngredientsCreate);
-        $authManager->addChild($roleSousChef, $permissionIngredientsUpdate);
-        $authManager->addChild($roleSousChef, $permissionIngredientsDelete);
-        $authManager->addChild($roleSousChef, $permissionInventoryList);
-        $authManager->addChild($roleSousChef, $permissionInventoryView);
-        $authManager->addChild($roleSousChef, $permissionInventoryCreate);
-        $authManager->addChild($roleSousChef, $permissionInventoryUpdate);
-        $authManager->addChild($roleSousChef, $permissionInventoryDelete);
-        $authManager->addChild($roleSousChef, $permissionMovementsList);
-        $authManager->addChild($roleSousChef, $permissionMovementsView);
-        $authManager->addChild($roleSousChef, $permissionMovementsCreate);
-        $authManager->addChild($roleSousChef, $permissionMovementsUpdate);
-        $authManager->addChild($roleSousChef, $permissionMovementsDelete);
+        $addChildSafely($roleSousChef, $permissionDashboardView);
+        $addChildSafely($roleSousChef, $permissionRecipeList);
+        $addChildSafely($roleSousChef, $permissionRecipeView);
+        $addChildSafely($roleSousChef, $permissionRecipeCreate);
+        $addChildSafely($roleSousChef, $permissionRecipeUpdate);
+        $addChildSafely($roleSousChef, $permissionRecipeDelete);
+        $addChildSafely($roleSousChef, $permissionIngredientsList);
+        $addChildSafely($roleSousChef, $permissionIngredientsView);
+        $addChildSafely($roleSousChef, $permissionIngredientsCreate);
+        $addChildSafely($roleSousChef, $permissionIngredientsUpdate);
+        $addChildSafely($roleSousChef, $permissionIngredientsDelete);
+        $addChildSafely($roleSousChef, $permissionInventoryList);
+        $addChildSafely($roleSousChef, $permissionInventoryView);
+        $addChildSafely($roleSousChef, $permissionInventoryCreate);
+        $addChildSafely($roleSousChef, $permissionInventoryUpdate);
+        $addChildSafely($roleSousChef, $permissionInventoryDelete);
+        $addChildSafely($roleSousChef, $permissionMovementsList);
+        $addChildSafely($roleSousChef, $permissionMovementsView);
+        $addChildSafely($roleSousChef, $permissionMovementsCreate);
+        $addChildSafely($roleSousChef, $permissionMovementsUpdate);
+        $addChildSafely($roleSousChef, $permissionMovementsDelete);
 
         // Assign permissions to Purchasing Manager
-        $authManager->addChild($rolePurchasingManager, $permissionDashboardView);
-        $authManager->addChild($rolePurchasingManager, $permissionProvidersList);
-        $authManager->addChild($rolePurchasingManager, $permissionProvidersView);
-        $authManager->addChild($rolePurchasingManager, $permissionProvidersCreate);
-        $authManager->addChild($rolePurchasingManager, $permissionProvidersUpdate);
-        $authManager->addChild($rolePurchasingManager, $permissionProvidersDelete);
-        $authManager->addChild($rolePurchasingManager, $permissionIngredientsList);
-        $authManager->addChild($rolePurchasingManager, $permissionIngredientsView);
-        $authManager->addChild($rolePurchasingManager, $permissionIngredientsCreate);
-        $authManager->addChild($rolePurchasingManager, $permissionIngredientsUpdate);
-        $authManager->addChild($rolePurchasingManager, $permissionIngredientsDelete);
-        $authManager->addChild($rolePurchasingManager, $permissionInventoryList);
-        $authManager->addChild($rolePurchasingManager, $permissionInventoryView);
-        $authManager->addChild($rolePurchasingManager, $permissionInventoryCreate);
-        $authManager->addChild($rolePurchasingManager, $permissionInventoryUpdate);
-        $authManager->addChild($rolePurchasingManager, $permissionInventoryDelete);
-        $authManager->addChild($rolePurchasingManager, $permissionMovementsList);
-        $authManager->addChild($rolePurchasingManager, $permissionMovementsView);
-        $authManager->addChild($rolePurchasingManager, $permissionMovementsCreate);
-        $authManager->addChild($rolePurchasingManager, $permissionMovementsUpdate);
-        $authManager->addChild($rolePurchasingManager, $permissionMovementsDelete);
+        $addChildSafely($rolePurchasingManager, $permissionDashboardView);
+        $addChildSafely($rolePurchasingManager, $permissionProvidersList);
+        $addChildSafely($rolePurchasingManager, $permissionProvidersView);
+        $addChildSafely($rolePurchasingManager, $permissionProvidersCreate);
+        $addChildSafely($rolePurchasingManager, $permissionProvidersUpdate);
+        $addChildSafely($rolePurchasingManager, $permissionProvidersDelete);
+        $addChildSafely($rolePurchasingManager, $permissionIngredientsList);
+        $addChildSafely($rolePurchasingManager, $permissionIngredientsView);
+        $addChildSafely($rolePurchasingManager, $permissionIngredientsCreate);
+        $addChildSafely($rolePurchasingManager, $permissionIngredientsUpdate);
+        $addChildSafely($rolePurchasingManager, $permissionIngredientsDelete);
+        $addChildSafely($rolePurchasingManager, $permissionInventoryList);
+        $addChildSafely($rolePurchasingManager, $permissionInventoryView);
+        $addChildSafely($rolePurchasingManager, $permissionInventoryCreate);
+        $addChildSafely($rolePurchasingManager, $permissionInventoryUpdate);
+        $addChildSafely($rolePurchasingManager, $permissionInventoryDelete);
+        $addChildSafely($rolePurchasingManager, $permissionMovementsList);
+        $addChildSafely($rolePurchasingManager, $permissionMovementsView);
+        $addChildSafely($rolePurchasingManager, $permissionMovementsCreate);
+        $addChildSafely($rolePurchasingManager, $permissionMovementsUpdate);
+        $addChildSafely($rolePurchasingManager, $permissionMovementsDelete);
 
         // Assign permissions to Maintenance Chief
-        $authManager->addChild($roleMaintenanceChief, $permissionDashboardView);
-        $authManager->addChild($roleMaintenanceChief, $permissionInventoryList);
-        $authManager->addChild($roleMaintenanceChief, $permissionInventoryView);
-        $authManager->addChild($roleMaintenanceChief, $permissionInventoryCreate);
-        $authManager->addChild($roleMaintenanceChief, $permissionInventoryUpdate);
-        $authManager->addChild($roleMaintenanceChief, $permissionInventoryDelete);
-        $authManager->addChild($roleMaintenanceChief, $permissionMovementsList);
-        $authManager->addChild($roleMaintenanceChief, $permissionMovementsView);
-        $authManager->addChild($roleMaintenanceChief, $permissionMovementsCreate);
-        $authManager->addChild($roleMaintenanceChief, $permissionMovementsUpdate);
-        $authManager->addChild($roleMaintenanceChief, $permissionMovementsDelete);
+        $addChildSafely($roleMaintenanceChief, $permissionDashboardView);
+        $addChildSafely($roleMaintenanceChief, $permissionInventoryList);
+        $addChildSafely($roleMaintenanceChief, $permissionInventoryView);
+        $addChildSafely($roleMaintenanceChief, $permissionInventoryCreate);
+        $addChildSafely($roleMaintenanceChief, $permissionInventoryUpdate);
+        $addChildSafely($roleMaintenanceChief, $permissionInventoryDelete);
+        $addChildSafely($roleMaintenanceChief, $permissionMovementsList);
+        $addChildSafely($roleMaintenanceChief, $permissionMovementsView);
+        $addChildSafely($roleMaintenanceChief, $permissionMovementsCreate);
+        $addChildSafely($roleMaintenanceChief, $permissionMovementsUpdate);
+        $addChildSafely($roleMaintenanceChief, $permissionMovementsDelete);
 
         // Assign permissions to Waiter Captain
-        $authManager->addChild($roleWaiterCaptain, $permissionDashboardView);
-        $authManager->addChild($roleWaiterCaptain, $permissionRecipeList);
-        $authManager->addChild($roleWaiterCaptain, $permissionRecipeView);
-        $authManager->addChild($roleWaiterCaptain, $permissionInventoryList);
-        $authManager->addChild($roleWaiterCaptain, $permissionInventoryView);
-        $authManager->addChild($roleWaiterCaptain, $permissionMovementsList);
-        $authManager->addChild($roleWaiterCaptain, $permissionMovementsView);
+        $addChildSafely($roleWaiterCaptain, $permissionDashboardView);
+        $addChildSafely($roleWaiterCaptain, $permissionRecipeList);
+        $addChildSafely($roleWaiterCaptain, $permissionRecipeView);
+        $addChildSafely($roleWaiterCaptain, $permissionInventoryList);
+        $addChildSafely($roleWaiterCaptain, $permissionInventoryView);
+        $addChildSafely($roleWaiterCaptain, $permissionMovementsList);
+        $addChildSafely($roleWaiterCaptain, $permissionMovementsView);
 
         // Assign permissions to Accountant
-        $authManager->addChild($roleAccountant, $permissionDashboardView);
-        $authManager->addChild($roleAccountant, $permissionProvidersList);
-        $authManager->addChild($roleAccountant, $permissionProvidersView);
-        $authManager->addChild($roleAccountant, $permissionInventoryList);
-        $authManager->addChild($roleAccountant, $permissionInventoryView);
-        $authManager->addChild($roleAccountant, $permissionMovementsList);
-        $authManager->addChild($roleAccountant, $permissionMovementsView);
-        $authManager->addChild($roleAccountant, $permissionMovementsCreate);
-        $authManager->addChild($roleAccountant, $permissionMovementsUpdate);
-        $authManager->addChild($roleAccountant, $permissionMovementsDelete);
+        $addChildSafely($roleAccountant, $permissionDashboardView);
+        $addChildSafely($roleAccountant, $permissionProvidersList);
+        $addChildSafely($roleAccountant, $permissionProvidersView);
+        $addChildSafely($roleAccountant, $permissionInventoryList);
+        $addChildSafely($roleAccountant, $permissionInventoryView);
+        $addChildSafely($roleAccountant, $permissionMovementsList);
+        $addChildSafely($roleAccountant, $permissionMovementsView);
+        $addChildSafely($roleAccountant, $permissionMovementsCreate);
+        $addChildSafely($roleAccountant, $permissionMovementsUpdate);
+        $addChildSafely($roleAccountant, $permissionMovementsDelete);
 
         // Assign permissions to Warehouse Assistant
-        $authManager->addChild($roleWarehouseAssistant, $permissionDashboardView);
-        $authManager->addChild($roleWarehouseAssistant, $permissionInventoryList);
-        $authManager->addChild($roleWarehouseAssistant, $permissionInventoryView);
-        $authManager->addChild($roleWarehouseAssistant, $permissionInventoryCreate);
-        $authManager->addChild($roleWarehouseAssistant, $permissionInventoryUpdate);
-        $authManager->addChild($roleWarehouseAssistant, $permissionInventoryDelete);
-        $authManager->addChild($roleWarehouseAssistant, $permissionMovementsList);
-        $authManager->addChild($roleWarehouseAssistant, $permissionMovementsView);
-        $authManager->addChild($roleWarehouseAssistant, $permissionMovementsCreate);
-        $authManager->addChild($roleWarehouseAssistant, $permissionMovementsUpdate);
-        $authManager->addChild($roleWarehouseAssistant, $permissionMovementsDelete);
+        $addChildSafely($roleWarehouseAssistant, $permissionDashboardView);
+        $addChildSafely($roleWarehouseAssistant, $permissionInventoryList);
+        $addChildSafely($roleWarehouseAssistant, $permissionInventoryView);
+        $addChildSafely($roleWarehouseAssistant, $permissionInventoryCreate);
+        $addChildSafely($roleWarehouseAssistant, $permissionInventoryUpdate);
+        $addChildSafely($roleWarehouseAssistant, $permissionInventoryDelete);
+        $addChildSafely($roleWarehouseAssistant, $permissionMovementsList);
+        $addChildSafely($roleWarehouseAssistant, $permissionMovementsView);
+        $addChildSafely($roleWarehouseAssistant, $permissionMovementsCreate);
+        $addChildSafely($roleWarehouseAssistant, $permissionMovementsUpdate);
+        $addChildSafely($roleWarehouseAssistant, $permissionMovementsDelete);
 
         // Assign permissions to External Consultant
-        $authManager->addChild($roleExternalConsultant, $permissionDashboardView);
-        $authManager->addChild($roleExternalConsultant, $permissionRecipeList);
-        $authManager->addChild($roleExternalConsultant, $permissionRecipeView);
-        $authManager->addChild($roleExternalConsultant, $permissionIngredientsList);
-        $authManager->addChild($roleExternalConsultant, $permissionIngredientsView);
-        $authManager->addChild($roleExternalConsultant, $permissionProvidersList);
-        $authManager->addChild($roleExternalConsultant, $permissionProvidersView);
-        $authManager->addChild($roleExternalConsultant, $permissionInventoryList);
-        $authManager->addChild($roleExternalConsultant, $permissionInventoryView);
-        $authManager->addChild($roleExternalConsultant, $permissionMovementsList);
-        $authManager->addChild($roleExternalConsultant, $permissionMovementsView);
+        $addChildSafely($roleExternalConsultant, $permissionDashboardView);
+        $addChildSafely($roleExternalConsultant, $permissionRecipeList);
+        $addChildSafely($roleExternalConsultant, $permissionRecipeView);
+        $addChildSafely($roleExternalConsultant, $permissionIngredientsList);
+        $addChildSafely($roleExternalConsultant, $permissionIngredientsView);
+        $addChildSafely($roleExternalConsultant, $permissionProvidersList);
+        $addChildSafely($roleExternalConsultant, $permissionProvidersView);
+        $addChildSafely($roleExternalConsultant, $permissionInventoryList);
+        $addChildSafely($roleExternalConsultant, $permissionInventoryView);
+        $addChildSafely($roleExternalConsultant, $permissionMovementsList);
+        $addChildSafely($roleExternalConsultant, $permissionMovementsView);
 
         // Assign permissions to Administrative Assistant
-        $authManager->addChild($roleAdministrativeAssistant, $permissionDashboardView);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionUsersList);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionUsersView);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionUsersCreate);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionUsersUpdate);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionUsersDelete);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionRecipeList);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionRecipeView);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionIngredientsList);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionIngredientsView);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionProvidersList);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionProvidersView);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionInventoryList);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionInventoryView);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionMovementsList);
-        $authManager->addChild($roleAdministrativeAssistant, $permissionMovementsView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionDashboardView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionUsersList);
+        $addChildSafely($roleAdministrativeAssistant, $permissionUsersView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionUsersCreate);
+        $addChildSafely($roleAdministrativeAssistant, $permissionUsersUpdate);
+        $addChildSafely($roleAdministrativeAssistant, $permissionUsersDelete);
+        $addChildSafely($roleAdministrativeAssistant, $permissionRecipeList);
+        $addChildSafely($roleAdministrativeAssistant, $permissionRecipeView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionIngredientsList);
+        $addChildSafely($roleAdministrativeAssistant, $permissionIngredientsView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionProvidersList);
+        $addChildSafely($roleAdministrativeAssistant, $permissionProvidersView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionInventoryList);
+        $addChildSafely($roleAdministrativeAssistant, $permissionInventoryView);
+        $addChildSafely($roleAdministrativeAssistant, $permissionMovementsList);
+        $addChildSafely($roleAdministrativeAssistant, $permissionMovementsView);
 
         // Assign permissions to Menu Manager
-        $authManager->addChild($roleMenuManager, $permissionDashboardView);
-        $authManager->addChild($roleMenuManager, $permissionRecipeList);
-        $authManager->addChild($roleMenuManager, $permissionRecipeView);
-        $authManager->addChild($roleMenuManager, $permissionRecipeCreate);
-        $authManager->addChild($roleMenuManager, $permissionRecipeUpdate);
-        $authManager->addChild($roleMenuManager, $permissionRecipeDelete);
-        $authManager->addChild($roleMenuManager, $permissionIngredientsList);
-        $authManager->addChild($roleMenuManager, $permissionIngredientsView);
-        $authManager->addChild($roleMenuManager, $permissionIngredientsCreate);
-        $authManager->addChild($roleMenuManager, $permissionIngredientsUpdate);
-        $authManager->addChild($roleMenuManager, $permissionIngredientsDelete);
+        $addChildSafely($roleMenuManager, $permissionDashboardView);
+        $addChildSafely($roleMenuManager, $permissionRecipeList);
+        $addChildSafely($roleMenuManager, $permissionRecipeView);
+        $addChildSafely($roleMenuManager, $permissionRecipeCreate);
+        $addChildSafely($roleMenuManager, $permissionRecipeUpdate);
+        $addChildSafely($roleMenuManager, $permissionRecipeDelete);
+        $addChildSafely($roleMenuManager, $permissionIngredientsList);
+        $addChildSafely($roleMenuManager, $permissionIngredientsView);
+        $addChildSafely($roleMenuManager, $permissionIngredientsCreate);
+        $addChildSafely($roleMenuManager, $permissionIngredientsUpdate);
+        $addChildSafely($roleMenuManager, $permissionIngredientsDelete);
 
     }
 

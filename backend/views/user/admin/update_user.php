@@ -11,7 +11,7 @@ $this->title = Yii::t('app', "Update user");
 // Cargar roles igual que en create_user.php
 $roles = Yii::$app->authManager->getRoles();
 $roles = array_filter($roles, function ($role) {
-    return $role->name != 'admin';
+    return $role->name != 'admin' && $role->name != 'owner';
 });
 // Ordenar roles por descripción
 usort($roles, function($a, $b) {

@@ -1485,6 +1485,8 @@ if ($ccRow > 2) {
         $mainSheet->getProtection()->setSort(false);
         $mainSheet->getProtection()->setInsertRows(false);
         $mainSheet->getProtection()->setFormatCells(false);
+        $mainSheet->getProtection()->setFormatColumns(true);
+        $mainSheet->getProtection()->setFormatRows(true);
         
         // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
         $spreadsheet->getActiveSheet()->setSelectedCell('A2');

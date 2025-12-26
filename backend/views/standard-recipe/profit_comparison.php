@@ -22,7 +22,7 @@ for ($year = 2020; $year <= $currentYear + 1; $year++) {
 
 <div class="card">
     <div class="card-header">
-        <h4 class="card-title"><?= Yii::t('app', "Filter by Month and Year") ?></h4>
+        <h4 class="card-title"><?= Yii::t('app', "Filtro por mes y año") ?></h4>
     </div>
     <div class="card-body">
         <form method="get" class="form-inline">
@@ -54,7 +54,7 @@ for ($year = 2020; $year <= $currentYear + 1; $year++) {
 <div class="card mt-3">
     <div class="card-body">
         <h5 class="text-info">
-            <?= Yii::t('app', "Analysis for: {month} {year}", [
+            <?= Yii::t('app', "Análisis para: {month} {year}", [
                 'month' => $months[$selectedMonth],
                 'year' => $selectedYear
             ]) ?>

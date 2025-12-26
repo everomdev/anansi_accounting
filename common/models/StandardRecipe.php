@@ -711,7 +711,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
     public function getPopularity($popularityAxis, $totalSales)
     {
-        $salesPercent = $this->getSalesPercent($totalSales);
+        $salesPercent = $this->getSalesPercent($totalSales) * 100;
         if ($salesPercent >= $popularityAxis) {
             return 'ALTA';
         } else {
@@ -721,7 +721,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
 
     public function getEffectiveness($costEffectivenessAxis, $totalSales)
     {
-        $retributionMargin = $this->sales - $this->cost;
+        $retributionMargin = $this->price - $this->cost;
         if ($retributionMargin >= $costEffectivenessAxis) {
             return 'ALTA';
         } else {
