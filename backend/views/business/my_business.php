@@ -27,19 +27,21 @@ $locales = array_combine($locales, $locales);
                 </button>
             </li>
 
-            <li class="nav-item tab-item" data-name="billing">
-                <button
-                        type="button"
-                        class="nav-link"
-                        role="tab"
-                        data-bs-toggle="tab"
-                        data-bs-target="#navs-pills-top-billing"
-                        aria-controls="navs-pills-top-billing"
-                        aria-selected="false"
-                >
-                    <?= Yii::t('app', 'Plan & Billing') ?>
-                </button>
-            </li>
+            <?php if (Yii::$app->user->can('manage_users')): ?>
+                <li class="nav-item tab-item" data-name="billing">
+                    <button
+                            type="button"
+                            class="nav-link"
+                            role="tab"
+                            data-bs-toggle="tab"
+                            data-bs-target="#navs-pills-top-billing"
+                            aria-controls="navs-pills-top-billing"
+                            aria-selected="false"
+                    >
+                        <?=  Yii::t('app', 'Plan & Billing') ?>
+                    </button>
+                </li>
+            <?php endif; ?>
 
 
         </ul>
@@ -55,10 +57,14 @@ $locales = array_combine($locales, $locales);
                 'timezones' => $timezones,
             ]) ?>
         </div>
-        <div class="tab-pane fade" id="navs-pills-top-billing"
-             role="tabpanel">
-            <?= $this->render('tabs/_billing') ?>
-        </div>
+        <?php if (Yii::$app->user->can('manage_users')): ?>
+            <div class="tab-pane fade" id="navs-pills-top-billing"
+                 role="tabpanel">
+                <?= $this->render('tabs/_billing', [
+                    'model' => $model,
+                ]) ?>
+            </div>
+        <?php endif; ?>
 
     </div>
 </div>

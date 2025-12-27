@@ -58,16 +58,20 @@ JS);
 <p>
     <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Save'), [
         'class' => 'btn btn-success'
-    ]) ?>    <?= \yii\bootstrap5\Html::a("Eliminar cuenta", '#', [
-        'class' => 'btn btn-danger',
-        'id' => 'btn-delete-account',
-        'data-bs-toggle' => 'modal',
-        'data-bs-target' => '#modal-delete-account'
     ]) ?>
+    <?php if (Yii::$app->user->can('manage_users')): ?>
+        <?= \yii\bootstrap5\Html::a("Eliminar cuenta", '#', [
+            'class' => 'btn btn-danger',
+            'id' => 'btn-delete-account',
+            'data-bs-toggle' => 'modal',
+            'data-bs-target' => '#modal-delete-account'
+        ]) ?>
+    <?php endif; ?>
 </p>
 
 <?php \yii\bootstrap5\ActiveForm::end(); ?>
 
+<?php if (Yii::$app->user->can('manage_users')): ?>
 <?php
 // Modal para eliminar cuenta
 \yii\bootstrap5\Modal::begin([
@@ -117,7 +121,11 @@ JS);
 </div>
 <?php
 \yii\bootstrap5\Modal::end();
+?>
+<?php endif; ?>
 
+<?php if (Yii::$app->user->can('manage_users')): ?>
+<?php
 // Definir las variables PHP antes de crear el JS
 $deleteAccountUrl = \yii\helpers\Url::to(['//user/admin/delete']);
 $csrfParam = Yii::$app->request->csrfParam;
@@ -171,3 +179,4 @@ JS;
 
 $this->registerJs($js);
 ?>
+<?php endif; ?>

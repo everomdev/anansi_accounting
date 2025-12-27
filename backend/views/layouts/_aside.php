@@ -482,7 +482,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Administración y Configuración -->
-        <?php if (Yii::$app->user->can('manage_users') or true): ?>
+        <?php if ($isAdmin): ?>
         <li class="menu-item <?= $administracionConfiguracionActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#administracionConfiguracion" role="button" 
                aria-expanded="<?= $administracionConfiguracionActive ? 'true' : 'false' ?>" 
