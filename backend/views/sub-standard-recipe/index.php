@@ -557,14 +557,14 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 // Modal para mostrar errores de importación
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-import-errors',
-    'title' => Yii::t('app', "Errores en la importación"),
+    'title' => Yii::t('app', "Problemas en la importación de subrecetas"),
 ]);
 ?>
 <div id="import-errors-content">
     <!-- Los errores se cargarán aquí dinámicamente -->
 </div>
 <div class="d-flex justify-content-end">
-    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido, revisaré el archivo'), [
         'class' => 'btn btn-primary',
         'data-bs-dismiss' => 'modal'
     ]) ?>
@@ -740,11 +740,15 @@ $this->registerJs("
     // Verificar si hay errores de importación al cargar la página
     $(document).ready(function() {
         if (typeof importErrors !== 'undefined' && importErrors.length > 0) {
-            var errorHtml = '<ul class=\"list-group\">';
+            var errorHtml = '<div class=\"alert alert-danger\" role=\"alert\">';
+            errorHtml += '<h5 class=\"alert-heading\"><i class=\"fas fa-exclamation-triangle\"></i> No se pudieron importar algunas subrecetas</h5>';
+            errorHtml += '<p>Se encontraron los siguientes problemas durante la importación:</p>';
+            errorHtml += '<ul class=\"mb-0\">';
             importErrors.forEach(function(error) {
-                errorHtml += '<li class=\"list-group-item list-group-item-danger\">' + error + '</li>';
+                errorHtml += '<li>' + error + '</li>';
             });
             errorHtml += '</ul>';
+            errorHtml += '</div>';
             $('#import-errors-content').html(errorHtml);
             var importErrorsModal = new bootstrap.Modal(document.getElementById('modal-import-errors'));
             importErrorsModal.show();

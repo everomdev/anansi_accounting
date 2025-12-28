@@ -2677,6 +2677,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $mpdf->WriteHTML($html);
     
             // PARTE 3: Solo procedimiento
+            $mpdf->AddPage(); // Nueva página para el procedimiento
             $html = '';
             // Separar los pasos en procedimientos y cuidados especiales
             $steps = RecipeStep::find()->where(['recipe_id' => $recipe->id])->all();

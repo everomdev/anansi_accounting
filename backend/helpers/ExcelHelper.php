@@ -2833,7 +2833,7 @@ if ($ccRow > 2) {
                     foreach ($recipe->errors as $attribute => $errorMessages) {
                         foreach ($errorMessages as $error) {
                             if (strpos($error, 'ya está en uso') !== false || strpos($error, 'already taken') !== false) {
-                                $validationErrors[] = "Fila $rowNumber: El nombre de la subreceta '{$data['title']}' ya existe.";
+                                $validationErrors[] = "La subreceta '{$data['title']}' ya existe en el sistema (fila $rowNumber). Por favor, use un nombre diferente o actualice la subreceta existente.";
                             } else {
                                 $validationErrors[] = "Fila $rowNumber ($attribute): $error";
                             }
