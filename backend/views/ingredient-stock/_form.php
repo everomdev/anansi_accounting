@@ -752,7 +752,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Formato completo al perder el foco
         let parts = value.split(decimalSeparator);
         let wholePart = parts[0].replace(/\D/g, '') || '0'; // Solo dígitos
-        let decimalPart = parts.length > 1 ? parts[1].replace(/\D/g, '').slice(0, 2) : '00';
+        let decimalPart = parts.length > 1 ? parts[1].replace(/\D/g, '').slice(0, 2) : '';
+
+        // Si forceFormat está activo y no hay parte decimal, usar '00'
+        if (forceFormat && decimalPart === '') {
+            decimalPart = '00';
+        } else if (decimalPart.length === 1) {
+            // Si solo hay un dígito decimal, agregar un cero al final
+            decimalPart = decimalPart + '0';
+        }
 
         // Agregar separadores de miles solo al final
         if (wholePart.length > 3) {
@@ -760,12 +768,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Construir valor formateado
-        let formattedValue = wholePart;
-        if (decimalPart.length > 0) {
-            formattedValue += decimalSeparator + decimalPart;
-        } else if (forceFormat) {
-            formattedValue += decimalSeparator + '00';
-        }
+        let formattedValue = wholePart + decimalSeparator + decimalPart;
 
         // Actualizar campo
         input.value = formattedValue;

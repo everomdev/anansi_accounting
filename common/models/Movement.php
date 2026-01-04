@@ -156,18 +156,14 @@ class Movement extends \yii\db\ActiveRecord
         if ($this->type == self::TYPE_OUTPUT && $this->quantity > 0) {
             $ingredient = $this->ingredient;
             
-            // Obtener el precio unitario del ingrediente (último precio de compra)
-            $lastMovement = Movement::find()
-                ->where([
-                    'ingredient_id' => $ingredient->id,
-                    'type' => self::TYPE_INPUT
-                ])
-                ->orderBy(['created_at' => SORT_DESC, 'id' => SORT_DESC])
+            // Obtener el último precio de stock_prices
+            $lastStockPrice = $ingredient->getStockPrices()
+                ->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])
                 ->one();
             
-            if ($lastMovement && $ingredient->portions_per_unit > 0) {
-                // Calcular precio por porción: unit_price / portions_per_unit
-                $pricePerPortion = $ingredient->adjustedPrice;
+            if ($lastStockPrice && $ingredient->portions_per_unit > 0) {
+                // Calcular precio por porción: price de stock_prices / portions_per_unit
+                $pricePerPortion = $lastStockPrice->price / $ingredient->portions_per_unit;
                 
                 // Calcular total: precio por porción * cantidad de salida
                 $this->total = round($pricePerPortion * $this->quantity, 2);

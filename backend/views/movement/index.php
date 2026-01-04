@@ -277,9 +277,9 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'value' => function($model) {
                     // Si es un movimiento de salida, calcular el costo basado en el precio del insumo
                     if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
-                        $unitPrice = $model->ingredient->lastUnitPrice ?? 0;
-                        $total = $unitPrice * $model->quantity;
-                        return formatPrice(-$total); // Mostrar en negativo
+                        // $unitPrice = $model->ingredient->adjustedPrice ?? 0;
+                        // $total = $unitPrice * $model->quantity;
+                        return formatPrice(-$model->total); // Mostrar en negativo
                     }
                     
                     // Para entradas y otros tipos, mostrar el total normal
