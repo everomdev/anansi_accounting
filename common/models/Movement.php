@@ -152,6 +152,31 @@ class Movement extends \yii\db\ActiveRecord
             $this->unit_price = round($this->amount / $this->quantity, 4); // 4 decimales para precisión
         }
 
+        // Para salidas, calcular el costo total basado en el precio por porción
+        if ($this->type == self::TYPE_OUTPUT && $this->quantity > 0) {
+            $ingredient = $this->ingredient;
+            
+            // Obtener el precio unitario del ingrediente (último precio de compra)
+            $lastMovement = Movement::find()
+                ->where([
+                    'ingredient_id' => $ingredient->id,
+                    'type' => self::TYPE_INPUT
+                ])
+                ->orderBy(['created_at' => SORT_DESC, 'id' => SORT_DESC])
+                ->one();
+            
+            if ($lastMovement && $lastMovement->unit_price > 0 && $ingredient->portions_per_unit > 0) {
+                // Calcular precio por porción: unit_price / portions_per_unit
+                $pricePerPortion = $lastMovement->unit_price / $ingredient->portions_per_unit;
+                
+                // Calcular total: precio por porción * cantidad de salida
+                $this->total = round($pricePerPortion * $this->quantity, 2);
+                
+                // Guardar el precio por porción en unit_price para referencia
+                $this->unit_price = round($pricePerPortion, 4);
+            }
+        }
+
         // Establecer la unidad de medida según el tipo de movimiento
         if ($this->type == self::TYPE_OUTPUT) {
             // Para salidas, usar la unidad de cocina (portion_um)

@@ -61,13 +61,13 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                         $parts[] = $data->presentation;
                     }
                     
-                    // Agregar unidad de medida
-                    //$parts[] = $data->um;
-                    
                     return implode('  ', $parts);
                 },
             ],
-            'quantity',
+            [
+                'attribute' => 'quantity',
+                'filter' => false, // Deshabilitar filtro para evitar quantity=0
+            ],
             [
                 'label' => Yii::t('app', "Value"),
                 'value' => function ($data) {

@@ -65,13 +65,18 @@ class IngredientStockSearch extends IngredientStock
         $query->andFilterWhere([
             'id' => $this->id,
             'business_id' => $this->business_id,
-            'quantity' => $this->quantity,
             'yield' => $this->yield,
             'portions_per_unit' => $this->portions_per_unit,
             'min_stock' => $this->min_stock,
             'max_stock' => $this->max_stock,
         ]);
+        
+        // Solo filtrar por quantity si no es null (para permitir buscar quantity=0)
+        if ($this->quantity !== null && $this->quantity !== '') {
+            $query->andWhere(['quantity' => $this->quantity]);
+        }
 
+        // Búsqueda case-insensitive para ingredient
         $query->andFilterWhere(['like', 'ingredient', $this->ingredient])
             ->andFilterWhere(['like', 'um', $this->um])
             ->andFilterWhere(['like', 'portion_um', $this->portion_um])

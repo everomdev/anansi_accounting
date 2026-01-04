@@ -285,3 +285,63 @@ $(document).on('submit', '#movement-form', function(e) {
     // Permitir el envío del formulario
     return true;
 });
+
+// Actualizar la unidad de medida cuando se selecciona un ingrediente (solo para salidas)
+$(document).on('select2:select', '#movement-ingredient_id', function(e) {
+    var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    
+    if (movementType === movementTypeOutput) {
+        var selectedData = e.params.data;
+        var selectedText = selectedData.text;
+        
+        // Extraer la unidad de medida del texto entre paréntesis
+        var umMatch = selectedText.match(/\(([^)]+)\)/);
+        var um = umMatch ? umMatch[1] : '';
+        
+        // Actualizar el span con la unidad de medida
+        $('#ingredient-um-display').text(um);
+    }
+});
+
+// También manejar el cambio normal del select (por si acaso)
+$(document).on('change', '#movement-ingredient_id', function() {
+    var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    
+    if (movementType === movementTypeOutput) {
+        var selectedOption = $(this).find('option:selected');
+        var selectedText = selectedOption.text();
+        
+        // Extraer la unidad de medida del texto entre paréntesis
+        var umMatch = selectedText.match(/\(([^)]+)\)/);
+        var um = umMatch ? umMatch[1] : '';
+        
+        // Actualizar el span con la unidad de medida
+        $('#ingredient-um-display').text(um);
+    }
+});
+
+// Función para actualizar la unidad de medida
+function updateIngredientUM() {
+    var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    
+    if (movementType === movementTypeOutput) {
+        var ingredientSelect = $('#movement-ingredient_id');
+        
+        if (ingredientSelect.length > 0) {
+            var selectedOption = ingredientSelect.find('option:selected');
+            var selectedText = selectedOption.text();
+            
+            // Extraer la unidad de medida del texto entre paréntesis
+            var umMatch = selectedText.match(/\(([^)]+)\)/);
+            var um = umMatch ? umMatch[1] : '';
+            
+            // Actualizar el span con la unidad de medida
+            $('#ingredient-um-display').text(um);
+        }
+    }
+}
+
+// Ejecutar al cargar la página para ingredientes ya seleccionados
+$(document).ready(function() {
+    updateIngredientUM();
+});

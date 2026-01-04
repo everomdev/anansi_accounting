@@ -12,6 +12,7 @@ $this->registerJsVar('movementTypeInput', \common\models\Movement::TYPE_INPUT);
 $this->registerJsVar('movementTypeOutput', \common\models\Movement::TYPE_OUTPUT);
 $this->registerJsVar('movementTypeOrder', \common\models\Movement::TYPE_ORDER);
 $this->registerJsVar('getProviderPaymentTypesUrl', \yii\helpers\Url::to(['movement/get-provider-payment-types']));
+$this->registerJsVar('currentMovementType', $model->type); // Tipo actual del movimiento
 
 $this->registerJsFile(Yii::getAlias("@web/js/movement/form.js"), [
     'depends' => \yii\web\YiiAsset::class,
@@ -409,9 +410,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 <?php endif; ?>
 
                 <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4">
-                    <?= $form->field($model, 'quantity', [
-                        'template' => "{label}<span style=\"color: red;\">*</span>\n{input}\n{hint}\n{error}"
-                    ])->textInput(['data-setting' => 'all']) ?>
+                    <?php if ($model->type == \common\models\Movement::TYPE_OUTPUT): ?>
+                        <?php 
+                        // Para salidas, obtener la unidad de cocina del ingrediente seleccionado
+                        $umLabel = '';
+                        if (!$model->isNewRecord && $model->ingredient) {
+                            $umLabel = $model->ingredient->portion_um;
+                        }
+                        ?>
+                        <?= $form->field($model, 'quantity', [
+                            'template' => "{label}<span style=\"color: red;\">*</span>\n<div class='input-group'>{input}<span class='input-group-text' id='ingredient-um-display'>" . htmlspecialchars($umLabel) . "</span></div>\n{hint}\n{error}"
+                        ])->textInput([
+                            'data-setting' => 'all',
+                            'placeholder' => 'Ingrese la cantidad'
+                        ]) ?>
+                    <?php else: ?>
+                        <?= $form->field($model, 'quantity', [
+                            'template' => "{label}<span style=\"color: red;\">*</span>\n{input}\n{hint}\n{error}"
+                        ])->textInput(['data-setting' => 'all']) ?>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Tercera fila: Los campos financieros (5 elementos) -->  
