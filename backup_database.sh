@@ -31,7 +31,6 @@ for DB in "${DATABASES[@]}"; do
     
     # Nombre de archivo por base de datos
     BACKUP_FILE="backup_${DB}_$(date +%Y%m%d_%H%M%S).sql"
-    ZIP_FILE="${BACKUP_FILE%.sql}.zip"
     
     # Crear el backup dentro del contenedor
     docker exec $CONTAINER_NAME /usr/bin/mysqldump -u $MYSQL_USER -p$MYSQL_PASSWORD $DB > $HOST_BACKUP_DIR/$BACKUP_FILE
@@ -44,15 +43,13 @@ for DB in "${DATABASES[@]}"; do
         exit 1
     fi
 
-    # Comprimir el archivo SQL en un .zip
-    echo "Comprimiendo el backup de $DB en $ZIP_FILE"
-    zip -j "$HOST_BACKUP_DIR/$ZIP_FILE" "$HOST_BACKUP_DIR/$BACKUP_FILE"
+    # Comprimir el archivo SQL con gzip
+    echo "Comprimiendo el backup de $DB"
+    gzip "$HOST_BACKUP_DIR/$BACKUP_FILE"
 
     # Verificar si la compresión fue exitosa
     if [ $? -eq 0 ]; then
-        echo "Backup de $DB comprimido con éxito en: $HOST_BACKUP_DIR/$ZIP_FILE"
-        # Eliminar el archivo SQL original después de la compresión
-        rm "$HOST_BACKUP_DIR/$BACKUP_FILE"
+        echo "Backup de $DB comprimido con éxito en: $HOST_BACKUP_DIR/$BACKUP_FILE.gz"
     else
         echo "Error al comprimir el backup de $DB."
         exit 1
@@ -63,6 +60,6 @@ done
 
 # Eliminar backups de más de 5 días
 echo "Eliminando backups de más de 5 días de antigüedad."
-find "$HOST_BACKUP_DIR" -name "*.zip" -type f -mtime +5 -exec rm {} \;
+find "$HOST_BACKUP_DIR" -name "*.gz" -type f -mtime +5 -exec rm {} \;
 
 echo "Todos los backups completados, comprimidos y antiguos eliminados."
