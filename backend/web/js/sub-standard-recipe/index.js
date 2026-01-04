@@ -32,11 +32,11 @@ $(document).on('click', '#btn-delete-recipes', function(event) {
     
     $('#selected-count-message').text(keys.length);
     
-    if (keys.length === $('.grid-view tbody tr').length) {
-        $('#modal-bulk-remove').modal('show');
-    } else {
-        $('#modal-confirm-selected-remove').modal('show');
-    }
+    // Determinar el tipo de eliminación
+    var deleteType = (keys.length === $('.grid-view tbody tr').length) ? 'bulk' : 'selected';
+    
+    // Verificar vínculos antes de mostrar el modal de eliminación
+    checkLinksBeforeDelete(keys, deleteType);
     
     return false;
 });
@@ -72,6 +72,50 @@ function handleDeleteRequest(url, data, $triggerButton) {
     });
 }
 
+// Función para verificar vínculos antes de eliminar
+function checkLinksBeforeDelete(keys, deleteType) {
+    $.ajax({
+        url: '/sub-standard-recipe/check-links',
+        type: 'POST',
+        data: { keys: keys },
+        success: function(response) {
+            if (response.hasLinks) {
+                // Mostrar modal de advertencia con información de vínculos
+                var warningHtml = '<p>Esta' + (keys.length > 1 ? 's subrecetas están' : ' subreceta está') + ' vinculada' + (keys.length > 1 ? 's' : '') + ' a:</p>';
+                warningHtml += '<ul>';
+                if (response.recipeCount > 0) {
+                    warningHtml += '<li><strong>' + response.recipeCount + '</strong> receta' + (response.recipeCount > 1 ? 's' : '') + '</li>';
+                }
+                if (response.subRecipeCount > 0) {
+                    warningHtml += '<li><strong>' + response.subRecipeCount + '</strong> subreceta' + (response.subRecipeCount > 1 ? 's' : '') + '</li>';
+                }
+                warningHtml += '</ul>';
+                warningHtml += '<p class="text-danger"><strong>Eliminarla' + (keys.length > 1 ? 's' : '') + ' modificará el costeo de esos elementos.</strong></p>';
+                warningHtml += '<p>¿Desea continuar?</p>';
+                
+                $('#links-warning-content').html(warningHtml);
+                
+                // Guardar datos para usar después de la confirmación
+                $('#confirm-delete-with-links').data('deleteType', deleteType);
+                $('#confirm-delete-with-links').data('keys', keys);
+                
+                $('#modal-links-warning').modal('show');
+            } else {
+                // No hay vínculos, proceder directamente con la eliminación
+                if (deleteType === 'bulk') {
+                    $('#modal-bulk-remove').modal('show');
+                } else {
+                    $('#modal-confirm-selected-remove').modal('show');
+                }
+            }
+        },
+        error: function(xhr) {
+            alert('Error al verificar vínculos: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+            resetMainButton($('#btn-delete-recipes'));
+        }
+    });
+}
+
 // Manejadores para los diferentes modales
 $(document).on('click', '#delete-current-page, #delete-all, #confirm-delete-selected', function() {
     var $button = $(this);
@@ -87,6 +131,22 @@ $(document).on('click', '#delete-current-page, #delete-all, #confirm-delete-sele
     }
     
     handleDeleteRequest('/sub-standard-recipe/delete-sub-recipe', requestData, $button);
+});
+
+// Manejar confirmación después de ver advertencia de vínculos
+$(document).on('click', '#confirm-delete-with-links', function() {
+    var $button = $(this);
+    var deleteType = $button.data('deleteType');
+    var keys = $button.data('keys');
+    
+    $('#modal-links-warning').modal('hide');
+    
+    // Mostrar el modal apropiado según el tipo de eliminación
+    if (deleteType === 'bulk') {
+        $('#modal-bulk-remove').modal('show');
+    } else {
+        $('#modal-confirm-selected-remove').modal('show');
+    }
 });
 
 // Exportar subrecetas completas (Excel)

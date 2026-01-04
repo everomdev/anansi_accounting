@@ -68,7 +68,8 @@ class SubStandardRecipeController extends Controller
                     [
                         'actions' => [
                             'delete',
-                            'delete-sub-recipe'
+                            'delete-sub-recipe',
+                            'check-links'
                         ],
                         'allow' => true,
                         'roles' => ['subrecipe_delete']
@@ -326,6 +327,59 @@ class SubStandardRecipeController extends Controller
                 return $this->asJson(['success' => true]);
             }
         }
+    }
+
+    /**
+     * Verifica los vínculos de las subrecetas seleccionadas
+     * Retorna la cantidad de recetas y subrecetas vinculadas
+     */
+    public function actionCheckLinks()
+    {
+        if (Yii::$app->request->isPost) {
+            $ids = Yii::$app->request->post('keys');
+            
+            if (empty($ids) || $ids === 'all') {
+                return $this->asJson(['hasLinks' => false]);
+            }
+            
+            $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+            $business = Business::findOne(['id' => $businessData['id']]);
+            
+            // Obtener todos los convoys del negocio
+            $convoyIds = Convoy::find()
+                ->select('id')
+                ->where(['business_id' => $business->id])
+                ->column();
+            
+            if (empty($convoyIds)) {
+                return $this->asJson(['hasLinks' => false]);
+            }
+            
+            // Contar vínculos para todas las subrecetas seleccionadas
+            $totalRecipeLinks = 0;
+            $totalSubRecipeLinks = 0;
+            
+            foreach ($ids as $subRecipeId) {
+                $subRecipe = StandardRecipe::findOne($subRecipeId);
+                if (!$subRecipe) {
+                    continue;
+                }
+                
+                $counts = $subRecipe->getSubRecipeCount();
+                $totalRecipeLinks += $counts['main'] ?? 0;
+                $totalSubRecipeLinks += $counts['sub'] ?? 0;
+            }
+            
+            $hasLinks = ($totalRecipeLinks > 0 || $totalSubRecipeLinks > 0);
+            
+            return $this->asJson([
+                'hasLinks' => $hasLinks,
+                'recipeCount' => $totalRecipeLinks,
+                'subRecipeCount' => $totalSubRecipeLinks
+            ]);
+        }
+        
+        return $this->asJson(['hasLinks' => false]);
     }
 
     public function actionDuplicateRecipes()

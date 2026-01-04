@@ -407,7 +407,7 @@ $this->registerCss('
 //            'costPercent:percent',
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => "{update} {delete}",
+                'template' => "{update}",
                 'buttons' => [
                     'update' => function ($url, $model, $key) {
                         return Html::a('<i class="fas fa-pencil-alt"></i>', \yii\helpers\Url::to(['standard-recipe/update', 'id' => $model->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'text-warning']);
@@ -483,6 +483,29 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
         'class' => 'btn btn-primary',
         'data-bs-dismiss' => 'modal'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
+// Modal para advertir sobre vínculos antes de eliminar
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-links-warning',
+    'title' => Yii::t('app', "Advertencia: Subreceta vinculada"),
+]);
+?>
+<div id="links-warning-content">
+    <!-- El contenido se cargará dinámicamente -->
+</div>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Sí, continuar'), [
+        'class' => 'btn btn-danger',
+        'id' => 'confirm-delete-with-links'
     ]) ?>
 </div>
 <?php
