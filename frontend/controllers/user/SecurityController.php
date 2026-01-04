@@ -113,7 +113,6 @@ class SecurityController extends Controller
         if (!Yii::$app->user->getIsGuest()) {
             return $this->goHome();
         }
-die(var_dump('asd'));
         /** @var LoginForm $form */
         $form = $this->make(LoginForm::class);
 
@@ -127,8 +126,13 @@ die(var_dump('asd'));
         }
 
         if ($form->load(Yii::$app->request->post())) {
+            Yii::error('=== INICIO PROCESO DE LOGIN ===', 'login-debug');
+            Yii::error('Login intentado con: ' . $form->login, 'login-debug');
+            
             if ($this->module->enableTwoFactorAuthentication && $form->validate()) {
+                Yii::error('2FA está habilitado y formulario es válido', 'login-debug');
                 if ($form->getUser()->auth_tf_enabled) {
+                    Yii::error('Usuario tiene 2FA habilitado, redirigiendo a confirmación', 'login-debug');
                     Yii::$app->session->set('credentials', ['login' => $form->login, 'pwd' => $form->password]);
 
                     return $this->redirect(['confirm']);
@@ -138,11 +142,21 @@ die(var_dump('asd'));
             $this->trigger(FormEvent::EVENT_BEFORE_LOGIN, $event);
             $authManager = Yii::$app->authManager;
             $user = User::find()->whereUsernameOrEmail($form->login)->one();
+            
+            Yii::error('Usuario encontrado: ' . ($user ? 'Sí (ID: ' . $user->id . ', Username: ' . $user->username . ')' : 'No'), 'login-debug');
+            
             if($user && !$authManager->checkAccess($user->id, 'admin')){
+                Yii::error('Usuario NO tiene rol admin - Acceso denegado', 'login-debug');
                 $form->addError("login", "Wrong username or password");
                 $this->trigger(FormEvent::EVENT_FAILED_LOGIN, $event);
             }else {
+                if($user) {
+                    Yii::error('Usuario tiene rol admin - Intentando login', 'login-debug');
+                }
+                
                 if ($form->login()) {
+                    Yii::error('Login exitoso', 'login-debug');
+                    
                     $form->getUser()->updateAttributes([
                         'last_login_at' => time(),
                         'last_login_ip' => Yii::$app->request->getUserIP(),
@@ -150,23 +164,39 @@ die(var_dump('asd'));
 
                     $this->trigger(FormEvent::EVENT_AFTER_LOGIN, $event);
                     RedisKeys::setValue(RedisKeys::USER_KEY, json_encode(Yii::$app->user->identity->attributes));
+                    Yii::error('Usuario guardado en Redis', 'login-debug');
+                    
                     $profile = Profile::findOne(['user_id' => $form->getUser()->id]);
                     if ($profile) {
                         RedisKeys::setValue(RedisKeys::PROFILE_KEY, json_encode($profile->attributes));
+                        Yii::error('Perfil guardado en Redis', 'login-debug');
+                    } else {
+                        Yii::error('No se encontró perfil para el usuario', 'login-debug');
                     }
+                    
                     $business = Business::findOne(['user_id' => $form->getUser()->id]);
                     if ($business) {
                         RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
-
+                        Yii::error('Negocio guardado en Redis (ID: ' . $business->id . ')', 'login-debug');
 
                         Yii::$app->setTimeZone($business->timezone);
-
+                        Yii::error('Timezone configurado: ' . $business->timezone, 'login-debug');
+                    } else {
+                        Yii::error('No se encontró negocio para el usuario', 'login-debug');
                     }
+                    
+                    Yii::error('=== LOGIN COMPLETADO EXITOSAMENTE ===', 'login-debug');
                     return $this->goBack();
                 } else {
+                    Yii::error('Login falló - Credenciales incorrectas o usuario bloqueado', 'login-debug');
+                    if($form->hasErrors()) {
+                        Yii::error('Errores del formulario: ' . json_encode($form->getErrors()), 'login-debug');
+                    }
                     $this->trigger(FormEvent::EVENT_FAILED_LOGIN, $event);
                 }
             }
+            
+            Yii::error('=== FIN PROCESO DE LOGIN (sin éxito) ===', 'login-debug');
         }
 
         return $this->render(
