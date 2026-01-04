@@ -165,9 +165,9 @@ class Movement extends \yii\db\ActiveRecord
                 ->orderBy(['created_at' => SORT_DESC, 'id' => SORT_DESC])
                 ->one();
             
-            if ($lastMovement && $lastMovement->unit_price > 0 && $ingredient->portions_per_unit > 0) {
+            if ($lastMovement && $ingredient->portions_per_unit > 0) {
                 // Calcular precio por porción: unit_price / portions_per_unit
-                $pricePerPortion = $lastMovement->unit_price / $ingredient->portions_per_unit;
+                $pricePerPortion = $ingredient->adjustedPrice;
                 
                 // Calcular total: precio por porción * cantidad de salida
                 $this->total = round($pricePerPortion * $this->quantity, 2);
