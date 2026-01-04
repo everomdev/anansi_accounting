@@ -113,7 +113,7 @@ class SecurityController extends Controller
         if (!Yii::$app->user->getIsGuest()) {
             return $this->goHome();
         }
-
+die(var_dump('asd'));
         /** @var LoginForm $form */
         $form = $this->make(LoginForm::class);
 
