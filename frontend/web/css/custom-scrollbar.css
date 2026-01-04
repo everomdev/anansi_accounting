@@ -1,0 +1,123 @@
+/* SCROLLBAR PERSONALIZADO PARA EL MENÚ LATERAL */
+/* Este archivo sobrescribe cualquier estilo de Perfect Scrollbar o tema */
+
+/* Deshabilitar Perfect Scrollbar en el menú */
+#layout-menu .ps__rail-y,
+#layout-menu .ps__rail-x,
+.menu-inner .ps__rail-y,
+.menu-inner .ps__rail-x {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+#layout-menu.ps,
+.menu-inner.ps {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
+/* FORZAR SCROLLBAR NATIVO PERSONALIZADO */
+/* Sobrescribir TODOS los estilos del sistema operativo */
+#layout-menu,
+#layout-menu *,
+.menu-inner {
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* Scrollbar personalizado GRIS para WEBKIT (Chrome, Edge, Safari) */
+#layout-menu::-webkit-scrollbar,
+.menu-inner::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    display: block !important;
+    background: rgba(236, 240, 241, 0.5) !important;
+}
+
+#layout-menu::-webkit-scrollbar-track,
+.menu-inner::-webkit-scrollbar-track {
+    background: rgba(236, 240, 241, 0.5) !important;
+    border-radius: 10px !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+}
+
+#layout-menu::-webkit-scrollbar-thumb,
+.menu-inner::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 10px !important;
+    min-height: 40px !important;
+    -webkit-box-shadow: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+#layout-menu::-webkit-scrollbar-thumb:hover,
+.menu-inner::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+#layout-menu::-webkit-scrollbar-thumb:active,
+.menu-inner::-webkit-scrollbar-thumb:active {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Eliminar flechas del scrollbar */
+#layout-menu::-webkit-scrollbar-button,
+.menu-inner::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Para Firefox */
+#layout-menu,
+.menu-inner {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(0, 0, 0, 0.3) rgba(236, 240, 241, 0.5) !important;
+    scroll-behavior: smooth !important;
+}
+
+/* Asegurar que el menú tenga scroll nativo */
+#layout-menu {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
+.menu-inner {
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+}
+
+/* Forzar en todos los tamaños de pantalla */
+@media (min-width: 992px) {
+    #layout-menu {
+        overflow-y: scroll !important;
+    }
+    
+    #layout-menu .ps__rail-y {
+        display: none !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    #layout-menu {
+        overflow-y: scroll !important;
+    }
+    
+    #layout-menu .ps__rail-y {
+        display: none !important;
+    }
+}
+
+/* Sobrescribir cualquier estilo inline que pudiera agregar Perfect Scrollbar */
+#layout-menu[style*="overflow"],
+.menu-inner[style*="overflow"] {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
