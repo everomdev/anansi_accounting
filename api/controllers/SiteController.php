@@ -75,7 +75,6 @@ class SiteController extends Controller
         }
 
         $this->layout = 'blank';
-        die(var_dump('asdasd'));
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
