@@ -169,7 +169,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                             'id' => 'ingredientstock-portion_um',
                             'data-original-value' => $model->portion_um ?? ''
                         ]
-                    )->label('Unidades de cocina <span class="asterisk">*</span>') ?>
+                    )->label('Unidades de uso <span class="asterisk">*</span>') ?>
                 </div>
 
                 <div class="col-sm-12 col-md-6 col-lg-3 col-xl-3 mb-3">
@@ -183,7 +183,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                                 'limit' => 10,
                             ]
                         ],
-                    ])->label('Equivalencia a unidades de cocina <span class="asterisk">*</span>');
+                    ])->label('Equivalencia a unidades de uso <span class="asterisk">*</span>');
                     echo preg_replace('/(<\/div>\s*)$/', '<div class="form-text" id="question-portion-um"></div>$1', $portionField);
                     ?>
                 </div>
@@ -678,7 +678,7 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
     function updatePortionUmQuestion() {
         var portionUm = $('#ingredientstock-portion_um').val();
         var um = $('#ingredientstock-um').val();
-        if (!portionUm || portionUm === '') portionUm = 'unidad de cocina';
+        if (!portionUm || portionUm === '') portionUm = 'unidad de uso';
         if (!um || um === '') um = 'unidad de compra';
         var pregunta = `¿Cuántos <b>${portionUm}</b> hay en un <b>${um}</b>?`;
         $('#question-portion-um').html(pregunta);

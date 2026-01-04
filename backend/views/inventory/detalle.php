@@ -114,7 +114,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     '</div>',
             ],
             [
-                'label' => 'Unidad<br>Cocina',
+                'label' => 'Unidad<br>Uso',
                 'encodeLabel' => false,
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->portion_um) ? $model->ingredientStock->portion_um : '-';

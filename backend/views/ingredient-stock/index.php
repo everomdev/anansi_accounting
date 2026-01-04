@@ -244,7 +244,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'portion_um',
-                'label' => 'Unidad<br>Cocina',
+                'label' => 'Unidad<br>Uso',
                 'encodeLabel' => false,
                 'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'portion_um', [
                     'class' => 'form-control form-control-sm',
