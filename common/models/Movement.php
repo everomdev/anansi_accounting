@@ -78,7 +78,13 @@ class Movement extends \yii\db\ActiveRecord
      */
     public function rules()
     {        return [            
-            [['type', 'quantity', 'ingredient_id', 'business_id', 'created_at', 'amount'], 'required'],
+            [['type', 'quantity', 'ingredient_id', 'business_id', 'created_at'], 'required'],
+            // amount es requerido solo para movimientos de entrada
+            [['amount'], 'required', 'when' => function($model) {
+                return $model->type === self::TYPE_INPUT;
+            }, 'whenClient' => "function (attribute, value) {
+                return $('#movement-type').val() === 'input';
+            }"],
             [['quantity'], 'number', 'min' => 0.01, 'message' => 'La cantidad debe ser un número mayor a 0'],
             [['amount'], 'number', 'min' => 0, 'message' => 'El precio de compra debe ser un número válido'],
             [['tax', 'retention'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],
@@ -146,7 +152,14 @@ class Movement extends \yii\db\ActiveRecord
             $this->unit_price = round($this->amount / $this->quantity, 4); // 4 decimales para precisión
         }
 
-        $this->um = $this->ingredient->portion_um;
+        // Establecer la unidad de medida según el tipo de movimiento
+        if ($this->type == self::TYPE_OUTPUT) {
+            // Para salidas, usar la unidad de cocina (portion_um)
+            $this->um = $this->ingredient->portion_um;
+        } else {
+            // Para entradas y órdenes, usar la unidad de compra (um)
+            $this->um = $this->ingredient->um;
+        }
 
         return true;
     }
