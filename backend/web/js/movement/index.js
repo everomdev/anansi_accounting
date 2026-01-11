@@ -180,3 +180,38 @@ $(document).on('click', '#confirm-delete-selected-movements', function() {
         }
     });
 });
+
+// Manejar el clic en el botón de exportar movimientos
+$(document).on('click', '#btn-export-movements', function(e) {
+    e.preventDefault();
+    
+    // Obtener IDs de las filas seleccionadas
+    const selectedIds = $('#movements-grid').yiiGridView('getSelectedRows');
+    
+    if (selectedIds.length === 0) {
+        // Mostrar modal de error si no hay selección
+        $('#modal-no-export-selection-movements').modal('show');
+        return;
+    }
+    
+    // Mostrar el modal de confirmación para exportación
+    $('#modal-export-movements').modal('show');
+});
+
+// Manejar la exportación de los movimientos seleccionados (página actual)
+$(document).on('click', '#export-current-page-movements', function() {
+    const selectedIds = $('#movements-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '/movement/export-movements?ids=' + selectedIds.join(',');
+    }
+    $('#modal-export-movements').modal('hide');
+});
+
+// Manejar la exportación de todos los movimientos seleccionados (todas las páginas)
+$(document).on('click', '#export-all-movements', function() {
+    const selectedIds = $('#movements-grid').yiiGridView('getSelectedRows');
+    if (selectedIds.length > 0) {
+        window.location.href = '/movement/export-movements?ids=' + selectedIds.join(',') + '&all=true';
+    }
+    $('#modal-export-movements').modal('hide');
+});

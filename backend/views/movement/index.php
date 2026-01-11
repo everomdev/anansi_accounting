@@ -109,19 +109,25 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             <div class="p-2">
                 <?= Html::a(Yii::t('app', 'Create order'), ['create', 'type' => \common\models\Movement::TYPE_ORDER], ['class' => 'btn btn-warning']) ?>
             </div>
-            <div class="p-2">
+            <!-- <div class="p-2">
                 <?= Html::a(Yii::t('app', 'Create requisition'), ['create-requisition'], ['class' => 'btn btn-info']) ?>
-            </div>
+            </div> -->
             <div class="p-2">
                 <?= Html::a(Yii::t('app', 'Download template'), ['movement/download-template'], ['class' => 'btn btn-warning']) ?>
             </div>
             <div class="p-2">
-                <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar movimientos', [
-                    'icon' => '<i class="fas fa-file-upload"></i>'
-                ]), ['movement/upload-movements'], ['class' => 'btn btn-warning']) ?>
+                <?= \yii\bootstrap5\Html::a(Yii::t('app', 'Cargar movimientos', [
+                ]), '#', [
+                    'class' => 'btn btn-warning',
+                    'data-bs-toggle' => 'modal',
+                    'data-bs-target' => '#modal-upload-file'
+                ]) ?>
             </div>
             <div class="p-2">
-                <?= Html::a(Yii::t('app', 'Exportar movimientos'), ['movement/export-movements'], ['class' => 'btn btn-warning']) ?>
+                <?= Html::a(Yii::t('app', 'Exportar movimientos'), '#', [
+                    'class' => 'btn btn-warning',
+                    'id' => 'btn-export-movements'
+                ]) ?>
             </div>
             <div class="p-2">
                 <?= Html::a(Yii::t('app', 'Balance'), "#", ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-balance']) ?>
@@ -491,6 +497,50 @@ echo "<div id='balance-container'></div>";
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
         'class' => 'btn btn-danger',
         'id' => 'confirm-delete-selected-movements'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para exportar movimientos seleccionados
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-export-movements',
+    'title' => Yii::t('app', "Exportar movimientos seleccionados"),
+]);
+?>
+<p>¿Deseas exportar todos los movimientos seleccionados o solo los de la página actual?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Exportar los seleccionados'), [
+        'class' => 'btn btn-success',
+        'id' => 'export-current-page-movements'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Exportar todos'), [
+        'class' => 'btn btn-success',
+        'id' => 'export-all-movements'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+
+<?php
+// Modal para mostrar error cuando no hay elementos seleccionados para exportar
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-no-export-selection-movements',
+    'title' => Yii::t('app', "Selección vacía"),
+]);
+?>
+<p>No has seleccionado ningún movimiento para exportar. Por favor, selecciona al menos un movimiento.</p>
+<div class="d-flex justify-content-end">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Entendido'), [
+        'class' => 'btn btn-primary',
+        'data-bs-dismiss' => 'modal'
     ]) ?>
 </div>
 <?php

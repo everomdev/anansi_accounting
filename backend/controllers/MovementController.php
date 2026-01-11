@@ -529,7 +529,17 @@ class MovementController extends Controller
         $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $business = Business::findOne(['id' => $businessData['id']]);
 
-        ExcelHelper::exportMovements($business);
+        // Obtener los IDs seleccionados del parámetro GET
+        $ids = Yii::$app->request->get('ids');
+        
+        // Si no hay IDs, exportar todos los movimientos del negocio
+        if (empty($ids)) {
+            ExcelHelper::exportMovements($business);
+        } else {
+            // Convertir los IDs de string a array
+            $idsArray = is_array($ids) ? $ids : explode(',', $ids);
+            ExcelHelper::exportMovements($business, $idsArray);
+        }
     }
 
     /**

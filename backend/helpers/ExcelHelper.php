@@ -2199,7 +2199,7 @@ if ($ccRow > 2) {
         exit(200);
     }
 
-    public static function exportMovements(Business $business)
+    public static function exportMovements(Business $business, $ids = null)
     {
         $spreadsheet = new Spreadsheet();
         $activeWorksheet = $spreadsheet->getActiveSheet();
@@ -2218,22 +2218,36 @@ if ($ccRow > 2) {
         $activeWorksheet->setCellValue("L1", "Total");
         $activeWorksheet->setCellValue("M1", "Observaciones");
 
-        $movements = Movement::find()->where(['business_id' => $business->id])->all();
+        // Si se proporcionan IDs, filtrar por ellos; de lo contrario, exportar todos
+        $query = Movement::find()->where(['business_id' => $business->id]);
+        if (!empty($ids)) {
+            $query->andWhere(['id' => $ids]);
+        }
+        $movements = $query->all();
+        
         $currentRow = 2;
         foreach ($movements as $movement){
             $activeWorksheet->setCellValue("A$currentRow", $movement->getFormattedType());
-            $activeWorksheet->setCellValue("B$currentRow", $movement->ingredient->key);
-            $activeWorksheet->setCellValue("C$currentRow", $movement->ingredient->ingredient);
+            
+            // Manejar movimientos sin ingrediente (como requisiciones)
+            if ($movement->ingredient) {
+                $activeWorksheet->setCellValue("B$currentRow", $movement->ingredient->key ?? '');
+                $activeWorksheet->setCellValue("C$currentRow", $movement->ingredient->ingredient ?? '');
+            } else {
+                $activeWorksheet->setCellValue("B$currentRow", '');
+                $activeWorksheet->setCellValue("C$currentRow", $movement->type === 'requisition' ? 'Requisición (múltiples insumos)' : 'N/A');
+            }
+            
             $activeWorksheet->setCellValue("D$currentRow", \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\DateTime::createFromFormat('Y-m-d H:i:s', $movement->created_at)));
-            $activeWorksheet->setCellValue("E$currentRow", $movement->provider);
+            $activeWorksheet->setCellValue("E$currentRow", $movement->provider ?? '');
             $activeWorksheet->setCellValue("F$currentRow", $movement->getFormattedPaymentType());
-            $activeWorksheet->setCellValue("G$currentRow", $movement->invoice);
-            $activeWorksheet->setCellValue("H$currentRow", $movement->quantity);
-            $activeWorksheet->setCellValue("I$currentRow", $movement->amount);
-            $activeWorksheet->setCellValue("J$currentRow", $movement->tax);
-            $activeWorksheet->setCellValue("K$currentRow", $movement->unit_price);
-            $activeWorksheet->setCellValue("L$currentRow", $movement->total);
-            $activeWorksheet->setCellValue("M$currentRow", $movement->observations);
+            $activeWorksheet->setCellValue("G$currentRow", $movement->invoice ?? '');
+            $activeWorksheet->setCellValue("H$currentRow", $movement->quantity ?? '');
+            $activeWorksheet->setCellValue("I$currentRow", $movement->amount ?? 0);
+            $activeWorksheet->setCellValue("J$currentRow", $movement->tax ?? 0);
+            $activeWorksheet->setCellValue("K$currentRow", $movement->unit_price ?? 0);
+            $activeWorksheet->setCellValue("L$currentRow", $movement->total ?? 0);
+            $activeWorksheet->setCellValue("M$currentRow", $movement->observations ?? '');
 
             $currentRow++;
         }
