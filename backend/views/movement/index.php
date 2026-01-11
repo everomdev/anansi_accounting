@@ -95,35 +95,38 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     </style>
 
     <div class="d-flex flex-wrap">
-        <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Create entry'), ['create', 'type' => \common\models\Movement::TYPE_INPUT], ['class' => 'btn btn-warning']) ?>
-        </div>
-        <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Create output'), ['create', 'type' => \common\models\Movement::TYPE_OUTPUT], ['class' => 'btn btn-warning']) ?>
-        </div>
-        <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Create order'), ['create', 'type' => \common\models\Movement::TYPE_ORDER], ['class' => 'btn btn-warning']) ?>
-        </div>
-        <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Download template'), ['movement/download-template'], ['class' => 'btn btn-warning']) ?>
-        </div>
-        <div class="p-2">
-            <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar movimientos', [
-                'icon' => ""
-            ]), '#', ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => "#modal-upload-file"]) ?>
-        </div>
-        <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Exportar movimientos'), ['movement/export-movements'], ['class' => 'btn btn-warning']) ?>
-        </div>
-        <div class="p-2">
-            <?= Html::a(Yii::t('app', 'Balance'), "#", ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-balance']) ?>
-        </div>
-        <div class="p-2">
-            <?php if (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator') || Yii::$app->user->can('storage_admin')): ?>
-                <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
-                    ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'btn-delete-movements']) ?>
-            <?php endif; ?>
-        </div>
+        <?php if (Yii::$app->user->can('consumption_requester')): ?>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Crear requisición'), ['create-requisition'], ['class' => 'btn btn-warning']) ?>
+            </div>
+        <?php else: ?>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Create entry'), ['create', 'type' => \common\models\Movement::TYPE_INPUT], ['class' => 'btn btn-warning']) ?>
+            </div>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Create output'), ['create', 'type' => \common\models\Movement::TYPE_OUTPUT], ['class' => 'btn btn-warning']) ?>
+            </div>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Create order'), ['create', 'type' => \common\models\Movement::TYPE_ORDER], ['class' => 'btn btn-warning']) ?>
+            </div>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Create requisition'), ['create-requisition'], ['class' => 'btn btn-info']) ?>
+            </div>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Download template'), ['movement/download-template'], ['class' => 'btn btn-warning']) ?>
+            </div>
+            <div class="p-2">
+                <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Cargar movimientos', [
+                    'icon' => '<i class="fas fa-file-upload"></i>'
+                ]), ['movement/upload-movements'], ['class' => 'btn btn-warning']) ?>
+            </div>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Exportar movimientos'), ['movement/export-movements'], ['class' => 'btn btn-warning']) ?>
+            </div>
+            <div class="p-2">
+                <?= Html::a(Yii::t('app', 'Balance'), "#", ['class' => 'btn btn-warning', 'data-bs-toggle' => 'modal', 'data-bs-target' => '#modal-balance']) ?>
+            </div>
+        <?php endif; ?>
     </div>
 
 
@@ -143,7 +146,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'value' => function ($model) {
                     $type = $model->formattedType;
                     if ($model->type === \common\models\Movement::TYPE_ORDER) {
-                        return $type . ' <span class="badge bg-info ms-1">Convertible</span>';
+                        return $type . ' <span class="badge bg-info ms-1">Convertible a entrada</span>';
+                    }
+                    if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                        return $type . ' <span class="badge bg-warning ms-1">Convertible a salida</span>';
                     }
                     return $type;
                 },
@@ -163,7 +169,18 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'ingredient_id',
                 'label' => 'Insumo',
                 'value' => function ($model) {
+                    // Para requisiciones, mostrar "Múltiples insumos"
+                    if ($model->type === 'requisition') {
+                        $itemCount = count($model->requisitionItems ?? []);
+                        return "Requisición ({$itemCount} insumos)";
+                    }
+                    
+                    // Para otros tipos de movimiento
                     $ingredient = $model->ingredient;
+                    if (!$ingredient) {
+                        return '-';
+                    }
+                    
                     $parts = [];
                     
                     // Agregar el nombre del insumo
@@ -329,7 +346,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                         return '';
                     },
                     'convert' => function ($url, $model, $key) {
-                        // Solo mostrar el botón de convertir para órdenes
+                        // Mostrar botón de convertir para órdenes (a entradas)
                         if ($model->type === \common\models\Movement::TYPE_ORDER) {
                             return \yii\bootstrap5\Html::a(
                                 '<i class="bx bx-transfer"></i>',
@@ -338,6 +355,18 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                                     'class' => 'text-success ms-2 convert-order',
                                     'title' => 'Convertir a entrada',
                                     'data-confirm' => '¿Confirmas que quieres convertir esta orden en una entrada?'
+                                ]
+                            );
+                        }
+                        // Mostrar botón de convertir para requisiciones (a salidas)
+                        if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                            return \yii\bootstrap5\Html::a(
+                                '<i class="bx bx-transfer-alt"></i>',
+                                ['convert-to-output', 'id' => $model->id],
+                                [
+                                    'class' => 'text-danger ms-2 convert-requisition',
+                                    'title' => 'Convertir a salida',
+                                    'data-confirm' => '¿Confirmas que quieres convertir esta requisición en una salida?'
                                 ]
                             );
                         }
@@ -354,7 +383,8 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
 <?php
 \yii\bootstrap5\Modal::begin([
-    'id' => 'modal-details-movement'
+    'id' => 'modal-details-movement',
+    'size' => \yii\bootstrap5\Modal::SIZE_EXTRA_LARGE, // Modal más grande para ver mejor los detalles
 ]);
 ?>
 <div id="container-modal-details-movement"></div>

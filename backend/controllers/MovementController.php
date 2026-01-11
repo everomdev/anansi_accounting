@@ -50,7 +50,9 @@ class MovementController extends Controller
                             'import-movements',
                             'balance',
                             'get-provider-payment-types',
-                            'convert-to-entry'
+                            'convert-to-entry',
+                            'convert-to-output',
+                            'check-stock-availability'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -61,6 +63,7 @@ class MovementController extends Controller
                     [
                         'actions' => [
                             'create',
+                            'create-requisition',
                         ],
                         'allow' => true,
                         'roles' => [
@@ -135,6 +138,11 @@ class MovementController extends Controller
      */
     public function actionCreate($type)
     {
+        // Si el tipo es REQUISITION, usar vista especial
+        if ($type === Movement::TYPE_REQUISITION) {
+            return $this->actionCreateRequisition();
+        }
+        
         Url::remember(['movement/create'], 'register-movement');
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $model = new Movement([
@@ -160,6 +168,94 @@ class MovementController extends Controller
         return $this->render('create', [
             'model' => $model,
         ]);
+    }
+    
+    /**
+     * Crear requisición con múltiples insumos
+     * @return mixed
+     */
+    public function actionCreateRequisition()
+    {
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $post = Yii::$app->request->post();
+        
+        if (Yii::$app->request->isPost) {
+            $transaction = Yii::$app->db->beginTransaction();
+            
+            try {
+                // Obtener datos del formulario
+                $consumptionCenterId = $post['consumption_center_id'] ?? null;
+                $requiredDate = $post['required_date'] ?? null;
+                $observations = $post['observations'] ?? '';
+                $clientTimezone = $post['client_timezone'] ?? 'UTC';
+                $items = $post['items'] ?? [];
+                
+                // Validar que haya items
+                if (empty($items)) {
+                    throw new \Exception('Debe agregar al menos un insumo a la requisición');
+                }
+                
+                // Validar centro de consumo
+                if (empty($consumptionCenterId)) {
+                    throw new \Exception('El centro de consumo es requerido');
+                }
+                
+                // Crear el movimiento de requisición (sin afectar inventario)
+                $movement = new Movement([
+                    'business_id' => $business['id'],
+                    'type' => Movement::TYPE_REQUISITION,
+                    'consumption_center_id' => $consumptionCenterId,
+                    'required_date' => $requiredDate,
+                    'observations' => $observations,
+                    'client_timezone' => $clientTimezone,
+                    'requested_by_user_id' => Yii::$app->user->id,
+                    'status' => 'pending',
+                    'created_at' => date('Y-m-d H:i:s'),
+                ]);
+                
+                if (!$movement->save()) {
+                    $errors = implode(', ', $movement->getFirstErrors());
+                    throw new \Exception('Error al crear requisición: ' . $errors);
+                }
+                
+                // Crear los items de la requisición
+                $savedCount = 0;
+                foreach ($items as $item) {
+                    if (empty($item['ingredient_id']) || empty($item['quantity'])) {
+                        continue;
+                    }
+                    
+                    $requisitionItem = new \common\models\RequisitionItem([
+                        'requisition_id' => $movement->id,
+                        'ingredient_id' => $item['ingredient_id'],
+                        'quantity_requested' => $item['quantity'],
+                    ]);
+                    
+                    if (!$requisitionItem->save()) {
+                        $errors = implode(', ', $requisitionItem->getFirstErrors());
+                        throw new \Exception('Error al guardar insumo: ' . $errors);
+                    }
+                    
+                    $savedCount++;
+                }
+                
+                if ($savedCount == 0) {
+                    throw new \Exception('No se guardó ningún insumo válido');
+                }
+                
+                $transaction->commit();
+                
+                Yii::$app->session->addFlash('success', 
+                    "Requisición {$movement->requisition_number} creada exitosamente con {$savedCount} insumo(s).");
+                return $this->redirect(['index']);
+                
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                Yii::$app->session->addFlash('error', 'Error al crear requisición: ' . $e->getMessage());
+            }
+        }
+        
+        return $this->render('create_requisition');
     }
 
     /**
@@ -238,6 +334,160 @@ class MovementController extends Controller
             }
             return $this->redirect(['view', 'id' => $id]);
         }
+    }
+
+    /**
+     * Convierte una requisición en una salida
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionConvertToOutput($id)
+    {
+        $originalRequisition = $this->findModel($id);
+        
+        // Verificar que sea una requisición
+        if ($originalRequisition->type !== Movement::TYPE_REQUISITION) {
+            Yii::$app->session->addFlash('error', 'Solo se pueden convertir requisiciones en salidas.');
+            return $this->redirect(['view', 'id' => $id]);
+        }
+        
+        // Verificar que la requisición tenga items
+        $items = $originalRequisition->requisitionItems;
+        if (empty($items)) {
+            Yii::$app->session->addFlash('error', 'La requisición no tiene insumos.');
+            return $this->redirect(['view', 'id' => $id]);
+        }
+        
+        $transaction = Yii::$app->db->beginTransaction();
+        
+        try {
+            $outputsCreated = 0;
+            $insufficientStock = [];
+            
+            // Crear una salida por cada item de la requisición
+            foreach ($items as $item) {
+                $ingredient = $item->ingredient;
+                
+                if (!$ingredient) {
+                    continue;
+                }
+                
+                // Verificar disponibilidad de stock
+                $availableQuantity = $ingredient->quantity ?? 0;
+                
+                if ($availableQuantity < $item->quantity_requested) {
+                    $insufficientStock[] = [
+                        'ingredient' => $ingredient->ingredient,
+                        'requested' => $item->quantity_requested,
+                        'available' => $availableQuantity,
+                    ];
+                    continue;
+                }
+                
+                // Crear movimiento de salida
+                $newOutput = new Movement();
+                $newOutput->type = Movement::TYPE_OUTPUT;
+                $newOutput->business_id = $originalRequisition->business_id;
+                $newOutput->ingredient_id = $item->ingredient_id;
+                $newOutput->consumption_center_id = $originalRequisition->consumption_center_id;
+                $newOutput->quantity = $item->quantity_requested;
+                $newOutput->um = $ingredient->portion_um ?? $ingredient->um;
+                $newOutput->observations = "Salida de requisición {$originalRequisition->requisition_number}";
+                $newOutput->parent_requisition_id = $originalRequisition->id;
+                $newOutput->created_at = date('Y-m-d H:i:s');
+                
+                if (!$newOutput->save()) {
+                    $errors = implode(', ', $newOutput->getFirstErrors());
+                    throw new \Exception("Error al crear salida para {$ingredient->ingredient}: {$errors}");
+                }
+                
+                // Actualizar cantidad surtida en el item
+                $item->quantity_fulfilled = $item->quantity_requested;
+                $item->save(false);
+                
+                $outputsCreated++;
+            }
+            
+            // Actualizar estado de la requisición
+            if ($outputsCreated > 0) {
+                if (empty($insufficientStock)) {
+                    $originalRequisition->status = 'fulfilled';
+                } else {
+                    $originalRequisition->status = 'partially_fulfilled';
+                }
+                $originalRequisition->fulfilled_by_user_id = Yii::$app->user->id;
+                $originalRequisition->save(false);
+            }
+            
+            $transaction->commit();
+            
+            // Mostrar resultados
+            if ($outputsCreated > 0) {
+                Yii::$app->session->addFlash('success', 
+                    "Se crearon {$outputsCreated} salida(s) exitosamente.");
+            }
+            
+            if (!empty($insufficientStock)) {
+                $message = "No se pudo surtir todo. Stock insuficiente para:\n";
+                foreach ($insufficientStock as $stock) {
+                    $message .= "- {$stock['ingredient']}: solicitado {$stock['requested']}, disponible {$stock['available']}\n";
+                }
+                Yii::$app->session->addFlash('warning', $message);
+            }
+            
+            if ($outputsCreated == 0) {
+                Yii::$app->session->addFlash('error', 'No se pudo crear ninguna salida debido a stock insuficiente.');
+            }
+            
+            return $this->redirect(['index']);
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->session->addFlash('error', 'Error al convertir requisición: ' . $e->getMessage());
+            return $this->redirect(['view', 'id' => $id]);
+        }
+    }
+    
+    /**
+     * Verifica la disponibilidad de stock para una requisición
+     * @return mixed JSON response
+     */
+    public function actionCheckStockAvailability()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $ingredientId = Yii::$app->request->post('ingredient_id');
+        $quantity = Yii::$app->request->post('quantity');
+        
+        if (empty($ingredientId) || empty($quantity)) {
+            return [
+                'success' => false,
+                'message' => 'Parámetros inválidos'
+            ];
+        }
+        
+        $ingredient = \common\models\IngredientStock::findOne($ingredientId);
+        
+        if (!$ingredient) {
+            return [
+                'success' => false,
+                'message' => 'Insumo no encontrado'
+            ];
+        }
+        
+        $availableQuantity = $ingredient->quantity ?? 0;
+        $available = $availableQuantity >= $quantity;
+        
+        return [
+            'success' => true,
+            'available' => $available,
+            'availableQuantity' => $availableQuantity,
+            'requestedQuantity' => $quantity,
+            'insufficientQuantity' => max(0, $quantity - $availableQuantity),
+            'ingredientName' => $ingredient->ingredient,
+            'um' => $ingredient->portion_um
+        ];
     }
 
     public function actionDownloadTemplate()

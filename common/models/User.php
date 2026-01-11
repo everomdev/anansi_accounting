@@ -82,6 +82,65 @@ class User extends \Da\User\Model\User
 //            ->where(['up.user_id' => $this->id]);
     }
 
+    /**
+     * Gets query for [[UserConsumptionCenters]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getUserConsumptionCenters()
+    {
+        return $this->hasMany(UserConsumptionCenter::class, ['user_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[ConsumptionCenters]] via UserConsumptionCenter.
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getConsumptionCenters()
+    {
+        return $this->hasMany(ConsumptionCenter::class, ['id' => 'consumption_center_id'])
+            ->viaTable('user_consumption_center', ['user_id' => 'id']);
+    }
+
+    /**
+     * Get the default consumption center for this user
+     * Si no hay uno marcado como default, retorna el primero
+     *
+     * @return ConsumptionCenter|null
+     */
+    public function getDefaultConsumptionCenter()
+    {
+        // Buscar el centro marcado como default
+        $relation = UserConsumptionCenter::find()
+            ->where(['user_id' => $this->id, 'is_default' => true])
+            ->one();
+        
+        if ($relation && $relation->consumptionCenter) {
+            return $relation->consumptionCenter;
+        }
+        
+        // Si no hay default, buscar el primer centro asignado
+        $firstRelation = UserConsumptionCenter::find()
+            ->where(['user_id' => $this->id])
+            ->orderBy(['created_at' => SORT_ASC])
+            ->one();
+        
+        return $firstRelation ? $firstRelation->consumptionCenter : null;
+    }
+
+    /**
+     * Verifica si el usuario tiene centros de consumo asignados
+     *
+     * @return bool
+     */
+    public function hasConsumptionCenters()
+    {
+        return UserConsumptionCenter::find()
+            ->where(['user_id' => $this->id])
+            ->exists();
+    }
+
     public function selectPlan($planId)
     {
         $userPlan = new UserPlan([

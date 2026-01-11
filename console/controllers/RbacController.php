@@ -488,6 +488,36 @@ class RbacController extends Controller
             $authManager->add($permissionMovementsManageBalance);
         }
 
+        // Requisition permissions (for consumption center users)
+        $permissionRequisitionsList = $authManager->getPermission('requisitions_list');
+        if (!$permissionRequisitionsList) {
+            $permissionRequisitionsList = $authManager->createPermission('requisitions_list');
+            $permissionRequisitionsList->description = "Ver lista de requisiciones";
+            $permissionRequisitionsList->ruleName = $paymentRule->name;
+            $authManager->add($permissionRequisitionsList);
+        }
+        $permissionRequisitionsView = $authManager->getPermission('requisitions_view');
+        if (!$permissionRequisitionsView) {
+            $permissionRequisitionsView = $authManager->createPermission('requisitions_view');
+            $permissionRequisitionsView->description = "Ver detalles de requisiciones";
+            $permissionRequisitionsView->ruleName = $paymentRule->name;
+            $authManager->add($permissionRequisitionsView);
+        }
+        $permissionRequisitionsCreate = $authManager->getPermission('requisitions_create');
+        if (!$permissionRequisitionsCreate) {
+            $permissionRequisitionsCreate = $authManager->createPermission('requisitions_create');
+            $permissionRequisitionsCreate->description = "Crear requisiciones";
+            $permissionRequisitionsCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionRequisitionsCreate);
+        }
+        $permissionRequisitionsConvert = $authManager->getPermission('requisitions_convert');
+        if (!$permissionRequisitionsConvert) {
+            $permissionRequisitionsConvert = $authManager->createPermission('requisitions_convert');
+            $permissionRequisitionsConvert->description = "Convertir requisiciones a salidas";
+            $permissionRequisitionsConvert->ruleName = $paymentRule->name;
+            $authManager->add($permissionRequisitionsConvert);
+        }
+
         $permissionMatrixBCG = $authManager->getPermission('matrix_bcg');
         if (!$permissionMatrixBCG) {
             $permissionMatrixBCG = $authManager->createPermission('matrix_bcg');
@@ -548,6 +578,10 @@ class RbacController extends Controller
         $addChildSafely($roleStorageAdmin, $permissionMovementsList);
         $addChildSafely($roleStorageAdmin, $permissionMovementsCreate);
         $addChildSafely($roleStorageAdmin, $permissionMovementsView);
+        $addChildSafely($roleStorageAdmin, $permissionRequisitionsList);
+        $addChildSafely($roleStorageAdmin, $permissionRequisitionsView);
+        $addChildSafely($roleStorageAdmin, $permissionRequisitionsCreate);
+        $addChildSafely($roleStorageAdmin, $permissionRequisitionsConvert);
         $addChildSafely($roleStorageAdmin, $permissionIngredientsList);
         $addChildSafely($roleStorageAdmin, $permissionIngredientsView);
         $addChildSafely($roleStorageAdmin, $permissionIngredientsCreate);
@@ -918,6 +952,14 @@ class RbacController extends Controller
             $authManager->add($roleMenuManager);
         }
 
+        // Role Consumption Requester (Solicitante de Consumo)
+        $roleConsumptionRequester = $authManager->getRole('consumption_requester');
+        if (!$roleConsumptionRequester) {
+            $roleConsumptionRequester = $authManager->createRole('consumption_requester');
+            $roleConsumptionRequester->description = 'Solicitante de Consumo - Solo puede crear y ver requisiciones';
+            $authManager->add($roleConsumptionRequester);
+        }
+
 
 
         // Assign permissions to General Manager
@@ -1094,6 +1136,17 @@ class RbacController extends Controller
         $addChildSafely($roleMenuManager, $permissionIngredientsCreate);
         $addChildSafely($roleMenuManager, $permissionIngredientsUpdate);
         $addChildSafely($roleMenuManager, $permissionIngredientsDelete);
+
+        // Assign permissions to Consumption Requester (Solicitante de Consumo)
+        // Este rol solo puede crear y ver requisiciones, NO puede convertirlas a salidas
+        $addChildSafely($roleConsumptionRequester, $permissionDashboardView);
+        $addChildSafely($roleConsumptionRequester, $permissionRequisitionsList);
+        $addChildSafely($roleConsumptionRequester, $permissionRequisitionsView);
+        $addChildSafely($roleConsumptionRequester, $permissionRequisitionsCreate);
+        $addChildSafely($roleConsumptionRequester, $permissionIngredientsList);
+        $addChildSafely($roleConsumptionRequester, $permissionIngredientsView);
+        $addChildSafely($roleConsumptionRequester, $permissionMovementsList);
+        $addChildSafely($roleConsumptionRequester, $permissionMovementsView);
 
     }
 

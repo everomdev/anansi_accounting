@@ -11,31 +11,44 @@ use common\behaviors\NumberFormatterBehavior;
  *
  * @property int $id
  * @property string $type
- * @property string $provider
+ * @property string|null $provider
  * @property string|null $payment_type
  * @property string|null $invoice
- * @property float $quantity
- * @property string $um
+ * @property float|null $quantity
+ * @property string|null $um
  * @property float|null $amount
  * @property float|null $tax
  * @property float|null $retention
  * @property float|null $unit_price
  * @property float|null $total
  * @property string|null $observations
- * @property int $ingredient_id
+ * @property int|null $ingredient_id
  * @property int $business_id
  * @property int|null $consumption_center_id
  * @property string $created_at
+ * @property string|null $requisition_number
+ * @property string|null $required_date
+ * @property string $status
+ * @property int|null $requested_by_user_id
+ * @property int|null $fulfilled_by_user_id
+ * @property int|null $parent_requisition_id
+ * @property bool $is_without_requisition
+ * @property string|null $client_timezone
  *
  * @property Business $business
  * @property IngredientStock $ingredient
  * @property ConsumptionCenter $consumptionCenter
+ * @property User $requestedByUser
+ * @property User $fulfilledByUser
+ * @property Movement $parentRequisition
+ * @property RequisitionItem[] $requisitionItems
  */
 class Movement extends \yii\db\ActiveRecord
 {
     use ProviderManagerTrait;    const TYPE_INPUT = 'input';
     const TYPE_OUTPUT = 'output';
     const TYPE_ORDER = 'order';
+    const TYPE_REQUISITION = 'requisition'; // Requisición para salidas
 
     // Tipos de pago genéricos (para compatibilidad)
     const PAYMENT_TYPE_CARD = 'card';
@@ -78,27 +91,55 @@ class Movement extends \yii\db\ActiveRecord
      */
     public function rules()
     {        return [            
-            [['type', 'quantity', 'ingredient_id', 'business_id', 'created_at'], 'required'],
-            // amount es requerido solo para movimientos de entrada
+            [['type', 'business_id', 'created_at'], 'required'],
+            // ingredient_id y quantity son requeridos excepto para requisiciones (que usan RequisitionItem)
+            [['ingredient_id', 'quantity'], 'required', 'when' => function($model) {
+                return $model->type !== self::TYPE_REQUISITION;
+            }],
+            // amount es requerido solo para movimientos de entrada y órdenes
             [['amount'], 'required', 'when' => function($model) {
-                return $model->type === self::TYPE_INPUT;
+                return $model->type === self::TYPE_INPUT || $model->type === self::TYPE_ORDER;
             }, 'whenClient' => "function (attribute, value) {
-                return $('#movement-type').val() === 'input';
+                var type = $('#movement-type').val();
+                return type === 'input' || type === 'order';
             }"],
+            // required_date es requerido para requisiciones
+            [['required_date'], 'required', 'when' => function($model) {
+                return $model->type === self::TYPE_REQUISITION;
+            }],
+            // consumption_center_id es requerido para requisiciones
+            [['consumption_center_id'], 'required', 'when' => function($model) {
+                return $model->type === self::TYPE_REQUISITION;
+            }],
+            // Validación de observaciones para salidas sin requisición
+            [['observations'], 'required', 'when' => function($model) {
+                if ($model->type === self::TYPE_OUTPUT && $model->is_without_requisition) {
+                    $config = RequisitionConfig::getForBusiness($model->business_id);
+                    return $config->require_observations_without_requisition;
+                }
+                return false;
+            }, 'message' => 'Las observaciones son obligatorias para salidas sin requisición'],
             [['quantity'], 'number', 'min' => 0.01, 'message' => 'La cantidad debe ser un número mayor a 0'],
             [['amount'], 'number', 'min' => 0, 'message' => 'El precio de compra debe ser un número válido'],
             [['tax', 'retention'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],
             [['unit_price', 'total'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],
-            [['ingredient_id', 'business_id', 'consumption_center_id'], 'integer'],
-            [['created_at'], 'safe'],
-            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations'], 'string', 'max' => 255],
+            [['ingredient_id', 'business_id', 'consumption_center_id', 'requested_by_user_id', 'fulfilled_by_user_id', 'parent_requisition_id'], 'integer'],
+            [['created_at', 'required_date'], 'safe'],
+            [['is_without_requisition'], 'boolean'],
+            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'status', 'client_timezone'], 'string', 'max' => 255],
+            [['requisition_number'], 'string', 'max' => 50],
+            [['status'], 'in', 'range' => ['pending', 'partially_fulfilled', 'fulfilled', 'cancelled']],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
             [['consumption_center_id'], 'exist', 'skipOnError' => true, 'targetClass' => ConsumptionCenter::className(), 'targetAttribute' => ['consumption_center_id' => 'id']],
+            [['requested_by_user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['requested_by_user_id' => 'id']],
+            [['fulfilled_by_user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['fulfilled_by_user_id' => 'id']],
+            [['parent_requisition_id'], 'exist', 'skipOnError' => true, 'targetClass' => Movement::className(), 'targetAttribute' => ['parent_requisition_id' => 'id']],
             [['type'], 'in', 'range' => array_keys(self::getFormattedTypes())],
             [['payment_type'], 'in', 'range' => array_keys(self::getFormattedPaymentMethods()), 'skipOnEmpty' => true],
             [['provider'], 'validateProvider'],
-            [['consumption_center_id'], 'validateConsumptionCenter']
+            [['consumption_center_id'], 'validateConsumptionCenter'],
+            [['required_date'], 'validateRequiredDate']
         ];
     }
 
@@ -125,6 +166,14 @@ class Movement extends \yii\db\ActiveRecord
             'business_id' => Yii::t('app', 'Business ID'),
             'consumption_center_id' => Yii::t('app', 'Centro de Consumo'),
             'created_at' => Yii::t('app', 'Created At'),
+            'requisition_number' => Yii::t('app', 'Número de Requisición'),
+            'required_date' => Yii::t('app', 'Fecha Requerida'),
+            'status' => Yii::t('app', 'Estado'),
+            'requested_by_user_id' => Yii::t('app', 'Solicitado por'),
+            'fulfilled_by_user_id' => Yii::t('app', 'Surtido por'),
+            'parent_requisition_id' => Yii::t('app', 'Requisición Padre'),
+            'is_without_requisition' => Yii::t('app', 'Sin Requisición'),
+            'client_timezone' => Yii::t('app', 'Zona Horaria'),
         ];
     }
 
@@ -147,13 +196,33 @@ class Movement extends \yii\db\ActiveRecord
             $this->created_at = date('Y-m-d H:i:s');
         }
 
+        // Generar número de requisición automáticamente
+        if ($insert && $this->type === self::TYPE_REQUISITION && empty($this->requisition_number)) {
+            $this->requisition_number = $this->generateRequisitionNumber();
+        }
+        
+        // Establecer usuario solicitante para requisiciones
+        if ($insert && $this->type === self::TYPE_REQUISITION && empty($this->requested_by_user_id)) {
+            $this->requested_by_user_id = Yii::$app->user->id;
+        }
+        
+        // Establecer estado inicial para requisiciones
+        if ($insert && $this->type === self::TYPE_REQUISITION && empty($this->status)) {
+            $this->status = 'pending';
+        }
+        
+        // Capturar zona horaria del cliente si está disponible en la sesión/request
+        if ($insert && empty($this->client_timezone)) {
+            $this->client_timezone = Yii::$app->request->post('client_timezone', 'UTC');
+        }
+
         // Calcular unit_price automáticamente si es entrada y hay cantidad y amount
         if ($this->type == self::TYPE_INPUT && $this->quantity > 0 && $this->amount > 0) {
             $this->unit_price = round($this->amount / $this->quantity, 4); // 4 decimales para precisión
         }
 
         // Para salidas, calcular el costo total basado en el precio por porción
-        if ($this->type == self::TYPE_OUTPUT && $this->quantity > 0) {
+        if ($this->type == self::TYPE_OUTPUT && $this->quantity > 0 && $this->ingredient_id) {
             $ingredient = $this->ingredient;
             
             // Obtener el último precio de stock_prices
@@ -174,12 +243,15 @@ class Movement extends \yii\db\ActiveRecord
         }
 
         // Establecer la unidad de medida según el tipo de movimiento
-        if ($this->type == self::TYPE_OUTPUT) {
-            // Para salidas, usar la unidad de cocina (portion_um)
-            $this->um = $this->ingredient->portion_um;
-        } else {
-            // Para entradas y órdenes, usar la unidad de compra (um)
-            $this->um = $this->ingredient->um;
+        // NOTA: Las requisiciones NO tienen ingredient_id directo, tienen items múltiples
+        if ($this->ingredient_id) {
+            if ($this->type == self::TYPE_OUTPUT || $this->type == self::TYPE_REQUISITION) {
+                // Para salidas y requisiciones, usar la unidad de cocina (portion_um)
+                $this->um = $this->ingredient->portion_um;
+            } else {
+                // Para entradas y órdenes, usar la unidad de compra (um)
+                $this->um = $this->ingredient->um;
+            }
         }
 
         return true;
@@ -257,12 +329,63 @@ class Movement extends \yii\db\ActiveRecord
         return $this->hasOne(ConsumptionCenter::className(), ['id' => 'consumption_center_id']);
     }
 
+    /**
+     * Gets query for [[RequisitionItems]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRequisitionItems()
+    {
+        return $this->hasMany(RequisitionItem::className(), ['requisition_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[RequestedByUser]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRequestedByUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'requested_by_user_id']);
+    }
+
+    /**
+     * Gets query for [[FulfilledByUser]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getFulfilledByUser()
+    {
+        return $this->hasOne(User::className(), ['id' => 'fulfilled_by_user_id']);
+    }
+
+    /**
+     * Gets query for [[ParentRequisition]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getParentRequisition()
+    {
+        return $this->hasOne(Movement::className(), ['id' => 'parent_requisition_id']);
+    }
+
+    /**
+     * Gets query for [[ChildOutputs]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getChildOutputs()
+    {
+        return $this->hasMany(Movement::className(), ['parent_requisition_id' => 'id']);
+    }
+
     public static function getFormattedTypes()
     {
         return [
             self::TYPE_INPUT => Yii::t('app', "Input"),
             self::TYPE_OUTPUT => Yii::t('app', "Output"),
             self::TYPE_ORDER => Yii::t('app', "Order"),
+            self::TYPE_REQUISITION => Yii::t('app', "Requisition"),
         ];
     }    public static function getFormattedPaymentTypes()
     {
@@ -392,14 +515,83 @@ class Movement extends \yii\db\ActiveRecord
     }
 
     /**
-     * Validar que el centro de consumo sea requerido para movimientos de salida
+     * Validar que el centro de consumo sea requerido para movimientos de salida y requisiciones
      */
     public function validateConsumptionCenter($attribute, $params)
     {
-        // Solo validar para movimientos de salida
-        if ($this->type === self::TYPE_OUTPUT && empty($this->$attribute)) {
-            $this->addError($attribute, 'El centro de consumo es requerido para movimientos de salida.');
+        // Validar para movimientos de salida y requisiciones
+        if (($this->type === self::TYPE_OUTPUT || $this->type === self::TYPE_REQUISITION) && empty($this->$attribute)) {
+            $this->addError($attribute, 'El centro de consumo es requerido para movimientos de salida y requisiciones.');
         }
+    }
+    
+    /**
+     * Validar que la fecha requerida no exceda el máximo de días a futuro configurado
+     */
+    public function validateRequiredDate($attribute, $params)
+    {
+        if ($this->type !== self::TYPE_REQUISITION || empty($this->$attribute)) {
+            return;
+        }
+        
+        $config = RequisitionConfig::getForBusiness($this->business_id);
+        $validation = $config->validateFutureDate($this->$attribute, $this->client_timezone);
+        
+        if (!$validation['valid']) {
+            $this->addError($attribute, $validation['message']);
+        }
+    }
+    
+    /**
+     * Verificar si hay stock suficiente para una requisición o salida
+     */
+    public function checkStockAvailability()
+    {
+        if ($this->type !== self::TYPE_REQUISITION && $this->type !== self::TYPE_OUTPUT) {
+            return ['available' => true, 'availableQuantity' => 0];
+        }
+        
+        $ingredient = $this->ingredient;
+        $availableQuantity = $ingredient->quantity ?? 0;
+        
+        return [
+            'available' => $availableQuantity >= $this->quantity,
+            'availableQuantity' => $availableQuantity,
+            'requestedQuantity' => $this->quantity,
+            'insufficientQuantity' => max(0, $this->quantity - $availableQuantity)
+        ];
+    }
+    
+    /**
+     * Generar número único de requisición
+     * Formato: REQ-YYYY-MM-DD-XXX (XXX = secuencial del día)
+     */
+    public function generateRequisitionNumber()
+    {
+        $timezone = $this->client_timezone ?: 'UTC';
+        $date = new \DateTime('now', new \DateTimeZone($timezone));
+        $dateStr = $date->format('Y-m-d');
+        
+        // Contar requisiciones del día actual
+        $count = self::find()
+            ->where(['type' => self::TYPE_REQUISITION, 'business_id' => $this->business_id])
+            ->andWhere(['like', 'requisition_number', "REQ-{$dateStr}-%", false])
+            ->count();
+        
+        $sequential = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+        
+        return "REQ-{$dateStr}-{$sequential}";
+    }
+    
+    /**
+     * IMPORTANTE: Las requisiciones a futuro NO descuentan inventario
+     * Solo las salidas (OUTPUT) descuentan inventario
+     */
+    public function isInventoryAffecting()
+    {
+        // Solo las entradas y salidas afectan el inventario
+        // Las requisiciones y órdenes NO afectan el inventario
+        return in_array($this->type, [self::TYPE_INPUT, self::TYPE_OUTPUT]);
     }
 
 

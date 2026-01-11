@@ -2,6 +2,7 @@
 /** @var $this \yii\web\View */
 /** @var $business \common\models\Business */
 /** @var $movements \common\models\Movement[] */
+use yii\helpers\Html;
 
 $movements = $business->getMovements()
 ->orderBy(['created_at' => SORT_DESC])
@@ -160,7 +161,14 @@ $this->registerCss("
 <div class="movements-container">
     <div class="movements-header">
         <h5>Últimos Movimientos</h5>
-        <span class="movements-badge"><?= count($movements) ?> recientes</span>
+        <div>
+            <span class="movements-badge"><?= count($movements) ?> recientes</span>
+            <?php if (Yii::$app->user->can('consumption_requester')): ?>
+                <?= Html::a(Yii::t('app', 'Crear requisición'), ['movement/create-requisition'], ['class' => 'btn btn-sm btn-info ms-2']) ?>
+            <?php else: ?>
+                <?= Html::a(Yii::t('app', 'Ver todos'), ['movement/index'], ['class' => 'btn btn-sm btn-outline-secondary ms-2']) ?>
+            <?php endif; ?>
+        </div>
     </div>
     
     <div class="movements-content">
@@ -192,8 +200,20 @@ $this->registerCss("
                                     <?= $movement->getFormattedType() ?>
                                 </span>
                             </td>
-                            <td class="movement-ingredient"><?= $movement->ingredient->ingredient ?></td>
-                            <td class="movement-quantity"><?= sprintf("%s %s", $movement->quantity, $movement->ingredient->um) ?></td>
+                            <td class="movement-ingredient">
+                                <?php if ($movement->type === 'requisition'): ?>
+                                    Requisición (<?= count($movement->requisitionItems ?? []) ?> insumos)
+                                <?php else: ?>
+                                    <?= $movement->ingredient ? $movement->ingredient->ingredient : '-' ?>
+                                <?php endif; ?>
+                            </td>
+                            <td class="movement-quantity">
+                                <?php if ($movement->type === 'requisition'): ?>
+                                    -
+                                <?php else: ?>
+                                    <?= $movement->ingredient ? sprintf("%s %s", $movement->quantity, $movement->ingredient->um) : '-' ?>
+                                <?php endif; ?>
+                            </td>
                             <td class="movement-total"><?= formatPrice($movement->total) ?></td>
                         </tr>
                     <?php endforeach; ?>

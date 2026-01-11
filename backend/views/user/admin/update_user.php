@@ -18,6 +18,17 @@ usort($roles, function($a, $b) {
     return strcmp($a->description, $b->description);
 });
 
+// Obtener centros de consumo del restaurante (excluyendo "Almacén")
+$business = \backend\helpers\RedisKeys::getBusiness();
+$consumptionCenters = \yii\helpers\ArrayHelper::map(
+    \common\models\ConsumptionCenter::find()
+        ->where(['business_id' => $business->id])
+        ->andWhere(['!=', 'name', 'Almacén'])
+        ->all(),
+    'id',
+    'name'
+);
+
 // Obtener todos los permisos disponibles para permisos adicionales
 $allPermissions = Yii::$app->authManager->getPermissions();
 if (!is_array($allPermissions)) {
@@ -146,6 +157,28 @@ $this->registerJsVar('searchPlaceholder', Yii::t('app', "Search"));
                 <label>Permisos adicionales <small class="text-muted">(opcional)</small></label>
                 <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#permissionsModal" data-additional='<?= json_encode($model->_permissions ?: []) ?>'>Seleccionar permisos adicionales</button>
                 <input type="hidden" name="CreateUserForm[_permissions]" id="permissions-hidden">
+            </div>
+        </div>
+        
+        <!-- Campo para Centros de Consumo (solo visible para "Solicitante de Consumo") -->
+        <div id="consumption-centers-field" style="display: none;" class="mt-3">
+            <label>Centros de Consumo <span class="text-danger">*</span></label>
+            <small class="text-muted d-block mb-2">Selecciona los centros de consumo que este usuario puede gestionar. El primero será el predeterminado.</small>
+            <?php foreach ($consumptionCenters as $id => $name): ?>
+                <div class="form-check">
+                    <input type="checkbox" 
+                           id="center-<?= $id ?>" 
+                           name="CreateUserForm[consumption_center_ids][]" 
+                           value="<?= $id ?>" 
+                           class="form-check-input consumption-center-checkbox"
+                           <?= in_array($id, $model->consumption_center_ids) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="center-<?= $id ?>">
+                        <?= $name ?>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+            <div class="invalid-feedback" id="consumption-center-error" style="display: none;">
+                Debes seleccionar al menos un centro de consumo.
             </div>
         </div>
     </div>
@@ -378,6 +411,53 @@ $(function(){
         var button = $('#update-button');
         button.prop('disabled', true);
         button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...');
+    });
+    
+    // Mostrar/ocultar centros de consumo según el rol seleccionado
+    function toggleConsumptionCenters() {
+        var selectedRole = $('#createuserform-role').val();
+        if (selectedRole === 'consumption_requester') {
+            $('#consumption-centers-field').slideDown();
+        } else {
+            $('#consumption-centers-field').slideUp();
+            // Desmarcar todos los checkboxes
+            $('.consumption-center-checkbox').prop('checked', false);
+        }
+    }
+    
+    // Ejecutar al cambiar el rol
+    $('#createuserform-role').on('change', function() {
+        toggleConsumptionCenters();
+    });
+    
+    // Ejecutar al cargar la página
+    toggleConsumptionCenters();
+    
+    // Validar que al menos un centro esté seleccionado
+    $('form').on('submit', function(e) {
+        var selectedRole = $('#createuserform-role').val();
+        if (selectedRole === 'consumption_requester') {
+            var checkedCount = $('.consumption-center-checkbox:checked').length;
+            if (checkedCount === 0) {
+                e.preventDefault();
+                $('#consumption-center-error').show();
+                $('.consumption-center-checkbox').first().focus();
+                
+                var button = $('#update-button');
+                button.prop('disabled', false);
+                button.html('<?= Yii::t('app', "Update") ?>');
+                return false;
+            } else {
+                $('#consumption-center-error').hide();
+            }
+        }
+    });
+    
+    // Ocultar error al seleccionar un checkbox
+    $('.consumption-center-checkbox').on('change', function() {
+        if ($('.consumption-center-checkbox:checked').length > 0) {
+            $('#consumption-center-error').hide();
+        }
     });
 });
 JS;

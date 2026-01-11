@@ -12,6 +12,7 @@ use common\models\Movement;
 class MovementSearch extends Movement
 {
     public $name;
+    public $consumption_center_id;
 
     /**
      * {@inheritdoc}
@@ -19,9 +20,10 @@ class MovementSearch extends Movement
     public function rules()
     {
         return [
-            [['id', 'ingredient_id', 'business_id', 'consumption_center_id'], 'integer'],
-            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations'], 'safe'],
+            [['id', 'ingredient_id', 'business_id', 'consumption_center_id', 'requested_by_user_id', 'fulfilled_by_user_id', 'parent_requisition_id'], 'integer'],
+            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'requisition_number', 'status', 'required_date', 'client_timezone'], 'safe'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
+            [['is_without_requisition'], 'boolean'],
             [['name'], 'string']
         ];
     }

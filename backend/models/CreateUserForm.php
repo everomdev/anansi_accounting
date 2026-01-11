@@ -18,6 +18,8 @@ class CreateUserForm extends Model
     public $role;
     public $_permissions;
     public $userId;
+    public $consumption_center_id; // Centro de consumo por defecto (al crear)
+    public $consumption_center_ids = []; // Array de centros de consumo (al editar)
     private $user;
 
     public function __construct($config = [])
@@ -50,6 +52,12 @@ class CreateUserForm extends Model
             \Yii::info('Permisos adicionales calculados: ' . json_encode($this->_permissions), 'user_permissions');
 
             $this->user = User::findOne(['id' => $this->userId]);
+            
+            // Cargar centros de consumo del usuario
+            $this->consumption_center_ids = \yii\helpers\ArrayHelper::getColumn(
+                $this->user->getUserConsumptionCenters()->all(),
+                'consumption_center_id'
+            );
         }
     }
 
@@ -62,6 +70,13 @@ class CreateUserForm extends Model
             [['role'], 'required', 'on' => [self::SCENARIO_CREATE, self::SCENARIO_UPDATE]],
             [['password', 'confirmPassword'], 'required', 'on' => self::SCENARIO_CREATE],
             [['_permissions'], 'safe'], // Permite array vacío en ambos escenarios
+            [['consumption_center_id'], 'integer'],
+            [['consumption_center_ids'], 'safe'], // Para edición (múltiples centros)
+            [['consumption_center_id'], 'required', 'when' => function($model) {
+                return $model->scenario === self::SCENARIO_CREATE && $model->role === 'consumption_requester';
+            }, 'whenClient' => "function (attribute, value) {
+                return $('#createuserform-role').val() === 'consumption_requester';
+            }"],
             [['email'], function ($attribute) {
                 if ($this->scenario == self::SCENARIO_CREATE) {
                     $exists = User::find()
@@ -91,6 +106,8 @@ class CreateUserForm extends Model
             'confirmPassword' => \Yii::t('app', "Confirmar contraseña"),
             'role' => \Yii::t('app', "Rol"),
             '_permissions' => \Yii::t('app', "Permisos adicionales"),
+            'consumption_center_id' => \Yii::t('app', "Centro de Consumo"),
+            'consumption_center_ids' => \Yii::t('app', "Centros de Consumo"),
         ];
     }
 
@@ -136,6 +153,19 @@ class CreateUserForm extends Model
                     )
                     ->execute();
 
+                // Asignar centro de consumo si es "Solicitante de Consumo"
+                if ($this->role === 'consumption_requester' && !empty($this->consumption_center_id)) {
+                    $userConsumptionCenter = new \common\models\UserConsumptionCenter([
+                        'user_id' => $user->id,
+                        'consumption_center_id' => $this->consumption_center_id,
+                        'is_default' => true,
+                        'created_at' => time(),
+                    ]);
+                    
+                    if (!$userConsumptionCenter->save()) {
+                        \Yii::error('Error al guardar centro de consumo: ' . json_encode($userConsumptionCenter->errors), 'user_creation');
+                    }
+                }
 
                 return true;
             }
@@ -187,6 +217,32 @@ class CreateUserForm extends Model
                         }
                     }
                 }
+                
+                // Actualizar centros de consumo si es "Solicitante de Consumo"
+                if ($this->role === 'consumption_requester') {
+                    // Eliminar centros de consumo anteriores
+                    \common\models\UserConsumptionCenter::deleteAll(['user_id' => $this->userId]);
+                    
+                    // Agregar nuevos centros de consumo
+                    if (!empty($this->consumption_center_ids)) {
+                        foreach ($this->consumption_center_ids as $index => $centerId) {
+                            $userConsumptionCenter = new \common\models\UserConsumptionCenter([
+                                'user_id' => $this->userId,
+                                'consumption_center_id' => $centerId,
+                                'is_default' => ($index === 0), // El primero es el por defecto
+                                'created_at' => time(),
+                            ]);
+                            
+                            if (!$userConsumptionCenter->save()) {
+                                \Yii::error('Error al guardar centro de consumo en actualización: ' . json_encode($userConsumptionCenter->errors), 'user_update');
+                            }
+                        }
+                    }
+                } else {
+                    // Si ya no es "Solicitante de Consumo", eliminar sus centros de consumo
+                    \common\models\UserConsumptionCenter::deleteAll(['user_id' => $this->userId]);
+                }
+                
                 return true;
             }
         }
