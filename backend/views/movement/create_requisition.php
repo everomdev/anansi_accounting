@@ -143,10 +143,11 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
                     <label class="form-label">Fecha Requerida <span class="text-danger">*</span></label>
                     <?= \kartik\datetime\DateTimePicker::widget([
                         'name' => 'required_date',
-                        'value' => date('Y-m-d H:i'),
+                        'value' => '', // Se llenará con JavaScript
                         'options' => [
                             'placeholder' => 'Seleccionar fecha requerida...',
                             'required' => true,
+                            'id' => 'required-date-input',
                         ],
                         'pluginOptions' => [
                             'autoclose' => true,
@@ -156,9 +157,24 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
                             'startView' => 1,
                             'minView' => 0,
                             'showMeridian' => false,
+                            // NO poner startDate ni endDate aquí - se configuran en JavaScript
+                        ],
+                        'pluginEvents' => [
+                            'show' => 'function(e) {
+                                // Asegurar que las restricciones estén aplicadas al abrir
+                                var now = new Date();
+                                var clientDateTime = now.getFullYear() + "-" + 
+                                                    String(now.getMonth() + 1).padStart(2, "0") + "-" + 
+                                                    String(now.getDate()).padStart(2, "0") + " " + 
+                                                    String(now.getHours()).padStart(2, "0") + ":" + 
+                                                    String(now.getMinutes()).padStart(2, "0");
+                                var maxDate = new Date(now.getTime() + (' . $config->max_future_days . ' * 24 * 60 * 60 * 1000));
+                                $(this).data("datetimepicker").setStartDate(clientDateTime);
+                                $(this).data("datetimepicker").setEndDate(maxDate);
+                            }',
                         ],
                     ]) ?>
-                    <small class="text-muted">Máximo <?= $config->max_future_days ?> días a futuro</small>
+                    <small class="text-muted">Solo fechas futuras. Máximo <?= $config->max_future_days ?> días a futuro</small>
                 </div>
 
                 <!-- Tabla de Insumos -->
@@ -236,6 +252,9 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
     <!-- Campo oculto para zona horaria del cliente -->
     <?= Html::hiddenInput('client_timezone', '', ['id' => 'client-timezone']) ?>
     
+    <!-- Campo oculto para fecha/hora actual del cliente -->
+    <?= Html::hiddenInput('client_current_datetime', '', ['id' => 'client-current-datetime']) ?>
+    
     <!-- Campo oculto para tipo de movimiento -->
     <?= Html::hiddenInput('Movement[type]', Movement::TYPE_REQUISITION) ?>
 
@@ -270,9 +289,25 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
 <?php
 $this->registerJs(<<<'JS'
 $(document).ready(function() {
-    // Inyectar zona horaria del cliente
-    ClientTimezone.inject('requisition-form');
-    $('#client-timezone').val(ClientTimezone.get());
+    // Capturar zona horaria y fecha/hora actual del cliente
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date();
+    const clientDateTime = now.getFullYear() + '-' + 
+                          String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(now.getDate()).padStart(2, '0') + ' ' + 
+                          String(now.getHours()).padStart(2, '0') + ':' + 
+                          String(now.getMinutes()).padStart(2, '0');
+    
+    $('#client-timezone').val(timezone);
+    $('#client-current-datetime').val(clientDateTime);
+    
+    // Establecer la fecha/hora del cliente en el DateTimePicker
+    $('#required-date-input').val(clientDateTime);
+    
+    // Inyectar zona horaria del cliente (compatibilidad)
+    if (typeof ClientTimezone !== 'undefined') {
+        ClientTimezone.inject('requisition-form');
+    }
     
     let itemIndex = 0;
     

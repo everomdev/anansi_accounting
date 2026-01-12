@@ -163,7 +163,10 @@ $this->registerCss("
                         </div>
                         <div class="col-md-6">
                             <strong>Creada:</strong> 
-                            <?= Yii::$app->formatter->asDatetime($model->created_at, 'php:d/m/Y H:i') ?>
+                            <?php 
+                            $dt = new \DateTime($model->created_at);
+                            echo $dt->format('d/m/Y H:i');
+                            ?>
                         </div>
                     </div>
 

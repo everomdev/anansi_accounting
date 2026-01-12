@@ -201,6 +201,9 @@ class MovementController extends Controller
                 $clientTimezone = $post['client_timezone'] ?? 'UTC';
                 $items = $post['items'] ?? [];
                 
+                // Obtener fecha/hora actual del cliente (no del servidor)
+                $clientCurrentDateTime = $post['client_current_datetime'] ?? date('Y-m-d H:i:s');
+                
                 // Validar que haya items
                 if (empty($items)) {
                     throw new \Exception('Debe agregar al menos un insumo a la requisición');
@@ -221,7 +224,7 @@ class MovementController extends Controller
                     'client_timezone' => $clientTimezone,
                     'requested_by_user_id' => Yii::$app->user->id,
                     'status' => 'pending',
-                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_at' => $clientCurrentDateTime, // Usar fecha/hora del cliente
                 ]);
                 
                 if (!$movement->save()) {
