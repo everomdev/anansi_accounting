@@ -111,7 +111,18 @@ class MovementController extends Controller
         $searchModel = new MovementSearch(['business_id' => $business['id']]);
 
         $params = Yii::$app->request->queryParams;
+        
+        // Si el usuario tiene el rol consumption_requester, solo mostrar requisiciones
+        if (Yii::$app->user->can('consumption_requester')) {
+            // Forzar el filtro de tipo a requisiciones
+            if (!isset($params['MovementSearch'])) {
+                $params['MovementSearch'] = [];
+            }
+            $params['MovementSearch']['type'] = Movement::TYPE_REQUISITION;
+        }
+        
         $dataProvider = $searchModel->search($params);
+        
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,

@@ -183,7 +183,9 @@ $this->registerCss("
                                     <th>Cantidad Solicitada</th>
                                     <th>Cantidad Surtida</th>
                                     <th>Disponibilidad</th>
-                                    <th>Costo Estimado</th>
+                                    <?php if (!Yii::$app->user->can('consumption_requester')): ?>
+                                        <th>Costo Estimado</th>
+                                    <?php endif; ?>
                                     <th>Estado</th>
                                     <th>Observaciones</th>
                                 </tr>
@@ -211,16 +213,28 @@ $this->registerCss("
                                             <?= $item->ingredient ? Html::encode($item->ingredient->um) : '' ?>
                                         </td>
                                         <td>
-                                            <span class="badge bg-<?= $item->availability_status === 'available' ? 'success' : ($item->availability_status === 'partial' ? 'warning' : 'danger') ?>">
-                                                <?= $item->availability_status === 'available' ? 'Disponible' : ($item->availability_status === 'partial' ? 'Parcial' : 'No Disponible') ?>
+                                            <?php
+                                            $statusMap = [
+                                                'available' => ['text' => 'Disponible', 'class' => 'success', 'icon' => '🟢'],
+                                                'warning' => ['text' => 'Advertencia', 'class' => 'warning', 'icon' => '🟡'],
+                                                'low' => ['text' => 'Advertencia', 'class' => 'warning', 'icon' => '🟡'],
+                                                'insufficient' => ['text' => 'Insuficiente', 'class' => 'danger', 'icon' => '🔴'],
+                                                'unavailable' => ['text' => 'No Disponible', 'class' => 'danger', 'icon' => '🔴'],
+                                            ];
+                                            $status = $statusMap[$item->availability_status] ?? ['text' => 'Pendiente', 'class' => 'secondary', 'icon' => '⚪'];
+                                            ?>
+                                            <span class="badge bg-<?= $status['class'] ?>">
+                                                <?= $status['icon'] ?> <?= $status['text'] ?>
                                             </span>
                                             <?php if ($item->availability_percentage !== null): ?>
-                                                (<?= round($item->availability_percentage) ?>%)
+                                                <small class="text-muted ms-1">(<?= round($item->availability_percentage) ?>%)</small>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="text-end">
-                                            <?= Yii::$app->formatter->asCurrency($item->cost_at_request ?? 0) ?>
-                                        </td>
+                                        <?php if (!Yii::$app->user->can('consumption_requester')): ?>
+                                            <td class="text-end">
+                                                <?= Yii::$app->formatter->asCurrency($item->cost_at_request ?? 0) ?>
+                                            </td>
+                                        <?php endif; ?>
                                         <td>
                                             <?php if ($item->isFullyDelivered()): ?>
                                                 <span class="badge bg-success">Completo</span>
@@ -236,17 +250,19 @@ $this->registerCss("
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
-                            <tfoot class="table-light">
-                                <tr>
-                                    <td colspan="4" class="text-end"><strong>Total Estimado:</strong></td>
-                                    <td class="text-end"><strong><?= Yii::$app->formatter->asCurrency($totalEstimated) ?></strong></td>
-                                    <td colspan="2"></td>
-                                </tr>
-                            </tfoot>
+                            <?php if (!Yii::$app->user->can('consumption_requester')): ?>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end"><strong>Total Estimado:</strong></td>
+                                        <td class="text-end"><strong><?= Yii::$app->formatter->asCurrency($totalEstimated) ?></strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            <?php endif; ?>
                         </table>
                     </div>
 
-                    <?php if ($model->status !== 'fulfilled'): ?>
+                    <?php if ($model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')): ?>
                         <div class="d-flex gap-2 mt-4">
                             <?= Html::a(
                                 '<i class="bx bx-transfer-alt"></i> Convertir a Salida', 

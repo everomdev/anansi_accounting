@@ -8,7 +8,8 @@ use yii\widgets\Pjax;
 /* @var $searchModel common\models\MovementSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = Yii::t('app', 'Movements');
+$isConsumptionRequester = Yii::$app->user->can('consumption_requester');
+$this->title = $isConsumptionRequester ? Yii::t('app', 'Mis Requisiciones') : Yii::t('app', 'Movements');
 $this->params['breadcrumbs'][] = $this->title;
 
 $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
@@ -139,248 +140,305 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <?php Pjax::begin(['id' => 'movements-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
+    <?php
+    // Definir columnas según el rol del usuario
+    $columns = [
+        ['class' => \yii\grid\CheckboxColumn::class],
+    ];
+
+    // Columna de tipo (solo si NO es consumption_requester)
+    if (!$isConsumptionRequester) {
+        $columns[] = [
+            'attribute' => 'type',
+            'value' => function ($model) {
+                $type = $model->formattedType;
+                if ($model->type === \common\models\Movement::TYPE_ORDER) {
+                    return $type . ' <span class="badge bg-info ms-1">Convertible a entrada</span>';
+                }
+                if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                    return $type . ' <span class="badge bg-warning ms-1">Convertible a salida</span>';
+                }
+                return $type;
+            },
+            'format' => 'raw',
+            'filter' => \yii\bootstrap5\Html::activeDropDownList(
+                $searchModel,
+                'type',
+                \common\models\Movement::getFormattedTypes(),
+                [
+                    'class' => 'form-control',
+                    'prompt' => Yii::t('app', "All")
+                ]
+            ),
+            'label' => $searchModel->getAttributeLabel('type')
+        ];
+    }
+
+    // Columna número de requisición (solo para consumption_requester)
+    if ($isConsumptionRequester) {
+        $columns[] = [
+            'attribute' => 'requisition_number',
+            'label' => 'Número de Requisición',
+            'value' => function ($model) {
+                return $model->requisition_number ?? '-';
+            },
+        ];
+    }
+
+    // Columna de insumos
+    $columns[] = [
+        'attribute' => 'ingredient_id',
+        'label' => $isConsumptionRequester ? 'Insumos Solicitados' : 'Insumo',
+        'value' => function ($model) {
+            // Para requisiciones, mostrar "Múltiples insumos"
+            if ($model->type === 'requisition') {
+                $itemCount = count($model->requisitionItems ?? []);
+                return "Requisición ({$itemCount} insumos)";
+            }
+            
+            // Para otros tipos de movimiento
+            $ingredient = $model->ingredient;
+            if (!$ingredient) {
+                return '-';
+            }
+            
+            $parts = [];
+            $parts[] = $ingredient->ingredient;
+            
+            if (!empty($ingredient->brand)) {
+                $parts[] = $ingredient->brand;
+            }
+            
+            if (!empty($ingredient->presentation)) {
+                $parts[] = $ingredient->presentation;
+            }
+            
+            return implode('  ', $parts);
+        },
+        'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'name', [
+            'class' => 'form-control',
+            'placeholder' => 'Buscar por nombre del insumo...'
+        ]),
+    ];
+
+    // Columnas adicionales solo para usuarios que no son consumption_requester
+    if (!$isConsumptionRequester) {
+        $columns[] = 'invoice';
+        $columns[] = [
+            'attribute' => 'provider',
+            'value' => function ($data) {
+                if ($data->type === \common\models\Movement::TYPE_INPUT) {
+                    $provider = \common\models\Provider::find()
+                        ->where(['name' => $data->provider, 'business_id' => $data->business_id])
+                        ->one();
+                    
+                    if ($provider) {
+                        return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
+                    }
+                    
+                    return $data->provider;
+                }
+                
+                return '-';
+            },
+            'filter' => \kartik\typeahead\Typeahead::widget([
+                'scrollable' => true,
+                'dataset' => [
+                    [
+                        'local' => \yii\helpers\ArrayHelper::getColumn(\common\models\Movement::find()->where(['type' => \common\models\Movement::TYPE_INPUT])->all(), 'provider'),
+                        'limit' => 10,
+                    ]
+                ],
+                'model' => $searchModel,
+                'attribute' => 'provider'
+            ])
+        ];
+    }
+
+    // Centro de consumo (para requisiciones y salidas)
+    $columns[] = [
+        'attribute' => 'consumption_center_id',
+        'label' => 'Centro de Consumo',
+        'value' => function ($data) use ($isConsumptionRequester) {
+            // Para requisiciones, siempre mostrar
+            if ($data->type === \common\models\Movement::TYPE_REQUISITION && $data->consumptionCenter) {
+                return $data->consumptionCenter->name;
+            }
+            // Para salidas, solo si no es consumption_requester
+            if (!$isConsumptionRequester && $data->type === \common\models\Movement::TYPE_OUTPUT && $data->consumptionCenter) {
+                return $data->consumptionCenter->name;
+            }
+            return '-';
+        },
+        'filter' => \yii\helpers\Html::activeDropDownList($searchModel, 'consumption_center_id', 
+            \yii\helpers\ArrayHelper::map(
+                \common\models\ConsumptionCenter::find()->where(['business_id' => $business->id])->all(), 
+                'id', 
+                'name'
+            ), 
+            ['class' => 'form-control', 'prompt' => 'Todos']
+        ),
+    ];
+
+    // Fecha requerida (solo para requisiciones/consumption_requester)
+    if ($isConsumptionRequester) {
+        $columns[] = [
+            'attribute' => 'required_date',
+            'label' => 'Fecha Requerida',
+            'value' => function($model) {
+                if ($model->required_date) {
+                    $dt = new \DateTime($model->required_date);
+                    return $dt->format('d/m/Y');
+                }
+                return '-';
+            },
+            'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
+        ];
+    }
+
+    // Estado (solo para requisiciones/consumption_requester)
+    if ($isConsumptionRequester) {
+        $columns[] = [
+            'attribute' => 'status',
+            'label' => 'Estado',
+            'value' => function($model) {
+                if ($model->status === 'fulfilled') {
+                    return '<span class="badge bg-success">Surtida</span>';
+                } elseif ($model->status === 'partially_fulfilled') {
+                    return '<span class="badge bg-warning">Parcialmente Surtida</span>';
+                } else {
+                    return '<span class="badge bg-secondary">Pendiente</span>';
+                }
+            },
+            'format' => 'raw',
+            'contentOptions' => ['style' => 'text-align: center;'],
+        ];
+    }
+
+    // Columnas de pago y cantidad solo para usuarios normales
+    if (!$isConsumptionRequester) {
+        $columns[] = [
+            'attribute' => 'payment_type',
+            'value' => function ($data) {
+                return $data->formattedPaymentType;
+            },
+            'filter' => \yii\bootstrap5\Html::activeDropDownList(
+                $searchModel,
+                'payment_type',
+                \common\models\Movement::getFormattedPaymentTypes(),
+                [
+                    'class' => 'form-control',
+                    'prompt' => '----'
+                ]
+            )
+        ];
+
+        $columns[] = 'quantity';
+        
+        $columns[] = [
+            'attribute' => 'um',
+            'filter' => \yii\bootstrap5\Html::activeDropDownList(
+                $searchModel,
+                'um',
+                \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
+                [
+                    'class' => 'form-control',
+                    'prompt' => '----'
+                ]
+            )
+        ];
+
+        $columns[] = [
+            'attribute' => 'total',
+            'label' => Yii::t('app', 'Total'),
+            'value' => function($model) {
+                if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
+                    return formatPrice(-$model->total);
+                }
+                return formatPrice($model->total);
+            },
+            'contentOptions' => ['style' => 'text-align: right;'],
+        ];
+    }
+
+    // Fecha de creación (para todos)
+    $columns[] = [
+        'attribute' => 'created_at',
+        'label' => Yii::t('app', 'Fecha de creación'),
+        'value' => function($model) {
+            $dt = new \DateTime($model->created_at);
+            return $dt->format('d/m/Y H:i');
+        },
+        'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
+    ];
+
+    // Columna de acciones
+    $columns[] = [
+        'class' => 'yii\grid\ActionColumn',
+        'template' => $isConsumptionRequester ? "{view}" : "{view} {update} {convert}",
+        'buttons' => [
+            'view' => function ($url, $model, $key) {
+                return \yii\bootstrap5\Html::a(
+                    '<i class="bx bx-show"></i>',
+                    $url,
+                    [
+                        'class' => 'movement-details text-warning',
+                        'title' => 'Ver detalles'
+                    ]
+                );
+            },
+            'update' => function ($url, $model, $key) {
+                // Solo mostrar el botón de editar si el usuario es administrador
+                if (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator')) {
+                    return \yii\bootstrap5\Html::a(
+                        '<i class="bx bx-edit-alt"></i>',
+                        ['update', 'id' => $model->id],
+                        [
+                            'class' => 'text-warning ms-2',
+                            'title' => 'Editar movimiento'
+                        ]
+                    );
+                }
+                return '';
+            },
+            'convert' => function ($url, $model, $key) {
+                // Mostrar botón de convertir para órdenes (a entradas)
+                if ($model->type === \common\models\Movement::TYPE_ORDER) {
+                    return \yii\bootstrap5\Html::a(
+                        '<i class="bx bx-transfer"></i>',
+                        ['convert-to-entry', 'id' => $model->id],
+                        [
+                            'class' => 'text-success ms-2 convert-order',
+                            'title' => 'Convertir a entrada',
+                            'data-confirm' => '¿Confirmas que quieres convertir esta orden en una entrada?'
+                        ]
+                    );
+                }
+                // Mostrar botón de convertir para requisiciones (a salidas)
+                if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                    return \yii\bootstrap5\Html::a(
+                        '<i class="bx bx-transfer-alt"></i>',
+                        ['convert-to-output', 'id' => $model->id],
+                        [
+                            'class' => 'text-danger ms-2 convert-requisition',
+                            'title' => 'Convertir a salida',
+                            'data-confirm' => '¿Confirmas que quieres convertir esta requisición en una salida?'
+                        ]
+                    );
+                }
+                return '';
+            }
+        ]
+    ];
+
+    // Renderizar GridView con las columnas definidas
+    ?>
     <?= GridView::widget([
         'id' => 'movements-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
-        'columns' => [
-            ['class' => \yii\grid\CheckboxColumn::class],
-
-            [
-                'attribute' => 'type',
-                'value' => function ($model) {
-                    $type = $model->formattedType;
-                    if ($model->type === \common\models\Movement::TYPE_ORDER) {
-                        return $type . ' <span class="badge bg-info ms-1">Convertible a entrada</span>';
-                    }
-                    if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
-                        return $type . ' <span class="badge bg-warning ms-1">Convertible a salida</span>';
-                    }
-                    return $type;
-                },
-                'format' => 'raw',
-                'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                    $searchModel,
-                    'type',
-                    \common\models\Movement::getFormattedTypes(),
-                    [
-                        'class' => 'form-control',
-                        'prompt' => Yii::t('app', "All")
-                    ]
-                ),
-                'label' => $searchModel->getAttributeLabel('type')
-            ],
-            [
-                'attribute' => 'ingredient_id',
-                'label' => 'Insumo',
-                'value' => function ($model) {
-                    // Para requisiciones, mostrar "Múltiples insumos"
-                    if ($model->type === 'requisition') {
-                        $itemCount = count($model->requisitionItems ?? []);
-                        return "Requisición ({$itemCount} insumos)";
-                    }
-                    
-                    // Para otros tipos de movimiento
-                    $ingredient = $model->ingredient;
-                    if (!$ingredient) {
-                        return '-';
-                    }
-                    
-                    $parts = [];
-                    
-                    // Agregar el nombre del insumo
-                    $parts[] = $ingredient->ingredient;
-                    
-                    // Agregar marca si existe
-                    if (!empty($ingredient->brand)) {
-                        $parts[] = $ingredient->brand;
-                    }
-                    
-                    // Agregar presentación si existe
-                    if (!empty($ingredient->presentation)) {
-                        $parts[] = $ingredient->presentation;
-                    }
-                    
-                    return implode('  ', $parts);
-                },
-                'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'name', [
-                    'class' => 'form-control',
-                    'placeholder' => 'Buscar por nombre del insumo...'
-                ]),
-            ],
-            'invoice',            [
-                'attribute' => 'provider',
-                'value' => function ($data) {
-                    // Solo mostrar proveedor para movimientos de entrada
-                    if ($data->type === \common\models\Movement::TYPE_INPUT) {
-                        // Buscar el proveedor por nombre para mostrar el business_name
-                        $provider = \common\models\Provider::find()
-                            ->where(['name' => $data->provider, 'business_id' => $data->business_id])
-                            ->one();
-                        
-                        if ($provider) {
-                            return $provider->business_name ?? $provider->getBusiness()->one()->name ?? $provider->name;
-                        }
-                        
-                        return $data->provider;
-                    }
-                    
-                    return '-'; // No mostrar proveedor para salidas
-                },
-                'filter' => \kartik\typeahead\Typeahead::widget([
-                    'scrollable' => true,
-                    'dataset' => [
-                        [
-                            'local' => \yii\helpers\ArrayHelper::getColumn(\common\models\Movement::find()->where(['type' => \common\models\Movement::TYPE_INPUT])->all(), 'provider'),
-                            'limit' => 10,
-
-                        ]
-                    ],
-                    'model' => $searchModel,
-                    'attribute' => 'provider'
-                ])
-            ],
-            [
-                'attribute' => 'consumption_center_id',
-                'label' => 'Centro de Consumo',
-                'value' => function ($data) {
-                    // Solo mostrar centro de consumo para movimientos de salida
-                    if ($data->type === \common\models\Movement::TYPE_OUTPUT && $data->consumptionCenter) {
-                        return $data->consumptionCenter->name;
-                    }
-                    
-                    return '-'; // No mostrar centro de consumo para entradas
-                },
-                'filter' => \yii\helpers\Html::activeDropDownList($searchModel, 'consumption_center_id', 
-                    \yii\helpers\ArrayHelper::map(
-                        \common\models\ConsumptionCenter::find()->where(['business_id' => $business->id])->all(), 
-                        'id', 
-                        'name'
-                    ), 
-                    ['class' => 'form-control', 'prompt' => 'Todos']
-                ),
-            ],
-            [
-                'attribute' => 'payment_type',
-                'value' => function ($data) {
-                    return $data->formattedPaymentType;
-                },
-                'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                    $searchModel,
-                    'payment_type',
-                    \common\models\Movement::getFormattedPaymentTypes(),
-                    [
-                        'class' => 'form-control',
-                        'prompt' => '----'
-                    ]
-                )
-            ],
-
-            'quantity',
-            [
-                'attribute' => 'um',
-                'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                    $searchModel,
-                    'um',
-                    \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
-                    [
-                        'class' => 'form-control',
-                        'prompt' => '----'
-                    ]
-                )
-            ],
-//            'amount',
-//            'tax',
-//            'retention',
-//            'unit_price',
-            [
-                'attribute' => 'total',
-                'label' => Yii::t('app', 'Total'),
-                'value' => function($model) {
-                    // Si es un movimiento de salida, calcular el costo basado en el precio del insumo
-                    if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
-                        // $unitPrice = $model->ingredient->adjustedPrice ?? 0;
-                        // $total = $unitPrice * $model->quantity;
-                        return formatPrice(-$model->total); // Mostrar en negativo
-                    }
-                    
-                    // Para entradas y otros tipos, mostrar el total normal
-                    return formatPrice($model->total);
-                },
-                'contentOptions' => ['style' => 'text-align: right;'],
-            ],
-            [
-                'attribute' => 'created_at',
-                'label' => Yii::t('app', 'Fecha de creación'),
-                'value' => function($model) {
-                    // Mostrar la fecha tal cual está guardada (evita conversión de zonas horarias)
-                    $dt = new \DateTime($model->created_at);
-                    return $dt->format('d/m/Y H:i');
-                },
-                'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
-            ],
-            //'observations',
-            //'business_id',
-
-            [
-                'class' => 'yii\grid\ActionColumn',
-                'template' => "{view} {update} {convert}",
-                'buttons' => [
-                    'view' => function ($url, $model, $key) {
-                        return \yii\bootstrap5\Html::a(
-                            '<i class="bx bx-show"></i>',
-                            $url,
-                            [
-                                'class' => 'movement-details text-warning',
-                                'title' => 'Ver detalles'
-                            ]
-                        );
-                    },
-                    'update' => function ($url, $model, $key) {
-                        // Solo mostrar el botón de editar si el usuario es administrador
-                        if (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator')) {
-                            return \yii\bootstrap5\Html::a(
-                                '<i class="bx bx-edit-alt"></i>',
-                                ['update', 'id' => $model->id],
-                                [
-                                    'class' => 'text-warning ms-2',
-                                    'title' => 'Editar movimiento'
-                                ]
-                            );
-                        }
-                        return '';
-                    },
-                    'convert' => function ($url, $model, $key) {
-                        // Mostrar botón de convertir para órdenes (a entradas)
-                        if ($model->type === \common\models\Movement::TYPE_ORDER) {
-                            return \yii\bootstrap5\Html::a(
-                                '<i class="bx bx-transfer"></i>',
-                                ['convert-to-entry', 'id' => $model->id],
-                                [
-                                    'class' => 'text-success ms-2 convert-order',
-                                    'title' => 'Convertir a entrada',
-                                    'data-confirm' => '¿Confirmas que quieres convertir esta orden en una entrada?'
-                                ]
-                            );
-                        }
-                        // Mostrar botón de convertir para requisiciones (a salidas)
-                        if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
-                            return \yii\bootstrap5\Html::a(
-                                '<i class="bx bx-transfer-alt"></i>',
-                                ['convert-to-output', 'id' => $model->id],
-                                [
-                                    'class' => 'text-danger ms-2 convert-requisition',
-                                    'title' => 'Convertir a salida',
-                                    'data-confirm' => '¿Confirmas que quieres convertir esta requisición en una salida?'
-                                ]
-                            );
-                        }
-                        return '';
-                    }
-                ]
-            ],
-        ],
+        'columns' => $columns,
     ]); ?>
 
     <?php Pjax::end(); ?>

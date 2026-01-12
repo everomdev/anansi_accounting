@@ -84,7 +84,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
 
         <!-- Configuración Base -->
-        <?php if ($isAdmin || Yii::$app->user->can('ingredients_list') || Yii::$app->user->can('recipe_list') || Yii::$app->user->can('subrecipe_list')): ?>
+        <?php if (($isAdmin || Yii::$app->user->can('ingredients_list') || Yii::$app->user->can('recipe_list') || Yii::$app->user->can('subrecipe_list')) && !Yii::$app->user->can('consumption_requester')): ?>
         <li class="menu-item <?= $configBaseActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#configuracionBase" role="button" 
                aria-expanded="<?= $configBaseActive ? 'true' : 'false' ?>" 
@@ -120,7 +120,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Gestión de Insumos y Proveedores -->
-        <?php if ($isAdmin || Yii::$app->user->can('providers_list') || Yii::$app->user->can('ingredients_list')): ?>
+        <?php if (($isAdmin || Yii::$app->user->can('providers_list') || Yii::$app->user->can('ingredients_list')) && !Yii::$app->user->can('consumption_requester')): ?>
         <li class="menu-item <?= $gestionInsumosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#gestionInsumos" role="button" 
                aria-expanded="<?= $gestionInsumosActive ? 'true' : 'false' ?>" 
@@ -278,8 +278,17 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
         <?php endif; ?>
 
-        <!-- Almacén y Movimientos -->
-        <?php if ($isAdmin || Yii::$app->user->can('movements_list') || Yii::$app->user->can('storage_list') || Yii::$app->user->can('price_trend_view')): ?>
+        <!-- Requisiciones (solo para consumption_requester) -->
+        <?php if (Yii::$app->user->can('consumption_requester')): ?>
+        <li class="menu-item <?= $currentControllerId == 'movement' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['/movement/index']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Requisiciones') ?></div>
+            </a>
+        </li>
+        <?php endif; ?>
+
+        <!-- Almacén y Movimientos (oculto para consumption_requester) -->
+        <?php if (!Yii::$app->user->can('consumption_requester') && ($isAdmin || Yii::$app->user->can('movements_list') || Yii::$app->user->can('storage_list') || Yii::$app->user->can('price_trend_view'))): ?>
         <li class="menu-item <?= $almacenMovimientosActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#almacenMovimientos" role="button" 
                aria-expanded="<?= $almacenMovimientosActive ? 'true' : 'false' ?>" 

@@ -4,10 +4,18 @@
 /** @var $movements \common\models\Movement[] */
 use yii\helpers\Html;
 
-$movements = $business->getMovements()
-->orderBy(['created_at' => SORT_DESC])
-->limit(10)
-->all();
+// Construir la consulta base
+$movementsQuery = $business->getMovements();
+
+// Si el usuario es consumption_requester, filtrar solo requisiciones
+if (Yii::$app->user->can('consumption_requester')) {
+    $movementsQuery->andWhere(['type' => \common\models\Movement::TYPE_REQUISITION]);
+}
+
+$movements = $movementsQuery
+    ->orderBy(['created_at' => SORT_DESC])
+    ->limit(10)
+    ->all();
 
 // CSS personalizado para el nuevo diseño
 $this->registerCss("
@@ -160,7 +168,7 @@ $this->registerCss("
 
 <div class="movements-container">
     <div class="movements-header">
-        <h5>Últimos Movimientos</h5>
+        <h5><?= Yii::$app->user->can('consumption_requester') ? 'Últimas Requisiciones' : 'Últimos Movimientos' ?></h5>
         <div>
             <span class="movements-badge"><?= count($movements) ?> recientes</span>
             <?php if (Yii::$app->user->can('consumption_requester')): ?>

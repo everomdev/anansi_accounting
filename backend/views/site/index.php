@@ -112,7 +112,7 @@ $this->registerCss("
         </div>
     <?php endif; ?>
     
-    <?php if (Yii::$app->user->can('movements_list')): ?>
+    <?php if (Yii::$app->user->can('movements_list') && !Yii::$app->user->can('consumption_requester')): ?>
         <div class="dashboard-card-medium" style="grid-column: span 4;">
             <div class="dashboard-card-content">
                 <?= $this->render('cards/_last_three_days', ['business' => $business]) ?>
