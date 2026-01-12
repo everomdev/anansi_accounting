@@ -4,11 +4,15 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use common\models\Movement;
 use common\models\RequisitionConfig;
+use kartik\select2\Select2Asset;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Movement */
 /* @var $form yii\widgets\ActiveForm */
 /* @var $config common\models\RequisitionConfig */
+
+// Registrar Select2
+Select2Asset::register($this);
 
 $this->title = 'Crear Requisición';
 $this->params['breadcrumbs'][] = ['label' => 'Movimientos', 'url' => ['index']];
@@ -284,6 +288,36 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
 .stock-display {
     font-family: monospace;
 }
+
+/* Estilos para Select2 en la tabla */
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-container .select2-selection--single {
+    height: 38px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 36px;
+    padding-left: 12px;
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+}
+
+.select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.select2-search--dropdown .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
 </style>
 
 <?php
@@ -370,6 +404,21 @@ $(document).ready(function() {
         `;
         
         $('#items-tbody').append(row);
+        
+        // Inicializar Select2 en el nuevo select
+        $(`.ingredient-select[data-index="${index}"]`).select2({
+            placeholder: 'Buscar insumo...',
+            allowClear: true,
+            language: {
+                noResults: function() {
+                    return "No se encontraron resultados";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        });
+        
         updateItemsCount();
     }
     
@@ -443,6 +492,10 @@ $(document).ready(function() {
     $(document).on('click', '.remove-item', function(e) {
         e.preventDefault();
         const index = $(this).data('index');
+        
+        // Destruir Select2 antes de eliminar la fila
+        $(`.ingredient-select[data-index="${index}"]`).select2('destroy');
+        
         $(`tr[data-index="${index}"]`).remove();
         updateItemsCount();
         

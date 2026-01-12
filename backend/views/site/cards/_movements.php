@@ -34,6 +34,51 @@ $this->registerCss("
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
     }
     
+    /* Estilos para el desplegable de insumos en requisiciones */
+    .requisition-items-list {
+        overflow: hidden;
+    }
+    
+    .requisition-items-list ul {
+        padding-left: 1rem;
+        background-color: rgba(52, 152, 219, 0.05);
+        border-left: 3px solid #3498db;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+    
+    .requisition-items-list ul li {
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .requisition-toggle-btn {
+        cursor: pointer;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .requisition-toggle-btn:hover {
+        color: #2980b9;
+        text-decoration: none;
+    }
+    
+    .requisition-toggle-btn .chevron-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+        font-size: 0.9rem;
+    }
+    
+    .requisition-toggle-btn[aria-expanded=\"true\"] .chevron-icon {
+        transform: rotate(180deg);
+    }
+    
     .movements-header {
         padding-bottom: 0.75rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -190,9 +235,14 @@ $this->registerCss("
                 <thead>
                     <tr>
                         <th>Tipo</th>
+                        <?php if (Yii::$app->user->can('consumption_requester')): ?>
+                            <th>Fecha Requerida</th>
+                        <?php endif; ?>
                         <th>Insumo</th>
-                        <th>Cantidad</th>
-                        <th style="text-align: right">Total</th>
+                        <?php if (!Yii::$app->user->can('consumption_requester')): ?>
+                            <th>Cantidad</th>
+                            <th style="text-align: right">Total</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -208,21 +258,65 @@ $this->registerCss("
                                     <?= $movement->getFormattedType() ?>
                                 </span>
                             </td>
+                            <?php if (Yii::$app->user->can('consumption_requester')): ?>
+                                <td style="white-space: nowrap;">
+                                    <?php if ($movement->required_date): ?>
+                                        <i class="bx bx-calendar text-primary"></i> <?= (new \DateTime($movement->required_date))->format('d/m/Y') ?>
+                                    <?php else: ?>
+                                        -
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
                             <td class="movement-ingredient">
                                 <?php if ($movement->type === 'requisition'): ?>
-                                    Requisición (<?= count($movement->requisitionItems ?? []) ?> insumos)
+                                    <?php
+                                    $items = $movement->requisitionItems ?? [];
+                                    $itemCount = count($items);
+                                    
+                                    if ($itemCount === 0) {
+                                        echo "Requisición (sin insumos)";
+                                    } else {
+                                        // Generar ID único para el collapse
+                                        $collapseId = 'dashboard-collapse-items-' . $movement->id;
+                                        
+                                        // Construir la lista de insumos (inicialmente oculta)
+                                        $itemsList = '<div class="requisition-items-list" id="' . $collapseId . '" style="display: none;"><ul class="list-unstyled">';
+                                        foreach ($items as $item) {
+                                            $ingredient = $item->ingredient;
+                                            if ($ingredient) {
+                                                $itemsList .= '<li><i class="bx bx-package text-muted"></i> ';
+                                                $itemsList .= Html::encode($ingredient->ingredient);
+                                                if (!empty($ingredient->brand)) {
+                                                    $itemsList .= ' <span class="text-muted">(' . Html::encode($ingredient->brand) . ')</span>';
+                                                }
+                                                $itemsList .= ' - <strong>' . Yii::$app->formatter->asDecimal($item->quantity_requested, 2) . '</strong> ';
+                                                $itemsList .= Html::encode($ingredient->um ?? '');
+                                                $itemsList .= '</li>';
+                                            }
+                                        }
+                                        $itemsList .= '</ul></div>';
+                                        
+                                        // Botón para expandir/colapsar
+                                        echo '<div>';
+                                        echo '<a href="javascript:void(0);" class="requisition-toggle-btn" data-target="' . $collapseId . '" data-expanded="false">';
+                                        echo '<i class="bx bx-list-ul"></i> Requisición (' . $itemCount . ' insumos) <i class="bx bx-chevron-down chevron-icon"></i>';
+                                        echo '</a>';
+                                        echo $itemsList;
+                                        echo '</div>';
+                                    }
+                                    ?>
                                 <?php else: ?>
                                     <?= $movement->ingredient ? $movement->ingredient->ingredient : '-' ?>
                                 <?php endif; ?>
                             </td>
-                            <td class="movement-quantity">
+                            <!-- <td class="movement-quantity">
                                 <?php if ($movement->type === 'requisition'): ?>
                                     -
                                 <?php else: ?>
                                     <?= $movement->ingredient ? sprintf("%s %s", $movement->quantity, $movement->ingredient->um) : '-' ?>
                                 <?php endif; ?>
                             </td>
-                            <td class="movement-total"><?= formatPrice($movement->total) ?></td>
+                            <td class="movement-total"><?= formatPrice($movement->total) ?></td> -->
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -230,3 +324,28 @@ $this->registerCss("
         <?php endif; ?>
     </div>
 </div>
+
+<?php
+// JavaScript para manejar el collapse de insumos en el dashboard
+$this->registerJs("
+$(document).on('click', '.requisition-toggle-btn', function(e) {
+    e.preventDefault();
+    var button = $(this);
+    var targetId = button.data('target');
+    var target = $('#' + targetId);
+    var isExpanded = button.data('expanded');
+    
+    if (isExpanded) {
+        // Ocultar
+        target.slideUp(300);
+        button.data('expanded', false);
+        button.attr('aria-expanded', 'false');
+    } else {
+        // Mostrar
+        target.slideDown(300);
+        button.data('expanded', true);
+        button.attr('aria-expanded', 'true');
+    }
+});
+");
+?>

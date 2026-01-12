@@ -385,7 +385,7 @@ class Movement extends \yii\db\ActiveRecord
             self::TYPE_INPUT => Yii::t('app', "Input"),
             self::TYPE_OUTPUT => Yii::t('app', "Output"),
             self::TYPE_ORDER => Yii::t('app', "Order"),
-            self::TYPE_REQUISITION => Yii::t('app', "Requisition"),
+            self::TYPE_REQUISITION => Yii::t('app', "Requisición"),
         ];
     }    public static function getFormattedPaymentTypes()
     {

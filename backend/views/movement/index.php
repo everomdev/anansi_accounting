@@ -93,6 +93,43 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         font-size: 1.2em;
         vertical-align: middle;
     }
+    
+    /* Estilos para el desplegable de insumos en requisiciones */
+    .items-list {
+        overflow: hidden;
+    }
+    
+    .items-list ul {
+        padding-left: 1.5rem;
+        background-color: rgba(52, 152, 219, 0.05);
+        border-left: 3px solid #3498db;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    
+    .items-list ul li {
+        padding: 0.25rem 0;
+    }
+    
+    .requisition-toggle {
+        cursor: pointer;
+        color: #3498db !important;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .requisition-toggle .chevron-icon {
+        transition: transform 0.3s ease;
+        display: inline-block;
+    }
+    
+    .requisition-toggle[aria-expanded="true"] .chevron-icon {
+        transform: rotate(180deg);
+    }
+    
+    .requisition-toggle:hover {
+        color: #2980b9 !important;
+    }
     </style>
 
     <div class="d-flex flex-wrap">
@@ -189,11 +226,43 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     $columns[] = [
         'attribute' => 'ingredient_id',
         'label' => $isConsumptionRequester ? 'Insumos Solicitados' : 'Insumo',
+        'format' => 'raw',
         'value' => function ($model) {
-            // Para requisiciones, mostrar "Múltiples insumos"
+            // Para requisiciones, mostrar botón desplegable con lista de insumos
             if ($model->type === 'requisition') {
-                $itemCount = count($model->requisitionItems ?? []);
-                return "Requisición ({$itemCount} insumos)";
+                $items = $model->requisitionItems ?? [];
+                $itemCount = count($items);
+                
+                if ($itemCount === 0) {
+                    return "Requisición (sin insumos)";
+                }
+                
+                // Generar ID único para el collapse
+                $collapseId = 'collapse-items-' . $model->id;
+                
+                // Construir la lista de insumos (inicialmente oculta)
+                $itemsList = '<div class="items-list" id="' . $collapseId . '" style="display: none;"><div class="mt-2"><ul class="list-unstyled mb-0 small">';
+                foreach ($items as $item) {
+                    $ingredient = $item->ingredient;
+                    if ($ingredient) {
+                        $itemsList .= '<li class="mb-1"><i class="bx bx-package text-muted"></i> ';
+                        $itemsList .= Html::encode($ingredient->ingredient);
+                        if (!empty($ingredient->brand)) {
+                            $itemsList .= ' <span class="text-muted">(' . Html::encode($ingredient->brand) . ')</span>';
+                        }
+                        $itemsList .= ' - <strong>' . Yii::$app->formatter->asDecimal($item->quantity_requested, 2) . '</strong> ';
+                        $itemsList .= Html::encode($ingredient->um ?? '');
+                        $itemsList .= '</li>';
+                    }
+                }
+                $itemsList .= '</ul></div></div>';
+                
+                // Botón para expandir/colapsar
+                $button = '<a href="javascript:void(0);" class="btn btn-sm btn-link p-0 text-decoration-none requisition-toggle" data-target="' . $collapseId . '" data-expanded="false">';
+                $button .= '<i class="bx bx-list-ul"></i> Requisición (' . $itemCount . ' insumos) <i class="bx bx-chevron-down chevron-icon"></i>';
+                $button .= '</a>';
+                
+                return '<div>' . $button . $itemsList . '</div>';
             }
             
             // Para otros tipos de movimiento
@@ -444,6 +513,32 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <?php Pjax::end(); ?>
 
 </div>
+
+<?php
+// JavaScript para manejar el collapse de insumos con toggle manual
+$this->registerJs("
+$(document).on('click', '.requisition-toggle', function(e) {
+    e.preventDefault();
+    var button = $(this);
+    var targetId = button.data('target');
+    var target = $('#' + targetId);
+    var isExpanded = button.data('expanded');
+    
+    
+    if (isExpanded) {
+        // Ocultar
+        target.slideUp(300);
+        button.data('expanded', false);
+        button.attr('aria-expanded', 'false');
+    } else {
+        // Mostrar
+        target.slideDown(300);
+        button.data('expanded', true);
+        button.attr('aria-expanded', 'true');
+    }
+});
+");
+?>
 
 <?php
 \yii\bootstrap5\Modal::begin([

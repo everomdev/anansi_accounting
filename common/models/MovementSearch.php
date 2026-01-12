@@ -95,6 +95,10 @@ class MovementSearch extends Movement
                         'asc' => ['movement.created_at' => SORT_ASC],
                         'desc' => ['movement.created_at' => SORT_DESC]
                     ],
+                    'required_date' => [
+                        'asc' => ['movement.required_date' => SORT_ASC],
+                        'desc' => ['movement.required_date' => SORT_DESC]
+                    ],
                     'tax' => [
                         'asc' => ['movement.tax' => SORT_ASC],
                         'desc' => ['movement.tax' => SORT_DESC]
