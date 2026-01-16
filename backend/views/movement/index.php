@@ -9,7 +9,7 @@ use yii\widgets\Pjax;
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $isConsumptionRequester = Yii::$app->user->can('consumption_requester');
-$this->title = $isConsumptionRequester ? Yii::t('app', 'Mis Requisiciones') : Yii::t('app', 'Movements');
+$this->title = $isConsumptionRequester ? Yii::t('app', 'Historial de mis Requisiciones') : Yii::t('app', 'Movements');
 $this->params['breadcrumbs'][] = $this->title;
 
 $this->registerJsFile(Yii::getAlias("@web/js/movement/index.js"), [
@@ -94,41 +94,24 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         vertical-align: middle;
     }
     
-    /* Estilos para el desplegable de insumos en requisiciones */
-    .items-list {
-        overflow: hidden;
-    }
-    
-    .items-list ul {
-        padding-left: 1.5rem;
-        background-color: rgba(52, 152, 219, 0.05);
-        border-left: 3px solid #3498db;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-    }
-    
-    .items-list ul li {
-        padding: 0.25rem 0;
-    }
-    
-    .requisition-toggle {
-        cursor: pointer;
-        color: #3498db !important;
-        text-decoration: none;
+    /* Colores para requisiciones según disponibilidad de stock */
+    .requisition-insufficient-stock {
+        color: #dc3545 !important; /* Rojo */
         font-weight: 500;
     }
     
-    .requisition-toggle .chevron-icon {
-        transition: transform 0.3s ease;
-        display: inline-block;
+    .requisition-available-stock {
+        color: #0d6efd !important; /* Azul */
+        font-weight: 500;
     }
     
-    .requisition-toggle[aria-expanded="true"] .chevron-icon {
-        transform: rotate(180deg);
+    /* Asegurar que el texto de las celdas herede el color de la fila */
+    .requisition-insufficient-stock td {
+        color: inherit !important;
     }
     
-    .requisition-toggle:hover {
-        color: #2980b9 !important;
+    .requisition-available-stock td {
+        color: inherit !important;
     }
     </style>
 
@@ -211,58 +194,36 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         ];
     }
 
-    // Columna número de requisición (solo para consumption_requester)
-    if ($isConsumptionRequester) {
-        $columns[] = [
-            'attribute' => 'requisition_number',
-            'label' => 'Número de Requisición',
-            'value' => function ($model) {
+    // Columna número de requisición
+    $columns[] = [
+        'attribute' => 'requisition_number',
+        'label' => 'Número de Requisición',
+        'value' => function ($model) {
+            if ($model->type === 'requisition') {
                 return $model->requisition_number ?? '-';
-            },
-        ];
-    }
+            }
+            return '-';
+        },
+    ];
 
     // Columna de insumos
     $columns[] = [
         'attribute' => 'ingredient_id',
-        'label' => $isConsumptionRequester ? 'Insumos Solicitados' : 'Insumo',
+        'label' => 'Insumo',
         'format' => 'raw',
         'value' => function ($model) {
-            // Para requisiciones, mostrar botón desplegable con lista de insumos
-            if ($model->type === 'requisition') {
-                $items = $model->requisitionItems ?? [];
-                $itemCount = count($items);
-                
-                if ($itemCount === 0) {
-                    return "Requisición (sin insumos)";
-                }
-                
-                // Generar ID único para el collapse
-                $collapseId = 'collapse-items-' . $model->id;
-                
-                // Construir la lista de insumos (inicialmente oculta)
-                $itemsList = '<div class="items-list" id="' . $collapseId . '" style="display: none;"><div class="mt-2"><ul class="list-unstyled mb-0 small">';
-                foreach ($items as $item) {
-                    $ingredient = $item->ingredient;
-                    if ($ingredient) {
-                        $itemsList .= '<li class="mb-1"><i class="bx bx-package text-muted"></i> ';
-                        $itemsList .= Html::encode($ingredient->ingredient);
-                        if (!empty($ingredient->brand)) {
-                            $itemsList .= ' <span class="text-muted">(' . Html::encode($ingredient->brand) . ')</span>';
-                        }
-                        $itemsList .= ' - <strong>' . Yii::$app->formatter->asDecimal($item->quantity_requested, 2) . '</strong> ';
-                        $itemsList .= Html::encode($ingredient->um ?? '');
-                        $itemsList .= '</li>';
+            // Para requisiciones con un item específico (expanded row)
+            if ($model->type === 'requisition' && isset($model->_expandedItem)) {
+                $item = $model->_expandedItem;
+                $ingredient = $item->ingredient;
+                if ($ingredient) {
+                    $text = Html::encode($ingredient->ingredient);
+                    if (!empty($ingredient->brand)) {
+                        $text .= ' <span class="text-muted">(' . Html::encode($ingredient->brand) . ')</span>';
                     }
+                    return $text;
                 }
-                $itemsList .= '</ul></div></div>';
-                
-                // Botón para expandir/colapsar
-                $button = '<a href="javascript:void(0);" class="btn btn-sm btn-link p-0 text-decoration-none requisition-toggle" data-target="' . $collapseId . '" data-expanded="false">';
-                $button .= '<i class="bx bx-list-ul"></i> Requisición (' . $itemCount . ' insumos) <i class="bx bx-chevron-down chevron-icon"></i>';
-                $button .= '</a>';
-                
-                return '<div>' . $button . $itemsList . '</div>';
+                return '-';
             }
             
             // Para otros tipos de movimiento
@@ -288,6 +249,96 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'class' => 'form-control',
             'placeholder' => 'Buscar por nombre del insumo...'
         ]),
+    ];
+
+    // Columna de familia
+    $columns[] = [
+        'attribute' => 'category_id',
+        'label' => 'Familia',
+        'format' => 'raw',
+        'value' => function ($model) {
+            // Para requisiciones con un item específico (expanded row)
+            if ($model->type === 'requisition' && isset($model->_expandedItem)) {
+                $item = $model->_expandedItem;
+                $ingredient = $item->ingredient;
+                if ($ingredient && $ingredient->category) {
+                    return Html::encode($ingredient->category->name ?? '-');
+                }
+                return '-';
+            }
+            
+            // Para otros tipos
+            if ($model->ingredient && $model->ingredient->category) {
+                return Html::encode($model->ingredient->category->name);
+            }
+            return '-';
+        },
+        'filter' => \yii\helpers\Html::activeDropDownList(
+            $searchModel,
+            'category_id',
+            (function() use ($business) {
+            $catsBusiness = \common\models\Category::find()
+                ->where(['business_id' => $business->id])
+                ->orderBy('name')
+                ->all();
+            $catsBuiltin = \common\models\Category::find()
+                ->where(['builtin' => true])
+                ->orderBy('name')
+                ->all();
+            $all = array_merge($catsBusiness, $catsBuiltin);
+            // Index by id to remove duplicates and preserve model instances
+            $unique = \yii\helpers\ArrayHelper::index($all, 'id');
+            // Re-index numeric keys
+            $unique = array_values($unique);
+            return \yii\helpers\ArrayHelper::map($unique, 'id', 'name');
+            })(),
+            ['class' => 'form-control', 'prompt' => 'Todas las familias']
+        ),
+    ];
+
+    // Columna de cantidad
+    // Cantidad
+    $columns[] = [
+        'attribute' => 'quantity',
+        'label' => 'Cantidad',
+        'format' => 'raw',
+        'value' => function ($model) {
+            // Para requisiciones con un item específico (expanded row)
+            if ($model->type === 'requisition' && isset($model->_expandedItem)) {
+                $item = $model->_expandedItem;
+                $quantity = Yii::$app->formatter->asDecimal($item->quantity_requested, 2);
+                return '<strong>' . $quantity . '</strong>';
+            }
+
+            // Para otros tipos
+            // Si quantity es numérico, formatearlo; si no, devolver tal cual
+            if ($model->quantity !== null && is_numeric($model->quantity)) {
+                return '<strong>' . Yii::$app->formatter->asDecimal($model->quantity, 2) . '</strong>';
+            }
+            return Html::encode($model->quantity ?? '-');
+        },
+        'contentOptions' => ['style' => 'text-align: right;'],
+    ];
+
+    // Unidad de medida
+    $columns[] = [
+        'attribute' => 'um',
+        'label' => 'Unidad de medida',
+        'format' => 'raw',
+        'value' => function ($model) {
+            // Para requisiciones con un item específico (expanded row)
+            if ($model->type === 'requisition' && isset($model->_expandedItem)) {
+                $item = $model->_expandedItem;
+                $ingredient = $item->ingredient;
+                return Html::encode($ingredient->um ?? '-');
+            }
+
+            // Para otros tipos
+            return Html::encode($model->um ?? '-');
+        },
+        // Mostrar esta columna para requesters (para usuarios que NO verán la columna 'um' más abajo)
+        'visible' => $isConsumptionRequester,
+        'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
     ];
 
     // Columnas adicionales solo para usuarios que no son consumption_requester
@@ -322,6 +373,49 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'attribute' => 'provider'
             ])
         ];
+        
+        // Columna de tipo de pago
+        $columns[] = [
+            'attribute' => 'payment_type',
+            'value' => function ($data) {
+                return $data->formattedPaymentType;
+            },
+            'filter' => \yii\bootstrap5\Html::activeDropDownList(
+                $searchModel,
+                'payment_type',
+                \common\models\Movement::getFormattedPaymentTypes(),
+                [
+                    'class' => 'form-control',
+                    'prompt' => '----'
+                ]
+            )
+        ];
+        
+        // Columna de unidad de medida
+        $columns[] = [
+            'attribute' => 'um',
+            'filter' => \yii\bootstrap5\Html::activeDropDownList(
+                $searchModel,
+                'um',
+                \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
+                [
+                    'class' => 'form-control',
+                    'prompt' => '----'
+                ]
+            )
+        ];
+
+        $columns[] = [
+            'attribute' => 'total',
+            'label' => Yii::t('app', 'Total'),
+            'value' => function($model) {
+                if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
+                    return formatPrice(-$model->total);
+                }
+                return formatPrice($model->total);
+            },
+            'contentOptions' => ['style' => 'text-align: right;'],
+        ];
     }
 
     // Centro de consumo (para requisiciones y salidas)
@@ -347,6 +441,26 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             ), 
             ['class' => 'form-control', 'prompt' => 'Todos']
         ),
+    ];
+    
+    // Estado de tiempo (para requisiciones - visible para todos)
+    $columns[] = [
+        'attribute' => 'requisition_time_status',
+        'label' => 'Estado de Tiempo',
+        'value' => function($model) {
+            if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                return $model->getTimeStatusLabel();
+            }
+            return '-';
+        },
+        'format' => 'raw',
+        'contentOptions' => ['style' => 'text-align: center;'],
+        'filter' => \yii\helpers\Html::activeDropDownList($searchModel, 'requisition_time_status', [
+            \common\models\Movement::TIME_STATUS_ON_TIME => 'En tiempo',
+            \common\models\Movement::TIME_STATUS_OUT_OF_TIME => 'Fuera de tiempo',
+            \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS => 'Extemporánea',
+        ], ['class' => 'form-control', 'prompt' => 'Todos']),
+        'visible' => !$isConsumptionRequester, // Solo visible para administradores
     ];
 
     // Fecha requerida (solo para requisiciones/consumption_requester)
@@ -382,51 +496,24 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'format' => 'raw',
             'contentOptions' => ['style' => 'text-align: center;'],
         ];
-    }
-
-    // Columnas de pago y cantidad solo para usuarios normales
-    if (!$isConsumptionRequester) {
-        $columns[] = [
-            'attribute' => 'payment_type',
-            'value' => function ($data) {
-                return $data->formattedPaymentType;
-            },
-            'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                $searchModel,
-                'payment_type',
-                \common\models\Movement::getFormattedPaymentTypes(),
-                [
-                    'class' => 'form-control',
-                    'prompt' => '----'
-                ]
-            )
-        ];
-
-        $columns[] = 'quantity';
         
+        // Estado de tiempo (solo para requisiciones)
         $columns[] = [
-            'attribute' => 'um',
-            'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                $searchModel,
-                'um',
-                \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
-                [
-                    'class' => 'form-control',
-                    'prompt' => '----'
-                ]
-            )
-        ];
-
-        $columns[] = [
-            'attribute' => 'total',
-            'label' => Yii::t('app', 'Total'),
+            'attribute' => 'requisition_time_status',
+            'label' => 'Estado de Tiempo',
             'value' => function($model) {
-                if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
-                    return formatPrice(-$model->total);
+                if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                    return $model->getTimeStatusLabel();
                 }
-                return formatPrice($model->total);
+                return '-';
             },
-            'contentOptions' => ['style' => 'text-align: right;'],
+            'format' => 'raw',
+            'contentOptions' => ['style' => 'text-align: center;'],
+            'filter' => \yii\helpers\Html::activeDropDownList($searchModel, 'requisition_time_status', [
+                \common\models\Movement::TIME_STATUS_ON_TIME => 'En tiempo',
+                \common\models\Movement::TIME_STATUS_OUT_OF_TIME => 'Fuera de tiempo',
+                \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS => 'Extemporánea',
+            ], ['class' => 'form-control', 'prompt' => 'Todos']),
         ];
     }
 
@@ -508,37 +595,43 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
         'columns' => $columns,
+        'rowOptions' => function ($model, $key, $index, $grid) {
+            // Solo aplicar colores a requisiciones
+            if ($model->type !== \common\models\Movement::TYPE_REQUISITION) {
+                return [];
+            }
+            
+            // Si la requisición ya fue surtida (tiene salida), mostrar en negro (sin clase especial)
+            if ($model->status === 'fulfilled' || $model->status === 'partially_fulfilled') {
+                return [];
+            }
+            
+            // Si es una fila expandida con un item específico
+            if (isset($model->_expandedItem)) {
+                $item = $model->_expandedItem;
+                $ingredient = $item->ingredient;
+                
+                if ($ingredient) {
+                    $availableStock = $ingredient->quantity ?? 0;
+                    $requestedQuantity = $item->quantity_requested;
+                    
+                    // Rojo si no hay suficiente stock
+                    if ($availableStock < $requestedQuantity) {
+                        return ['class' => 'requisition-insufficient-stock'];
+                    }
+                    
+                    // Azul si hay suficiente stock
+                    return ['class' => 'requisition-available-stock'];
+                }
+            }
+            
+            return [];
+        },
     ]); ?>
 
     <?php Pjax::end(); ?>
 
 </div>
-
-<?php
-// JavaScript para manejar el collapse de insumos con toggle manual
-$this->registerJs("
-$(document).on('click', '.requisition-toggle', function(e) {
-    e.preventDefault();
-    var button = $(this);
-    var targetId = button.data('target');
-    var target = $('#' + targetId);
-    var isExpanded = button.data('expanded');
-    
-    
-    if (isExpanded) {
-        // Ocultar
-        target.slideUp(300);
-        button.data('expanded', false);
-        button.attr('aria-expanded', 'false');
-    } else {
-        // Mostrar
-        target.slideDown(300);
-        button.data('expanded', true);
-        button.attr('aria-expanded', 'true');
-    }
-});
-");
-?>
 
 <?php
 \yii\bootstrap5\Modal::begin([

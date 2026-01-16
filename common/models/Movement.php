@@ -45,10 +45,23 @@ use common\behaviors\NumberFormatterBehavior;
  */
 class Movement extends \yii\db\ActiveRecord
 {
-    use ProviderManagerTrait;    const TYPE_INPUT = 'input';
+    use ProviderManagerTrait;
+    
+    /**
+     * Propiedad temporal para almacenar el item específico cuando se expande una requisición
+     * @var RequisitionItem|null
+     */
+    public $_expandedItem;
+    
+    const TYPE_INPUT = 'input';
     const TYPE_OUTPUT = 'output';
     const TYPE_ORDER = 'order';
     const TYPE_REQUISITION = 'requisition'; // Requisición para salidas
+
+    // Estados de tiempo de requisición
+    const TIME_STATUS_ON_TIME = 'on_time';           // Dentro de días/horarios permitidos
+    const TIME_STATUS_OUT_OF_TIME = 'out_of_time';   // Fuera de días/horarios, sin motivo especial
+    const TIME_STATUS_EXTEMPORANEOUS = 'extemporaneous'; // Fuera de días/horarios CON motivo justificado
 
     // Tipos de pago genéricos (para compatibilidad)
     const PAYMENT_TYPE_CARD = 'card';
@@ -139,7 +152,18 @@ class Movement extends \yii\db\ActiveRecord
             [['payment_type'], 'in', 'range' => array_keys(self::getFormattedPaymentMethods()), 'skipOnEmpty' => true],
             [['provider'], 'validateProvider'],
             [['consumption_center_id'], 'validateConsumptionCenter'],
-            [['required_date'], 'validateRequiredDate']
+            [['required_date'], 'validateRequiredDate'],
+            
+            // Campos de requisiciones extemporáneas
+            [['is_extemporaneous'], 'boolean'],
+            [['extemporaneous_reason'], 'string'],
+            [['extemporaneous_reason'], 'required', 'when' => function($model) {
+                if ($model->type === self::TYPE_REQUISITION && $model->is_extemporaneous) {
+                    $business = Business::findOne($model->business_id);
+                    return $business && $business->require_extemporaneous_reason;
+                }
+                return false;
+            }, 'message' => 'Debe proporcionar un motivo para esta requisición extemporánea']
         ];
     }
 
@@ -592,6 +616,50 @@ class Movement extends \yii\db\ActiveRecord
         // Solo las entradas y salidas afectan el inventario
         // Las requisiciones y órdenes NO afectan el inventario
         return in_array($this->type, [self::TYPE_INPUT, self::TYPE_OUTPUT]);
+    }
+    
+    /**
+     * Obtiene la etiqueta legible del estado de tiempo de requisición
+     * @return string
+     */
+    public function getTimeStatusLabel()
+    {
+        if ($this->type !== self::TYPE_REQUISITION) {
+            return '';
+        }
+        
+        switch ($this->requisition_time_status) {
+            case self::TIME_STATUS_ON_TIME:
+                return '<span class="badge bg-success"><i class="bx bx-check-circle"></i> En tiempo</span>';
+            case self::TIME_STATUS_OUT_OF_TIME:
+                return '<span class="badge bg-warning"><i class="bx bx-time"></i> Fuera de tiempo</span>';
+            case self::TIME_STATUS_EXTEMPORANEOUS:
+                return '<span class="badge bg-info"><i class="bx bx-bell"></i> Extemporánea</span>';
+            default:
+                return '<span class="badge bg-secondary">Sin clasificar</span>';
+        }
+    }
+    
+    /**
+     * Obtiene el texto simple del estado de tiempo
+     * @return string
+     */
+    public function getTimeStatusText()
+    {
+        if ($this->type !== self::TYPE_REQUISITION) {
+            return '';
+        }
+        
+        switch ($this->requisition_time_status) {
+            case self::TIME_STATUS_ON_TIME:
+                return 'En tiempo';
+            case self::TIME_STATUS_OUT_OF_TIME:
+                return 'Fuera de tiempo';
+            case self::TIME_STATUS_EXTEMPORANEOUS:
+                return 'Extemporánea';
+            default:
+                return 'Sin clasificar';
+        }
     }
 
 

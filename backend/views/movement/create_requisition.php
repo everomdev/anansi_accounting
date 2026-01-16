@@ -28,6 +28,15 @@ $config = RequisitionConfig::getForBusiness($business->id);
 $user = Yii::$app->user->identity;
 $defaultCenter = $user->getDefaultConsumptionCenter();
 
+// Obtener reglas de requisición para el centro por defecto
+$defaultCenterRules = null;
+if ($defaultCenter) {
+    $defaultCenterRules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter(
+        $defaultCenter->id,
+        $business->id
+    );
+}
+
 // Obtener todos los centros de consumo del usuario
 $userCenters = $user->getConsumptionCenters()->all();
 
@@ -97,11 +106,49 @@ $this->registerJsVar('ingredientsData', array_reduce($ingredients, function($car
     return $carry;
 }, []));
 
+// Registrar reglas de requisición del centro por defecto
+if ($defaultCenterRules) {
+    $this->registerJsVar('requisitionAllowedDays', $defaultCenterRules->getRequisitionAllowedDaysArray());
+    $this->registerJsVar('requisitionStartTime', $defaultCenterRules->requisition_start_time ?: '00:00');
+    $this->registerJsVar('requisitionEndTime', $defaultCenterRules->requisition_end_time ?: '23:59');
+    $this->registerJsVar('allowExtemporaneousRequisitions', $defaultCenterRules->allow_extemporaneous_requisitions ?? true);
+    $this->registerJsVar('requireExtemporaneousReason', $defaultCenterRules->require_extemporaneous_reason ?? true);
+} else {
+    // Valores por defecto si no hay reglas configuradas
+    $this->registerJsVar('requisitionAllowedDays', [1,2,3,4,5]); // Lunes a Viernes
+    $this->registerJsVar('requisitionStartTime', '00:00');
+    $this->registerJsVar('requisitionEndTime', '23:59');
+    $this->registerJsVar('allowExtemporaneousRequisitions', true);
+    $this->registerJsVar('requireExtemporaneousReason', true);
+}
+
+// URL para cargar reglas dinámicamente cuando cambie el centro
+$this->registerJsVar('loadCenterRulesUrl', \yii\helpers\Url::to(['business/load-consumption-center-rules']));
+$this->registerJsVar('businessId', $business->id);
+
 // Registrar script de zona horaria
 $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
 <div class="requisition-form">
+    <!-- Alerta de Requisición Extemporánea -->
+    <div id="extemporaneous-alert" class="alert alert-warning alert-dismissible fade" role="alert" style="display: none;">
+        <i class="bx bx-error-circle me-2"></i>
+        <strong id="alert-title"><?= Yii::t('app', 'Requisición Fuera de Tiempo') ?></strong>
+        <p class="mb-2" id="extemporaneous-message"></p>
+        <div id="extemporaneous-reason-container" style="display: none;">
+            <label class="form-label fw-bold"><?= Yii::t('app', 'Motivo de la requisición extemporánea (opcional):') ?></label>
+            <small class="text-muted d-block mb-2">Si proporciona un motivo, la requisición se marcará como "Extemporánea". Si no, se marcará como "Fuera de tiempo".</small>
+            <?= Html::textarea('extemporaneous_reason', '', [
+                'class' => 'form-control',
+                'rows' => 3,
+                'id' => 'extemporaneous-reason',
+                'placeholder' => Yii::t('app', 'Opcional: Explique el motivo especial de esta requisición...'),
+            ]) ?>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
     <?php $form = ActiveForm::begin([
         'id' => 'requisition-form',
         'enableAjaxValidation' => false,
@@ -261,6 +308,12 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
     
     <!-- Campo oculto para tipo de movimiento -->
     <?= Html::hiddenInput('Movement[type]', Movement::TYPE_REQUISITION) ?>
+    
+    <!-- Campo oculto para indicar si es requisición extemporánea -->
+    <?= Html::hiddenInput('is_extemporaneous', '0', ['id' => 'is-extemporaneous']) ?>
+    
+    <!-- Campo oculto para el motivo de requisición extemporánea -->
+    <?= Html::hiddenInput('extemporaneous_reason_hidden', '', ['id' => 'extemporaneous-reason-hidden']) ?>
 
     <?php ActiveForm::end(); ?>
 </div>
@@ -342,6 +395,137 @@ $(document).ready(function() {
     if (typeof ClientTimezone !== 'undefined') {
         ClientTimezone.inject('requisition-form');
     }
+    
+    // Función para cargar reglas del centro de consumo seleccionado
+    function loadCenterRules(centerId) {
+        if (!centerId) {
+            console.log('No hay centro seleccionado');
+            return;
+        }
+        
+        console.log('Cargando reglas para centro:', centerId);
+        
+        $.ajax({
+            url: loadCenterRulesUrl,
+            type: 'POST',
+            data: {
+                consumption_center_id: centerId,
+                business_id: businessId
+            },
+            dataType: 'json',
+            success: function(response) {
+                console.log('Reglas cargadas:', response);
+                
+                if (response.success) {
+                    const rules = response.rules;
+                    
+                    // Actualizar variables globales
+                    requisitionAllowedDays = rules.requisition_allowed_days || [1,2,3,4,5];
+                    requisitionStartTime = rules.requisition_start_time || '00:00';
+                    requisitionEndTime = rules.requisition_end_time || '23:59';
+                    allowExtemporaneousRequisitions = rules.allow_extemporaneous_requisitions == 1 || rules.allow_extemporaneous_requisitions === true;
+                    requireExtemporaneousReason = rules.require_extemporaneous_reason == 1 || rules.require_extemporaneous_reason === true;
+                    
+                    console.log('Reglas actualizadas:', {
+                        días: requisitionAllowedDays,
+                        inicio: requisitionStartTime,
+                        fin: requisitionEndTime,
+                        permitirExtemp: allowExtemporaneousRequisitions,
+                        requiereMotivo: requireExtemporaneousReason
+                    });
+                    
+                    // Re-validar con las nuevas reglas
+                    checkRequisitionRules();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error al cargar reglas:', status, error);
+            }
+        });
+    }
+    
+    // Evento cuando cambia el centro de consumo
+    $('#consumption-center-select').on('change', function() {
+        const centerId = $(this).val();
+        console.log('Centro de consumo cambiado a:', centerId);
+        loadCenterRules(centerId);
+    });
+    
+    // Función para validar si la requisición es extemporánea
+    function checkRequisitionRules() {
+        const currentDay = now.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+        const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        
+        console.log('Validando reglas:', {
+            díaActual: currentDay,
+            horaActual: currentTime,
+            díasPermitidos: requisitionAllowedDays,
+            horarioInicio: requisitionStartTime,
+            horarioFin: requisitionEndTime
+        });
+        
+        // Verificar si el día está permitido
+        const isDayAllowed = requisitionAllowedDays.includes(currentDay);
+        
+        // Verificar si la hora está dentro del rango
+        const isTimeAllowed = currentTime >= requisitionStartTime && currentTime <= requisitionEndTime;
+        
+        // Si está fuera de las reglas
+        const isExtemporaneous = !isDayAllowed || !isTimeAllowed;
+        
+        console.log('Resultado validación:', {
+            díaPermitido: isDayAllowed,
+            horaPermitida: isTimeAllowed,
+            esExtemporánea: isExtemporaneous
+        });
+        
+        // Actualizar campo oculto
+        $('#is-extemporaneous').val(isExtemporaneous ? '1' : '0');
+        
+        if (isExtemporaneous) {
+            // Construir mensaje
+            let message = '';
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            
+            if (!isDayAllowed && !isTimeAllowed) {
+                message = `Esta requisición está siendo creada fuera de los días y horarios permitidos. Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}. Horario: ${requisitionStartTime} - ${requisitionEndTime}.`;
+            } else if (!isDayAllowed) {
+                message = `Esta requisición está siendo creada en un día no permitido (${dayNames[currentDay]}). Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}.`;
+            } else {
+                message = `Esta requisición está siendo creada fuera del horario permitido. Horario: ${requisitionStartTime} - ${requisitionEndTime}.`;
+            }
+            
+            // Mostrar alerta (siempre amarilla, nunca bloquear)
+            $('#extemporaneous-alert').removeClass('alert-danger').addClass('alert-warning show').fadeIn();
+            $('#extemporaneous-message').text(message);
+            
+            // Mostrar campo de motivo (opcional si allow_extemporaneous, sino informativo)
+            if (allowExtemporaneousRequisitions) {
+                $('#alert-title').text('Requisición Fuera de Tiempo');
+                $('#extemporaneous-reason-container').show();
+                $('#extemporaneous-reason').prop('required', false); // Ahora es opcional
+                message += '\n\nPuede proporcionar un motivo para clasificarla como "Extemporánea", o dejarla como "Fuera de tiempo".';
+                $('#extemporaneous-message').text(message);
+                $('#submit-btn').prop('disabled', false).html('<i class="bx bx-send"></i> Enviar Requisición');
+            } else {
+                // No se permiten extemporáneas, pero igual se puede enviar como "fuera de tiempo"
+                $('#alert-title').text('Requisición Fuera de Tiempo');
+                $('#extemporaneous-reason-container').hide();
+                message += ' Esta requisición se registrará como "Fuera de tiempo".';
+                $('#extemporaneous-message').text(message);
+                $('#submit-btn').prop('disabled', false).html('<i class="bx bx-send"></i> Enviar Requisición Fuera de Tiempo');
+            }
+        } else {
+            // Ocultar alerta si está dentro de las reglas
+            $('#extemporaneous-alert').removeClass('show').fadeOut();
+            $('#extemporaneous-reason-container').hide();
+            $('#extemporaneous-reason').prop('required', false);
+            $('#submit-btn').prop('disabled', false).html('<i class="bx bx-send"></i> Enviar Requisición');
+        }
+    }
+    
+    // Validar reglas al cargar la página
+    checkRequisitionRules();
     
     let itemIndex = 0;
     
@@ -537,8 +721,24 @@ $(document).ready(function() {
             return false;
         }
         
-        // Confirmar envío
-        if (!confirm('¿Está seguro de enviar esta requisición?')) {
+        // Validar motivo extemporáneo si es requerido
+        const reason = $('#extemporaneous-reason').val().trim();
+        if (reason) {
+            // Si hay motivo, copiar al campo oculto
+            $('#extemporaneous-reason-hidden').val(reason);
+        }
+        
+        // Confirmar envío según tipo de requisición
+        const isExtemporaneous = $('#is-extemporaneous').val() === '1';
+        let confirmMessage = '¿Está seguro de enviar esta requisición?';
+        
+        if (isExtemporaneous && reason) {
+            confirmMessage = '⚠️ Esta es una requisición EXTEMPORÁNEA (con motivo justificado).\n\n¿Confirma que desea enviarla?';
+        } else if (isExtemporaneous && !reason) {
+            confirmMessage = '⚠️ Esta requisición se marcará como FUERA DE TIEMPO (sin motivo especial).\n\n¿Confirma que desea enviarla?';
+        }
+        
+        if (!confirm(confirmMessage)) {
             return false;
         }
         

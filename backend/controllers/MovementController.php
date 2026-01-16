@@ -200,6 +200,8 @@ class MovementController extends Controller
                 $observations = $post['observations'] ?? '';
                 $clientTimezone = $post['client_timezone'] ?? 'UTC';
                 $items = $post['items'] ?? [];
+                $isExtemporaneous = ($post['is_extemporaneous'] ?? '0') === '1';
+                $extemporaneousReason = $post['extemporaneous_reason_hidden'] ?? null;
                 
                 // Obtener fecha/hora actual del cliente (no del servidor)
                 $clientCurrentDateTime = $post['client_current_datetime'] ?? date('Y-m-d H:i:s');
@@ -214,6 +216,32 @@ class MovementController extends Controller
                     throw new \Exception('El centro de consumo es requerido');
                 }
                 
+                // Obtener reglas de requisición del centro de consumo
+                $centerRules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter(
+                    $consumptionCenterId,
+                    $business['id']
+                );
+                
+                // Validar si la requisición puede ser creada (solo para información)
+                $requisitionCheck = $centerRules->canCreateRequisitionNow();
+                $isOutOfTime = !$requisitionCheck['allowed']; // Fuera de días/horarios
+                
+                // Determinar el estado de tiempo de la requisición
+                $timeStatus = \common\models\Movement::TIME_STATUS_ON_TIME;
+                
+                if ($isOutOfTime) {
+                    // Si está fuera de tiempo, verificar si hay motivo
+                    if (!empty($extemporaneousReason) && $centerRules->allow_extemporaneous_requisitions) {
+                        // Tiene motivo Y se permiten extemporáneas = EXTEMPORÁNEA
+                        $timeStatus = \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS;
+                        $isExtemporaneous = true;
+                    } else {
+                        // No tiene motivo O no se permiten extemporáneas = FUERA DE TIEMPO
+                        $timeStatus = \common\models\Movement::TIME_STATUS_OUT_OF_TIME;
+                        $isExtemporaneous = false;
+                    }
+                }
+                
                 // Crear el movimiento de requisición (sin afectar inventario)
                 $movement = new Movement([
                     'business_id' => $business['id'],
@@ -225,6 +253,9 @@ class MovementController extends Controller
                     'requested_by_user_id' => Yii::$app->user->id,
                     'status' => 'pending',
                     'created_at' => $clientCurrentDateTime, // Usar fecha/hora del cliente
+                    'is_extemporaneous' => $isExtemporaneous,
+                    'extemporaneous_reason' => !empty($extemporaneousReason) ? $extemporaneousReason : null,
+                    'requisition_time_status' => $timeStatus,
                 ]);
                 
                 if (!$movement->save()) {

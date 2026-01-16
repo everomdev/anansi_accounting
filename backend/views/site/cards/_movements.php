@@ -34,51 +34,6 @@ $this->registerCss("
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
     }
     
-    /* Estilos para el desplegable de insumos en requisiciones */
-    .requisition-items-list {
-        overflow: hidden;
-    }
-    
-    .requisition-items-list ul {
-        padding-left: 1rem;
-        background-color: rgba(52, 152, 219, 0.05);
-        border-left: 3px solid #3498db;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        margin-top: 0.5rem;
-        margin-bottom: 0;
-    }
-    
-    .requisition-items-list ul li {
-        padding: 0.25rem 0;
-        font-size: 0.85rem;
-    }
-    
-    .requisition-toggle-btn {
-        cursor: pointer;
-        color: #3498db;
-        text-decoration: none;
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    
-    .requisition-toggle-btn:hover {
-        color: #2980b9;
-        text-decoration: none;
-    }
-    
-    .requisition-toggle-btn .chevron-icon {
-        transition: transform 0.3s ease;
-        display: inline-block;
-        font-size: 0.9rem;
-    }
-    
-    .requisition-toggle-btn[aria-expanded=\"true\"] .chevron-icon {
-        transform: rotate(180deg);
-    }
-    
     .movements-header {
         padding-bottom: 0.75rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -208,6 +163,26 @@ $this->registerCss("
         border-radius: 100px;
         font-size: 0.85rem;
     }
+    
+    /* Colores para requisiciones según disponibilidad de stock */
+    .requisition-insufficient-stock {
+        color: #dc3545 !important; /* Rojo */
+        font-weight: 500;
+    }
+    
+    .requisition-available-stock {
+        color: #0d6efd !important; /* Azul */
+        font-weight: 500;
+    }
+    
+    /* Asegurar que el texto de las celdas herede el color de la fila */
+    .requisition-insufficient-stock td {
+        color: inherit !important;
+    }
+    
+    .requisition-available-stock td {
+        color: inherit !important;
+    }
 ");
 ?>
 
@@ -239,113 +214,177 @@ $this->registerCss("
                             <th>Fecha Requerida</th>
                         <?php endif; ?>
                         <th>Insumo</th>
+                        <th>Cantidad</th>
+                        <th>Unidad</th>
+                        <th>Familia</th>
                         <?php if (!Yii::$app->user->can('consumption_requester')): ?>
-                            <th>Cantidad</th>
                             <th style="text-align: right">Total</th>
                         <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($movements as $movement): ?>
-                        <tr>
-                            <td>
-                                <?php 
-                                $typeClass = $movement->type == \common\models\Movement::TYPE_INPUT ? 'movement-type-input' : 'movement-type-output';
-                                $typeIcon = $movement->type == \common\models\Movement::TYPE_INPUT ? 'fas fa-arrow-down' : 'fas fa-arrow-up';
+                    <?php 
+                    // Expandir requisiciones en múltiples filas
+                    foreach ($movements as $movement): 
+                        if ($movement->type === 'requisition'):
+                            $items = $movement->requisitionItems ?? [];
+                            if (count($items) === 0):
+                                // Mostrar requisición sin items
                                 ?>
-                                <span class="movement-type <?= $typeClass ?>">
-                                    <i class="<?= $typeIcon ?> me-1"></i>
-                                    <?= $movement->getFormattedType() ?>
-                                </span>
-                            </td>
-                            <?php if (Yii::$app->user->can('consumption_requester')): ?>
-                                <td style="white-space: nowrap;">
-                                    <?php if ($movement->required_date): ?>
-                                        <i class="bx bx-calendar text-primary"></i> <?= (new \DateTime($movement->required_date))->format('d/m/Y') ?>
-                                    <?php else: ?>
-                                        -
+                                <tr>
+                                    <td>
+                                        <span class="movement-type movement-type-output">
+                                            <i class="fas fa-file-alt me-1"></i>
+                                            <?= $movement->getFormattedType() ?>
+                                            <?php
+                                            // Mostrar ícono según estado de tiempo
+                                            switch ($movement->requisition_time_status) {
+                                                case \common\models\Movement::TIME_STATUS_ON_TIME:
+                                                    echo ' <span style="color: #28a745;" title="En tiempo">✅</span>';
+                                                    break;
+                                                case \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS:
+                                                    echo ' <span style="color: #ffc107;" title="Extemporánea">⚠️</span>';
+                                                    break;
+                                                case \common\models\Movement::TIME_STATUS_OUT_OF_TIME:
+                                                    echo ' <span style="color: #dc3545;" title="Fuera de tiempo">⛔</span>';
+                                                    break;
+                                            }
+                                            ?>
+                                        </span>
+                                    </td>
+                                    <?php if (Yii::$app->user->can('consumption_requester')): ?>
+                                        <td>
+                                            <?php if ($movement->required_date): ?>
+                                                <i class="bx bx-calendar text-primary"></i> <?= (new \DateTime($movement->required_date))->format('d/m/Y') ?>
+                                            <?php else: ?>
+                                                -
+                                            <?php endif; ?>
+                                        </td>
                                     <?php endif; ?>
-                                </td>
-                            <?php endif; ?>
-                            <td class="movement-ingredient">
-                                <?php if ($movement->type === 'requisition'): ?>
-                                    <?php
-                                    $items = $movement->requisitionItems ?? [];
-                                    $itemCount = count($items);
+                                    <td colspan="<?= Yii::$app->user->can('consumption_requester') ? '4' : '5' ?>">Sin insumos</td>
+                                </tr>
+                                <?php
+                            else:
+                                // Mostrar una fila por cada item de la requisición
+                                foreach ($items as $index => $item):
+                                    $ingredient = $item->ingredient;
                                     
-                                    if ($itemCount === 0) {
-                                        echo "Requisición (sin insumos)";
-                                    } else {
-                                        // Generar ID único para el collapse
-                                        $collapseId = 'dashboard-collapse-items-' . $movement->id;
-                                        
-                                        // Construir la lista de insumos (inicialmente oculta)
-                                        $itemsList = '<div class="requisition-items-list" id="' . $collapseId . '" style="display: none;"><ul class="list-unstyled">';
-                                        foreach ($items as $item) {
-                                            $ingredient = $item->ingredient;
-                                            if ($ingredient) {
-                                                $itemsList .= '<li><i class="bx bx-package text-muted"></i> ';
-                                                $itemsList .= Html::encode($ingredient->ingredient);
-                                                if (!empty($ingredient->brand)) {
-                                                    $itemsList .= ' <span class="text-muted">(' . Html::encode($ingredient->brand) . ')</span>';
-                                                }
-                                                $itemsList .= ' - <strong>' . Yii::$app->formatter->asDecimal($item->quantity_requested, 2) . '</strong> ';
-                                                $itemsList .= Html::encode($ingredient->um ?? '');
-                                                $itemsList .= '</li>';
+                                    // Determinar clase de color según disponibilidad de stock
+                                    $rowClass = '';
+                                    if ($movement->status !== 'fulfilled' && $movement->status !== 'partially_fulfilled') {
+                                        if ($ingredient) {
+                                            $availableStock = $ingredient->quantity ?? 0;
+                                            $requestedQuantity = $item->quantity_requested;
+                                            
+                                            if ($availableStock < $requestedQuantity) {
+                                                $rowClass = 'requisition-insufficient-stock';
+                                            } else {
+                                                $rowClass = 'requisition-available-stock';
                                             }
                                         }
-                                        $itemsList .= '</ul></div>';
-                                        
-                                        // Botón para expandir/colapsar
-                                        echo '<div>';
-                                        echo '<a href="javascript:void(0);" class="requisition-toggle-btn" data-target="' . $collapseId . '" data-expanded="false">';
-                                        echo '<i class="bx bx-list-ul"></i> Requisición (' . $itemCount . ' insumos) <i class="bx bx-chevron-down chevron-icon"></i>';
-                                        echo '</a>';
-                                        echo $itemsList;
-                                        echo '</div>';
                                     }
                                     ?>
-                                <?php else: ?>
-                                    <?= $movement->ingredient ? $movement->ingredient->ingredient : '-' ?>
+                                    <tr class="<?= $rowClass ?>">
+                                        <td>
+                                            <span class="movement-type movement-type-output">
+                                                <i class="fas fa-file-alt me-1"></i>
+                                                <?= $movement->getFormattedType() ?>
+                                                <?php
+                                                // Mostrar ícono según estado de tiempo
+                                                switch ($movement->requisition_time_status) {
+                                                    case \common\models\Movement::TIME_STATUS_ON_TIME:
+                                                        echo ' <span style="color: #28a745;" title="En tiempo">✅</span>';
+                                                        break;
+                                                    case \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS:
+                                                        echo ' <span style="color: #ffc107;" title="Extemporánea">⚠️</span>';
+                                                        break;
+                                                    case \common\models\Movement::TIME_STATUS_OUT_OF_TIME:
+                                                        echo ' <span style="color: #dc3545;" title="Fuera de tiempo">⛔</span>';
+                                                        break;
+                                                }
+                                                ?>
+                                            </span>
+                                        </td>
+                                        <?php if (Yii::$app->user->can('consumption_requester')): ?>
+                                            <td style="white-space: nowrap;">
+                                                <?php if ($movement->required_date): ?>
+                                                    <i class="bx bx-calendar text-primary"></i> <?= (new \DateTime($movement->required_date))->format('d/m/Y') ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endif; ?>
+                                        <td class="movement-ingredient">
+                                            <?php if ($ingredient): ?>
+                                                <?= Html::encode($ingredient->ingredient) ?>
+                                                <?php if (!empty($ingredient->brand)): ?>
+                                                    <span class="text-muted">(<?= Html::encode($ingredient->brand) ?>)</span>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                -
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="movement-quantity" style="text-align: right;">
+                                            <strong><?= Yii::$app->formatter->asDecimal($item->quantity_requested, 2) ?></strong>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <?= Html::encode($ingredient ? $ingredient->um : '-') ?>
+                                        </td>
+                                        <td>
+                                            <?= $ingredient && $ingredient->category ? Html::encode($ingredient->category->name) : '-' ?>
+                                        </td>
+                                        <?php if (!Yii::$app->user->can('consumption_requester')): ?>
+                                            <td class="movement-total">
+                                                <?php if ($index === 0): ?>
+                                                    <?= formatPrice($movement->total) ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endif; ?>
+                                    </tr>
+                                    <?php
+                                endforeach;
+                            endif;
+                        else:
+                            // Para movimientos normales (entrada/salida)
+                            ?>
+                            <tr>
+                                <td>
+                                    <?php 
+                                    $typeClass = $movement->type == \common\models\Movement::TYPE_INPUT ? 'movement-type-input' : 'movement-type-output';
+                                    $typeIcon = $movement->type == \common\models\Movement::TYPE_INPUT ? 'fas fa-arrow-down' : 'fas fa-arrow-up';
+                                    ?>
+                                    <span class="movement-type <?= $typeClass ?>">
+                                        <i class="<?= $typeIcon ?> me-1"></i>
+                                        <?= $movement->getFormattedType() ?>
+                                    </span>
+                                </td>
+                                <?php if (Yii::$app->user->can('consumption_requester')): ?>
+                                    <td>-</td>
                                 <?php endif; ?>
-                            </td>
-                            <!-- <td class="movement-quantity">
-                                <?php if ($movement->type === 'requisition'): ?>
-                                    -
-                                <?php else: ?>
-                                    <?= $movement->ingredient ? sprintf("%s %s", $movement->quantity, $movement->ingredient->um) : '-' ?>
+                                <td class="movement-ingredient">
+                                    <?= $movement->ingredient ? Html::encode($movement->ingredient->ingredient) : '-' ?>
+                                </td>
+                                <td class="movement-quantity" style="text-align: right;">
+                                    <strong><?= $movement->quantity ? Yii::$app->formatter->asDecimal($movement->quantity, 2) : '-' ?></strong>
+                                </td>
+                                <td style="text-align: center;">
+                                    <?= $movement->ingredient ? Html::encode($movement->ingredient->um) : '-' ?>
+                                </td>
+                                <td>
+                                    <?= $movement->ingredient && $movement->ingredient->category ? Html::encode($movement->ingredient->category->name) : '-' ?>
+                                </td>
+                                <?php if (!Yii::$app->user->can('consumption_requester')): ?>
+                                    <td class="movement-total"><?= formatPrice($movement->total) ?></td>
                                 <?php endif; ?>
-                            </td>
-                            <td class="movement-total"><?= formatPrice($movement->total) ?></td> -->
-                        </tr>
-                    <?php endforeach; ?>
+                            </tr>
+                            <?php
+                        endif;
+                    endforeach; 
+                    ?>
                 </tbody>
             </table>
         <?php endif; ?>
     </div>
 </div>
-
-<?php
-// JavaScript para manejar el collapse de insumos en el dashboard
-$this->registerJs("
-$(document).on('click', '.requisition-toggle-btn', function(e) {
-    e.preventDefault();
-    var button = $(this);
-    var targetId = button.data('target');
-    var target = $('#' + targetId);
-    var isExpanded = button.data('expanded');
-    
-    if (isExpanded) {
-        // Ocultar
-        target.slideUp(300);
-        button.data('expanded', false);
-        button.attr('aria-expanded', 'false');
-    } else {
-        // Mostrar
-        target.slideDown(300);
-        button.data('expanded', true);
-        button.attr('aria-expanded', 'true');
-    }
-});
-");
-?>

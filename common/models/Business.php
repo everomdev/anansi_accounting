@@ -24,6 +24,11 @@ use common\models\MonthlySales;
  * @property string $timezone [varchar(255)]
  * @property string $locale [varchar(255)]
  * @property int $monthly_plate_sales [int]
+ * @property string $requisition_allowed_days [json] Array de días permitidos (0=Dom, 1=Lun, ..., 6=Sáb)
+ * @property string $requisition_start_time [varchar(5)] Hora de inicio (HH:MM)
+ * @property string $requisition_end_time [varchar(5)] Hora de fin (HH:MM)
+ * @property bool $allow_extemporaneous_requisitions Permitir requisiciones fuera de horario
+ * @property bool $require_extemporaneous_reason Requiere motivo para requisiciones extemporáneas
  */
 class Business extends \yii\db\ActiveRecord
 {
@@ -55,6 +60,13 @@ class Business extends \yii\db\ActiveRecord
                 'timezone',
                 'locale',
             ], 'string', 'max' => 255],
+            
+            // Reglas de requisición
+            [['requisition_allowed_days'], 'safe'], // JSON field
+            [['requisition_start_time', 'requisition_end_time'], 'string', 'max' => 5],
+            [['requisition_start_time', 'requisition_end_time'], 'match', 'pattern' => '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', 'message' => 'Formato de hora inválido (HH:MM)'],
+            [['allow_extemporaneous_requisitions', 'require_extemporaneous_reason'], 'boolean'],
+            [['allow_extemporaneous_requisitions', 'require_extemporaneous_reason'], 'default', 'value' => true],
 
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
@@ -70,6 +82,11 @@ class Business extends \yii\db\ActiveRecord
             'name' => 'Name',
             'user_id' => 'User ID',
             'monthly_plate_sales' => Yii::t('app', "Plate sales / Month"),
+            'requisition_allowed_days' => Yii::t('app', 'Días permitidos para requisiciones'),
+            'requisition_start_time' => Yii::t('app', 'Hora de inicio'),
+            'requisition_end_time' => Yii::t('app', 'Hora de fin'),
+            'allow_extemporaneous_requisitions' => Yii::t('app', 'Permitir requisiciones extemporáneas'),
+            'require_extemporaneous_reason' => Yii::t('app', 'Requiere motivo para requisiciones extemporáneas'),
         ];
     }
 
@@ -879,5 +896,136 @@ public function getBcgData($type = 'all', $year = null)
     public function getProviders()
     {
         return $this->hasMany(Provider::class, ['business_id' => 'id']);
+    }
+    
+    /**
+     * Obtener días permitidos para requisiciones como array
+     * @return array Array de días (0=Domingo, 1=Lunes, ..., 6=Sábado)
+     */
+    public function getRequisitionAllowedDaysArray()
+    {
+        if (empty($this->requisition_allowed_days)) {
+            return [1, 2, 3, 4, 5]; // Default: Lunes a Viernes
+        }
+        
+        $days = json_decode($this->requisition_allowed_days, true);
+        return is_array($days) ? $days : [1, 2, 3, 4, 5];
+    }
+    
+    /**
+     * Establecer días permitidos desde array
+     * @param array $days Array de días (0-6)
+     */
+    public function setRequisitionAllowedDaysArray($days)
+    {
+        $this->requisition_allowed_days = json_encode(array_map('intval', $days));
+    }
+    
+    /**
+     * Verificar si un día de la semana está permitido para requisiciones
+     * @param int $dayOfWeek Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado)
+     * @return bool
+     */
+    public function isDayAllowedForRequisition($dayOfWeek)
+    {
+        $allowedDays = $this->getRequisitionAllowedDaysArray();
+        return in_array($dayOfWeek, $allowedDays);
+    }
+    
+    /**
+     * Verificar si una hora está dentro de la ventana permitida
+     * @param string $time Hora en formato HH:MM
+     * @return bool
+     */
+    public function isTimeAllowedForRequisition($time)
+    {
+        if (empty($this->requisition_start_time) || empty($this->requisition_end_time)) {
+            return true; // Sin restricción horaria
+        }
+        
+        return $time >= $this->requisition_start_time && $time <= $this->requisition_end_time;
+    }
+    
+    /**
+     * Verificar si una fecha/hora está permitida para requisiciones
+     * @param string|\DateTime $datetime Fecha y hora a verificar
+     * @return array ['allowed' => bool, 'is_extemporaneous' => bool, 'reason' => string]
+     */
+    public function isRequisitionAllowed($datetime = null)
+    {
+        if ($datetime === null) {
+            $datetime = new \DateTime('now', new \DateTimeZone($this->timezone ?: 'UTC'));
+        } elseif (is_string($datetime)) {
+            $datetime = new \DateTime($datetime, new \DateTimeZone($this->timezone ?: 'UTC'));
+        }
+        
+        $dayOfWeek = (int)$datetime->format('w'); // 0=Domingo, 6=Sábado
+        $time = $datetime->format('H:i');
+        
+        $dayAllowed = $this->isDayAllowedForRequisition($dayOfWeek);
+        $timeAllowed = $this->isTimeAllowedForRequisition($time);
+        
+        $isWithinRules = $dayAllowed && $timeAllowed;
+        $isExtemporaneous = !$isWithinRules;
+        
+        // Si está dentro de las reglas, siempre permitido
+        if ($isWithinRules) {
+            return [
+                'allowed' => true,
+                'is_extemporaneous' => false,
+                'reason' => null,
+            ];
+        }
+        
+        // Si es extemporánea, verificar si se permiten
+        if ($this->allow_extemporaneous_requisitions) {
+            return [
+                'allowed' => true,
+                'is_extemporaneous' => true,
+                'requires_reason' => $this->require_extemporaneous_reason,
+                'reason' => $this->getExtemporaneousReason($dayAllowed, $timeAllowed),
+            ];
+        }
+        
+        // No se permiten requisiciones extemporáneas
+        return [
+            'allowed' => false,
+            'is_extemporaneous' => true,
+            'reason' => $this->getExtemporaneousReason($dayAllowed, $timeAllowed),
+        ];
+    }
+    
+    /**
+     * Obtener razón por la cual una requisición es extemporánea
+     * @param bool $dayAllowed
+     * @param bool $timeAllowed
+     * @return string
+     */
+    private function getExtemporaneousReason($dayAllowed, $timeAllowed)
+    {
+        if (!$dayAllowed && !$timeAllowed) {
+            return Yii::t('app', 'Día y horario no permitidos');
+        } elseif (!$dayAllowed) {
+            return Yii::t('app', 'Día no permitido');
+        } else {
+            return Yii::t('app', 'Fuera del horario permitido');
+        }
+    }
+    
+    /**
+     * Obtener nombres de días de la semana
+     * @return array
+     */
+    public static function getDayNames()
+    {
+        return [
+            0 => Yii::t('app', 'Domingo'),
+            1 => Yii::t('app', 'Lunes'),
+            2 => Yii::t('app', 'Martes'),
+            3 => Yii::t('app', 'Miércoles'),
+            4 => Yii::t('app', 'Jueves'),
+            5 => Yii::t('app', 'Viernes'),
+            6 => Yii::t('app', 'Sábado'),
+        ];
     }
 }

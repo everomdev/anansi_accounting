@@ -132,6 +132,11 @@ class BusinessController extends Controller
             'thousands_separator' => $business->thousands_separator,
             'timezone' => $business->timezone,
             'locale' => $business->locale,
+            'requisition_allowed_days' => $business->getRequisitionAllowedDaysArray(),
+            'requisition_start_time' => $business->requisition_start_time ?: '00:00',
+            'requisition_end_time' => $business->requisition_end_time ?: '23:59',
+            'allow_extemporaneous_requisitions' => $business->allow_extemporaneous_requisitions ?? true,
+            'require_extemporaneous_reason' => $business->require_extemporaneous_reason ?? true,
         ]);
 
         $post = Yii::$app->request->post();
@@ -153,6 +158,97 @@ class BusinessController extends Controller
         return $this->render('my_business', [
             'model' => $model
         ]);
+    }
+    
+    /**
+     * Página independiente para gestionar reglas de requisición
+     */
+    public function actionRequisitionRules()
+    {
+        $businessData = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $business = Business::findOne(['id' => $businessData['id']]);
+        
+        if (!$business) {
+            throw new NotFoundHttpException('El negocio no fue encontrado.');
+        }
+        
+        return $this->render('requisition-rules', [
+            'business' => $business,
+        ]);
+    }
+
+    /**
+     * Cargar reglas de requisición para un centro de consumo
+     */
+    public function actionLoadConsumptionCenterRules()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $centerId = Yii::$app->request->post('consumption_center_id');
+        $businessId = Yii::$app->request->post('business_id');
+        
+        if (!$centerId || !$businessId) {
+            return [
+                'success' => false,
+                'message' => 'Parámetros inválidos'
+            ];
+        }
+        
+        $rules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter($centerId, $businessId);
+        
+        return [
+            'success' => true,
+            'rules' => [
+                'requisition_allowed_days' => $rules->getRequisitionAllowedDaysArray(),
+                'requisition_start_time' => $rules->requisition_start_time,
+                'requisition_end_time' => $rules->requisition_end_time,
+                'allow_extemporaneous_requisitions' => $rules->allow_extemporaneous_requisitions,
+                'require_extemporaneous_reason' => $rules->require_extemporaneous_reason,
+            ]
+        ];
+    }
+    
+    /**
+     * Guardar reglas de requisición para un centro de consumo
+     */
+    public function actionSaveConsumptionCenterRules()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        
+        $centerId = Yii::$app->request->post('consumption_center_id');
+        $businessId = Yii::$app->request->post('business_id');
+        
+        if (!$centerId || !$businessId) {
+            return [
+                'success' => false,
+                'message' => 'Parámetros inválidos'
+            ];
+        }
+        
+        $rules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter($centerId, $businessId);
+        
+        // Actualizar datos
+        $days = Yii::$app->request->post('requisition_allowed_days', []);
+        $rules->setRequisitionAllowedDaysArray($days);
+        $rules->requisition_start_time = Yii::$app->request->post('requisition_start_time', '00:00');
+        $rules->requisition_end_time = Yii::$app->request->post('requisition_end_time', '23:59');
+        
+        // Los checkboxes solo envían valor cuando están marcados
+        // Si no existe en el POST, el checkbox está desmarcado = 0
+        $rules->allow_extemporaneous_requisitions = Yii::$app->request->post('allow_extemporaneous_requisitions', 0) ? 1 : 0;
+        $rules->require_extemporaneous_reason = Yii::$app->request->post('require_extemporaneous_reason', 0) ? 1 : 0;
+        
+        if ($rules->save()) {
+            return [
+                'success' => true,
+                'message' => 'Configuración guardada exitosamente'
+            ];
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'Error al guardar: ' . json_encode($rules->errors)
+        ];
     }
 
     /**

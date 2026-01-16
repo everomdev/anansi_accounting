@@ -50,7 +50,7 @@ if($currentControllerId == 'standard-recipe'){
 }
 
 // Verificar si algún elemento dentro de cada menú está activo
-$configBaseActive = in_array($currentControllerId, ['category', 'recipe-category', 'unit-of-measurement']);
+$configBaseActive = in_array($currentControllerId, ['category', 'recipe-category', 'unit-of-measurement', 'business']);
 $gestionInsumosActive = in_array($currentControllerId, ['ingredient-stock', 'provider', 'ingredients']);
 $costeoActive = in_array($currentControllerId, ['sub-standard-recipe', 'standard-recipe', 'convoy', 'menu']);
 $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center', 'storage', 'movement', 'price-trend']);
@@ -111,6 +111,13 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         <li class="menu-item <?= $currentControllerId == 'unit-of-measurement' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/unit-of-measurement/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Unidades de medida') ?></div>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('manage_users') || Yii::$app->user->can('administrator')): ?>
+                        <li class="menu-item <?= ($currentControllerId == 'business' && $action == 'requisition-rules') ? 'active' : '' ?>">
+                            <a href="<?= \yii\helpers\Url::to(['/business/requisition-rules']) ?>" class="menu-link">
+                                <div><?= Yii::t('app', 'Reglas de Requisición') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>

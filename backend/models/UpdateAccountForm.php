@@ -19,6 +19,13 @@ class UpdateAccountForm extends \yii\base\Model
     public $thousands_separator;
     public $timezone;
     public $locale;
+    
+    // Campos de reglas de requisición
+    public $requisition_allowed_days;
+    public $requisition_start_time;
+    public $requisition_end_time;
+    public $allow_extemporaneous_requisitions;
+    public $require_extemporaneous_reason;
 
     public function rules()
     {
@@ -41,7 +48,13 @@ class UpdateAccountForm extends \yii\base\Model
                 'thousands_separator',
                 'timezone',
                 'locale',
-            ], 'string']
+            ], 'string'],
+            
+            // Reglas de requisición
+            [['requisition_allowed_days'], 'safe'],
+            [['requisition_start_time', 'requisition_end_time'], 'string', 'max' => 5],
+            [['requisition_start_time', 'requisition_end_time'], 'match', 'pattern' => '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', 'message' => 'Formato de hora inválido (HH:MM)'],
+            [['allow_extemporaneous_requisitions', 'require_extemporaneous_reason'], 'boolean'],
         ];
     }
 
@@ -66,6 +79,16 @@ class UpdateAccountForm extends \yii\base\Model
         $business->thousands_separator = $this->thousands_separator;
         $business->timezone = $this->timezone;
         $business->locale = $this->locale;
+        
+        // Guardar reglas de requisición
+        if (isset($this->requisition_allowed_days)) {
+            $business->setRequisitionAllowedDaysArray($this->requisition_allowed_days);
+        }
+        $business->requisition_start_time = $this->requisition_start_time;
+        $business->requisition_end_time = $this->requisition_end_time;
+        $business->allow_extemporaneous_requisitions = $this->allow_extemporaneous_requisitions;
+        $business->require_extemporaneous_reason = $this->require_extemporaneous_reason;
+        
         $profile->name = $this->name;
         if (isset($this->password)) {
             $user->password = $this->password;

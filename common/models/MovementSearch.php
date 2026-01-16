@@ -13,6 +13,7 @@ class MovementSearch extends Movement
 {
     public $name;
     public $consumption_center_id;
+    public $category_id; // Filtro por familia/categoría
 
     /**
      * {@inheritdoc}
@@ -20,7 +21,7 @@ class MovementSearch extends Movement
     public function rules()
     {
         return [
-            [['id', 'ingredient_id', 'business_id', 'consumption_center_id', 'requested_by_user_id', 'fulfilled_by_user_id', 'parent_requisition_id'], 'integer'],
+            [['id', 'ingredient_id', 'business_id', 'consumption_center_id', 'requested_by_user_id', 'fulfilled_by_user_id', 'parent_requisition_id', 'category_id'], 'integer'],
             [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'requisition_number', 'status', 'required_date', 'client_timezone'], 'safe'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['is_without_requisition'], 'boolean'],
@@ -48,11 +49,13 @@ class MovementSearch extends Movement
     {
         $query = Movement::find();
         $query->leftJoin('ingredient_stock ingredient', "ingredient.id=movement.ingredient_id");
+        $query->leftJoin('category', "category.id=ingredient.category_id");
         $query->select([
             "movement.*", 
             "ingredient.ingredient as name",
             "ingredient.brand",
-            "ingredient.presentation"
+            "ingredient.presentation",
+            "ingredient.category_id"
         ]);
 
         $dataProvider = new ActiveDataProvider([
@@ -166,13 +169,78 @@ class MovementSearch extends Movement
             ->andFilterWhere(['like', 'movement.payment_type', $this->payment_type])
             ->andFilterWhere(['like', 'movement.invoice', $this->invoice])
             ->andFilterWhere(['like', 'movement.um', $this->um])
-            ->andFilterWhere(['like', 'movement.observations', $this->observations]);
+            ->andFilterWhere(['like', 'movement.observations', $this->observations])
+            ->andFilterWhere(['like', 'movement.requisition_number', $this->requisition_number]);
 
         // Filtro por nombre del ingrediente
+        // Para movimientos normales, filtrar directamente
+        // Para requisiciones, filtraremos después de expandir
         if (!empty($this->name)) {
-            $query->andWhere(['like', 'ingredient.ingredient', $this->name]);
+            $query->andWhere([
+                'or',
+                ['like', 'ingredient.ingredient', $this->name],
+                ['movement.type' => Movement::TYPE_REQUISITION] // Incluir todas las requisiciones para filtrar después
+            ]);
             \Yii::info("Aplicando filtro por ingrediente: " . $this->name, 'movement-search');
         }
+
+        // Filtro por categoría/familia
+        // Para movimientos normales, filtrar directamente
+        // Para requisiciones, filtraremos después de expandir
+        if (!empty($this->category_id)) {
+            $query->andWhere([
+                'or',
+                ['ingredient.category_id' => $this->category_id],
+                ['movement.type' => Movement::TYPE_REQUISITION] // Incluir todas las requisiciones para filtrar después
+            ]);
+            \Yii::info("Aplicando filtro por categoría: " . $this->category_id, 'movement-search');
+        }
+
+        // Expandir requisiciones en múltiples filas (una por item)
+        $models = $query->all();
+        $expandedModels = [];
+        
+        foreach ($models as $model) {
+            if ($model->type === Movement::TYPE_REQUISITION) {
+                $items = $model->requisitionItems;
+                if (count($items) > 0) {
+                    // Crear una fila por cada item de la requisición
+                    foreach ($items as $item) {
+                        $ingredient = $item->ingredient;
+                        
+                        // Si hay filtro por nombre, verificar si este item coincide
+                        if (!empty($this->name)) {
+                            if ($ingredient && stripos($ingredient->ingredient, $this->name) === false) {
+                                continue; // Saltar este item si no coincide con el filtro
+                            }
+                        }
+                        
+                        // Si hay filtro por categoría, verificar si este item coincide
+                        if (!empty($this->category_id)) {
+                            if (!$ingredient || $ingredient->category_id != $this->category_id) {
+                                continue; // Saltar este item si no coincide con el filtro
+                            }
+                        }
+                        
+                        $expandedModel = clone $model;
+                        $expandedModel->_expandedItem = $item;
+                        $expandedModels[] = $expandedModel;
+                    }
+                } else {
+                    // Si no tiene items, agregar la requisición vacía solo si no hay filtros activos
+                    if (empty($this->name) && empty($this->category_id)) {
+                        $expandedModels[] = $model;
+                    }
+                }
+            } else {
+                // Para otros tipos, agregar directamente
+                $expandedModels[] = $model;
+            }
+        }
+        
+        // Reemplazar los modelos del dataProvider con los expandidos
+        $dataProvider->models = $expandedModels;
+        $dataProvider->totalCount = count($expandedModels);
 
         return $dataProvider;
     }
