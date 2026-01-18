@@ -196,6 +196,21 @@ class BusinessController extends Controller
         
         $rules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter($centerId, $businessId);
         
+        // Cargar horarios individuales por día
+        $schedules = \common\models\ConsumptionCenterSchedule::find()
+            ->where(['consumption_center_id' => $centerId])
+            ->orderBy(['day_of_week' => SORT_ASC])
+            ->all();
+        
+        // Convertir schedules a un objeto indexado por día
+        $daySchedules = [];
+        foreach ($schedules as $schedule) {
+            $daySchedules[$schedule->day_of_week] = [
+                'start_time' => $schedule->start_time,
+                'end_time' => $schedule->end_time,
+            ];
+        }
+        
         return [
             'success' => true,
             'rules' => [
@@ -204,6 +219,7 @@ class BusinessController extends Controller
                 'requisition_end_time' => $rules->requisition_end_time,
                 'allow_extemporaneous_requisitions' => $rules->allow_extemporaneous_requisitions,
                 'require_extemporaneous_reason' => $rules->require_extemporaneous_reason,
+                'day_schedules' => $daySchedules, // Nuevo campo con horarios por día
             ]
         ];
     }
@@ -225,30 +241,64 @@ class BusinessController extends Controller
             ];
         }
         
-        $rules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter($centerId, $businessId);
+        $transaction = Yii::$app->db->beginTransaction();
         
-        // Actualizar datos
-        $days = Yii::$app->request->post('requisition_allowed_days', []);
-        $rules->setRequisitionAllowedDaysArray($days);
-        $rules->requisition_start_time = Yii::$app->request->post('requisition_start_time', '00:00');
-        $rules->requisition_end_time = Yii::$app->request->post('requisition_end_time', '23:59');
-        
-        // Los checkboxes solo envían valor cuando están marcados
-        // Si no existe en el POST, el checkbox está desmarcado = 0
-        $rules->allow_extemporaneous_requisitions = Yii::$app->request->post('allow_extemporaneous_requisitions', 0) ? 1 : 0;
-        $rules->require_extemporaneous_reason = Yii::$app->request->post('require_extemporaneous_reason', 0) ? 1 : 0;
-        
-        if ($rules->save()) {
+        try {
+            $rules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter($centerId, $businessId);
+            
+            // Actualizar datos básicos
+            $days = Yii::$app->request->post('requisition_allowed_days', []);
+            $rules->setRequisitionAllowedDaysArray($days);
+            $rules->requisition_start_time = Yii::$app->request->post('requisition_start_time', '00:00');
+            $rules->requisition_end_time = Yii::$app->request->post('requisition_end_time', '23:59');
+            
+            // Los checkboxes solo envían valor cuando están marcados
+            $rules->allow_extemporaneous_requisitions = Yii::$app->request->post('allow_extemporaneous_requisitions', 0) ? 1 : 0;
+            $rules->require_extemporaneous_reason = Yii::$app->request->post('require_extemporaneous_reason', 0) ? 1 : 0;
+            
+            if (!$rules->save()) {
+                throw new \Exception('Error al guardar reglas: ' . json_encode($rules->errors));
+            }
+            
+            // Obtener horarios por día
+            $dayStartTimes = Yii::$app->request->post('day_start_time', []);
+            $dayEndTimes = Yii::$app->request->post('day_end_time', []);
+            
+            // Eliminar horarios existentes para este centro
+            \common\models\ConsumptionCenterSchedule::deleteAll(['consumption_center_id' => $centerId]);
+            
+            // Guardar nuevos horarios solo para los días seleccionados
+            foreach ($days as $day) {
+                $startTime = $dayStartTimes[$day] ?? '00:00';
+                $endTime = $dayEndTimes[$day] ?? '23:59';
+                
+                $schedule = new \common\models\ConsumptionCenterSchedule();
+                $schedule->consumption_center_id = $centerId;
+                $schedule->day_of_week = (int)$day;
+                $schedule->start_time = $startTime;
+                $schedule->end_time = $endTime;
+                $schedule->is_active = true;
+                
+                if (!$schedule->save()) {
+                    throw new \Exception('Error al guardar horario del día ' . $day . ': ' . json_encode($schedule->errors));
+                }
+            }
+            
+            $transaction->commit();
+            
             return [
                 'success' => true,
                 'message' => 'Configuración guardada exitosamente'
             ];
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
-        
-        return [
-            'success' => false,
-            'message' => 'Error al guardar: ' . json_encode($rules->errors)
-        ];
     }
 
     /**

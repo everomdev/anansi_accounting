@@ -108,7 +108,23 @@ $this->registerJsVar('ingredientsData', array_reduce($ingredients, function($car
 
 // Registrar reglas de requisición del centro por defecto
 if ($defaultCenterRules) {
+    // Cargar horarios individuales por día
+    $schedules = \common\models\ConsumptionCenterSchedule::find()
+        ->where(['consumption_center_id' => $defaultCenter->id])
+        ->orderBy(['day_of_week' => SORT_ASC])
+        ->all();
+    
+    // Convertir schedules a array para JavaScript
+    $daySchedules = [];
+    foreach ($schedules as $schedule) {
+        $daySchedules[$schedule->day_of_week] = [
+            'start_time' => $schedule->start_time,
+            'end_time' => $schedule->end_time,
+        ];
+    }
+    
     $this->registerJsVar('requisitionAllowedDays', $defaultCenterRules->getRequisitionAllowedDaysArray());
+    $this->registerJsVar('daySchedules', $daySchedules); // Nuevo: horarios por día
     $this->registerJsVar('requisitionStartTime', $defaultCenterRules->requisition_start_time ?: '00:00');
     $this->registerJsVar('requisitionEndTime', $defaultCenterRules->requisition_end_time ?: '23:59');
     $this->registerJsVar('allowExtemporaneousRequisitions', $defaultCenterRules->allow_extemporaneous_requisitions ?? true);
@@ -116,6 +132,7 @@ if ($defaultCenterRules) {
 } else {
     // Valores por defecto si no hay reglas configuradas
     $this->registerJsVar('requisitionAllowedDays', [1,2,3,4,5]); // Lunes a Viernes
+    $this->registerJsVar('daySchedules', []); // Sin horarios específicos
     $this->registerJsVar('requisitionStartTime', '00:00');
     $this->registerJsVar('requisitionEndTime', '23:59');
     $this->registerJsVar('allowExtemporaneousRequisitions', true);
@@ -421,6 +438,7 @@ $(document).ready(function() {
                     
                     // Actualizar variables globales
                     requisitionAllowedDays = rules.requisition_allowed_days || [1,2,3,4,5];
+                    daySchedules = rules.day_schedules || {}; // Nuevo: horarios por día
                     requisitionStartTime = rules.requisition_start_time || '00:00';
                     requisitionEndTime = rules.requisition_end_time || '23:59';
                     allowExtemporaneousRequisitions = rules.allow_extemporaneous_requisitions == 1 || rules.allow_extemporaneous_requisitions === true;
@@ -428,6 +446,7 @@ $(document).ready(function() {
                     
                     console.log('Reglas actualizadas:', {
                         días: requisitionAllowedDays,
+                        horariosPorDía: daySchedules,
                         inicio: requisitionStartTime,
                         fin: requisitionEndTime,
                         permitirExtemp: allowExtemporaneousRequisitions,
@@ -453,22 +472,48 @@ $(document).ready(function() {
     
     // Función para validar si la requisición es extemporánea
     function checkRequisitionRules() {
-        const currentDay = now.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-        const currentTime = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        // Obtener la fecha requerida seleccionada por el usuario
+        const requiredDateValue = $('#required-date-input').val();
+        
+        // Si no hay fecha seleccionada, usar la fecha actual
+        let checkDate = now;
+        if (requiredDateValue) {
+            // Parsear la fecha seleccionada (formato: yyyy-mm-dd hh:ii)
+            checkDate = new Date(requiredDateValue.replace(' ', 'T'));
+            // Si la fecha no es válida, usar la actual
+            if (isNaN(checkDate.getTime())) {
+                checkDate = now;
+            }
+        }
+        
+        const currentDay = checkDate.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+        const currentTime = String(checkDate.getHours()).padStart(2, '0') + ':' + String(checkDate.getMinutes()).padStart(2, '0');
+        
+        // Obtener horario específico para este día, o usar horario global como fallback
+        let startTime = requisitionStartTime;
+        let endTime = requisitionEndTime;
+        
+        if (daySchedules && daySchedules[currentDay]) {
+            startTime = daySchedules[currentDay].start_time;
+            endTime = daySchedules[currentDay].end_time;
+        }
         
         console.log('Validando reglas:', {
+            fechaRequerida: requiredDateValue,
+            fechaValidación: checkDate.toISOString(),
             díaActual: currentDay,
             horaActual: currentTime,
             díasPermitidos: requisitionAllowedDays,
-            horarioInicio: requisitionStartTime,
-            horarioFin: requisitionEndTime
+            horarioInicio: startTime,
+            horarioFin: endTime,
+            usandoHorarioEspecífico: !!(daySchedules && daySchedules[currentDay])
         });
         
         // Verificar si el día está permitido
         const isDayAllowed = requisitionAllowedDays.includes(currentDay);
         
-        // Verificar si la hora está dentro del rango
-        const isTimeAllowed = currentTime >= requisitionStartTime && currentTime <= requisitionEndTime;
+        // Verificar si la hora está dentro del rango (usando horario específico del día)
+        const isTimeAllowed = currentTime >= startTime && currentTime <= endTime;
         
         // Si está fuera de las reglas
         const isExtemporaneous = !isDayAllowed || !isTimeAllowed;
@@ -486,13 +531,22 @@ $(document).ready(function() {
             // Construir mensaje
             let message = '';
             const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const selectedDayName = dayNames[currentDay];
+            const selectedDateTime = checkDate.toLocaleString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             
             if (!isDayAllowed && !isTimeAllowed) {
-                message = `Esta requisición está siendo creada fuera de los días y horarios permitidos. Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}. Horario: ${requisitionStartTime} - ${requisitionEndTime}.`;
+                message = `La fecha requerida (${selectedDateTime}) está fuera de los días y horarios permitidos para este centro de consumo. Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}. Horario: ${startTime} - ${endTime}.`;
             } else if (!isDayAllowed) {
-                message = `Esta requisición está siendo creada en un día no permitido (${dayNames[currentDay]}). Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}.`;
+                message = `La fecha requerida está en ${selectedDayName}, que no está permitido para este centro. Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}.`;
             } else {
-                message = `Esta requisición está siendo creada fuera del horario permitido. Horario: ${requisitionStartTime} - ${requisitionEndTime}.`;
+                message = `La hora de la fecha requerida (${currentTime}) está fuera del horario permitido para ${selectedDayName}. Horario: ${startTime} - ${endTime}.`;
             }
             
             // Mostrar alerta (siempre amarilla, nunca bloquear)
@@ -526,6 +580,18 @@ $(document).ready(function() {
     
     // Validar reglas al cargar la página
     checkRequisitionRules();
+    
+    // Re-validar cada vez que cambie la fecha requerida
+    $('#required-date-input').on('change changeDate', function() {
+        console.log('Fecha requerida cambiada a:', $(this).val());
+        checkRequisitionRules();
+    });
+    
+    // También validar cuando el DateTimePicker oculta (después de seleccionar)
+    $('#required-date-input').on('dp.change', function(e) {
+        console.log('DateTimePicker cambió:', e.date);
+        checkRequisitionRules();
+    });
     
     let itemIndex = 0;
     

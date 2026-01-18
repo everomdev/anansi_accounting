@@ -36,8 +36,8 @@ $consumptionCenters = \common\models\ConsumptionCenter::find()
 }
 
 .day-checkbox-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
 }
@@ -45,9 +45,51 @@ $consumptionCenters = \common\models\ConsumptionCenter::find()
 .day-checkbox-item {
     display: flex;
     align-items: center;
-    padding: 0.75rem;
+    gap: 1rem;
+    padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.day-checkbox-item.active {
+    background: #e7f3ff;
+    border-color: #0d6efd;
+}
+
+.day-checkbox-item .day-label {
+    min-width: 100px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.day-checkbox-item .time-inputs {
+    display: none;
+    flex: 1;
+    gap: 1rem;
+    align-items: center;
+}
+
+.day-checkbox-item.active .time-inputs {
+    display: flex;
+}
+
+.day-checkbox-item .time-input-wrapper {
+    flex: 1;
+}
+
+.day-checkbox-item .time-input-wrapper label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.day-checkbox-item .time-input-wrapper input {
+    width: 100%;
 }
 
 .time-input-group {
@@ -134,35 +176,63 @@ $consumptionCenters = \common\models\ConsumptionCenter::find()
             Días permitidos para requisiciones
         </label>
         <p class="text-muted">
-            Seleccione los días de la semana en que los usuarios pueden crear requisiciones.
+            Seleccione los días de la semana y configure el horario permitido para cada día.
         </p>
         
         <div class="day-checkbox-container">
             <?php foreach ($dayNames as $dayNumber => $dayName): ?>
-                <div class="day-checkbox-item">
-                    <input 
-                        type="checkbox" 
-                        name="requisition_allowed_days[]" 
-                        value="<?= $dayNumber ?>" 
-                        id="day-<?= $dayNumber ?>"
-                        class="day-checkbox"
-                    >
-                    <label for="day-<?= $dayNumber ?>">
-                        <?= $dayName ?>
-                    </label>
+                <div class="day-checkbox-item" data-day="<?= $dayNumber ?>">
+                    <div class="day-label">
+                        <input 
+                            type="checkbox" 
+                            name="requisition_allowed_days[]" 
+                            value="<?= $dayNumber ?>" 
+                            id="day-<?= $dayNumber ?>"
+                            class="day-checkbox form-check-input"
+                        >
+                        <label for="day-<?= $dayNumber ?>" class="mb-0">
+                            <?= $dayName ?>
+                        </label>
+                    </div>
+                    
+                    <div class="time-inputs">
+                        <div class="time-input-wrapper">
+                            <label>Hora inicio</label>
+                            <input 
+                                type="time" 
+                                name="day_start_time[<?= $dayNumber ?>]" 
+                                id="start-time-<?= $dayNumber ?>"
+                                class="form-control form-control-sm" 
+                                value="00:00"
+                            >
+                        </div>
+                        
+                        <span style="padding-top: 1.5rem;">→</span>
+                        
+                        <div class="time-input-wrapper">
+                            <label>Hora fin</label>
+                            <input 
+                                type="time" 
+                                name="day_end_time[<?= $dayNumber ?>]" 
+                                id="end-time-<?= $dayNumber ?>"
+                                class="form-control form-control-sm" 
+                                value="23:59"
+                            >
+                        </div>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>
     </div>
 
     <!-- Ventana Horaria -->
-    <div class="mb-4">
+    <div class="mb-4" style="display: none;">
         <label class="form-label fw-bold">
             <i class="bx bx-time me-1"></i>
-            Ventana horaria permitida
+            Ventana horaria permitida (DEPRECADO - usar horarios por día)
         </label>
         <p class="text-muted">
-            Defina el horario en que se pueden crear requisiciones (formato 24 horas).
+            Este campo se mantiene por compatibilidad pero ya no se usa.
         </p>
         
         <div class="row">
@@ -235,6 +305,16 @@ const businessId = {$businessId};
 console.log('URLs configuradas:', loadRulesUrl, saveRulesUrl);
 console.log('Business ID:', businessId);
 
+// Manejar activación/desactivación visual de días
+$('.day-checkbox').on('change', function() {
+    const dayItem = $(this).closest('.day-checkbox-item');
+    if ($(this).is(':checked')) {
+        dayItem.addClass('active');
+    } else {
+        dayItem.removeClass('active');
+    }
+});
+
 // Cuando se selecciona un centro de consumo
 $('#consumption-center-selector').on('change', function() {
     const centerId = $(this).val();
@@ -279,20 +359,41 @@ $('#consumption-center-selector').on('change', function() {
                 // Cargar datos
                 const rules = response.rules;
                 
-                // Días permitidos
+                // Días permitidos y horarios
                 $('.day-checkbox').prop('checked', false);
+                $('.day-checkbox-item').removeClass('active');
+                
                 if (rules.requisition_allowed_days && rules.requisition_allowed_days.length > 0) {
                     rules.requisition_allowed_days.forEach(function(day) {
-                        $('#day-' + day).prop('checked', true);
+                        const checkbox = $('#day-' + day);
+                        checkbox.prop('checked', true);
+                        checkbox.closest('.day-checkbox-item').addClass('active');
                     });
                 } else {
                     // Default: Lunes a Viernes
                     [1, 2, 3, 4, 5].forEach(function(day) {
-                        $('#day-' + day).prop('checked', true);
+                        const checkbox = $('#day-' + day);
+                        checkbox.prop('checked', true);
+                        checkbox.closest('.day-checkbox-item').addClass('active');
                     });
                 }
                 
-                // Horarios
+                // Cargar horarios por día
+                if (rules.day_schedules && typeof rules.day_schedules === 'object') {
+                    Object.keys(rules.day_schedules).forEach(function(day) {
+                        const schedule = rules.day_schedules[day];
+                        $('#start-time-' + day).val(schedule.start_time || '00:00');
+                        $('#end-time-' + day).val(schedule.end_time || '23:59');
+                    });
+                } else {
+                    // Default: 00:00 - 23:59 para todos los días
+                    [0, 1, 2, 3, 4, 5, 6].forEach(function(day) {
+                        $('#start-time-' + day).val('00:00');
+                        $('#end-time-' + day).val('23:59');
+                    });
+                }
+                
+                // Horarios globales (deprecados, solo por compatibilidad)
                 $('#requisition_start_time').val(rules.requisition_start_time || '00:00');
                 $('#requisition_end_time').val(rules.requisition_end_time || '23:59');
                 
@@ -332,6 +433,31 @@ $('#requisition-rules-form').on('beforeSubmit', function(e) {
     
     if (selectedDays === 0) {
         alert('Por favor seleccione al menos un día permitido para requisiciones.');
+        return false;
+    }
+    
+    // Validar que cada día seleccionado tenga horarios válidos
+    let hasInvalidSchedule = false;
+    $('input[name="requisition_allowed_days[]"]:checked').each(function() {
+        const day = $(this).val();
+        const startTime = $('input[name="day_start_time[' + day + ']"]').val();
+        const endTime = $('input[name="day_end_time[' + day + ']"]').val();
+        
+        if (!startTime || !endTime) {
+            alert('Por favor configure los horarios para todos los días seleccionados.');
+            hasInvalidSchedule = true;
+            return false;
+        }
+        
+        if (startTime >= endTime) {
+            const dayName = $('#day-' + day).closest('.day-checkbox-item').find('label').text().trim();
+            alert('La hora de inicio debe ser menor que la hora de fin para ' + dayName);
+            hasInvalidSchedule = true;
+            return false;
+        }
+    });
+    
+    if (hasInvalidSchedule) {
         return false;
     }
     

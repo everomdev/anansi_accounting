@@ -115,6 +115,24 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     }
     </style>
 
+    <script>
+    // Inicializar tooltips de Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // Re-inicializar tooltips después de que Pjax recargue el grid
+    $(document).on('pjax:success', '#movements-pjax', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    </script>
+
     <div class="d-flex flex-wrap">
         <?php if (Yii::$app->user->can('consumption_requester')): ?>
             <div class="p-2">
@@ -572,15 +590,48 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 }
                 // Mostrar botón de convertir para requisiciones (a salidas)
                 if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
-                    return \yii\bootstrap5\Html::a(
-                        '<i class="bx bx-transfer-alt"></i>',
-                        ['convert-to-output', 'id' => $model->id],
-                        [
-                            'class' => 'text-danger ms-2 convert-requisition',
-                            'title' => 'Convertir a salida',
-                            'data-confirm' => '¿Confirmas que quieres convertir esta requisición en una salida?'
-                        ]
-                    );
+                    // Verificar si la fecha requerida ya pasó
+                    $now = new \DateTime('now', new \DateTimeZone($model->client_timezone ?: 'UTC'));
+                    $requiredDate = new \DateTime($model->required_date, new \DateTimeZone($model->client_timezone ?: 'UTC'));
+                    
+                    // Solo mostrar botón si la fecha requerida ya pasó
+                    if ($requiredDate <= $now) {
+                        return \yii\bootstrap5\Html::a(
+                            '<i class="bx bx-transfer-alt"></i>',
+                            ['convert-to-output', 'id' => $model->id],
+                            [
+                                'class' => 'text-danger ms-2 convert-requisition',
+                                'title' => 'Convertir a salida',
+                                'data-confirm' => '¿Confirmas que quieres convertir esta requisición en una salida?'
+                            ]
+                        );
+                    } else {
+                        // Mostrar botón deshabilitado con tooltip explicativo
+                        $daysRemaining = $now->diff($requiredDate)->days;
+                        $hoursRemaining = $now->diff($requiredDate)->h;
+                        
+                        $timeRemaining = '';
+                        if ($daysRemaining > 0) {
+                            $timeRemaining = $daysRemaining . ' día(s)';
+                        } else if ($hoursRemaining > 0) {
+                            $timeRemaining = $hoursRemaining . ' hora(s)';
+                        } else {
+                            $minutesRemaining = $now->diff($requiredDate)->i;
+                            $timeRemaining = $minutesRemaining . ' minuto(s)';
+                        }
+                        
+                        return \yii\bootstrap5\Html::tag(
+                            'span',
+                            '<i class="bx bx-transfer-alt"></i>',
+                            [
+                                'class' => 'text-muted ms-2',
+                                'style' => 'opacity: 0.5; cursor: not-allowed;',
+                                'title' => 'No disponible hasta la fecha requerida (' . $requiredDate->format('d/m/Y H:i') . '). Faltan: ' . $timeRemaining,
+                                'data-bs-toggle' => 'tooltip',
+                                'data-bs-placement' => 'top'
+                            ]
+                        );
+                    }
                 }
                 return '';
             }

@@ -222,9 +222,34 @@ class MovementController extends Controller
                     $business['id']
                 );
                 
-                // Validar si la requisición puede ser creada (solo para información)
-                $requisitionCheck = $centerRules->canCreateRequisitionNow();
-                $isOutOfTime = !$requisitionCheck['allowed']; // Fuera de días/horarios
+                // Validar si la requisición puede ser creada basándose en la FECHA REQUERIDA, no en la fecha actual
+                // Parsear la fecha requerida
+                $requiredDateTime = new \DateTime($requiredDate, new \DateTimeZone($clientTimezone));
+                $requiredDay = (int)$requiredDateTime->format('w'); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+                $requiredTime = $requiredDateTime->format('H:i');
+                
+                // Obtener días permitidos
+                $allowedDays = $centerRules->getRequisitionAllowedDaysArray();
+                
+                // Verificar si el día está permitido
+                $isDayAllowed = in_array($requiredDay, $allowedDays);
+                
+                // Obtener horario específico para ese día desde consumption_center_schedule
+                $scheduleForDay = \common\models\ConsumptionCenterSchedule::findOne([
+                    'consumption_center_id' => $consumptionCenterId,
+                    'day_of_week' => $requiredDay,
+                    'is_active' => true
+                ]);
+                
+                // Usar horario específico del día o fallback a horario global
+                $startTime = $scheduleForDay ? $scheduleForDay->start_time : ($centerRules->requisition_start_time ?: '00:00');
+                $endTime = $scheduleForDay ? $scheduleForDay->end_time : ($centerRules->requisition_end_time ?: '23:59');
+                
+                // Verificar si la hora está dentro del rango
+                $isTimeAllowed = $requiredTime >= $startTime && $requiredTime <= $endTime;
+                
+                // Determinar si está fuera de tiempo basándose en la fecha requerida
+                $isOutOfTime = !$isDayAllowed || !$isTimeAllowed;
                 
                 // Determinar el estado de tiempo de la requisición
                 $timeStatus = \common\models\Movement::TIME_STATUS_ON_TIME;

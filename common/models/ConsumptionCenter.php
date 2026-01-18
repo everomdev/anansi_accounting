@@ -57,4 +57,25 @@ class ConsumptionCenter extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Business::className(), ['id' => 'business_id']);
     }
+
+    /**
+     * Gets query for [[RequisitionRules]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getRequisitionRules()
+    {
+        return $this->hasOne(ConsumptionCenterRequisitionRules::class, ['consumption_center_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[Schedules]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSchedules()
+    {
+        return $this->hasMany(ConsumptionCenterSchedule::class, ['consumption_center_id' => 'id'])
+            ->orderBy(['day_of_week' => SORT_ASC]);
+    }
 }
