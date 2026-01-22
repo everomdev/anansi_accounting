@@ -180,7 +180,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
                 <select id="per-page-selector-movements" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
-                    <?php foreach ([10, 25, 50, 100] as $value): ?>
+                    <?php foreach ([10, 25, 50, 100, 250] as $value): ?>
                     <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
                     <?php endforeach; ?>
                 </select>
