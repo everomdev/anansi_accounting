@@ -209,9 +209,7 @@ $(document).on('click', '#export-current-page-movements', function() {
 
 // Manejar la exportación de todos los movimientos seleccionados (todas las páginas)
 $(document).on('click', '#export-all-movements', function() {
-    const selectedIds = $('#movements-grid').yiiGridView('getSelectedRows');
-    if (selectedIds.length > 0) {
-        window.location.href = '/movement/export-movements?ids=' + selectedIds.join(',') + '&all=true';
-    }
+    // En lugar de enviar todos los IDs, enviar 'all' para exportar todos los movimientos del negocio
+    window.location.href = '/movement/export-movements?ids=all';
     $('#modal-export-movements').modal('hide');
 });

@@ -2217,6 +2217,9 @@ if ($ccRow > 2) {
         $activeWorksheet->setCellValue("K1", "Precio Unitario");
         $activeWorksheet->setCellValue("L1", "Total");
         $activeWorksheet->setCellValue("M1", "Observaciones");
+        $activeWorksheet->setCellValue("N1", "Centro de Consumo");
+        $activeWorksheet->setCellValue("O1", "Número de Requisición");
+        $activeWorksheet->setCellValue("P1", "Stock Disponible");
 
         // Si se proporcionan IDs, filtrar por ellos; de lo contrario, exportar todos
         $query = Movement::find()->where(['business_id' => $business->id]);
@@ -2227,29 +2230,85 @@ if ($ccRow > 2) {
         
         $currentRow = 2;
         foreach ($movements as $movement){
-            $activeWorksheet->setCellValue("A$currentRow", $movement->getFormattedType());
-            
-            // Manejar movimientos sin ingrediente (como requisiciones)
-            if ($movement->ingredient) {
-                $activeWorksheet->setCellValue("B$currentRow", $movement->ingredient->key ?? '');
-                $activeWorksheet->setCellValue("C$currentRow", $movement->ingredient->ingredient ?? '');
+            // Si es una requisición, expandir mostrando cada item
+            if ($movement->type === Movement::TYPE_REQUISITION) {
+                $items = $movement->requisitionItems;
+                
+                if (count($items) > 0) {
+                    // Crear una fila por cada item de la requisición
+                    foreach ($items as $item) {
+                        $ingredient = $item->ingredient;
+                        
+                        if ($ingredient) {
+                            $activeWorksheet->setCellValue("A$currentRow", $movement->getFormattedType());
+                            $activeWorksheet->setCellValue("B$currentRow", $ingredient->key ?? '');
+                            $activeWorksheet->setCellValue("C$currentRow", $ingredient->ingredient ?? '');
+                            $activeWorksheet->setCellValue("D$currentRow", \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\DateTime::createFromFormat('Y-m-d H:i:s', $movement->created_at)));
+                            $activeWorksheet->setCellValue("E$currentRow", '');
+                            $activeWorksheet->setCellValue("F$currentRow", '');
+                            $activeWorksheet->setCellValue("G$currentRow", '');
+                            $activeWorksheet->setCellValue("H$currentRow", $item->quantity_requested);
+                            $activeWorksheet->setCellValue("I$currentRow", 0);
+                            $activeWorksheet->setCellValue("J$currentRow", 0);
+                            $activeWorksheet->setCellValue("K$currentRow", 0);
+                            $activeWorksheet->setCellValue("L$currentRow", 0);
+                            $activeWorksheet->setCellValue("M$currentRow", $movement->observations ?? '');
+                            $activeWorksheet->setCellValue("N$currentRow", $movement->consumptionCenter ? $movement->consumptionCenter->name : '');
+                            $activeWorksheet->setCellValue("O$currentRow", $movement->requisition_number ?? '');
+                            $activeWorksheet->setCellValue("P$currentRow", $ingredient->quantity ?? 0);
+                            
+                            $currentRow++;
+                        }
+                    }
+                } else {
+                    // Requisición sin items
+                    $activeWorksheet->setCellValue("A$currentRow", $movement->getFormattedType());
+                    $activeWorksheet->setCellValue("B$currentRow", '');
+                    $activeWorksheet->setCellValue("C$currentRow", 'Sin insumos');
+                    $activeWorksheet->setCellValue("D$currentRow", \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\DateTime::createFromFormat('Y-m-d H:i:s', $movement->created_at)));
+                    $activeWorksheet->setCellValue("E$currentRow", '');
+                    $activeWorksheet->setCellValue("F$currentRow", '');
+                    $activeWorksheet->setCellValue("G$currentRow", '');
+                    $activeWorksheet->setCellValue("H$currentRow", '');
+                    $activeWorksheet->setCellValue("I$currentRow", 0);
+                    $activeWorksheet->setCellValue("J$currentRow", 0);
+                    $activeWorksheet->setCellValue("K$currentRow", 0);
+                    $activeWorksheet->setCellValue("L$currentRow", 0);
+                    $activeWorksheet->setCellValue("M$currentRow", $movement->observations ?? '');
+                    $activeWorksheet->setCellValue("N$currentRow", $movement->consumptionCenter ? $movement->consumptionCenter->name : '');
+                    $activeWorksheet->setCellValue("O$currentRow", $movement->requisition_number ?? '');
+                    $activeWorksheet->setCellValue("P$currentRow", '');
+                    
+                    $currentRow++;
+                }
             } else {
-                $activeWorksheet->setCellValue("B$currentRow", '');
-                $activeWorksheet->setCellValue("C$currentRow", $movement->type === 'requisition' ? 'Requisición (múltiples insumos)' : 'N/A');
+                // Otros tipos de movimientos (entrada, salida, orden)
+                $activeWorksheet->setCellValue("A$currentRow", $movement->getFormattedType());
+                
+                if ($movement->ingredient) {
+                    $activeWorksheet->setCellValue("B$currentRow", $movement->ingredient->key ?? '');
+                    $activeWorksheet->setCellValue("C$currentRow", $movement->ingredient->ingredient ?? '');
+                } else {
+                    $activeWorksheet->setCellValue("B$currentRow", '');
+                    $activeWorksheet->setCellValue("C$currentRow", 'N/A');
+                }
+                
+                $activeWorksheet->setCellValue("D$currentRow", \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\DateTime::createFromFormat('Y-m-d H:i:s', $movement->created_at)));
+                $activeWorksheet->setCellValue("E$currentRow", $movement->provider ?? '');
+                $activeWorksheet->setCellValue("F$currentRow", $movement->getFormattedPaymentType());
+                $activeWorksheet->setCellValue("G$currentRow", $movement->invoice ?? '');
+                $activeWorksheet->setCellValue("H$currentRow", $movement->quantity ?? '');
+                $activeWorksheet->setCellValue("I$currentRow", $movement->amount ?? 0);
+                $activeWorksheet->setCellValue("J$currentRow", $movement->tax ?? 0);
+                $activeWorksheet->setCellValue("K$currentRow", $movement->unit_price ?? 0);
+                $activeWorksheet->setCellValue("L$currentRow", $movement->total ?? 0);
+                $activeWorksheet->setCellValue("M$currentRow", $movement->observations ?? '');
+                $activeWorksheet->setCellValue("N$currentRow", $movement->consumptionCenter ? $movement->consumptionCenter->name : '');
+                $activeWorksheet->setCellValue("O$currentRow", '');
+                $activeWorksheet->setCellValue("P$currentRow", $movement->ingredient ? ($movement->ingredient->quantity ?? 0) : '');
+                
+                $currentRow++;
             }
-            
-            $activeWorksheet->setCellValue("D$currentRow", \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\DateTime::createFromFormat('Y-m-d H:i:s', $movement->created_at)));
-            $activeWorksheet->setCellValue("E$currentRow", $movement->provider ?? '');
-            $activeWorksheet->setCellValue("F$currentRow", $movement->getFormattedPaymentType());
-            $activeWorksheet->setCellValue("G$currentRow", $movement->invoice ?? '');
-            $activeWorksheet->setCellValue("H$currentRow", $movement->quantity ?? '');
-            $activeWorksheet->setCellValue("I$currentRow", $movement->amount ?? 0);
-            $activeWorksheet->setCellValue("J$currentRow", $movement->tax ?? 0);
-            $activeWorksheet->setCellValue("K$currentRow", $movement->unit_price ?? 0);
-            $activeWorksheet->setCellValue("L$currentRow", $movement->total ?? 0);
-            $activeWorksheet->setCellValue("M$currentRow", $movement->observations ?? '');
-
-            $currentRow++;
         }
 
         $spreadsheet->getActiveSheet()->getStyle("I2:L$currentRow")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_CURRENCY_USD);
@@ -2268,6 +2327,9 @@ if ($ccRow > 2) {
         $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('L')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('M')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('N')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('O')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('P')->setAutoSize(true);
 
 
         $writer = new Xlsx($spreadsheet);

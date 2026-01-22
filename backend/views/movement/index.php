@@ -174,6 +174,21 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         <?php endif; ?>
     </div>
 
+    <!-- Selector de elementos por página -->
+    <div class="row mb-2 align-items-center mt-3">
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+                <select id="per-page-selector-movements" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
+                    <?php foreach ([10, 25, 50, 100] as $value): ?>
+                    <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'movimientos por página') ?></span>
+            </div>
+        </div>
+    </div>
+
 
     <?php Pjax::begin(['id' => 'movements-pjax']); ?>
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -844,3 +859,50 @@ echo "<div id='balance-container'></div>";
 \yii\bootstrap5\Modal::end();
 ?>
 
+<?php
+$this->registerJs("
+// Detector de cambio en elementos por página
+document.getElementById('per-page-selector-movements').addEventListener('change', function() {
+    const pageSize = this.value;
+    
+    // Guardar en localStorage
+    localStorage.setItem('movements-per-page', pageSize);
+    
+    // Crear URL con nuevo tamaño de página
+    let url = new URL(window.location);
+    url.searchParams.set('per-page', pageSize);
+    
+    // Recargar con el nuevo tamaño de página
+    $.pjax.reload({
+        container: '#movements-pjax',
+        url: url.toString(),
+        timeout: 10000
+    });
+});
+
+// Cargar selección guardada al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const savedPerPage = localStorage.getItem('movements-per-page');
+    if (savedPerPage) {
+        const selector = document.getElementById('per-page-selector-movements');
+        if (selector) {
+            selector.value = savedPerPage;
+            
+            // Si el valor actual es diferente al guardado, aplicar el guardado
+            const currentPageSize = '" . $dataProvider->pagination->pageSize . "';
+            if (currentPageSize != savedPerPage) {
+                // Crear URL con el valor guardado y recargar
+                let url = new URL(window.location);
+                url.searchParams.set('per-page', savedPerPage);
+                
+                $.pjax.reload({
+                    container: '#movements-pjax',
+                    url: url.toString(),
+                    timeout: 10000
+                });
+            }
+        }
+    }
+});
+", \yii\web\View::POS_END);
+?>

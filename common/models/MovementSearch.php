@@ -196,11 +196,12 @@ class MovementSearch extends Movement
             \Yii::info("Aplicando filtro por categoría: " . $this->category_id, 'movement-search');
         }
 
-        // Expandir requisiciones en múltiples filas (una por item)
-        $models = $query->all();
+        // Obtener TODOS los modelos para poder expandir las requisiciones
+        // Nota: Esto obtiene todos los registros y luego aplica paginación manualmente
+        $allModels = $query->all();
         $expandedModels = [];
         
-        foreach ($models as $model) {
+        foreach ($allModels as $model) {
             if ($model->type === Movement::TYPE_REQUISITION) {
                 $items = $model->requisitionItems;
                 if (count($items) > 0) {
@@ -238,9 +239,26 @@ class MovementSearch extends Movement
             }
         }
         
-        // Reemplazar los modelos del dataProvider con los expandidos
-        $dataProvider->models = $expandedModels;
-        $dataProvider->totalCount = count($expandedModels);
+        // Guardar el pageSize original antes de crear el nuevo dataProvider
+        $pageSize = $dataProvider->pagination->pageSize ?? 10;
+        
+        // Convertir a ArrayDataProvider para aplicar paginación después de la expansión
+        $dataProvider = new \yii\data\ArrayDataProvider([
+            'allModels' => $expandedModels,
+            'pagination' => [
+                'pageSize' => $pageSize, // Respetar el pageSize configurado
+            ],
+            'sort' => [
+                'attributes' => [
+                    'created_at',
+                    'type',
+                    'quantity',
+                    'amount',
+                    'total',
+                ],
+                'defaultOrder' => ['created_at' => SORT_DESC]
+            ],
+        ]);
 
         return $dataProvider;
     }

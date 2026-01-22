@@ -108,6 +108,23 @@ class MovementController extends Controller
     public function actionIndex()
     {
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        
+        // Determinar el tamaño de página
+        $savedPageSize = (int)Yii::$app->request->cookies->getValue('movements-per-page', 10);
+        $perPage = Yii::$app->request->get('per-page');
+        
+        if ($perPage !== null) {
+            $pageSize = (int)$perPage;
+            // Guardar en cookie para persistencia
+            Yii::$app->response->cookies->add(new \yii\web\Cookie([
+                'name' => 'movements-per-page',
+                'value' => $pageSize,
+                'expire' => time() + 86400 * 365, // 1 año
+            ]));
+        } else {
+            $pageSize = $savedPageSize;
+        }
+        
         $searchModel = new MovementSearch(['business_id' => $business['id']]);
 
         $params = Yii::$app->request->queryParams;
@@ -122,6 +139,9 @@ class MovementController extends Controller
         }
         
         $dataProvider = $searchModel->search($params);
+        
+        // Establecer el tamaño de página en el dataProvider
+        $dataProvider->pagination->pageSize = $pageSize;
         
         return $this->render('index', [
             'searchModel' => $searchModel,
@@ -602,11 +622,11 @@ class MovementController extends Controller
         // Obtener los IDs seleccionados del parámetro GET
         $ids = Yii::$app->request->get('ids');
         
-        // Si no hay IDs, exportar todos los movimientos del negocio
-        if (empty($ids)) {
+        // Si no hay IDs o si es 'all', exportar todos los movimientos del negocio
+        if (empty($ids) || $ids === 'all') {
             ExcelHelper::exportMovements($business);
         } else {
-            // Convertir los IDs de string a array
+            // Convertir los IDs de string a array (solo para selección específica)
             $idsArray = is_array($ids) ? $ids : explode(',', $ids);
             ExcelHelper::exportMovements($business, $idsArray);
         }
