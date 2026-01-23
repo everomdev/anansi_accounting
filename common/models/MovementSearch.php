@@ -245,6 +245,7 @@ class MovementSearch extends Movement
         // Convertir a ArrayDataProvider para aplicar paginación después de la expansión
         $dataProvider = new \yii\data\ArrayDataProvider([
             'allModels' => $expandedModels,
+            'key' => 'id', // Usar el campo 'id' como clave en lugar del índice del array
             'pagination' => [
                 'pageSize' => $pageSize, // Respetar el pageSize configurado
             ],

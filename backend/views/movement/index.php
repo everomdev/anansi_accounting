@@ -196,7 +196,12 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <?php
     // Definir columnas según el rol del usuario
     $columns = [
-        ['class' => \yii\grid\CheckboxColumn::class],
+        [
+            'class' => \yii\grid\CheckboxColumn::class,
+            'checkboxOptions' => function ($model, $key, $index, $column) {
+                return ['value' => $model->id];
+            }
+        ],
     ];
 
     // Columna de tipo (solo si NO es consumption_requester)

@@ -188,7 +188,10 @@ $(document).on('click', '#btn-export-movements', function(e) {
     // Obtener IDs de las filas seleccionadas
     const selectedIds = $('#movements-grid').yiiGridView('getSelectedRows');
     
-    if (selectedIds.length === 0) {
+    // Filtrar IDs únicos (porque las requisiciones expandidas pueden tener el mismo ID múltiples veces)
+    const uniqueIds = [...new Set(selectedIds)];
+    
+    if (uniqueIds.length === 0) {
         // Mostrar modal de error si no hay selección
         $('#modal-no-export-selection-movements').modal('show');
         return;
@@ -201,8 +204,12 @@ $(document).on('click', '#btn-export-movements', function(e) {
 // Manejar la exportación de los movimientos seleccionados (página actual)
 $(document).on('click', '#export-current-page-movements', function() {
     const selectedIds = $('#movements-grid').yiiGridView('getSelectedRows');
-    if (selectedIds.length > 0) {
-        window.location.href = '/movement/export-movements?ids=' + selectedIds.join(',');
+    
+    // Filtrar IDs únicos (porque las requisiciones expandidas pueden tener el mismo ID múltiples veces)
+    const uniqueIds = [...new Set(selectedIds)];
+    
+    if (uniqueIds.length > 0) {
+        window.location.href = '/movement/export-movements?ids=' + uniqueIds.join(',');
     }
     $('#modal-export-movements').modal('hide');
 });
