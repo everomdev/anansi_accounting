@@ -199,13 +199,16 @@ class BusinessController extends Controller
         // Cargar horarios individuales por día
         $schedules = \common\models\ConsumptionCenterSchedule::find()
             ->where(['consumption_center_id' => $centerId])
-            ->orderBy(['day_of_week' => SORT_ASC])
+            ->orderBy(['day_of_week' => SORT_ASC, 'start_time' => SORT_ASC])
             ->all();
         
-        // Convertir schedules a un objeto indexado por día
+        // Convertir schedules a un objeto indexado por día (ahora puede tener múltiples rangos)
         $daySchedules = [];
         foreach ($schedules as $schedule) {
-            $daySchedules[$schedule->day_of_week] = [
+            if (!isset($daySchedules[$schedule->day_of_week])) {
+                $daySchedules[$schedule->day_of_week] = [];
+            }
+            $daySchedules[$schedule->day_of_week][] = [
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
             ];
@@ -260,27 +263,43 @@ class BusinessController extends Controller
                 throw new \Exception('Error al guardar reglas: ' . json_encode($rules->errors));
             }
             
-            // Obtener horarios por día
-            $dayStartTimes = Yii::$app->request->post('day_start_time', []);
-            $dayEndTimes = Yii::$app->request->post('day_end_time', []);
+            // Obtener horarios por día (ahora puede ser múltiples rangos)
+            $daySchedules = Yii::$app->request->post('day_schedules', []);
             
             // Eliminar horarios existentes para este centro
             \common\models\ConsumptionCenterSchedule::deleteAll(['consumption_center_id' => $centerId]);
             
             // Guardar nuevos horarios solo para los días seleccionados
             foreach ($days as $day) {
-                $startTime = $dayStartTimes[$day] ?? '00:00';
-                $endTime = $dayEndTimes[$day] ?? '23:59';
-                
-                $schedule = new \common\models\ConsumptionCenterSchedule();
-                $schedule->consumption_center_id = $centerId;
-                $schedule->day_of_week = (int)$day;
-                $schedule->start_time = $startTime;
-                $schedule->end_time = $endTime;
-                $schedule->is_active = true;
-                
-                if (!$schedule->save()) {
-                    throw new \Exception('Error al guardar horario del día ' . $day . ': ' . json_encode($schedule->errors));
+                // Si hay múltiples rangos para este día
+                if (isset($daySchedules[$day]) && is_array($daySchedules[$day])) {
+                    foreach ($daySchedules[$day] as $range) {
+                        $startTime = $range['start_time'] ?? '00:00';
+                        $endTime = $range['end_time'] ?? '23:59';
+                        
+                        $schedule = new \common\models\ConsumptionCenterSchedule();
+                        $schedule->consumption_center_id = $centerId;
+                        $schedule->day_of_week = (int)$day;
+                        $schedule->start_time = $startTime;
+                        $schedule->end_time = $endTime;
+                        $schedule->is_active = true;
+                        
+                        if (!$schedule->save()) {
+                            throw new \Exception('Error al guardar horario del día ' . $day . ': ' . json_encode($schedule->errors));
+                        }
+                    }
+                } else {
+                    // Fallback: formato antiguo (un solo rango)
+                    $schedule = new \common\models\ConsumptionCenterSchedule();
+                    $schedule->consumption_center_id = $centerId;
+                    $schedule->day_of_week = (int)$day;
+                    $schedule->start_time = '00:00';
+                    $schedule->end_time = '23:59';
+                    $schedule->is_active = true;
+                    
+                    if (!$schedule->save()) {
+                        throw new \Exception('Error al guardar horario del día ' . $day . ': ' . json_encode($schedule->errors));
+                    }
                 }
             }
             

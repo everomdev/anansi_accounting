@@ -116,6 +116,42 @@ $consumptionCenters = \common\models\ConsumptionCenter::find()
     width: 3rem;
     height: 1.5rem;
 }
+
+.time-range-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.time-range-item .time-input-wrapper {
+    flex: 1;
+}
+
+.time-range-item .time-input-wrapper label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.time-range-item .time-input-wrapper input {
+    width: 100%;
+    font-size: 0.875rem;
+}
+
+.time-range-item .btn-remove-range {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.time-ranges-container {
+    min-height: 50px;
+}
 </style>
 
 <div class="requisition-rules-container">
@@ -176,7 +212,7 @@ $consumptionCenters = \common\models\ConsumptionCenter::find()
             Días permitidos para requisiciones
         </label>
         <p class="text-muted">
-            Seleccione los días de la semana y configure el horario permitido para cada día.
+            Seleccione los días de la semana y configure uno o más rangos de horarios para cada día.
         </p>
         
         <div class="day-checkbox-container">
@@ -196,28 +232,13 @@ $consumptionCenters = \common\models\ConsumptionCenter::find()
                     </div>
                     
                     <div class="time-inputs">
-                        <div class="time-input-wrapper">
-                            <label>Hora inicio</label>
-                            <input 
-                                type="time" 
-                                name="day_start_time[<?= $dayNumber ?>]" 
-                                id="start-time-<?= $dayNumber ?>"
-                                class="form-control form-control-sm" 
-                                value="00:00"
-                            >
-                        </div>
-                        
-                        <span style="padding-top: 1.5rem;">→</span>
-                        
-                        <div class="time-input-wrapper">
-                            <label>Hora fin</label>
-                            <input 
-                                type="time" 
-                                name="day_end_time[<?= $dayNumber ?>]" 
-                                id="end-time-<?= $dayNumber ?>"
-                                class="form-control form-control-sm" 
-                                value="23:59"
-                            >
+                        <div style="flex: 1;">
+                            <div class="time-ranges-container" data-day="<?= $dayNumber ?>">
+                                <!-- Los rangos de tiempo se agregan dinámicamente aquí -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2 add-time-range" data-day="<?= $dayNumber ?>">
+                                <i class="bx bx-plus"></i> Agregar otro horario
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -298,44 +319,122 @@ $saveRulesUrl = \yii\helpers\Url::to(['business/save-consumption-center-rules'])
 $js = <<<JS
 console.log('Script de requisiciones cargado');
 
-const loadRulesUrl = '{$loadRulesUrl}';
-const saveRulesUrl = '{$saveRulesUrl}';
-const businessId = {$businessId};
+const loadRulesUrl = '$loadRulesUrl';
+const saveRulesUrl = '$saveRulesUrl';
+const businessId = $businessId;
 
 console.log('URLs configuradas:', loadRulesUrl, saveRulesUrl);
 console.log('Business ID:', businessId);
 
-// Manejar activación/desactivación visual de días
-$('.day-checkbox').on('change', function() {
-    const dayItem = $(this).closest('.day-checkbox-item');
-    if ($(this).is(':checked')) {
-        dayItem.addClass('active');
+// Función para agregar un rango de tiempo
+function addTimeRange(day, startTime = '00:00', endTime = '23:59', rangeIndex = null) {
+    console.log('🔧 addTimeRange() llamada con:', {day: day, startTime: startTime, endTime: endTime, rangeIndex: rangeIndex});
+    
+    const container = \$('.time-ranges-container[data-day="' + day + '"]');
+    console.log('   - Container encontrado:', container.length > 0 ? 'SI' : 'NO');
+    
+    const index = rangeIndex !== null ? rangeIndex : container.find('.time-range-item').length;
+    console.log('   - Index calculado:', index);
+    
+    const rangeHtml = '<div class="time-range-item" data-range-index="' + index + '">' +
+        '<div class="time-input-wrapper">' +
+            '<label>Hora inicio</label>' +
+            '<input type="time" name="day_schedules[' + day + '][' + index + '][start_time]" ' +
+                'class="form-control form-control-sm" value="' + startTime + '" required>' +
+        '</div>' +
+        '<span style="padding-top: 1.2rem;">→</span>' +
+        '<div class="time-input-wrapper">' +
+            '<label>Hora fin</label>' +
+            '<input type="time" name="day_schedules[' + day + '][' + index + '][end_time]" ' +
+                'class="form-control form-control-sm" value="' + endTime + '" required>' +
+        '</div>' +
+        '<button type="button" class="btn btn-sm btn-danger btn-remove-range" style="margin-top: 1.2rem;">' +
+            '<i class="bx bx-trash"></i>' +
+        '</button>' +
+    '</div>';
+    
+    container.append(rangeHtml);
+    console.log('   - ✅ Rango agregado al container');
+}
+
+// Evento para agregar nuevo rango de tiempo
+\$(document).on('click', '.add-time-range', function() {
+    const day = \$(this).data('day');
+    addTimeRange(day);
+});
+
+// Evento para eliminar un rango de tiempo
+\$(document).on('click', '.btn-remove-range', function() {
+    const container = \$(this).closest('.time-ranges-container');
+    const rangeItem = \$(this).closest('.time-range-item');
+    
+    // Permitir eliminar solo si hay más de un rango
+    if (container.find('.time-range-item').length > 1) {
+        rangeItem.remove();
     } else {
-        dayItem.removeClass('active');
+        alert('Debe mantener al menos un rango de horario para este día.');
     }
 });
 
-// Cuando se selecciona un centro de consumo
-$('#consumption-center-selector').on('change', function() {
-    const centerId = $(this).val();
-    const centerName = $(this).find('option:selected').text();
+// Manejar activación/desactivación visual de días
+\$('.day-checkbox').on('change', function() {
+    const dayItem = \$(this).closest('.day-checkbox-item');
+    const day = \$(this).val();
     
-    console.log('Centro seleccionado:', centerId, centerName);
+    if (\$(this).is(':checked')) {
+        dayItem.addClass('active');
+        // Agregar un rango por defecto si no hay ninguno
+        const container = \$('.time-ranges-container[data-day="' + day + '"]');
+        if (container.find('.time-range-item').length === 0) {
+            addTimeRange(day);
+        }
+    } else {
+        dayItem.removeClass('active');
+        // Limpiar todos los rangos de tiempo
+        \$('.time-ranges-container[data-day="' + day + '"]').empty();
+    }
+});
+
+
+// Cuando se selecciona un centro de consumo
+\$('#consumption-center-selector').on('change', function() {
+    const centerId = \$(this).val();
+    const centerName = \$(this).find('option:selected').text();
+    
+    console.log('========== DEBUG INICIO ==========');
+    console.log('Centro seleccionado ID:', centerId);
+    console.log('Centro seleccionado Nombre:', centerName);
+    console.log('Tipo de centerId:', typeof centerId);
+    console.log('loadRulesUrl:', loadRulesUrl);
+    console.log('businessId:', businessId);
     
     if (!centerId) {
-        $('#rules-form-container').hide();
+        console.log('⚠️ No hay centro seleccionado, ocultando formulario');
+        \$('#rules-form-container').hide();
         return;
     }
     
-    // Mostrar loading
-    $('#rules-form-container').show();
-    $('#loading-indicator').show();
-    $('#rules-form-content').hide();
+    console.log('✅ Centro válido, mostrando contenedor');
     
-    console.log('Enviando AJAX a:', loadRulesUrl);
+    // Mostrar loading
+    \$('#rules-form-container').show();
+    console.log('1. Contenedor mostrado');
+    
+    \$('#loading-indicator').show();
+    console.log('2. Indicador de carga mostrado');
+    
+    \$('#rules-form-content').hide();
+    console.log('3. Contenido del formulario ocultado');
+    
+    console.log('4. Preparando AJAX request...');
+    console.log('   URL:', loadRulesUrl);
+    console.log('   Data:', {
+        consumption_center_id: centerId,
+        business_id: businessId
+    });
     
     // Cargar reglas del centro seleccionado
-    $.ajax({
+    \$.ajax({
         url: loadRulesUrl,
         type: 'POST',
         data: {
@@ -343,116 +442,202 @@ $('#consumption-center-selector').on('change', function() {
             business_id: businessId
         },
         dataType: 'json',
+        beforeSend: function() {
+            console.log('📤 Enviando petición AJAX...');
+        },
         success: function(response) {
-            console.log('Respuesta del servidor:', response);
+            console.log('📥 Respuesta recibida del servidor:');
+            console.log('   Response completa:', response);
+            console.log('   Success:', response.success);
+            console.log('   Rules:', response.rules);
             
-            $('#loading-indicator').hide();
+            \$('#loading-indicator').hide();
+            console.log('5. Indicador de carga ocultado');
             
             if (response.success) {
+                console.log('✅ Respuesta exitosa, procesando datos...');
+                
                 // Actualizar nombre del centro
-                $('#selected-center-name').text(centerName);
-                $('#selected-consumption-center-id').val(centerId);
+                \$('#selected-center-name').text(centerName);
+                console.log('6. Nombre del centro actualizado');
+                
+                \$('#selected-consumption-center-id').val(centerId);
+                console.log('7. ID del centro guardado');
                 
                 // Mostrar formulario
-                $('#rules-form-content').show();
+                \$('#rules-form-content').show();
+                console.log('8. ✅ FORMULARIO MOSTRADO');
                 
                 // Cargar datos
                 const rules = response.rules;
+                console.log('9. Cargando reglas:', rules);
                 
                 // Días permitidos y horarios
-                $('.day-checkbox').prop('checked', false);
-                $('.day-checkbox-item').removeClass('active');
+                \$('.day-checkbox').prop('checked', false);
+                \$('.day-checkbox-item').removeClass('active');
+                \$('.time-ranges-container').empty(); // Limpiar todos los rangos
+                console.log('10. Limpieza de controles completada');
                 
                 if (rules.requisition_allowed_days && rules.requisition_allowed_days.length > 0) {
+                    console.log('11. Cargando días permitidos:', rules.requisition_allowed_days);
                     rules.requisition_allowed_days.forEach(function(day) {
-                        const checkbox = $('#day-' + day);
+                        const checkbox = \$('#day-' + day);
                         checkbox.prop('checked', true);
                         checkbox.closest('.day-checkbox-item').addClass('active');
+                        console.log('    - Día ' + day + ' marcado');
                     });
                 } else {
+                    console.log('11. Sin días configurados, usando default (Lunes-Viernes)');
                     // Default: Lunes a Viernes
                     [1, 2, 3, 4, 5].forEach(function(day) {
-                        const checkbox = $('#day-' + day);
+                        const checkbox = \$('#day-' + day);
                         checkbox.prop('checked', true);
                         checkbox.closest('.day-checkbox-item').addClass('active');
                     });
                 }
                 
-                // Cargar horarios por día
+                console.log('12. Procesando horarios por día...');
+                // Cargar horarios por día (ahora puede ser un array de rangos)
                 if (rules.day_schedules && typeof rules.day_schedules === 'object') {
+                    console.log('    day_schedules encontrado:', rules.day_schedules);
                     Object.keys(rules.day_schedules).forEach(function(day) {
-                        const schedule = rules.day_schedules[day];
-                        $('#start-time-' + day).val(schedule.start_time || '00:00');
-                        $('#end-time-' + day).val(schedule.end_time || '23:59');
+                        const schedules = rules.day_schedules[day];
+                        console.log('    - Procesando día ' + day + ':', schedules);
+                        
+                        // Si schedules es un array de rangos
+                        if (Array.isArray(schedules) && schedules.length > 0) {
+                            console.log('      Es un array con ' + schedules.length + ' rangos');
+                            schedules.forEach(function(schedule, index) {
+                                console.log('      Agregando rango ' + index + ':', schedule);
+                                addTimeRange(
+                                    day,
+                                    schedule.start_time || '00:00',
+                                    schedule.end_time || '23:59',
+                                    index
+                                );
+                            });
+                        } 
+                        // Si schedules es un objeto simple (formato antiguo - un solo rango)
+                        else if (schedules.start_time && schedules.end_time) {
+                            console.log('      Es un objeto simple (formato antiguo)');
+                            addTimeRange(
+                                day,
+                                schedules.start_time || '00:00',
+                                schedules.end_time || '23:59',
+                                0
+                            );
+                        }
+                        // Si no hay schedule para este día pero está marcado, agregar uno por defecto
+                        else if (\$('#day-' + day).is(':checked')) {
+                            console.log('      Día marcado sin horarios, agregando default');
+                            addTimeRange(day, '00:00', '23:59', 0);
+                        }
                     });
                 } else {
-                    // Default: 00:00 - 23:59 para todos los días
-                    [0, 1, 2, 3, 4, 5, 6].forEach(function(day) {
-                        $('#start-time-' + day).val('00:00');
-                        $('#end-time-' + day).val('23:59');
-                    });
+                    console.log('    No hay day_schedules configurado');
                 }
                 
-                // Horarios globales (deprecados, solo por compatibilidad)
-                $('#requisition_start_time').val(rules.requisition_start_time || '00:00');
-                $('#requisition_end_time').val(rules.requisition_end_time || '23:59');
+                console.log('13. Agregando rangos por defecto para días sin horarios...');
+                // Agregar rangos por defecto para días marcados sin horarios
+                \$('.day-checkbox:checked').each(function() {
+                    const day = \$(this).val();
+                    const container = \$('.time-ranges-container[data-day="' + day + '"]');
+                    if (container.find('.time-range-item').length === 0) {
+                        console.log('    - Agregando rango default para día ' + day);
+                        addTimeRange(day, '00:00', '23:59', 0);
+                    }
+                });
                 
+                console.log('14. Configurando horarios globales (deprecados)...');
+                // Horarios globales (deprecados, solo por compatibilidad)
+                \$('#requisition_start_time').val(rules.requisition_start_time || '00:00');
+                \$('#requisition_end_time').val(rules.requisition_end_time || '23:59');
+                
+                console.log('15. Configurando switches...');
                 // Switches - convertir valores 1/0 a boolean
-                $('#allow_extemporaneous_requisitions').prop('checked', rules.allow_extemporaneous_requisitions == 1 || rules.allow_extemporaneous_requisitions === true);
-                $('#require_extemporaneous_reason').prop('checked', rules.require_extemporaneous_reason == 1 || rules.require_extemporaneous_reason === true);
+                \$('#allow_extemporaneous_requisitions').prop('checked', rules.allow_extemporaneous_requisitions == 1 || rules.allow_extemporaneous_requisitions === true);
+                \$('#require_extemporaneous_reason').prop('checked', rules.require_extemporaneous_reason == 1 || rules.require_extemporaneous_reason === true);
                 
                 toggleRequireReason();
+                console.log('16. ✅ TODO COMPLETADO - Formulario listo');
+                console.log('========== DEBUG FIN ==========');
             } else {
+                console.error('❌ Error en respuesta del servidor:', response.message || 'Error desconocido');
                 alert('Error al cargar las reglas: ' + (response.message || 'Error desconocido'));
-                $('#rules-form-container').hide();
+                \$('#rules-form-container').hide();
             }
         },
         error: function(xhr, status, error) {
-            console.error('Error AJAX:', status, error);
-            console.error('Response:', xhr.responseText);
-            $('#loading-indicator').hide();
+            console.error('========== ERROR AJAX ==========');
+            console.error('❌ Error en la petición AJAX');
+            console.error('   Status:', status);
+            console.error('   Error:', error);
+            console.error('   XHR Status:', xhr.status);
+            console.error('   Response Text:', xhr.responseText);
+            console.error('========== FIN ERROR ==========');
+            \$('#loading-indicator').hide();
             alert('Error al comunicarse con el servidor: ' + error);
-            $('#rules-form-container').hide();
+            \$('#rules-form-container').hide();
         }
     });
 });
 
 // Mostrar/ocultar el switch de "requiere motivo"
 function toggleRequireReason() {
-    const allowExtemporaneous = $('#allow_extemporaneous_requisitions').is(':checked');
-    $('#require-reason-container').toggle(allowExtemporaneous);
+    const allowExtemporaneous = \$('#allow_extemporaneous_requisitions').is(':checked');
+    \$('#require-reason-container').toggle(allowExtemporaneous);
 }
 
-$('#allow_extemporaneous_requisitions').on('change', toggleRequireReason);
+\$('#allow_extemporaneous_requisitions').on('change', toggleRequireReason);
 
 // Validación del formulario
-$('#requisition-rules-form').on('beforeSubmit', function(e) {
+\$('#requisition-rules-form').on('beforeSubmit', function(e) {
     e.preventDefault();
     
-    const selectedDays = $('input[name="requisition_allowed_days[]"]:checked').length;
+    const selectedDays = \$('input[name="requisition_allowed_days[]"]:checked').length;
     
     if (selectedDays === 0) {
         alert('Por favor seleccione al menos un día permitido para requisiciones.');
         return false;
     }
     
-    // Validar que cada día seleccionado tenga horarios válidos
+    // Validar que cada día seleccionado tenga al menos un rango de horarios válido
     let hasInvalidSchedule = false;
-    $('input[name="requisition_allowed_days[]"]:checked').each(function() {
-        const day = $(this).val();
-        const startTime = $('input[name="day_start_time[' + day + ']"]').val();
-        const endTime = $('input[name="day_end_time[' + day + ']"]').val();
+    const dayNames = {
+        0: 'Domingo', 1: 'Lunes', 2: 'Martes', 3: 'Miércoles',
+        4: 'Jueves', 5: 'Viernes', 6: 'Sábado'
+    };
+    
+    \$('input[name="requisition_allowed_days[]"]:checked').each(function() {
+        const day = \$(this).val();
+        const container = \$('.time-ranges-container[data-day="' + day + '"]');
+        const ranges = container.find('.time-range-item');
         
-        if (!startTime || !endTime) {
-            alert('Por favor configure los horarios para todos los días seleccionados.');
+        if (ranges.length === 0) {
+            alert('Por favor agregue al menos un rango de horario para ' + dayNames[day]);
             hasInvalidSchedule = true;
             return false;
         }
         
-        if (startTime >= endTime) {
-            const dayName = $('#day-' + day).closest('.day-checkbox-item').find('label').text().trim();
-            alert('La hora de inicio debe ser menor que la hora de fin para ' + dayName);
-            hasInvalidSchedule = true;
+        // Validar cada rango
+        ranges.each(function() {
+            const startTime = \$(this).find('input[name*="[start_time]"]').val();
+            const endTime = \$(this).find('input[name*="[end_time]"]').val();
+            
+            if (!startTime || !endTime) {
+                alert('Por favor complete todos los horarios para ' + dayNames[day]);
+                hasInvalidSchedule = true;
+                return false;
+            }
+            
+            if (startTime >= endTime) {
+                alert('La hora de inicio debe ser menor que la hora de fin para ' + dayNames[day]);
+                hasInvalidSchedule = true;
+                return false;
+            }
+        });
+        
+        if (hasInvalidSchedule) {
             return false;
         }
     });
@@ -464,10 +649,10 @@ $('#requisition-rules-form').on('beforeSubmit', function(e) {
     console.log('Enviando formulario...');
     
     // Enviar por AJAX
-    $.ajax({
+    \$.ajax({
         url: saveRulesUrl,
         type: 'POST',
-        data: $(this).serialize(),
+        data: \$(this).serialize(),
         dataType: 'json',
         success: function(response) {
             console.log('Respuesta del guardado:', response);

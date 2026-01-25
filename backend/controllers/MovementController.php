@@ -255,18 +255,30 @@ class MovementController extends Controller
                 $isDayAllowed = in_array($requiredDay, $allowedDays);
                 
                 // Obtener horario específico para ese día desde consumption_center_schedule
-                $scheduleForDay = \common\models\ConsumptionCenterSchedule::findOne([
+                // IMPORTANTE: Ahora puede haber MÚLTIPLES rangos de horarios para el mismo día
+                $schedulesForDay = \common\models\ConsumptionCenterSchedule::findAll([
                     'consumption_center_id' => $consumptionCenterId,
                     'day_of_week' => $requiredDay,
                     'is_active' => true
                 ]);
                 
-                // Usar horario específico del día o fallback a horario global
-                $startTime = $scheduleForDay ? $scheduleForDay->start_time : ($centerRules->requisition_start_time ?: '00:00');
-                $endTime = $scheduleForDay ? $scheduleForDay->end_time : ($centerRules->requisition_end_time ?: '23:59');
+                // Verificar si la hora está dentro de ALGUNO de los rangos configurados
+                $isTimeAllowed = false;
                 
-                // Verificar si la hora está dentro del rango
-                $isTimeAllowed = $requiredTime >= $startTime && $requiredTime <= $endTime;
+                if (!empty($schedulesForDay)) {
+                    // Verificar cada rango de horario
+                    foreach ($schedulesForDay as $schedule) {
+                        if ($requiredTime >= $schedule->start_time && $requiredTime <= $schedule->end_time) {
+                            $isTimeAllowed = true;
+                            break; // Encontró un rango válido, no necesita seguir buscando
+                        }
+                    }
+                } else {
+                    // Fallback: si no hay horarios específicos para este día, usar horario global
+                    $startTime = $centerRules->requisition_start_time ?: '00:00';
+                    $endTime = $centerRules->requisition_end_time ?: '23:59';
+                    $isTimeAllowed = $requiredTime >= $startTime && $requiredTime <= $endTime;
+                }
                 
                 // Determinar si está fuera de tiempo basándose en la fecha requerida
                 $isOutOfTime = !$isDayAllowed || !$isTimeAllowed;

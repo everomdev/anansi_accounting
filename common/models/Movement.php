@@ -131,7 +131,11 @@ class Movement extends \yii\db\ActiveRecord
                     return $config->require_observations_without_requisition;
                 }
                 return false;
-            }, 'message' => 'Las observaciones son obligatorias para salidas sin requisición'],
+            }, 'whenClient' => "function (attribute, value) {
+                var type = $('#movement-type').val();
+                var isWithoutRequisition = $('#movement-is_without_requisition').is(':checked');
+                return type === 'output' && isWithoutRequisition;
+            }", 'message' => 'Las observaciones son obligatorias para salidas sin requisición'],
             [['quantity'], 'number', 'min' => 0.01, 'message' => 'La cantidad debe ser un número mayor a 0'],
             [['amount'], 'number', 'min' => 0, 'message' => 'El precio de compra debe ser un número válido'],
             [['tax', 'retention'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],

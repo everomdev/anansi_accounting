@@ -69,8 +69,10 @@ class ConsumptionCenterSchedule extends ActiveRecord
             [['start_time', 'end_time'], 'match', 'pattern' => '/^([01]\d|2[0-3]):([0-5]\d)$/', 'message' => 'El formato debe ser HH:MM (24 horas)'],
             [['created_at', 'updated_at'], 'safe'],
             [['consumption_center_id'], 'exist', 'skipOnError' => true, 'targetClass' => ConsumptionCenter::class, 'targetAttribute' => ['consumption_center_id' => 'id']],
-            // Validación única por centro y día
-            [['day_of_week'], 'unique', 'targetAttribute' => ['consumption_center_id', 'day_of_week'], 'message' => 'Ya existe un horario para este día en este centro de consumo.'],
+            // NOTA: Validación única eliminada - ahora se permiten múltiples horarios por día
+            // Esto permite configurar múltiples rangos de horarios para el mismo día
+            // Por ejemplo: Lunes 7:00-8:30 y 13:00-14:30
+            // [['day_of_week'], 'unique', 'targetAttribute' => ['consumption_center_id', 'day_of_week'], 'message' => 'Ya existe un horario para este día en este centro de consumo.'],
             // Validar que end_time sea mayor que start_time
             ['end_time', 'validateTimeRange'],
         ];

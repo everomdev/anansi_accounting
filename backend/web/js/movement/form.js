@@ -286,57 +286,63 @@ $(document).on('submit', '#movement-form', function(e) {
     return true;
 });
 
-// Actualizar la unidad de medida cuando se selecciona un ingrediente (solo para salidas)
+// Actualizar la unidad de medida cuando se selecciona un ingrediente (para entradas y salidas)
 $(document).on('select2:select', '#movement-ingredient_id', function(e) {
     var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    var selectedData = e.params.data;
+    var selectedText = selectedData.text;
+    
+    // Extraer la unidad de medida del texto entre paréntesis
+    var umMatch = selectedText.match(/\(([^)]+)\)/);
+    var um = umMatch ? umMatch[1] : '';
     
     if (movementType === movementTypeOutput) {
-        var selectedData = e.params.data;
-        var selectedText = selectedData.text;
-        
-        // Extraer la unidad de medida del texto entre paréntesis
-        var umMatch = selectedText.match(/\(([^)]+)\)/);
-        var um = umMatch ? umMatch[1] : '';
-        
-        // Actualizar el span con la unidad de medida
+        // Para salidas, actualizar el span de unidad de cocina
         $('#ingredient-um-display').text(um);
+    } else {
+        // Para entradas, actualizar el span de unidad de compra
+        $('#ingredient-um-display-input').text(um);
     }
 });
 
 // También manejar el cambio normal del select (por si acaso)
 $(document).on('change', '#movement-ingredient_id', function() {
     var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    var selectedOption = $(this).find('option:selected');
+    var selectedText = selectedOption.text();
+    
+    // Extraer la unidad de medida del texto entre paréntesis
+    var umMatch = selectedText.match(/\(([^)]+)\)/);
+    var um = umMatch ? umMatch[1] : '';
     
     if (movementType === movementTypeOutput) {
-        var selectedOption = $(this).find('option:selected');
-        var selectedText = selectedOption.text();
-        
-        // Extraer la unidad de medida del texto entre paréntesis
-        var umMatch = selectedText.match(/\(([^)]+)\)/);
-        var um = umMatch ? umMatch[1] : '';
-        
-        // Actualizar el span con la unidad de medida
+        // Para salidas, actualizar el span de unidad de cocina
         $('#ingredient-um-display').text(um);
+    } else {
+        // Para entradas, actualizar el span de unidad de compra
+        $('#ingredient-um-display-input').text(um);
     }
 });
 
 // Función para actualizar la unidad de medida
 function updateIngredientUM() {
     var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    var ingredientSelect = $('#movement-ingredient_id');
     
-    if (movementType === movementTypeOutput) {
-        var ingredientSelect = $('#movement-ingredient_id');
+    if (ingredientSelect.length > 0) {
+        var selectedOption = ingredientSelect.find('option:selected');
+        var selectedText = selectedOption.text();
         
-        if (ingredientSelect.length > 0) {
-            var selectedOption = ingredientSelect.find('option:selected');
-            var selectedText = selectedOption.text();
-            
-            // Extraer la unidad de medida del texto entre paréntesis
-            var umMatch = selectedText.match(/\(([^)]+)\)/);
-            var um = umMatch ? umMatch[1] : '';
-            
-            // Actualizar el span con la unidad de medida
+        // Extraer la unidad de medida del texto entre paréntesis
+        var umMatch = selectedText.match(/\(([^)]+)\)/);
+        var um = umMatch ? umMatch[1] : '';
+        
+        if (movementType === movementTypeOutput) {
+            // Para salidas, actualizar el span de unidad de cocina
             $('#ingredient-um-display').text(um);
+        } else {
+            // Para entradas, actualizar el span de unidad de compra
+            $('#ingredient-um-display-input').text(um);
         }
     }
 }

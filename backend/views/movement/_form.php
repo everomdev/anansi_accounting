@@ -425,9 +425,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             'placeholder' => 'Ingrese la cantidad'
                         ]) ?>
                     <?php else: ?>
+                        <?php 
+                        // Para entradas, obtener la unidad de compra del ingrediente seleccionado
+                        $umLabelInput = '';
+                        if (!$model->isNewRecord && $model->ingredient) {
+                            $umLabelInput = $model->ingredient->um;
+                        }
+                        ?>
                         <?= $form->field($model, 'quantity', [
-                            'template' => "{label}<span style=\"color: red;\">*</span>\n{input}\n{hint}\n{error}"
-                        ])->textInput(['data-setting' => 'all']) ?>
+                            'template' => "{label}<span style=\"color: red;\">*</span>\n<div class='input-group'>{input}<span class='input-group-text' id='ingredient-um-display-input'>" . htmlspecialchars($umLabelInput) . "</span></div>\n{hint}\n{error}"
+                        ])->textInput([
+                            'data-setting' => 'all',
+                            'placeholder' => 'Ingrese la cantidad'
+                        ]) ?>
                     <?php endif; ?>
                 </div>
 

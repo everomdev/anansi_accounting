@@ -111,20 +111,23 @@ if ($defaultCenterRules) {
     // Cargar horarios individuales por día
     $schedules = \common\models\ConsumptionCenterSchedule::find()
         ->where(['consumption_center_id' => $defaultCenter->id])
-        ->orderBy(['day_of_week' => SORT_ASC])
+        ->orderBy(['day_of_week' => SORT_ASC, 'start_time' => SORT_ASC])
         ->all();
     
-    // Convertir schedules a array para JavaScript
+    // Convertir schedules a array para JavaScript (ahora puede tener múltiples rangos por día)
     $daySchedules = [];
     foreach ($schedules as $schedule) {
-        $daySchedules[$schedule->day_of_week] = [
+        if (!isset($daySchedules[$schedule->day_of_week])) {
+            $daySchedules[$schedule->day_of_week] = [];
+        }
+        $daySchedules[$schedule->day_of_week][] = [
             'start_time' => $schedule->start_time,
             'end_time' => $schedule->end_time,
         ];
     }
     
     $this->registerJsVar('requisitionAllowedDays', $defaultCenterRules->getRequisitionAllowedDaysArray());
-    $this->registerJsVar('daySchedules', $daySchedules); // Nuevo: horarios por día
+    $this->registerJsVar('daySchedules', $daySchedules); // Ahora es un array de rangos por día
     $this->registerJsVar('requisitionStartTime', $defaultCenterRules->requisition_start_time ?: '00:00');
     $this->registerJsVar('requisitionEndTime', $defaultCenterRules->requisition_end_time ?: '23:59');
     $this->registerJsVar('allowExtemporaneousRequisitions', $defaultCenterRules->allow_extemporaneous_requisitions ?? true);
@@ -489,13 +492,24 @@ $(document).ready(function() {
         const currentDay = checkDate.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
         const currentTime = String(checkDate.getHours()).padStart(2, '0') + ':' + String(checkDate.getMinutes()).padStart(2, '0');
         
-        // Obtener horario específico para este día, o usar horario global como fallback
-        let startTime = requisitionStartTime;
-        let endTime = requisitionEndTime;
+        // Obtener horarios para este día (ahora puede ser múltiples rangos)
+        let dayRanges = [];
         
-        if (daySchedules && daySchedules[currentDay]) {
-            startTime = daySchedules[currentDay].start_time;
-            endTime = daySchedules[currentDay].end_time;
+        if (daySchedules && daySchedules[currentDay] && Array.isArray(daySchedules[currentDay])) {
+            // Tiene múltiples rangos configurados para este día
+            dayRanges = daySchedules[currentDay];
+        } else if (daySchedules && daySchedules[currentDay]) {
+            // Formato antiguo: un solo objeto con start_time y end_time
+            dayRanges = [{
+                start_time: daySchedules[currentDay].start_time,
+                end_time: daySchedules[currentDay].end_time
+            }];
+        } else {
+            // Fallback: usar horario global
+            dayRanges = [{
+                start_time: requisitionStartTime,
+                end_time: requisitionEndTime
+            }];
         }
         
         console.log('Validando reglas:', {
@@ -504,16 +518,24 @@ $(document).ready(function() {
             díaActual: currentDay,
             horaActual: currentTime,
             díasPermitidos: requisitionAllowedDays,
-            horarioInicio: startTime,
-            horarioFin: endTime,
-            usandoHorarioEspecífico: !!(daySchedules && daySchedules[currentDay])
+            rangosHorarios: dayRanges,
+            cantidadDeRangos: dayRanges.length
         });
         
         // Verificar si el día está permitido
         const isDayAllowed = requisitionAllowedDays.includes(currentDay);
         
-        // Verificar si la hora está dentro del rango (usando horario específico del día)
-        const isTimeAllowed = currentTime >= startTime && currentTime <= endTime;
+        // Verificar si la hora está dentro de ALGUNO de los rangos configurados
+        let isTimeAllowed = false;
+        let matchedRange = null;
+        
+        for (let range of dayRanges) {
+            if (currentTime >= range.start_time && currentTime <= range.end_time) {
+                isTimeAllowed = true;
+                matchedRange = range;
+                break;
+            }
+        }
         
         // Si está fuera de las reglas
         const isExtemporaneous = !isDayAllowed || !isTimeAllowed;
@@ -542,11 +564,15 @@ $(document).ready(function() {
             });
             
             if (!isDayAllowed && !isTimeAllowed) {
-                message = `La fecha requerida (${selectedDateTime}) está fuera de los días y horarios permitidos para este centro de consumo. Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}. Horario: ${startTime} - ${endTime}.`;
+                const allowedDaysStr = requisitionAllowedDays.map(d => dayNames[d]).join(', ');
+                message = `La fecha requerida (${selectedDateTime}) está fuera de los días y horarios permitidos para este centro de consumo. Días permitidos: ${allowedDaysStr}.`;
             } else if (!isDayAllowed) {
-                message = `La fecha requerida está en ${selectedDayName}, que no está permitido para este centro. Días permitidos: ${requisitionAllowedDays.map(d => dayNames[d]).join(', ')}.`;
+                const allowedDaysStr = requisitionAllowedDays.map(d => dayNames[d]).join(', ');
+                message = `La fecha requerida está en ${selectedDayName}, que no está permitido para este centro. Días permitidos: ${allowedDaysStr}.`;
             } else {
-                message = `La hora de la fecha requerida (${currentTime}) está fuera del horario permitido para ${selectedDayName}. Horario: ${startTime} - ${endTime}.`;
+                // El día está permitido pero la hora no está en ninguno de los rangos
+                let rangesStr = dayRanges.map(r => `${r.start_time} - ${r.end_time}`).join(', ');
+                message = `La hora de la fecha requerida (${currentTime}) está fuera de los horarios permitidos para ${selectedDayName}. Horarios permitidos: ${rangesStr}.`;
             }
             
             // Mostrar alerta (siempre amarilla, nunca bloquear)

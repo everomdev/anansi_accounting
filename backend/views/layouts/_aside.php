@@ -54,6 +54,8 @@ $configBaseActive = in_array($currentControllerId, ['category', 'recipe-category
 $gestionInsumosActive = in_array($currentControllerId, ['ingredient-stock', 'provider', 'ingredients']);
 $costeoActive = in_array($currentControllerId, ['sub-standard-recipe', 'standard-recipe', 'convoy', 'menu']);
 $almacenMovimientosActive = in_array($currentControllerId, ['consumption-center', 'storage', 'movement', 'price-trend']);
+// Active flag for Centros de consumo inside Configuración Base (also mark active when on requisition rules action)
+$centrosConsumoActive = in_array($currentControllerId, ['consumption-center']) || ($currentControllerId == 'business' && $action == 'requisition-rules');
 $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
 $kpisControlActive = in_array($currentControllerId, ['control-insumos', 'control-almacen', 'compras-vs-consumo', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
@@ -115,11 +117,22 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         </li>
                     <?php endif; ?>
                     <?php if ($isAdmin || Yii::$app->user->can('manage_users') || Yii::$app->user->can('administrator')): ?>
-                        <li class="menu-item <?= ($currentControllerId == 'business' && $action == 'requisition-rules') ? 'active' : '' ?>">
-                            <a href="<?= \yii\helpers\Url::to(['/business/requisition-rules']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Reglas de Requisición') ?></div>
-                            </a>
-                        </li>
+                            <li class="menu-item <?= $centrosConsumoActive ? 'active open' : '' ?>">
+                                <a class="menu-link" data-bs-toggle="collapse" href="#centrosConsumo" role="button"
+                                   aria-expanded="<?= $centrosConsumoActive ? 'true' : 'false' ?>"
+                                   aria-controls="centrosConsumo">
+                                    <div><?= Yii::t('app', 'Centros de consumo') ?></div>
+                                </a>
+                                <div class="collapse <?= $centrosConsumoActive ? 'show' : '' ?>" id="centrosConsumo">
+                                    <ul class="sub-menu">
+                                        <li class="menu-item <?= ($currentControllerId == 'business' && $action == 'requisition-rules') ? 'active' : '' ?>">
+                                            <a href="<?= \yii\helpers\Url::to(['/business/requisition-rules']) ?>" class="menu-link">
+                                                <div><?= Yii::t('app', 'Reglas de Requisición') ?></div>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
                     <?php endif; ?>
                 </ul>
             </div>
