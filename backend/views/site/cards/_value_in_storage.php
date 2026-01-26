@@ -4,7 +4,36 @@
 /** @var $ingredients \common\models\IngredientStock[] */
 
 $ingredients = $business->ingredientStocks;
-$total = array_sum(\yii\helpers\ArrayHelper::getColumn($ingredients, 'valueInMoney'));
+
+// Log detallado de todos los ingredientes y sus valores
+$logDetails = [];
+$totalCalculado = 0;
+foreach ($ingredients as $ingredient) {
+    $valorEnDinero = $ingredient->valueInMoney;
+    $totalCalculado += $valorEnDinero;
+    
+    $logDetails[] = [
+        'id' => $ingredient->id,
+        'nombre' => $ingredient->name,
+        'stock_actual' => $ingredient->stock,
+        'unidad' => $ingredient->unitOfMeasurement->name ?? 'N/A',
+        'precio_unitario' => $ingredient->price,
+        'valor_en_dinero' => $valorEnDinero,
+    ];
+}
+
+// Registrar log warning con todos los detalles
+\Yii::warning([
+    'mensaje' => 'Cálculo de dinero en almacén - Detalle completo de ingredientes',
+    'business_id' => $business->id,
+    'business_name' => $business->name,
+    'total_ingredientes' => count($ingredients),
+    'total_calculado' => $totalCalculado,
+    'ingredientes_detalle' => $logDetails,
+    'timestamp' => date('Y-m-d H:i:s'),
+], 'storage_value_calculation');
+
+$total = $totalCalculado;
 
 // CSS personalizado para el nuevo diseño compacto
 $this->registerCss("
