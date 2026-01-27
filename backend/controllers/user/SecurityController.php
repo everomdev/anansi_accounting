@@ -110,8 +110,30 @@ class SecurityController extends Controller
     public function actionLogin()
     {
         $this->layout = '@backend/views/layouts/blank.php';
-        if (!Yii::$app->user->getIsGuest()) {
-            return $this->goHome();
+        
+        // Detectar y limpiar sesiones expiradas o corruptas
+        try {
+            // Verificar si hay datos de sesión pero el usuario está como guest (sesión expirada)
+            if (Yii::$app->user->getIsGuest()) {
+                // Limpiar cualquier dato residual de sesión
+                Yii::$app->session->remove(RedisKeys::USER_KEY);
+                Yii::$app->session->remove(RedisKeys::PROFILE_KEY);
+                Yii::$app->session->remove(RedisKeys::BUSINESS_KEY);
+                Yii::$app->session->remove('credentials');
+                
+                // Regenerar el ID de sesión para evitar conflictos
+                if (Yii::$app->session->getIsActive()) {
+                    Yii::$app->session->regenerateID(true);
+                }
+            } else {
+                // Si no es guest, verificar que la sesión sea válida
+                return $this->goHome();
+            }
+        } catch (\Exception $e) {
+            // Si hay algún error al verificar la sesión, limpiarla completamente
+            Yii::$app->session->destroy();
+            Yii::$app->session->open();
+            Yii::warning('Sesión corrupta detectada y limpiada: ' . $e->getMessage(), 'session_cleanup');
         }
 
         /** @var LoginForm $form */
