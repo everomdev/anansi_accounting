@@ -130,10 +130,23 @@ $inventarios = $inventarios ?? [];
             var fechaInput = document.getElementById('fecha-inventario');
             var rangoElement = document.getElementById('rango-fechas');
             
+            // Verificar si el business_id es 2342 (sin restricción de fecha)
+            var businessId = <?= $business->id ?>;
+            var sinRestriccion = (businessId === 2342);
+            
             // Calcular rango usando la fecha local del usuario
             var now = new Date();
-            var fechaMinima = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 horas antes
-            var fechaMaxima = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // 24 horas después
+            var fechaMinima, fechaMaxima;
+            
+            if (sinRestriccion) {
+                // Sin restricción: permitir cualquier fecha
+                fechaMinima = new Date('1900-01-01');
+                fechaMaxima = new Date('2100-12-31');
+            } else {
+                // Con restricción: 24 horas antes y después
+                fechaMinima = new Date(now.getTime() - (24 * 60 * 60 * 1000)); // 24 horas antes
+                fechaMaxima = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // 24 horas después
+            }
             
             // Formatear fechas para el input datetime-local
             function formatearFechaParaInput(fecha) {
@@ -162,9 +175,15 @@ $inventarios = $inventarios ?? [];
             fechaInput.setAttribute('max', maxDate);
             
             // Mostrar el rango al usuario
-            rangoElement.textContent = 'Rango permitido: ' + 
-                formatearFechaParaMostrar(fechaMinima) + ' - ' + 
-                formatearFechaParaMostrar(fechaMaxima);
+            if (sinRestriccion) {
+                rangoElement.textContent = 'Sin restricción de fecha: Puedes seleccionar cualquier fecha';
+                rangoElement.style.color = '#28a745';
+                rangoElement.style.fontWeight = '600';
+            } else {
+                rangoElement.textContent = 'Rango permitido: ' + 
+                    formatearFechaParaMostrar(fechaMinima) + ' - ' + 
+                    formatearFechaParaMostrar(fechaMaxima);
+            }
             
             // Establecer fecha/hora local del usuario si no hay valor previo
             if (fechaInput && !fechaInput.value) {
