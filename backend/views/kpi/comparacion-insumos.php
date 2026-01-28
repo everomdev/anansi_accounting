@@ -30,6 +30,22 @@ $this->params['breadcrumbs'][] = $this->title;
                 </select>
             </div>
     </form>
+    
+    <!-- Selector de elementos por página -->
+    <div class="row mb-2 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+                <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
+                    <?php foreach ([10, 25, 50, 100] as $value): ?>
+                    <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'insumos por página') ?></span>
+            </div>
+        </div>
+    </div>
+    
     <div class="table-responsive">
         <?= GridView::widget([
             'dataProvider' => $dataProvider,
@@ -60,7 +76,9 @@ $this->params['breadcrumbs'][] = $this->title;
                     'attribute' => 'existencia_almacen',
                     'label' => 'Existencia<br>almacén',
                     'encodeLabel' => false,
-                    'format' => ['integer'],
+                    'value' => function ($data) {
+                        return formatNumber($data['existencia_almacen']);
+                    },
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
                 ],
@@ -68,13 +86,18 @@ $this->params['breadcrumbs'][] = $this->title;
                     'attribute' => 'inventario_almacen',
                     'label' => 'Inventario<br>almacén',
                     'encodeLabel' => false,
-                    'format' => ['integer'],
+                    'value' => function ($data) {
+                        return formatNumber($data['inventario_almacen']);
+                    },
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
                 ],
                 [
                     'attribute' => 'compras_menos_consumo',
                     'label' => 'Compras - Consumo real',
+                    'value' => function ($data) {
+                        return formatNumber($data['compras_menos_consumo']);
+                    },
                     'contentOptions' => ['style' => 'text-align:center;'],
                     'headerOptions' => ['style' => 'text-align:center;'],
                 ],
@@ -97,6 +120,15 @@ $this->params['breadcrumbs'][] = $this->title;
                         }
                     ]
                 ],
+            ],
+            'pager' => [
+                'class' => \yii\bootstrap5\LinkPager::class,
+                'options' => ['class' => 'pagination pagination-sm'],
+                'maxButtonCount' => 10,
+                'firstPageLabel' => '<i class="fas fa-angle-double-left">Primera página</i>',
+                'lastPageLabel' => '<i class="fas fa-angle-double-right">Última página</i>',
+                'prevPageLabel' => '<i class="fas fa-angle-left"></i>',
+                'nextPageLabel' => '<i class="fas fa-angle-right"></i>',
             ],
         ]) ?>
     </div>
@@ -142,7 +174,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     </div>
                     <div class="form-group">
                         <label>Nueva Existencia:</label>
-                        <input type="number" id="nuevaExistencia" name="nueva_existencia" class="form-control" step="0.01" required>
+                        <input type="number" id="nuevaExistencia" name="nueva_existencia" class="form-control" step="0.001" required>
                     </div>
                     <div class="form-group">
                         <label>Motivo (opcional):</label>
@@ -184,21 +216,25 @@ function ajustarTodos() {
     var ajustes = [];
     $('table tbody tr').each(function() {
         var $row = $(this);
-        var existenciaAlmacen = parseFloat($row.find('td:eq(3)').text()) || 0;
-        var inventarioFisico = parseFloat($row.find('td:eq(4)').text()) || 0;
         
-        // Solo si hay diferencia
-        if (existenciaAlmacen !== inventarioFisico) {
-            var ajusteBtn = $row.find('button[onclick*="ajustarExistencia"]');
-            if (ajusteBtn.length > 0) {
-                var onclick = ajusteBtn.attr('onclick');
-                var matches = onclick.match(/ajustarExistencia\((\d+),\s*"([^"]+)",\s*([^,]+),\s*([^)]+)\)/);
-                if (matches) {
+        // Buscar el botón de ajustar para obtener los valores correctos
+        var ajusteBtn = $row.find('button[onclick*="ajustarExistencia"]');
+        if (ajusteBtn.length > 0) {
+            var onclick = ajusteBtn.attr('onclick');
+            // Capturar los valores numéricos directamente del onclick
+            // Formato: ajustarExistencia(123, "Nombre", 0.75, 1.5)
+            var matches = onclick.match(/ajustarExistencia\((\d+),\s*"([^"]+)",\s*([\d.]+),\s*([\d.]+)\)/);
+            if (matches) {
+                var existenciaActual = parseFloat(matches[3]);
+                var inventarioFisico = parseFloat(matches[4]);
+                
+                // Solo si hay diferencia
+                if (Math.abs(existenciaActual - inventarioFisico) > 0.001) {
                     ajustes.push({
                         ingredient_stock_id: matches[1],
                         nombre: matches[2],
-                        existencia_anterior: matches[3],
-                        nueva_existencia: matches[4],
+                        existencia_anterior: existenciaActual,
+                        nueva_existencia: inventarioFisico,
                         motivo: 'Ajuste masivo al inventario físico'
                     });
                 }
@@ -292,5 +328,32 @@ $(document).ready(function() {
             }
         });
     });
+    
+    // Detector de cambio en elementos por página
+    document.getElementById('per-page-selector').addEventListener('change', function() {
+        const pageSize = this.value;
+        
+        // Guardar en localStorage
+        localStorage.setItem('comparacion-insumos-per-page', pageSize);
+        
+        // Crear URL con nuevo tamaño de página
+        let url = new URL(window.location);
+        url.searchParams.set('per-page', pageSize);
+        
+        // Recargar con el nuevo tamaño de página
+        window.location.href = url.toString();
+    });
+    
+    // Cargar selección guardada al cargar la página
+    const savedPerPage = localStorage.getItem('comparacion-insumos-per-page');
+    if (savedPerPage) {
+        const selector = document.getElementById('per-page-selector');
+        if (selector && selector.value != savedPerPage) {
+            // Si hay un valor guardado diferente al actual, aplicarlo
+            let url = new URL(window.location);
+            url.searchParams.set('per-page', savedPerPage);
+            window.location.href = url.toString();
+        }
+    }
 });
 </script>

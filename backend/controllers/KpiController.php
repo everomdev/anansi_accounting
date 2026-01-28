@@ -838,9 +838,12 @@ public function actionComparacionInsumos()
         ];
     }
     
+    // Obtener el tamaño de página de la petición, por defecto 10
+    $perPage = Yii::$app->request->get('per-page', 10);
+    
     $dataProvider = new \yii\data\ArrayDataProvider([
         'allModels' => $datos,
-        'pagination' => ['pageSize' => 20],
+        'pagination' => ['pageSize' => $perPage],
         'sort' => [
             'attributes' => ['nombre', 'categoria', 'unidad_compra', 'existencia_almacen', 'inventario_almacen', 'compras_menos_consumo'],
         ],

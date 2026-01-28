@@ -12,8 +12,56 @@ $this->title = Yii::t('app', 'Storage');
 $this->params['breadcrumbs'][] = $this->title;
 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
 $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+
+// Calcular el total de dinero en almacén
+$ingredients = $business->ingredientStocks;
+$totalDineroAlmacen = array_sum(\yii\helpers\ArrayHelper::getColumn($ingredients, 'valueInMoney'));
+
+// CSS para la tarjeta de total
+$this->registerCss("
+    .total-storage-card {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .total-storage-card h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .total-storage-card .amount {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #212529;
+        margin: 0;
+    }
+    
+    @media (max-width: 576px) {
+        .total-storage-card .amount {
+            font-size: 1.5rem;
+        }
+    }
+");
 ?>
 <div class="ingredient-stock-index">
+
+    <!-- Tarjeta de Total en Almacén -->
+    <div class="row mb-3">
+        <div class="col-md-4 col-lg-3">
+            <div class="total-storage-card">
+                <h6><i class="fas fa-warehouse"></i> Dinero en Almacén</h6>
+                <div class="amount"><?= formatPrice($totalDineroAlmacen) ?></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Selector de elementos por página y filtros mejorados -->
     <div class="row mb-2 align-items-center">
