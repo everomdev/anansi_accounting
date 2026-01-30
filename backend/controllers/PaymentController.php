@@ -114,29 +114,47 @@ class PaymentController extends Controller
                 \Yii::warning("Subscription Status: " . $subscription->status, 'stripe-webhook');
                 \Yii::warning("Metadata: " . json_encode($subscription->metadata), 'stripe-webhook');
 
-                // Extraer metadata
-                $plan = json_decode($subscription->metadata['plan_id'], true);
-                $user = json_decode($subscription->metadata['user_id'], true);
+                // Intentar primero con metadata (para suscripciones nuevas)
+                $plan = isset($subscription->metadata['plan_id']) ? json_decode($subscription->metadata['plan_id'], true) : null;
+                $user = isset($subscription->metadata['user_id']) ? json_decode($subscription->metadata['user_id'], true) : null;
                 
                 \Yii::warning("Decoded Plan ID: " . $plan, 'stripe-webhook');
                 \Yii::warning("Decoded User ID: " . $user, 'stripe-webhook');
                 
-                // Actualizar la base de datos
-                $rowsAffected = \Yii::$app->db->createCommand()
-                    ->update(
-                        'user_plan',
-                        ['stripe_subscription_status' => $subscription->status],
-                        ['plan_id' => $plan, 'user_id' => $user]
-                    )
-                    ->execute();
+                $rowsAffected = 0;
                 
-                \Yii::warning("Rows affected: " . $rowsAffected, 'stripe-webhook');
+                // Si tenemos metadata, actualizar por plan y user
+                if ($plan && $user) {
+                    $rowsAffected = \Yii::$app->db->createCommand()
+                        ->update(
+                            'user_plan',
+                            ['stripe_subscription_status' => $subscription->status],
+                            ['plan_id' => $plan, 'user_id' => $user]
+                        )
+                        ->execute();
+                    \Yii::warning("Update by metadata - Rows affected: " . $rowsAffected, 'stripe-webhook');
+                }
+                
+                // Si no hay metadata o no se actualizó nada, buscar por stripe_subscription_id
+                if ($rowsAffected === 0) {
+                    \Yii::warning("Trying to find by stripe_subscription_id: " . $subscription->id, 'stripe-webhook');
+                    
+                    $rowsAffected = \Yii::$app->db->createCommand()
+                        ->update(
+                            'user_plan',
+                            ['stripe_subscription_status' => $subscription->status],
+                            ['stripe_subscription_id' => $subscription->id]
+                        )
+                        ->execute();
+                    
+                    \Yii::warning("Update by stripe_subscription_id - Rows affected: " . $rowsAffected, 'stripe-webhook');
+                }
                 
                 if ($rowsAffected > 0) {
                     \Yii::warning("Successfully updated subscription status to: " . $subscription->status, 'stripe-webhook');
                     echo json_encode(['success' => true, 'message' => 'Subscription updated']);
                 } else {
-                    \Yii::warning("No rows affected. Plan: $plan, User: $user", 'stripe-webhook');
+                    \Yii::warning("No rows affected. Subscription ID: " . $subscription->id, 'stripe-webhook');
                     echo json_encode(['success' => false, 'message' => 'No matching user_plan found']);
                 }
                 break;
