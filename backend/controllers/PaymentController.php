@@ -107,18 +107,43 @@ class PaymentController extends Controller
             case 'customer.subscription.deleted':
                 /** @var Subscription $subscription */
                 $subscription = $event->data->object;
+                
+                // Log para debugging
+                \Yii::warning("Stripe Webhook Event: " . $event->type, 'stripe-webhook');
+                \Yii::warning("Subscription ID: " . $subscription->id, 'stripe-webhook');
+                \Yii::warning("Subscription Status: " . $subscription->status, 'stripe-webhook');
+                \Yii::warning("Metadata: " . json_encode($subscription->metadata), 'stripe-webhook');
+
+                // Extraer metadata
                 $plan = json_decode($subscription->metadata['plan_id'], true);
                 $user = json_decode($subscription->metadata['user_id'], true);
-            \Yii::info("DECODED EVENT: " . print_r($subscription, true));
-                \Yii::$app->db->createCommand()
+                
+                \Yii::warning("Decoded Plan ID: " . $plan, 'stripe-webhook');
+                \Yii::warning("Decoded User ID: " . $user, 'stripe-webhook');
+                
+                // Actualizar la base de datos
+                $rowsAffected = \Yii::$app->db->createCommand()
                     ->update(
                         'user_plan',
                         ['stripe_subscription_status' => $subscription->status],
                         ['plan_id' => $plan, 'user_id' => $user]
                     )
                     ->execute();
+                
+                \Yii::warning("Rows affected: " . $rowsAffected, 'stripe-webhook');
+                
+                if ($rowsAffected > 0) {
+                    \Yii::warning("Successfully updated subscription status to: " . $subscription->status, 'stripe-webhook');
+                    echo json_encode(['success' => true, 'message' => 'Subscription updated']);
+                } else {
+                    \Yii::warning("No rows affected. Plan: $plan, User: $user", 'stripe-webhook');
+                    echo json_encode(['success' => false, 'message' => 'No matching user_plan found']);
+                }
+                break;
+                
             default:
-                echo 'Received unknown event type ' . $event->type;
+                \Yii::warning('Received unknown event type: ' . $event->type, 'stripe-webhook');
+                echo json_encode(['success' => false, 'message' => 'Unknown event type: ' . $event->type]);
         }
     }
 
