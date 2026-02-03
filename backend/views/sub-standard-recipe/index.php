@@ -138,6 +138,13 @@ $this->registerJs("var successMessage = " . json_encode($successMessage) . ";", 
 $this->registerJs("var errorMessage = " . json_encode($errorMessage) . ";", \yii\web\View::POS_HEAD);
 $this->registerJs("var importErrors = " . json_encode($importErrors) . ";", \yii\web\View::POS_HEAD);
 
+// Registrar URLs para el JavaScript
+$this->registerJs("
+    var checkLinksUrl = '" . \yii\helpers\Url::to(['sub-standard-recipe/check-links']) . "';
+    var deleteSubRecipeUrl = '" . \yii\helpers\Url::to(['sub-standard-recipe/delete-sub-recipe']) . "';
+    var exportRecipesUrl = '" . \yii\helpers\Url::to(['standard-recipe/export-recipes-to-excel']) . "';
+", \yii\web\View::POS_HEAD);
+
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/index.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerJsFile(Yii::getAlias('@web/js/sub-standard-recipe/sort.js'), ['depends' => \yii\web\YiiAsset::class]);
 $this->registerCss('
@@ -489,6 +496,27 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 \yii\bootstrap5\Modal::end();
 ?>
 <?php
+// Modal para confirmar la eliminación de elementos específicos
+\yii\bootstrap5\Modal::begin([
+    'id' => 'modal-confirm-selected-remove',
+    'title' => Yii::t('app', "Confirmar eliminación"),
+]);
+?>
+<p>¿Estás seguro de que deseas eliminar <span id="selected-count-message"></span> subrecetas?</p>
+<div class="d-flex justify-content-end gap-3">
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
+        'class' => 'btn btn-secondary',
+        'data-bs-dismiss' => 'modal'
+    ]) ?>
+    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
+        'class' => 'btn btn-danger',
+        'id' => 'confirm-delete-selected'
+    ]) ?>
+</div>
+<?php
+\yii\bootstrap5\Modal::end();
+?>
+<?php
 // Modal para advertir sobre vínculos antes de eliminar
 \yii\bootstrap5\Modal::begin([
     'id' => 'modal-links-warning',
@@ -506,27 +534,6 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Sí, continuar'), [
         'class' => 'btn btn-danger',
         'id' => 'confirm-delete-with-links'
-    ]) ?>
-</div>
-<?php
-\yii\bootstrap5\Modal::end();
-?>
-<?php
-// Modal para confirmar la eliminación de elementos específicos
-\yii\bootstrap5\Modal::begin([
-    'id' => 'modal-confirm-selected-remove',
-    'title' => Yii::t('app', "Confirmar eliminación"),
-]);
-?>
-<p>¿Estás seguro de que deseas eliminar <span id="selected-count-message"></span> subrecetas?</p>
-<div class="d-flex justify-content-end gap-3">
-    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
-        'class' => 'btn btn-secondary',
-        'data-bs-dismiss' => 'modal'
-    ]) ?>
-    <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Eliminar'), [
-        'class' => 'btn btn-danger',
-        'id' => 'confirm-delete-selected'
     ]) ?>
 </div>
 <?php

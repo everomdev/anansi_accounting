@@ -288,6 +288,42 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'placeholder' => 'Buscar por nombre del insumo...'
         ]),
     ];
+    // Columna de cantidad
+    // Cantidad
+    $columns[] = [
+        'attribute' => 'quantity',
+        'label' => 'Cantidad',
+        'format' => 'raw',
+        'value' => function ($model) {
+            // Para requisiciones con un item específico (expanded row)
+            if ($model->type === 'requisition' && isset($model->_expandedItem)) {
+                $item = $model->_expandedItem;
+                $quantity = Yii::$app->formatter->asDecimal($item->quantity_requested, 2);
+                return '<strong>' . $quantity . '</strong>';
+            }
+
+            // Para otros tipos
+            // Si quantity es numérico, formatearlo; si no, devolver tal cual
+            if ($model->quantity !== null && is_numeric($model->quantity)) {
+                return '<strong>' . Yii::$app->formatter->asDecimal($model->quantity, 2) . '</strong>';
+            }
+            return Html::encode($model->quantity ?? '-');
+        },
+        'contentOptions' => ['style' => 'text-align: right;'],
+    ];
+     // Columna de unidad de medida
+        $columns[] = [
+            'attribute' => 'um',
+            'filter' => \yii\bootstrap5\Html::activeDropDownList(
+                $searchModel,
+                'um',
+                \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
+                [
+                    'class' => 'form-control',
+                    'prompt' => '----'
+                ]
+            )
+        ];
 
     // Columna de familia
     $columns[] = [
@@ -334,29 +370,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         ),
     ];
 
-    // Columna de cantidad
-    // Cantidad
-    $columns[] = [
-        'attribute' => 'quantity',
-        'label' => 'Cantidad',
-        'format' => 'raw',
-        'value' => function ($model) {
-            // Para requisiciones con un item específico (expanded row)
-            if ($model->type === 'requisition' && isset($model->_expandedItem)) {
-                $item = $model->_expandedItem;
-                $quantity = Yii::$app->formatter->asDecimal($item->quantity_requested, 2);
-                return '<strong>' . $quantity . '</strong>';
-            }
-
-            // Para otros tipos
-            // Si quantity es numérico, formatearlo; si no, devolver tal cual
-            if ($model->quantity !== null && is_numeric($model->quantity)) {
-                return '<strong>' . Yii::$app->formatter->asDecimal($model->quantity, 2) . '</strong>';
-            }
-            return Html::encode($model->quantity ?? '-');
-        },
-        'contentOptions' => ['style' => 'text-align: right;'],
-    ];
+    
 
     // Unidad de medida
     $columns[] = [
@@ -429,19 +443,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             )
         ];
         
-        // Columna de unidad de medida
-        $columns[] = [
-            'attribute' => 'um',
-            'filter' => \yii\bootstrap5\Html::activeDropDownList(
-                $searchModel,
-                'um',
-                \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
-                [
-                    'class' => 'form-control',
-                    'prompt' => '----'
-                ]
-            )
-        ];
+       
 
         $columns[] = [
             'attribute' => 'total',

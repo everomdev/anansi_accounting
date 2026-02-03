@@ -25,7 +25,8 @@ $(document).on('click', '#btn-delete-recipes', function(event) {
     var keys = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
     
     if (keys.length === 0) {
-        $('#modal-no-selection').modal('show');
+        var noSelectionModal = new bootstrap.Modal(document.getElementById('modal-no-selection'));
+        noSelectionModal.show();
         resetMainButton($mainButton);
         return false;
     }
@@ -75,7 +76,7 @@ function handleDeleteRequest(url, data, $triggerButton) {
 // Función para verificar vínculos antes de eliminar
 function checkLinksBeforeDelete(keys, deleteType) {
     $.ajax({
-        url: '/sub-standard-recipe/check-links',
+        url: checkLinksUrl,
         type: 'POST',
         data: { keys: keys },
         success: function(response) {
@@ -99,17 +100,22 @@ function checkLinksBeforeDelete(keys, deleteType) {
                 $('#confirm-delete-with-links').data('deleteType', deleteType);
                 $('#confirm-delete-with-links').data('keys', keys);
                 
-                $('#modal-links-warning').modal('show');
+                // Usar Bootstrap 5 sintaxis
+                var linksWarningModal = new bootstrap.Modal(document.getElementById('modal-links-warning'));
+                linksWarningModal.show();
             } else {
                 // No hay vínculos, proceder directamente con la eliminación
                 if (deleteType === 'bulk') {
-                    $('#modal-bulk-remove').modal('show');
+                    var bulkModal = new bootstrap.Modal(document.getElementById('modal-bulk-remove'));
+                    bulkModal.show();
                 } else {
-                    $('#modal-confirm-selected-remove').modal('show');
+                    var confirmModal = new bootstrap.Modal(document.getElementById('modal-confirm-selected-remove'));
+                    confirmModal.show();
                 }
             }
         },
         error: function(xhr) {
+            console.error('Error al verificar vínculos:', xhr);
             alert('Error al verificar vínculos: ' + (xhr.responseJSON?.message || 'Error desconocido'));
             resetMainButton($('#btn-delete-recipes'));
         }
@@ -120,7 +126,13 @@ function checkLinksBeforeDelete(keys, deleteType) {
 $(document).on('click', '#delete-current-page, #delete-all, #confirm-delete-selected', function() {
     var $button = $(this);
     var modalId = $button.closest('.modal').attr('id');
-    $('#' + modalId).modal('hide');
+    
+    // Cerrar modal usando Bootstrap 5
+    var modalElement = document.getElementById(modalId);
+    var modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+        modal.hide();
+    }
     
     var requestData = {};
     
@@ -130,7 +142,7 @@ $(document).on('click', '#delete-current-page, #delete-all, #confirm-delete-sele
         requestData = { keys: $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows') };
     }
     
-    handleDeleteRequest('/sub-standard-recipe/delete-sub-recipe', requestData, $button);
+    handleDeleteRequest(deleteSubRecipeUrl, requestData, $button);
 });
 
 // Manejar confirmación después de ver advertencia de vínculos
@@ -139,13 +151,20 @@ $(document).on('click', '#confirm-delete-with-links', function() {
     var deleteType = $button.data('deleteType');
     var keys = $button.data('keys');
     
-    $('#modal-links-warning').modal('hide');
+    // Cerrar modal usando Bootstrap 5
+    var linksWarningElement = document.getElementById('modal-links-warning');
+    var linksWarningModal = bootstrap.Modal.getInstance(linksWarningElement);
+    if (linksWarningModal) {
+        linksWarningModal.hide();
+    }
     
     // Mostrar el modal apropiado según el tipo de eliminación
     if (deleteType === 'bulk') {
-        $('#modal-bulk-remove').modal('show');
+        var bulkModal = new bootstrap.Modal(document.getElementById('modal-bulk-remove'));
+        bulkModal.show();
     } else {
-        $('#modal-confirm-selected-remove').modal('show');
+        var confirmModal = new bootstrap.Modal(document.getElementById('modal-confirm-selected-remove'));
+        confirmModal.show();
     }
 });
 
@@ -154,17 +173,19 @@ $(document).on('click', '#download-recipes-complete-excel', function(e) {
     e.preventDefault();
     var selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
     if (selectedIds.length === 0) {
-        $('#modal-no-export-selection').modal('show');
+        var noExportModal = new bootstrap.Modal(document.getElementById('modal-no-export-selection'));
+        noExportModal.show();
         return false;
     }
-    $('#modal-export-recipes').modal('show');
+    var exportModal = new bootstrap.Modal(document.getElementById('modal-export-recipes'));
+    exportModal.show();
 });
 
 // Exportar solo las seleccionadas
 $(document).on('click', '#export-current-page', function() {
     var selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
     if (selectedIds.length > 0) {
-        window.location.href = '/standard-recipe/export-recipes-to-excel?id=' + selectedIds.join(',') + '&type=sub';
+        window.location.href = exportRecipesUrl + '?id=' + selectedIds.join(',') + '&type=sub';
     }
 });
 
@@ -172,6 +193,6 @@ $(document).on('click', '#export-current-page', function() {
 $(document).on('click', '#export-all', function() {
     var selectedIds = $('#sub-standard-recipes-grid').yiiGridView('getSelectedRows');
     if (selectedIds.length > 0) {
-        window.location.href = '/standard-recipe/export-recipes-to-excel?id=' + selectedIds.join(',') + '&all=true&type=sub';
+        window.location.href = exportRecipesUrl + '?id=' + selectedIds.join(',') + '&all=true&type=sub';
     }
 });
