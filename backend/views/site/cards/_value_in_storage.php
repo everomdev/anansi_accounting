@@ -4,58 +4,7 @@
 /** @var $ingredients \common\models\IngredientStock[] */
 
 $ingredients = $business->ingredientStocks;
-// Log detallado de todos los ingredientes y sus valores
-$logDetails = [];
-$totalCalculado = 0;
-foreach ($ingredients as $ingredient) {
-    // Obtener valores reales que se usan en el cálculo
-    $cantidad = $ingredient->quantity;
-    $precioUnitarioUltimo = $ingredient->lastUnitPrice; // Precio ajustado más reciente de stock_prices
-    $valorEnDinero = $ingredient->valueInMoney; // Calcula: quantity * lastUnitPrice
-    $totalCalculado += $valorEnDinero;
-    
-    $logDetails[] = [
-        'id' => $ingredient->id,
-        'codigo' => $ingredient->key,
-        'nombre' => $ingredient->name,
-        'cantidad_en_almacen' => $cantidad,
-        'unidad_medida' => $ingredient->unitOfMeasurement->name ?? 'N/A',
-        'ultimo_precio_unitario' => $precioUnitarioUltimo, // De tabla stock_prices (adjusted_price)
-        'valor_en_dinero' => $valorEnDinero, // = cantidad * ultimo_precio_unitario
-        'calculo' => sprintf('%s x %s = %s', $cantidad, $precioUnitarioUltimo, $valorEnDinero),
-    ];
-}
-
-// Construir la expresión de suma para el log
-$sumatoriaExpresion = [];
-foreach ($logDetails as $detalle) {
-    $sumatoriaExpresion[] = sprintf('%s (%s)', $detalle['valor_en_dinero'], $detalle['nombre']);
-}
-$expresionCompleta = implode(' + ', $sumatoriaExpresion) . ' = ' . $totalCalculado;
-
-// Registrar log warning con todos los detalles
-\Yii::warning([
-    'mensaje' => 'Cálculo de dinero en almacén - Detalle completo de ingredientes',
-    'business_id' => $business->id,
-    'business_name' => $business->name,
-    'total_ingredientes' => count($ingredients),
-    'total_calculado' => $totalCalculado,
-    'sumatoria_completa' => $expresionCompleta,
-    'ingredientes_detalle' => $logDetails,
-    'timestamp' => date('Y-m-d H:i:s'),
-], 'storage_value_calculation');
-
-// Log adicional solo con la sumatoria
-\Yii::warning([
-    'mensaje' => 'SUMATORIA DE VALORES EN DINERO',
-    'expresion' => $expresionCompleta,
-    'desglose' => array_map(function($detalle) {
-        return sprintf('%s: %s', $detalle['nombre'], $detalle['valor_en_dinero']);
-    }, $logDetails),
-    'resultado_total' => $totalCalculado,
-], 'storage_value_sum');
-
-$total = $totalCalculado;
+$total = array_sum(\yii\helpers\ArrayHelper::getColumn($ingredients, 'valueInMoney'));
 
 // CSS personalizado para el nuevo diseño compacto
 $this->registerCss("
