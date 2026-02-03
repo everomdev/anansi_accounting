@@ -350,4 +350,136 @@ function updateIngredientUM() {
 // Ejecutar al cargar la página para ingredientes ya seleccionados
 $(document).ready(function() {
     updateIngredientUM();
+    checkStockAvailability(); // Verificar stock al cargar
+});
+
+// Función para verificar disponibilidad de stock (solo para salidas)
+function checkStockAvailability() {
+    var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    
+    // Solo validar para movimientos de salida
+    if (movementType !== movementTypeOutput) {
+        enableSaveButton();
+        clearStockError();
+        return;
+    }
+    
+    var ingredientId = $('#movement-ingredient_id').val();
+    var quantity = parseFloat($('#movement-quantity').val()) || 0;
+    
+    // Si no hay ingrediente o cantidad, no validar
+    if (!ingredientId || quantity <= 0) {
+        enableSaveButton();
+        clearStockError();
+        return;
+    }
+    
+    // Limpiar errores anteriores antes de hacer la petición
+    clearStockError();
+    
+    // Hacer petición AJAX para verificar el stock disponible
+    $.ajax({
+        url: '/movement/check-stock-availability',
+        type: 'POST',
+        data: {
+            ingredient_id: ingredientId,
+            quantity: quantity
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.available) {
+                enableSaveButton();
+                clearStockError();
+            } else {
+                disableSaveButton();
+                showStockError(response.message || 'No hay suficiente stock disponible');
+            }
+        },
+        error: function() {
+            // En caso de error, permitir el guardado (la validación del servidor lo manejará)
+            enableSaveButton();
+            clearStockError();
+        }
+    });
+}
+
+// Función para deshabilitar el botón de guardar
+function disableSaveButton() {
+    var saveButton = $('#movement-save-button');
+    if (saveButton.length === 0) {
+        // Fallback si no se encuentra por ID
+        saveButton = $('#movement-form').find('button[type="submit"]');
+    }
+    saveButton.prop('disabled', true);
+    saveButton.addClass('disabled');
+}
+
+// Función para habilitar el botón de guardar
+function enableSaveButton() {
+    var saveButton = $('#movement-save-button');
+    if (saveButton.length === 0) {
+        // Fallback si no se encuentra por ID
+        saveButton = $('#movement-form').find('button[type="submit"]');
+    }
+    saveButton.prop('disabled', false);
+    saveButton.removeClass('disabled');
+}
+
+// Función para mostrar error de stock
+function showStockError(message) {
+    var quantityField = $('#movement-quantity');
+    var fieldGroup = quantityField.closest('.form-group, .col-sm-12, .col-md-4, .col-lg-4, .col-xl-4');
+    
+    // Remover TODOS los errores anteriores de stock (incluso duplicados)
+    $('.stock-error-feedback').remove();
+    quantityField.removeClass('stock-error');
+    
+    // Agregar nuevo error
+    quantityField.addClass('is-invalid stock-error');
+    var errorDiv = $('<div class="invalid-feedback stock-error-feedback" style="display: block;">' + message + '</div>');
+    
+    // Insertar después del input group si existe, o después del input
+    var inputGroup = quantityField.closest('.input-group');
+    if (inputGroup.length > 0) {
+        // Verificar que no exista ya un error después del input-group
+        if (inputGroup.next('.stock-error-feedback').length === 0) {
+            errorDiv.insertAfter(inputGroup);
+        }
+    } else {
+        // Verificar que no exista ya un error después del input
+        if (quantityField.next('.stock-error-feedback').length === 0) {
+            errorDiv.insertAfter(quantityField);
+        }
+    }
+}
+
+// Función para limpiar error de stock
+function clearStockError() {
+    var quantityField = $('#movement-quantity');
+    
+    // Remover TODOS los errores de stock del documento
+    $('.stock-error-feedback').remove();
+    quantityField.removeClass('stock-error is-invalid');
+}
+
+// Validar stock cuando cambia el ingrediente o la cantidad
+$(document).on('change', '#movement-ingredient_id, #movement-quantity', function() {
+    var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    
+    if (movementType === movementTypeOutput) {
+        checkStockAvailability();
+    }
+});
+
+// También validar mientras se escribe la cantidad (con debounce)
+var stockCheckTimeout;
+$(document).on('input', '#movement-quantity', function() {
+    var movementType = (typeof currentMovementType !== 'undefined') ? currentMovementType : $('#movement-type').val();
+    
+    if (movementType === movementTypeOutput) {
+        clearTimeout(stockCheckTimeout);
+        stockCheckTimeout = setTimeout(function() {
+            checkStockAvailability();
+        }, 500); // Esperar 500ms después de que el usuario deje de escribir
+    }
 });

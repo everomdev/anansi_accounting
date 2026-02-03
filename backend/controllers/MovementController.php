@@ -581,6 +581,11 @@ class MovementController extends Controller
         $availableQuantity = $ingredient->quantity ?? 0;
         $available = $availableQuantity >= $quantity;
         
+        $message = '';
+        if (!$available) {
+            $message = "No hay suficiente stock disponible. Cantidad disponible: {$availableQuantity} {$ingredient->portion_um}, Cantidad solicitada: {$quantity} {$ingredient->portion_um}";
+        }
+        
         return [
             'success' => true,
             'available' => $available,
@@ -588,7 +593,8 @@ class MovementController extends Controller
             'requestedQuantity' => $quantity,
             'insufficientQuantity' => max(0, $quantity - $availableQuantity),
             'ingredientName' => $ingredient->ingredient,
-            'um' => $ingredient->portion_um
+            'um' => $ingredient->portion_um,
+            'message' => $message
         ];
     }
 

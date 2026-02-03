@@ -157,6 +157,7 @@ class Movement extends \yii\db\ActiveRecord
             [['provider'], 'validateProvider'],
             [['consumption_center_id'], 'validateConsumptionCenter'],
             [['required_date'], 'validateRequiredDate'],
+            [['quantity'], 'validateStockAvailability'],
             
             // Campos de requisiciones extemporáneas
             [['is_extemporaneous'], 'boolean'],
@@ -567,6 +568,45 @@ class Movement extends \yii\db\ActiveRecord
         
         if (!$validation['valid']) {
             $this->addError($attribute, $validation['message']);
+        }
+    }
+    
+    /**
+     * Valida que haya suficiente stock disponible para movimientos de salida
+     */
+    public function validateStockAvailability($attribute, $params)
+    {
+        // Solo validar para movimientos de salida
+        if ($this->type !== self::TYPE_OUTPUT) {
+            return;
+        }
+        
+        // Si no hay ingrediente o cantidad, no validar (otras reglas lo manejan)
+        if (empty($this->ingredient_id) || empty($this->quantity)) {
+            return;
+        }
+        
+        // No validar durante validación AJAX, el JavaScript ya maneja esto
+        // Solo validar en el submit final del formulario
+        if (Yii::$app->request->isAjax && Yii::$app->request->post('ajax') === 'movement-form') {
+            return;
+        }
+        
+        // Obtener el ingrediente
+        $ingredient = IngredientStock::findOne($this->ingredient_id);
+        
+        if (!$ingredient) {
+            $this->addError($attribute, 'El ingrediente seleccionado no existe.');
+            return;
+        }
+        
+        // Verificar si hay suficiente cantidad disponible
+        $availableQuantity = $ingredient->quantity ?? 0;
+        
+        if ($this->quantity > $availableQuantity) {
+            $this->addError($attribute, 
+                "No hay suficiente stock disponible. Cantidad disponible: {$availableQuantity} {$ingredient->portion_um}, Cantidad solicitada: {$this->quantity} {$ingredient->portion_um}"
+            );
         }
     }
     

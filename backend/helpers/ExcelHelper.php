@@ -144,6 +144,7 @@ class ExcelHelper
         $sheet->setTitle('Proveedores');
 
         // Títulos en español; incluir 'Nombre del negocio' como primera columna
+        // Agregamos columnas individuales para cada método de pago con su descripción entre paréntesis
         $headers = [
             'Nombre del negocio',
             'RFC',
@@ -152,12 +153,18 @@ class ExcelHelper
             'Teléfono',
             'Teléfono (contacto)',
             'Dirección',
-            'Método de pago',
             'Cuenta/Referencia',
             'Días de crédito',
             'Ventajas',
             'Desventajas',
-            'Observaciones'
+            'Observaciones',
+            // Columnas de métodos de pago con descripción
+            'Metodo de pago 1 (Efectivo)',
+            'Metodo de pago 2 (Transferencia Bancaria)',
+            'Metodo de pago 3 (Cheque)',
+            'Metodo de pago 4 (Tarjeta de Credito)',
+            'Metodo de pago 5 (Tarjeta de Debito)',
+            'Metodo de pago 6 (Otro Metodo)'
         ];
 
         // Escribir cabeceras
@@ -179,25 +186,10 @@ class ExcelHelper
         ];
 
         // Aplicar centrado a un rango suficientemente grande para la plantilla/exports
-        // A1:M500 cubre cabeceras y filas de datos esperadas
-        $sheet->getStyle('A1:M500')->applyFromArray($centerStyle);
+        // A1:S500 cubre cabeceras y filas de datos esperadas (ampliado para incluir columnas de pago)
+        $sheet->getStyle('A1:S500')->applyFromArray($centerStyle);
 
-    // Validación para la columna 'Método de pago' (lista fija)
-    $validation = $sheet->getCell('H2')->getDataValidation();
-        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-        $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-        $validation->setAllowBlank(true);
-        $validation->setShowDropDown(true);
-        $validation->setShowInputMessage(true);
-        $validation->setShowErrorMessage(true);
-        $validation->setPrompt('Selecciona un método de pago (opcional).');
-    // Lista literal de métodos de pago (select fijo)
-    // Crear hoja oculta con mapeo descripción => código para métodos de pago
-    $paymentSheet = $spreadsheet->createSheet();
-    $paymentSheet->setTitle('MetodosPago');
-    $paymentSheet->setCellValue('A1', 'Descripción');
-    $paymentSheet->setCellValue('B1', 'Código');
-
+    // Definir mapeo de métodos de pago
     $paymentMapping = [
         'cash'        => Yii::t('app', 'Efectivo'),
         'transfer'    => Yii::t('app', 'Transferencia Bancaria'),
@@ -207,49 +199,44 @@ class ExcelHelper
         'other'       => Yii::t('app', 'Otro Método')
     ];
 
-    $row = 2;
-    foreach ($paymentMapping as $code => $label) {
-        $paymentSheet->setCellValue("A{$row}", $label); // texto visible en Excel
-        $paymentSheet->setCellValue("B{$row}", $code);  // código que se usará al importar
-        $row++;
+    // Configurar validación con dropdown SI para las columnas de métodos de pago (M a R)
+    // Las validaciones comienzan en la fila 2 (datos empiezan ahí)
+    // Columnas: M=Efectivo, N=Transferencia, O=Cheque, P=Tarjeta Crédito, Q=Tarjeta Débito, R=Otro
+    $paymentColumns = ['M', 'N', 'O', 'P', 'Q', 'R'];
+    foreach ($paymentColumns as $col) {
+        $validation = $sheet->getCell($col . '2')->getDataValidation();
+        $validation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $validation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $validation->setAllowBlank(true); // permitir SI, NO o dejar en blanco
+        $validation->setShowDropDown(true);
+        $validation->setShowInputMessage(true);
+        $validation->setShowErrorMessage(true);
+        $validation->setPromptTitle('Marcar método de pago');
+        $validation->setPrompt('Selecciona "SI", "NO" o deja la celda en blanco');
+        $validation->setErrorTitle('Valor inválido');
+        $validation->setError('Solo puedes seleccionar "SI", "NO" o dejar la celda vacía');
+        $validation->setFormula1('"SI,NO"');
+        
+        // Aplicar validación desde la fila 2 hasta 500
+        for ($i = 2; $i <= 500; $i++) {
+            $sheet->getCell($col . $i)->setDataValidation(clone $validation);
+        }
     }
 
-    $paymentSheet->getColumnDimension('A')->setWidth(35);
-    $paymentSheet->getColumnDimension('B')->setWidth(20);
-
-    // Ocultar la hoja de métodos de pago
-    $paymentSheet->setSheetState(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::SHEETSTATE_HIDDEN);
-
-    // Usar el rango de la columna A como lista de validación (mostrar etiquetas en español)
-    $paymentList = "='MetodosPago'!\$A\$2:\$A\$" . ($row - 1);
-    $validation->setFormula1($paymentList);
-
-        // Aplicar validación a muchas filas
-        for ($i = 2; $i <= 500; $i++) {
-            $sheet->getCell('H' . $i)->setDataValidation(clone $validation);
-        }
-
-        // Anchuras
-    foreach (range('A', 'M') as $c) {
+        // Anchuras - ahora incluye las nuevas columnas de métodos de pago
+    foreach (range('A', 'R') as $c) {
             $spreadsheet->getActiveSheet()->getColumnDimension($c)->setAutoSize(true);
         }
 
-        // Si se pasaron providers, escribirlos
+        // Si se pasaron providers, escribirlos (comienzan en fila 2)
         if (is_array($providers) && count($providers) > 0) {
             $row = 2;
             foreach ($providers as $p) {
                 $col = 'A';
-                // Convert payment_method codes to human labels for the template
-                if (is_array($p->payment_method)) {
-                    $pmLabels = [];
-                    foreach ($p->payment_method as $pmCode) {
-                        $pmLabels[] = $paymentMapping[$pmCode] ?? $pmCode;
-                    }
-                    $pmValue = implode(', ', $pmLabels);
-                } else {
-                    $pmValue = $paymentMapping[$p->payment_method] ?? $p->payment_method;
-                }
-
+                
+                // Determinar qué métodos de pago tiene este proveedor
+                $providerMethods = is_array($p->payment_method) ? $p->payment_method : explode(',', $p->payment_method ?? '');
+                
                 $vals = [
                     $p->business_name,
                     $p->rfc,
@@ -258,12 +245,18 @@ class ExcelHelper
                     $p->phone,
                     $p->second_phone,
                     $p->address,
-                    $pmValue,
                     $p->account,
                     $p->credit_days,
                     $p->advantages,
                     $p->disadvantages,
                     $p->observations,
+                    // Marcar con "SI" los métodos de pago que tiene el proveedor
+                    in_array('cash', $providerMethods) ? 'SI' : '',
+                    in_array('transfer', $providerMethods) ? 'SI' : '',
+                    in_array('check', $providerMethods) ? 'SI' : '',
+                    in_array('credit_card', $providerMethods) ? 'SI' : '',
+                    in_array('debit_card', $providerMethods) ? 'SI' : '',
+                    in_array('other', $providerMethods) ? 'SI' : '',
                 ];
                 foreach ($vals as $v) {
                     $sheet->setCellValue($col . $row, $v);
@@ -310,9 +303,10 @@ class ExcelHelper
             // iterate rows like importIngredients pattern
             foreach ($rowIterator as $row) {
                 $rowIndex = $row->getRowIndex();
-                if ($rowIndex == 1) continue; // skip header
+                // Saltar solo fila 1 (encabezados)
+                if ($rowIndex == 1) continue;
 
-                $cellIterator = $row->getCellIterator('A', 'M');
+                $cellIterator = $row->getCellIterator('A', 'R'); // Ampliado a R para incluir columnas de métodos de pago
                 $cellIterator->setIterateOnlyExistingCells(false);
 
                 // read first cell - business name - if empty, assume end of data
@@ -347,23 +341,40 @@ class ExcelHelper
                 // G - Dirección
                 $data['address'] = trim((string)self::resolveCellValue($cellIterator->current()));
                 $cellIterator->next();
-                // H - Método de pago (puede ser lista separada por comas)
-                $pmRaw = trim((string)self::resolveCellValue($cellIterator->current()));
-                $cellIterator->next();
-                // I - Cuenta/Referencia
+                // H - Cuenta/Referencia (la columna de método de pago ya no existe aquí)
                 $data['account'] = trim((string)self::resolveCellValue($cellIterator->current()));
                 $cellIterator->next();
-                // J - Días de crédito
+                // I - Días de crédito
                 $data['credit_days'] = trim((string)self::resolveCellValue($cellIterator->current()));
                 $cellIterator->next();
-                // K - Ventajas
+                // J - Ventajas
                 $data['advantages'] = trim((string)self::resolveCellValue($cellIterator->current()));
                 $cellIterator->next();
-                // L - Desventajas
+                // K - Desventajas
                 $data['disadvantages'] = trim((string)self::resolveCellValue($cellIterator->current()));
                 $cellIterator->next();
-                // M - Observaciones
+                // L - Observaciones
                 $data['observations'] = trim((string)self::resolveCellValue($cellIterator->current()));
+                $cellIterator->next();
+                
+                // M-R: Leer columnas de métodos de pago (checkboxes)
+                // M - Efectivo
+                $cashCheck = trim(strtoupper((string)self::resolveCellValue($cellIterator->current())));
+                $cellIterator->next();
+                // N - Transferencia Bancaria
+                $transferCheck = trim(strtoupper((string)self::resolveCellValue($cellIterator->current())));
+                $cellIterator->next();
+                // O - Cheque
+                $checkCheck = trim(strtoupper((string)self::resolveCellValue($cellIterator->current())));
+                $cellIterator->next();
+                // P - Tarjeta de Crédito
+                $creditCardCheck = trim(strtoupper((string)self::resolveCellValue($cellIterator->current())));
+                $cellIterator->next();
+                // Q - Tarjeta de Débito
+                $debitCardCheck = trim(strtoupper((string)self::resolveCellValue($cellIterator->current())));
+                $cellIterator->next();
+                // R - Otro Método
+                $otherCheck = trim(strtoupper((string)self::resolveCellValue($cellIterator->current())));
 
                 $data['business_id'] = $business->id;
 
@@ -371,18 +382,15 @@ class ExcelHelper
                 $model = new \common\models\Provider(['business_id' => $business->id]);
                 $model->load($data, '');
 
-                // Normalize payment methods: accept comma-separated labels or codes
+                // Construir array de métodos de pago basado en las columnas marcadas
                 $methods = [];
-                if ($pmRaw !== '') {
-                    $parts = array_map('trim', explode(',', $pmRaw));
-                    foreach ($parts as $p) {
-                        if ($p === '') continue;
-                        // map label to code if possible
-                        $mapped = $paymentMap[$p] ?? null;
-                        if ($mapped) $methods[] = $mapped;
-                        else $methods[] = $p; // unknown, keep raw
-                    }
-                }
+                if ($cashCheck === 'SI') $methods[] = 'cash';
+                if ($transferCheck === 'SI') $methods[] = 'transfer';
+                if ($checkCheck === 'SI') $methods[] = 'check';
+                if ($creditCardCheck === 'SI') $methods[] = 'credit_card';
+                if ($debitCardCheck === 'SI') $methods[] = 'debit_card';
+                if ($otherCheck === 'SI') $methods[] = 'other';
+                
                 // If no method provided, set default 'other' to satisfy validation
                 if (empty($methods)) $methods[] = 'other';
                 $model->payment_method = $methods;

@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         </div>        <div class="card-footer">
             <div class="form-group">
-                <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success']) ?>
+                <?= Html::submitButton(Yii::t('app', 'Save'), ['class' => 'btn btn-success', 'id' => 'movement-save-button']) ?>
                 <?= Html::a(Yii::t('app', 'Cancel'), ['movement/index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
