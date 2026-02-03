@@ -625,11 +625,11 @@ public function actionExportPlantillaInventario()
                 $fechaActualUsuario = new \DateTime($fechaUsuario);
                 $diferenciaDias = $fechaActualUsuario->diff($fechaPlantilla)->days;
                 
-                if ($diferenciaDias > 1) {
+                /*if ($diferenciaDias > 1) {
                     $fechaFormateada = $fechaPlantilla->format('d/m/Y H:i');
                     Yii::$app->session->setFlash('error', "Esta plantilla es muy antigua. Fue descargada el {$fechaFormateada}. Solo se pueden importar plantillas descargadas hoy o ayer. Por favor, descarga una nueva plantilla.");
                     return $this->redirect(['index']);
-                }
+                }*/
 
                 // Obtener centros de consumo del usuario para mapear las columnas
                 $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
