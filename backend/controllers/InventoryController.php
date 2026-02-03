@@ -436,15 +436,15 @@ public function actionExportPlantillaInventario()
     }
 
     // Configurar protección del libro para evitar nuevas hojas
-    $spreadsheet->getSecurity()->setLockStructure(true);
-    $spreadsheet->getSecurity()->setLockWindows(true);
+    //$spreadsheet->getSecurity()->setLockStructure(true);
+    //$spreadsheet->getSecurity()->setLockWindows(true);
     // setRevisions() fue eliminado ya que no existe
 
     // ====== 2. FECHA ======
     $sheet->setCellValue('A2', 'Fecha de generación:');
     $sheet->setCellValue('B2', $fechaActual);
     $sheet->getStyle('A2:B2')->getFont()->setBold(true);
-    $sheet->getStyle('B2')->getProtection()->setLocked(true); // Solo la fecha protegida
+    //$sheet->getStyle('B2')->getProtection()->setLocked(true); // Solo la fecha protegida
 
     // ====== 2.1. ALERTA TEMPORAL ======
     $sheet->mergeCells('A3:H3');
@@ -571,12 +571,12 @@ public function actionExportPlantillaInventario()
     $sheet->setShowGridlines(false);
 
     // ====== 8. PROTECCIÓN (solo fecha y alerta bloqueadas) ======
-    $protection = $sheet->getProtection();
-    $protection->setSheet(true);
-    $protection->setPassword('inventario');
-    $sheet->getStyle('A2:B2')->getProtection()->setLocked(true); // Fecha protegida
-    $sheet->getStyle('A3:H3')->getProtection()->setLocked(true); // Alerta protegida
-    $sheet->getStyle("A6:{$lastCol}{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
+    //$protection = $sheet->getProtection();
+    //$protection->setSheet(true);
+    //$protection->setPassword('inventario');
+    //$sheet->getStyle('A2:B2')->getProtection()->setLocked(true); // Fecha protegida
+    //$sheet->getStyle('A3:H3')->getProtection()->setLocked(true); // Alerta protegida
+    //$sheet->getStyle("A6:{$lastCol}{$lastRow}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
 
     // ====== 9. CONFIGURACIÓN ADICIONAL PARA BLOQUEAR HOJAS ======
     // Configurar protección del libro con contraseña
