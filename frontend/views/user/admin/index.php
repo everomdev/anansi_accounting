@@ -54,7 +54,7 @@ $module = Yii::$app->getModule('user');
     position: sticky;
     top: 0;
     background: #e9ecef;
-    z-index: 10;
+    z-index: 5;
     border-bottom: 2px solid #dee2e6;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     font-weight: 600;
@@ -68,7 +68,7 @@ $module = Yii::$app->getModule('user');
     position: sticky;
     left: 0;
     background: #f8f9fa;
-    z-index: 5;
+    z-index: 3;
     min-width: 120px;
     border-right: 2px solid #dee2e6;
     box-shadow: 2px 0 4px rgba(0,0,0,0.1);
@@ -77,7 +77,7 @@ $module = Yii::$app->getModule('user');
 /* Header de la primera columna (fijo tanto arriba como a la izquierda) */
 .fixed-table th:first-child {
     background: #e9ecef;
-    z-index: 15; /* Mayor z-index para estar sobre todo */
+    z-index: 6; /* Menor que el dropdown del navbar */
     border-right: 2px solid #dee2e6;
     border-bottom: 2px solid #dee2e6;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.15);

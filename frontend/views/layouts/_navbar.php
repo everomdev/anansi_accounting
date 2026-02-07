@@ -4,6 +4,43 @@ use yii\helpers\Url;
 use yii\bootstrap5\Html;
 use rmrevin\yii\fontawesome\FAS;
 
+// Agregar estilo para el dropdown del navbar
+$this->registerCss("
+.navbar-dropdown .dropdown-menu {
+    z-index: 10000 !important;
+}
+.navbar-dropdown.show {
+    z-index: 10000 !important;
+}
+.dropdown-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.dropdown-close-btn:hover {
+    background-color: #f8f9fa;
+    color: #dc3545;
+}
+.navbar-dropdown .dropdown-menu {
+    position: relative;
+    padding-top: 35px;
+}
+");
+
 ?>
 <nav
     class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
@@ -37,6 +74,11 @@ use rmrevin\yii\fontawesome\FAS;
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
+                    <!-- Botón de cerrar -->
+                    <button type="button" class="dropdown-close-btn" id="closeDropdown" aria-label="Cerrar">
+                        <i class="bx bx-x"></i>
+                    </button>
+                    
                     <li>
                         <a class="dropdown-item" href="#">
                             <div class="d-flex">
@@ -100,3 +142,86 @@ use rmrevin\yii\fontawesome\FAS;
         </ul>
     </div>
 </nav>
+
+<?php
+// Script para reinicializar dropdowns de Bootstrap después de Pjax
+$this->registerJs("
+// Función para inicializar todos los dropdowns
+function initDropdowns() {
+    // Verificar si Bootstrap está disponible
+    if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+        var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle=\"dropdown\"]'));
+        
+        dropdownElementList.map(function (dropdownToggleEl) {
+            
+            // Destruir instancia previa si existe para evitar duplicados
+            var existingInstance = bootstrap.Dropdown.getInstance(dropdownToggleEl);
+            if (existingInstance) {
+                existingInstance.dispose();
+            }
+            
+            // Crear nueva instancia
+            var newInstance = new bootstrap.Dropdown(dropdownToggleEl, {
+                autoClose: true
+            });
+            
+            // Remover listeners previos para evitar duplicados
+            dropdownToggleEl.removeEventListener('click', dropdownToggleEl._customClickHandler);
+            
+            // Agregar listener manual con capture para ejecutarse ANTES que otros listeners
+            dropdownToggleEl._customClickHandler = function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                var instance = bootstrap.Dropdown.getInstance(dropdownToggleEl);
+                if (instance) {
+                    instance.toggle();
+                    
+                    // Verificar si se aplicó la clase 'show'
+                    setTimeout(function() {
+                        var menu = dropdownToggleEl.nextElementSibling;
+                        var parent = dropdownToggleEl.closest('.dropdown');
+                        // Si no se mostró, intentar manualmente
+                        if (menu && !menu.classList.contains('show')) {
+                            menu.classList.add('show');
+                            parent.classList.add('show');
+                            menu.setAttribute('data-bs-popper', 'none');
+                        }
+                    }, 50);
+                } else {
+                    console.error('No se encontró instancia de dropdown');
+                }
+            };
+            
+            // Usar capture: true para ejecutarse antes que los listeners en bubbling
+            dropdownToggleEl.addEventListener('click', dropdownToggleEl._customClickHandler, true);
+            
+            return newInstance;
+        });
+    } else {
+        console.error('Bootstrap o Bootstrap.Dropdown NO está disponible!');
+    }
+}
+
+// Inicializar al cargar la página
+initDropdowns();
+
+// Reinicializar después de cada request de Pjax
+$(document).on('pjax:end', function() {
+    initDropdowns();
+});
+
+// Manejar el botón de cerrar del dropdown
+$(document).on('click', '#closeDropdown', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    var dropdownMenu = $(this).closest('.dropdown-menu');
+    var dropdownParent = dropdownMenu.closest('.dropdown');
+    
+    dropdownMenu.removeClass('show');
+    dropdownParent.removeClass('show');
+});
+
+", \yii\web\View::POS_READY);
+?>
