@@ -818,7 +818,7 @@ public static function generateIngredientsTemplate($id)
         $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Movimiento
         $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(15); // Clave
         $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(20); // Fecha
+        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(22); // Fecha
         $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(25); // Proveedor
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(25); // Tipo de Pago
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(15); // Factura
@@ -1503,47 +1503,27 @@ if ($ccRow > 2) {
         // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
         $spreadsheet->getActiveSheet()->setSelectedCell('A2');
 
-        // APLICAR ASTERISCOS ROJOS AL FINAL - Enfoque usando símbolos Unicode y formato
+        // APLICAR INDICADORES ROJOS AL FINAL - [T] = Todos, [E] = Entrada, [S] = Salida
         $mainSheet = $spreadsheet->getActiveSheet();
         
-        // Definir estilo para asteriscos rojos
-        $asteriskStyle = [
-            'font' => [
-                'color' => ['rgb' => 'FF0000'],
-                'bold' => true,
-                'size' => 14
-            ]
+        // Array de campos con sus indicadores
+        $fieldsWithIndicators = [
+            'A1' => ['label' => 'Movimiento', 'indicator' => '[T]'],
+            'B1' => ['label' => 'Fecha (año-mes-dia)', 'indicator' => '[T]'], 
+            'C1' => ['label' => 'Insumo', 'indicator' => '[T]'],
+            'E1' => ['label' => 'Proveedor', 'indicator' => ''], // Asterisco
+            'F1' => ['label' => 'Tipo de Pago', 'indicator' => '[E]'],
+            'H1' => ['label' => 'Centro de Consumo', 'indicator' => '[S]'],
+            'I1' => ['label' => 'Cantidad', 'indicator' => '[T]'], 
+            'J1' => ['label' => 'Precio de Compra', 'indicator' => '[E]'],
+            'L1' => ['label' => 'Precio Unitario', 'indicator' => ''], // Asterisco
+            'M1' => ['label' => 'Total', 'indicator' => ''] // Asterisco
         ];
         
-        // Array de campos obligatorios con sus posiciones
-        $requiredFields = [
-            'A1' => 'Movimiento',
-            'B1' => 'Fecha (año-mes-dia)', 
-            'C1' => 'Insumo',
-            'E1' => 'Proveedor',
-            'F1' => 'Tipo de Pago',
-            'H1' => 'Centro de Consumo',
-            'I1' => 'Cantidad', 
-            'J1' => 'Precio de Compra',
-            'L1' => 'Precio Unitario',
-            'M1' => 'Total'
-        ];
-        
-        // Aplicar texto normal + asterisco rojo usando approach de columnas adyacentes
-        foreach($requiredFields as $cell => $label) {
-            // Establecer el texto normal en la celda principal
-            $mainSheet->setCellValue($cell, $label);
-            
-            // Crear columna auxiliar para asterisco (usando columnas ocultas)
-            $nextCol = chr(ord(substr($cell, 0, 1)) + 1);
-            if($nextCol > 'Z') $nextCol = 'AA'; // Manejar overflow
-            $asteriskCell = $nextCol . '1';
-            
-            // Si la columna auxiliar ya tiene contenido, usar una diferente
-            if(in_array($nextCol, ['D', 'G', 'K', 'N'])) {
-                // Estas columnas están ocupadas, usar approach diferente
-                // Agregar asterisco directamente al texto
-            $mainSheet->setCellValue($cell, $label . ' *');
+        // Aplicar texto normal + indicador rojo
+        foreach($fieldsWithIndicators as $cell => $data) {
+            $label = $data['label'];
+            $indicator = $data['indicator'];
             
             // Enfoque directo: crear RichText paso a paso de forma simple
             $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
@@ -1551,10 +1531,10 @@ if ($ccRow > 2) {
             // Agregar el texto normal
             $richText->createText($label . ' ');
             
-            // Agregar el asterisco rojo
-            $asteriskRun = $richText->createTextRun('*');
-            $asteriskRun->getFont()->setBold(true);
-            $asteriskRun->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFF0000'));
+            // Agregar el indicador rojo
+            $indicatorRun = $richText->createTextRun($indicator);
+            $indicatorRun->getFont()->setBold(true);
+            $indicatorRun->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFF0000'));
             
             // Asignar el RichText a la celda
             $mainSheet->setCellValue($cell, $richText);
@@ -1574,7 +1554,6 @@ if ($ccRow > 2) {
             ];
             
             $mainSheet->getStyle($cell)->applyFromArray($baseStyle);
-            }
         }
 
         $writer = new Xlsx($spreadsheet);
