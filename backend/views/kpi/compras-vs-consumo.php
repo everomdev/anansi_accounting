@@ -25,6 +25,9 @@ function getMonthName($month) {
 $this->title = 'Compras vs Consumo';
 $this->params['breadcrumbs'][] = ['label' => 'KPI\'s y Control', 'url' => ['#']];
 $this->params['breadcrumbs'][] = $this->title;
+
+// Obtener filtro de estado desde GET
+$estadoFiltro = Yii::$app->request->get('estado', '');
 ?>
 <div class="kpi-compras-consumo">
     
@@ -47,7 +50,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <?php $form = ActiveForm::begin([
                                         'method' => 'get',
                                         'action' => ['kpi/compras-vs-consumo'],
-                                        'options' => ['class' => 'form-inline']
+                                        'options' => ['class' => 'form-inline', 'id' => 'filter-form']
                                     ]); ?>
                                     
                                     <div class="form-group me-3">
@@ -68,10 +71,13 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <div class="form-group me-3">
                                         <label class="me-2">Año:</label>
                                         <?= Html::dropDownList('year', $selectedYear, 
-                                            array_merge([0 => 'TODOS'], $years),
+                                            $years,
                                             ['class' => 'form-control']
                                         ) ?>
                                     </div>
+                                    
+                                    <!-- Campo oculto para el filtro de estado -->
+                                    <?= Html::hiddenInput('estado', $estadoFiltro, ['id' => 'estado-filter']) ?>
                                     
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-filter"></i> Filtrar
@@ -98,29 +104,50 @@ $this->params['breadcrumbs'][] = $this->title;
                         ?>
                         <br>
                         <small><strong>Total de ingredientes:</strong> <?= count($dataProvider->allModels) ?></small>
+                        <?php if ($estadoFiltro): ?>
+                        <br>
+                        <small><strong>Filtro aplicado:</strong> <?= ucfirst($estadoFiltro) ?></small>
+                        <?php endif; ?>
                     </div>
                     
                     <!-- Cálculo de estadísticas -->
                     <?php
-                    $totalInsumos = count($dataProvider->allModels);
-                    $faltantes = count(array_filter($dataProvider->allModels, function($item) {
+                    $allModels = $dataProvider->allModels;
+                    $totalInsumos = count($allModels);
+                    $faltantes = count(array_filter($allModels, function($item) {
                         return $item['estado_diferencia'] === 'faltante';
                     }));
-                    $sobrantes = count(array_filter($dataProvider->allModels, function($item) {
+                    $sobrantes = count(array_filter($allModels, function($item) {
                         return $item['estado_diferencia'] === 'sobrante';
                     }));
-                    $equilibrados = count(array_filter($dataProvider->allModels, function($item) {
+                    $equilibrados = count(array_filter($allModels, function($item) {
                         return $item['estado_diferencia'] === 'equilibrado';
                     }));
+                    
+                    // Aplicar filtro de estado si existe
+                    if ($estadoFiltro) {
+                        $allModels = array_filter($allModels, function($item) use ($estadoFiltro) {
+                            return $item['estado_diferencia'] === $estadoFiltro;
+                        });
+                        
+                        // Actualizar el dataProvider con los modelos filtrados
+                        $dataProvider->allModels = array_values($allModels);
+                        $dataProvider->setTotalCount(count($allModels));
+                    }
                     ?>
                     
                     <!-- Resumen de Estados -->
                     <div class="row mb-3">
-                        <div class="col-md-12">
-                            <h5><i class="fas fa-chart-bar"></i> Análisis: (Comprado - Consumido) vs Almacén</h5>
+                        <div class="col-md-12 d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Análisis: (Comprado - Consumido) vs Almacén</h5>
+                            <?php if ($estadoFiltro): ?>
+                            <button type="button" class="btn btn-secondary btn-sm" id="clear-estado-filter">
+                                <i class="fas fa-times"></i> Limpiar filtro
+                            </button>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4">
-                            <div class="info-box">
+                            <div class="info-box estado-card <?= $estadoFiltro === 'faltante' ? 'active' : '' ?>" data-estado="faltante" style="cursor: pointer;">
                                 <span class="info-box-icon bg-danger"><i class="fas fa-exclamation-triangle"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Faltantes</span>
@@ -130,7 +157,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="info-box">
+                            <div class="info-box estado-card <?= $estadoFiltro === 'equilibrado' ? 'active' : '' ?>" data-estado="equilibrado" style="cursor: pointer;">
                                 <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Equilibrados</span>
@@ -140,7 +167,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="info-box">
+                            <div class="info-box estado-card <?= $estadoFiltro === 'sobrante' ? 'active' : '' ?>" data-estado="sobrante" style="cursor: pointer;">
                                 <span class="info-box-icon bg-warning"><i class="fas fa-arrow-up"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Sobrantes</span>
@@ -299,6 +326,17 @@ $this->params['breadcrumbs'][] = $this->title;
     box-shadow: 0 1px 1px rgba(0,0,0,0.1);
     border-radius: 2px;
     margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.info-box:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
+
+.info-box.active {
+    border: 3px solid #007bff;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
 }
 
 .info-box-icon {
@@ -386,4 +424,46 @@ $this->params['breadcrumbs'][] = $this->title;
     70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
     100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
+
+.estado-filter-dropdown {
+    width: 100%;
+    max-width: 150px;
+    margin: 0 auto;
+    font-size: 13px;
+    padding: 5px;
+}
+
+.estado-filter-dropdown option {
+    padding: 5px;
+}
 </style>
+
+<?php
+$this->registerJs(<<<JS
+$(document).ready(function() {
+    // Manejar click en las tarjetas de estado
+    $('.estado-card').on('click', function() {
+        var estado = $(this).data('estado');
+        var currentEstado = $('#estado-filter').val();
+        
+        // Si ya está filtrado por este estado, limpiar el filtro
+        if (currentEstado === estado) {
+            $('#estado-filter').val('');
+        } else {
+            // Aplicar el filtro de este estado
+            $('#estado-filter').val(estado);
+        }
+        
+        // Enviar el formulario
+        $('#filter-form').submit();
+    });
+    
+    // Manejar botón de limpiar filtro
+    $('#clear-estado-filter').on('click', function() {
+        $('#estado-filter').val('');
+        $('#filter-form').submit();
+    });
+});
+JS
+);
+?>

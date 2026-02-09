@@ -125,8 +125,24 @@ class KpiController extends Controller
         $selectedMonth = Yii::$app->request->get('month', date('n'));
         $selectedYear = Yii::$app->request->get('year', date('Y'));
         
-        // Generar array de años disponibles
-        $years = [];
+        // Validar y corregir valores
+        $selectedMonth = intval($selectedMonth);
+        $selectedYear = intval($selectedYear);
+        
+        // Si el año es menor a 2000, probablemente es un error (índice en lugar de valor)
+        // En ese caso, usar el año actual por defecto
+        if ($selectedYear > 0 && $selectedYear < 2000) {
+            Yii::warning("Año inválido recibido: {$selectedYear}, usando año actual", 'kpi-compras');
+            $selectedYear = date('Y');
+        }
+        
+        // Validar mes (0-12)
+        if ($selectedMonth < 0 || $selectedMonth > 12) {
+            $selectedMonth = date('n');
+        }
+        
+        // Generar array de años disponibles (key = value para que el dropdown envíe el año correcto)
+        $years = [0 => 'TODOS'];
         for ($i = 2020; $i <= date('Y'); $i++) {
             $years[$i] = $i;
         }
@@ -355,7 +371,7 @@ private function convertirConsumoSubreceta($ingrediente, $subreceta, $consumoUni
         $consumoConvertido = $consumoUnidadCocina / $ingrediente->portions_per_unit;
         
         if ($debug) {
-            Yii::info("    Conversión directa: {$consumoUnidadCocina} {$subreceta->yield_um} / {$ingrediente->portions_per_unit} = {$consumoConvertido} {$ingrediente->um}", 'control-insumos');
+            Yii::warning("    Conversión directa: {$consumoUnidadCocina} {$subreceta->yield_um} / {$ingrediente->portions_per_unit} = {$consumoConvertido} {$ingrediente->um}", 'control-insumos');
         }
         
         return $consumoConvertido;
@@ -385,7 +401,7 @@ private function convertirUnidadCocinaACompra($ingrediente, $consumoUnidadCocina
         $consumoConvertido = $consumoUnidadCocina / $ingrediente->portions_per_unit;
         
         if ($debug) {
-            Yii::info("Conversión ingrediente directo: {$consumoUnidadCocina} {$ingrediente->portion_um} → {$consumoConvertido} {$ingrediente->um}", 'control-insumos');
+            Yii::warning("Conversión ingrediente directo: {$consumoUnidadCocina} {$ingrediente->portion_um} → {$consumoConvertido} {$ingrediente->um}", 'control-insumos');
         }
         
         return $consumoConvertido;
@@ -578,8 +594,30 @@ private function calcularConsumoIndirecto($ingredienteId, $selectedMonth, $selec
         }
         // Si ambos son 0 (TODOS), no se aplican filtros de fecha
         
+        // Debug: Log de la consulta SQL
+        if ($debug || $ingredienteId == 4027) { // 4027 = ACHIOTE
+            Yii::warning("=== DEBUG COMPRAS - Ingrediente ID: {$ingredienteId} ===", 'kpi-compras');
+            Yii::warning("SQL: " . $query->createCommand()->getRawSql(), 'kpi-compras');
+        }
+        
         $result = $query->one();
         $totalComprado = floatval($result['total_comprado'] ?: 0);
+        
+        // Debug: Verificar movimientos individuales
+        if ($debug || $ingredienteId == 4027) {
+            $movimientos = Movement::find()
+                ->where([
+                    'ingredient_id' => $ingredienteId,
+                    'business_id' => $business->id,
+                ])
+                ->all();
+            
+            Yii::warning("Total movimientos encontrados: " . count($movimientos), 'kpi-compras');
+            foreach ($movimientos as $mov) {
+                Yii::warning("Movimiento ID {$mov->id}: type={$mov->type}, quantity={$mov->quantity}, created_at={$mov->created_at}", 'kpi-compras');
+            }
+            Yii::warning("Total comprado calculado: {$totalComprado}", 'kpi-compras');
+        }
         
         return $totalComprado;
         
