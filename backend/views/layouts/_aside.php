@@ -59,7 +59,7 @@ $centrosConsumoActive = in_array($currentControllerId, ['consumption-center']) |
 $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','saved-menus']);
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
 $kpisControlActive = in_array($currentControllerId, ['control-insumos', 'control-almacen', 'compras-vs-consumo', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
-$gastosActive = in_array($currentControllerId, ['expense', 'expense-movement', 'expense-unit-measurement', 'expense-category']);
+$gastosActive = in_array($currentControllerId, ['expense', 'expense-movement', 'expense-unit-measurement', 'expense-category', 'expense-subcategory']);
 $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
@@ -253,7 +253,14 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-category' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-category/index']) ?>" class="menu-link">
-                            <div><?= Yii::t('app', 'Categorías de Gastos') ?></div>
+                            <div><?= Yii::t('app', 'Categorías Principales') ?></div>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
+                    <li class="menu-item <?= $currentControllerId == 'expense-subcategory' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense-subcategory/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Subcategorías de Gastos') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>

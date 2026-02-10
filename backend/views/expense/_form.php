@@ -1,6 +1,7 @@
 <?php
 
 use common\models\Provider;
+use common\models\ExpenseSubcategory;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
@@ -18,6 +19,9 @@ $providers = \yii\helpers\ArrayHelper::map(
     'id',
     'business_name'
 );
+
+// Obtener subcategorías agrupadas por categoría
+$subcategoriesGrouped = ExpenseSubcategory::getGroupedByCategory($business->id);
 ?>
 
 <style>
@@ -98,25 +102,24 @@ $providers = \yii\helpers\ArrayHelper::map(
             </div>
 
             <div class="row">
-                <div class="col-md-6">
-                    <?= $form->field($model, 'category_id')->widget(Select2::class, [
-                        'data' => \yii\helpers\ArrayHelper::map(
-                            \common\models\ExpenseCategory::find()
-                                ->where(['business_id' => $business->id])
-                                ->orderBy(['name' => SORT_ASC])
-                                ->all(),
-                            'id',
-                            'name'
-                        ),
+                <div class="col-md-12">
+                    <?= $form->field($model, 'subcategory_id')->widget(Select2::class, [
+                        'data' => $subcategoriesGrouped,
                         'options' => [
-                            'placeholder' => 'Seleccionar categoría...',
+                            'placeholder' => 'Seleccionar tipo de gasto...',
                         ],
                         'pluginOptions' => [
-                            'allowClear' => true,
+                            'allowClear' => false,
                             'width' => '100%',
                         ],
-                    ])->label('Categoría <span class="required">*</span>') ?>
+                    ])->label('Tipo de Gasto <span class="required">*</span>') ?>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> El tipo de gasto determina automáticamente su categoría en el estado de resultados. 📦 = Requiere control de inventario.
+                    </small>
                 </div>
+            </div>
+
+            <div class="row mt-3">
                 <div class="col-md-6">
                     <?= $form->field($model, 'unit_measurement_id')->widget(Select2::class, [
                         'data' => \yii\helpers\ArrayHelper::map(
@@ -136,9 +139,6 @@ $providers = \yii\helpers\ArrayHelper::map(
                         ],
                     ])->label('Unidad de Medida (Opcional)') ?>
                 </div>
-            </div>
-
-            <div class="row">
                 <div class="col-md-6">
                     <?= $form->field($model, 'provider_id')->widget(Select2::class, [
                         'data' => $providers,

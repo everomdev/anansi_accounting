@@ -12,12 +12,15 @@ use yii\behaviors\TimestampBehavior;
  * @property int $id
  * @property string $name
  * @property string|null $description
+ * @property bool $is_main_category
+ * @property int $sort_order
  * @property int $business_id
  * @property string|null $created_at
  * @property string|null $updated_at
  *
  * @property Business $business
  * @property Expense[] $expenses
+ * @property ExpenseSubcategory[] $subcategories
  */
 class ExpenseCategory extends ActiveRecord
 {
@@ -46,8 +49,9 @@ class ExpenseCategory extends ActiveRecord
     {
         return [
             [['name', 'business_id'], 'required'],
-            [['business_id'], 'integer'],
+            [['business_id', 'sort_order'], 'integer'],
             [['description'], 'string'],
+            [['is_main_category'], 'boolean'],
             [['created_at', 'updated_at'], 'safe'],
             [['name'], 'string', 'max' => 255],
             [['name', 'business_id'], 'unique', 'targetAttribute' => ['name', 'business_id']],
@@ -64,6 +68,8 @@ class ExpenseCategory extends ActiveRecord
             'id' => Yii::t('app', 'ID'),
             'name' => Yii::t('app', 'Nombre'),
             'description' => Yii::t('app', 'Descripción'),
+            'is_main_category' => Yii::t('app', 'Categoría Principal'),
+            'sort_order' => Yii::t('app', 'Orden'),
             'business_id' => Yii::t('app', 'Negocio'),
             'created_at' => Yii::t('app', 'Creado'),
             'updated_at' => Yii::t('app', 'Actualizado'),
@@ -88,5 +94,25 @@ class ExpenseCategory extends ActiveRecord
     public function getExpenses()
     {
         return $this->hasMany(Expense::class, ['category_id' => 'id']);
+    }
+
+    /**
+     * Gets query for associated subcategories.
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSubcategories()
+    {
+        return $this->hasMany(ExpenseSubcategory::class, ['category_id' => 'id'])->orderBy(['sort_order' => SORT_ASC]);
+    }
+
+    /**
+     * Obtiene el número de subcategorías asociadas
+     *
+     * @return int
+     */
+    public function getSubcategoryCount()
+    {
+        return $this->getSubcategories()->count();
     }
 }

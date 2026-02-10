@@ -17,6 +17,7 @@ use yii\behaviors\TimestampBehavior;
  * @property float $amount
  * @property int|null $unit_measurement_id
  * @property int|null $category_id
+ * @property int|null $subcategory_id
  * @property string $frequency
  * @property string $expense_date
  * @property string|null $observations
@@ -30,6 +31,7 @@ use yii\behaviors\TimestampBehavior;
  * @property Provider $provider
  * @property ExpenseUnitMeasurement $unitMeasurement
  * @property ExpenseCategory $category
+ * @property ExpenseSubcategory $subcategory
  */
 class Expense extends ActiveRecord
 {
@@ -62,8 +64,8 @@ class Expense extends ActiveRecord
     public function rules()
     {
         return [
-            [['name', 'business_id', 'category_id'], 'required'],
-            [['business_id', 'provider_id', 'unit_measurement_id', 'category_id', 'is_active', 'is_recurring'], 'integer'],
+            [['name', 'business_id', 'subcategory_id'], 'required'],
+            [['business_id', 'provider_id', 'unit_measurement_id', 'category_id', 'subcategory_id', 'is_active', 'is_recurring'], 'integer'],
             [['amount'], 'number', 'min' => 0],
             [['amount', 'frequency', 'expense_date'], 'required', 'when' => function($model) {
                 return $model->is_recurring == 1;
@@ -81,6 +83,7 @@ class Expense extends ActiveRecord
             [['provider_id'], 'exist', 'skipOnError' => true, 'targetClass' => Provider::class, 'targetAttribute' => ['provider_id' => 'id']],
             [['unit_measurement_id'], 'exist', 'skipOnError' => true, 'targetClass' => ExpenseUnitMeasurement::class, 'targetAttribute' => ['unit_measurement_id' => 'id']],
             [['category_id'], 'exist', 'skipOnError' => true, 'targetClass' => ExpenseCategory::class, 'targetAttribute' => ['category_id' => 'id']],
+            [['subcategory_id'], 'exist', 'skipOnError' => true, 'targetClass' => ExpenseSubcategory::class, 'targetAttribute' => ['subcategory_id' => 'id']],
         ];
     }
 
@@ -98,6 +101,7 @@ class Expense extends ActiveRecord
             'amount' => 'Monto',
             'unit_measurement_id' => 'Unidad de Medida',
             'category_id' => 'Categoría',
+            'subcategory_id' => 'Tipo de Gasto',
             'frequency' => 'Frecuencia',
             'expense_date' => 'Fecha del Gasto',
             'observations' => 'Observaciones',
@@ -157,6 +161,16 @@ class Expense extends ActiveRecord
     public function getCategory()
     {
         return $this->hasOne(ExpenseCategory::class, ['id' => 'category_id']);
+    }
+
+    /**
+     * Gets query for [[Subcategory]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSubcategory()
+    {
+        return $this->hasOne(ExpenseSubcategory::class, ['id' => 'subcategory_id']);
     }
 
     /**
@@ -247,6 +261,15 @@ class Expense extends ActiveRecord
             if (empty($this->key)) {
                 $this->generateKey();
             }
+            
+            // Asignar automáticamente category_id basado en subcategory_id
+            if ($this->subcategory_id) {
+                $subcategory = ExpenseSubcategory::findOne($this->subcategory_id);
+                if ($subcategory) {
+                    $this->category_id = $subcategory->category_id;
+                }
+            }
+            
             return true;
         }
         return false;
