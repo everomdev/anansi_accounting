@@ -229,13 +229,6 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $gastosActive ? 'show' : '' ?>" id="gastos">
                 <ul class="sub-menu">
-                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
-                    <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
-                        <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
-                            <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
-                        </a>
-                    </li>
-                    <?php endif; ?>
                     <?php if ($isAdmin || Yii::$app->user->can('expense_movements_list')): ?>
                     <li class="menu-item <?= $currentControllerId == 'expense-movement' ? 'active' : '' ?>">
                         <a href="<?= \yii\helpers\Url::to(['/expense-movement/index']) ?>" class="menu-link">
@@ -244,9 +237,16 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     </li>
                     <?php endif; ?>
                     <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
-                    <li class="menu-item <?= $currentControllerId == 'expense-unit-measurement' ? 'active' : '' ?>">
-                        <a href="<?= \yii\helpers\Url::to(['/expense-unit-measurement/index']) ?>" class="menu-link">
-                            <div><?= Yii::t('app', 'Unidades de Medida') ?></div>
+                    <li class="menu-item <?= $currentControllerId == 'expense' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Catálogo de Gastos') ?></div>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
+                    <li class="menu-item <?= $currentControllerId == 'expense-subcategory' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense-subcategory/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Subcategorías de Gastos') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>
@@ -257,10 +257,10 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         </a>
                     </li>
                     <?php endif; ?>
-                    <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
-                    <li class="menu-item <?= $currentControllerId == 'expense-subcategory' ? 'active' : '' ?>">
-                        <a href="<?= \yii\helpers\Url::to(['/expense-subcategory/index']) ?>" class="menu-link">
-                            <div><?= Yii::t('app', 'Subcategorías de Gastos') ?></div>
+                      <?php if ($isAdmin || Yii::$app->user->can('expense_list')): ?>
+                    <li class="menu-item <?= $currentControllerId == 'expense-unit-measurement' ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/expense-unit-measurement/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Unidades de Medida') ?></div>
                         </a>
                     </li>
                     <?php endif; ?>

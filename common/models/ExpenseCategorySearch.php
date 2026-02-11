@@ -70,6 +70,22 @@ class ExpenseCategorySearch extends ExpenseCategory
         $query->andFilterWhere(['like', 'name', $this->name])
             ->andFilterWhere(['like', 'description', $this->description]);
 
+        // Ordenar manualmente las categorías en el orden específico
+        $query->orderBy([
+            new \yii\db\Expression("CASE name
+                WHEN 'Nómina / Costo de Personal' THEN 1
+                WHEN 'Gastos Variables Operativos' THEN 2
+                WHEN 'Energía y servicios' THEN 3
+                WHEN 'Gastos Administrativos' THEN 4
+                WHEN 'Marketing y Ventas' THEN 5
+                WHEN 'Gastos Fijos' THEN 6
+                WHEN 'Gastos de Dirección' THEN 7
+                WHEN 'Gastos Financieros' THEN 8
+                ELSE 99
+            END"),
+            'name' => SORT_ASC
+        ]);
+
         return $dataProvider;
     }
 }

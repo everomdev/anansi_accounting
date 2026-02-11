@@ -91,6 +91,8 @@ $this->registerCss('
         </div>
     </div>
 
+    <?php Pjax::begin(['id' => 'expense-subcategory-pjax', 'enablePushState' => true]); ?>
+
     <div class="row mb-2 align-items-center">
         <div class="col-md-4">
             <div class="input-group input-group-sm">
@@ -104,8 +106,6 @@ $this->registerCss('
             </div>
         </div>
     </div>
-
-    <?php Pjax::begin(['id' => 'expense-subcategory-pjax']); ?>
 
     <div class="table-responsive sticky-header-container">
         <?= GridView::widget([
@@ -189,9 +189,41 @@ $this->registerCss('
 </div>
 
 <script>
+// Función para guardar elementos por página en localStorage
+function savePerPageToStorage(pageSize) {
+    localStorage.setItem('expense-subcategory-per-page', pageSize);
+}
+
+// Función para obtener elementos por página del localStorage
+function getPerPageFromStorage() {
+    const saved = localStorage.getItem('expense-subcategory-per-page');
+    return saved || '20'; // Default 20 si no hay valor guardado
+}
+
+// Aplicar configuración guardada al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const perPageSelector = document.getElementById('per-page-selector');
+    const savedPerPage = getPerPageFromStorage();
+    
+    // Establecer el valor guardado en el selector
+    if (perPageSelector) {
+        perPageSelector.value = savedPerPage;
+    }
+});
+
+// Detector de cambio en elementos por página
 document.getElementById('per-page-selector').addEventListener('change', function() {
-    var url = new URL(window.location);
-    url.searchParams.set('per-page', this.value);
-    window.location = url.toString();
+    const pageSize = this.value;
+    
+    // Guardar en localStorage
+    savePerPageToStorage(pageSize);
+    
+    // Crear URL con nuevo tamaño de página
+    let url = new URL(window.location);
+    url.searchParams.set('per-page', pageSize);
+    url.searchParams.delete('page'); // Resetear a página 1
+    
+    // Recargar con el nuevo tamaño de página
+    window.location.href = url.toString();
 });
 </script>

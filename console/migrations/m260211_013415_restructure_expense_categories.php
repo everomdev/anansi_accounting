@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Reestructura el sistema de categorías de gastos para soportar categorías y subcategorías
  */
-class m250209_000001_restructure_expense_categories extends Migration
+class m260211_013415_restructure_expense_categories extends Migration
 {
     /**
      * {@inheritdoc}

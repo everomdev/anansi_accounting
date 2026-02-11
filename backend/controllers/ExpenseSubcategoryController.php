@@ -59,9 +59,34 @@ class ExpenseSubcategoryController extends Controller
     {
         $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
         $searchModel = new ExpenseSubcategorySearch(['business_id' => $business['id']]);
-
+        
+        // Obtener el valor de la cookie si existe
+        $savedPageSize = (int)Yii::$app->request->cookies->getValue('expense_subcategory_page_size', 20);
+        
+        // Personalizar elementos por página - solo si viene en la URL
+        $perPage = Yii::$app->request->get('per-page');
+        
+        // Si perPage no viene en la URL o no es válido, usar el valor guardado en la cookie
+        if (!$perPage || !in_array((int)$perPage, [20, 50, 100])) {
+            $perPage = $savedPageSize;
+        } else {
+            // Solo guardar una nueva cookie si el valor es diferente al que ya tenemos
+            if ((int)$perPage !== $savedPageSize) {
+                $cookie = new \yii\web\Cookie([
+                    'name' => 'expense_subcategory_page_size',
+                    'value' => $perPage,
+                    'expire' => time() + 86400 * 30,
+                ]);
+                Yii::$app->response->cookies->add($cookie);
+            }
+        }
+        
+        // Usar perPage como la cantidad de elementos por página
+        $pageSize = (int)$perPage;
+        
         $params = Yii::$app->request->queryParams;
         $dataProvider = $searchModel->search($params);
+        $dataProvider->pagination->pageSize = $pageSize;
 
         return $this->render('index', [
             'searchModel' => $searchModel,
