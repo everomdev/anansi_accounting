@@ -183,7 +183,7 @@ $this->registerCss('
                 ],
                 [
                     'attribute' => 'is_kitchen',
-                    'label' => 'Insumos<br>(Cocina)',
+                    'label' => 'Insumos<br>(Uso)',
                     'encodeLabel' => false,
                     'format' => 'raw',
                     'value' => function($model) {
