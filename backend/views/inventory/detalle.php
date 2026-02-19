@@ -1,6 +1,7 @@
 <?php
 use yii\grid\GridView;
 use yii\helpers\Html;
+use yii\widgets\Pjax;
 use common\models\InventorySearch;
 
 $this->title = 'Detalle de Inventario';
@@ -77,6 +78,23 @@ $this->params['breadcrumbs'][] = $this->title;
         echo implode(' | ', $totalesHtml);
         ?>
     </div>
+    
+    <!-- Selector de elementos por página -->
+    <div class="row mb-2 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
+                <select id="per-page-selector" class="form-select form-select-sm" style="width: auto; max-width: 75px;">
+                    <option value="20" <?= $dataProvider->pagination->pageSize == 20 ? 'selected' : '' ?>>20</option>
+                    <option value="50" <?= $dataProvider->pagination->pageSize == 50 ? 'selected' : '' ?>>50</option>
+                    <option value="100" <?= $dataProvider->pagination->pageSize == 100 ? 'selected' : '' ?>>100</option>
+                </select>
+                <span class="input-group-text bg-light"><?= Yii::t('app', 'elementos por página') ?></span>
+            </div>
+        </div>
+    </div>
+    
+    <?php Pjax::begin(['id' => 'inventory-detalle-pjax', 'timeout' => 10000]); ?>
     <div class="table-responsive sticky-header-container" style="overflow-x:auto;">
     <?php
     $columns = [
@@ -272,10 +290,17 @@ $this->params['breadcrumbs'][] = $this->title;
         'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
         'options' => ['class' => 'grid-view sticky-header-grid'],
         'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
+        'pager' => [
+            'class' => \yii\bootstrap5\LinkPager::class,
+            'options' => ['class' => 'pagination pagination-sm'],
+            'maxButtonCount' => 10,
+        ],
         'columns' => $columns,
     ]);
     ?>
     </div>
+    <?php Pjax::end(); ?>
+    
     <div class="mt-3">
         <?= Html::a('<i class="fas fa-history"></i> Ver Historial de Ajustes', ['/kpi/historial-ajustes'], ['class' => 'btn btn-secondary mr-2']) ?>
         <?php if (Yii::$app->user->can('storage_admin') || Yii::$app->user->can('manage_users') || Yii::$app->user->can('administrator')): ?>
@@ -375,4 +400,65 @@ $(document).ready(function() {
         }
     });
 });
+
+</script>
+<script>
+    // Función para guardar elementos por página en localStorage
+    function savePerPageToStorage(pageSize) {
+        localStorage.setItem('inventory-detalle-per-page', pageSize);
+    }
+    
+    // Función para obtener elementos por página del localStorage
+    function getPerPageFromStorage() {
+        const saved = localStorage.getItem('inventory-detalle-per-page');
+        return saved || '20'; // Default 20 si no hay valor guardado
+    }
+    
+    // Aplicar configuración guardada al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        const perPageSelector = document.getElementById('per-page-selector');
+        const savedPerPage = getPerPageFromStorage();
+        
+        // Establecer el valor guardado en el selector
+        perPageSelector.value = savedPerPage;
+        
+        // Si el valor actual es diferente al guardado, aplicar el guardado
+        const currentPageSize = '<?= $dataProvider->pagination->pageSize ?>';
+        if (currentPageSize != savedPerPage) {
+            // Crear URL con el valor guardado y recargar
+            let url = new URL(window.location);
+            url.searchParams.set('per-page', savedPerPage);
+            
+            $.pjax.reload({
+                container: '#inventory-detalle-pjax',
+                url: url.toString(),
+                timeout: 10000
+            });
+        }
+    });
+    
+    // Detector de cambio en elementos por página
+    document.getElementById('per-page-selector').addEventListener('change', function() {
+        const pageSize = this.value;
+        
+        // Guardar en localStorage
+        savePerPageToStorage(pageSize);
+        
+        // Crear URL con nuevo tamaño de página
+        let url = new URL(window.location);
+        url.searchParams.set('per-page', pageSize);
+        
+        // Recargar con el nuevo tamaño de página
+        $.pjax.reload({
+            container: '#inventory-detalle-pjax',
+            url: url.toString(),
+            timeout: 10000
+        });
+    });
+    
+    // Actualizar el selector después de PJAX
+    $(document).on('pjax:complete', '#inventory-detalle-pjax', function() {
+        const savedPerPage = getPerPageFromStorage();
+        document.getElementById('per-page-selector').value = savedPerPage;
+    });
 </script>

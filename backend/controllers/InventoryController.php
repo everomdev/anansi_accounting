@@ -290,6 +290,32 @@ public function actionCreate()
     {
         $searchModel = new \common\models\InventorySearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams, $fecha);
+        
+        // Obtener el valor de la cookie si existe
+        $savedPageSize = (int)Yii::$app->request->cookies->getValue('inventory_detalle_page_size', 20);
+        
+        // Personalizar elementos por página - solo si viene en la URL
+        $perPage = Yii::$app->request->get('per-page');
+        
+        // Si perPage no viene en la URL o no es válido, usar el valor guardado en la cookie
+        if (!$perPage || !in_array((int)$perPage, [20, 50, 100])) {
+            $perPage = $savedPageSize;
+        } else {
+            // Solo guardar una nueva cookie si el valor es diferente al que ya tenemos
+            if ((int)$perPage !== $savedPageSize) {
+                $cookie = new \yii\web\Cookie([
+                    'name' => 'inventory_detalle_page_size',
+                    'value' => (int)$perPage,
+                    'expire' => time() + 86400 * 30,
+                ]);
+                Yii::$app->response->cookies->add($cookie);
+            }
+        }
+        
+        // Usar perPage como la cantidad de elementos por página
+        $pageSize = (int)$perPage;
+        $dataProvider->pagination->pageSize = $pageSize;
+        
         // Obtener la fecha de finalización del primer registro de inventario para esa fecha
         $firstInventory = \common\models\Inventory::find()->where(['fecha' => $fecha])->orderBy(['id' => SORT_ASC])->one();
         $dateEnd = $firstInventory ? $firstInventory->date_end : null;
