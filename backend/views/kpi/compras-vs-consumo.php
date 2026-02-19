@@ -28,6 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 // Obtener filtro de estado desde GET
 $estadoFiltro = Yii::$app->request->get('estado', '');
+$buscarInsumo = Yii::$app->request->get('buscar', '');
 ?>
 <div class="kpi-compras-consumo">
     
@@ -79,9 +80,18 @@ $estadoFiltro = Yii::$app->request->get('estado', '');
                                     <!-- Campo oculto para el filtro de estado -->
                                     <?= Html::hiddenInput('estado', $estadoFiltro, ['id' => 'estado-filter']) ?>
                                     
+                                    <!-- Campo oculto para mantener el filtro de búsqueda -->
+                                    <?= Html::hiddenInput('buscar', $buscarInsumo, ['id' => 'buscar-hidden']) ?>
+                                    
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-filter"></i> Filtrar
                                     </button>
+                                    
+                                    <?php if ($buscarInsumo || $estadoFiltro): ?>
+                                    <a href="<?= Url::to(['kpi/compras-vs-consumo', 'month' => $selectedMonth, 'year' => $selectedYear]) ?>" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Limpiar filtros
+                                    </a>
+                                    <?php endif; ?>
                                     
                                     <?php ActiveForm::end(); ?>
                                 </div>
@@ -107,6 +117,10 @@ $estadoFiltro = Yii::$app->request->get('estado', '');
                         <?php if ($estadoFiltro): ?>
                         <br>
                         <small><strong>Filtro aplicado:</strong> <?= ucfirst($estadoFiltro) ?></small>
+                        <?php endif; ?>
+                        <?php if ($buscarInsumo): ?>
+                        <br>
+                        <small><strong>Búsqueda:</strong> "<?= Html::encode($buscarInsumo) ?>"</small>
                         <?php endif; ?>
                     </div>
                     
@@ -134,15 +148,31 @@ $estadoFiltro = Yii::$app->request->get('estado', '');
                         $dataProvider->allModels = array_values($allModels);
                         $dataProvider->setTotalCount(count($allModels));
                     }
+                    
+                    // Aplicar filtro de búsqueda si existe
+                    if ($buscarInsumo) {
+                        $allModels = array_filter($allModels, function($item) use ($buscarInsumo) {
+                            return stripos($item['nombre'], $buscarInsumo) !== false;
+                        });
+                        
+                        // Actualizar el dataProvider con los modelos filtrados
+                        $dataProvider->allModels = array_values($allModels);
+                        $dataProvider->setTotalCount(count($allModels));
+                    }
                     ?>
                     
                     <!-- Resumen de Estados -->
                     <div class="row mb-3">
                         <div class="col-md-12 d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Análisis: (Comprado - Consumido) vs Almacén</h5>
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar"></i> Análisis: (Comprado - Consumido) vs Almacén
+                                <?php if ($buscarInsumo): ?>
+                                    <small class="text-muted">- Búsqueda: "<?= Html::encode($buscarInsumo) ?>"</small>
+                                <?php endif; ?>
+                            </h5>
                             <?php if ($estadoFiltro): ?>
                             <button type="button" class="btn btn-secondary btn-sm" id="clear-estado-filter">
-                                <i class="fas fa-times"></i> Limpiar filtro
+                                <i class="fas fa-times"></i> Limpiar filtro de estado
                             </button>
                             <?php endif; ?>
                         </div>
@@ -182,6 +212,7 @@ $estadoFiltro = Yii::$app->request->get('estado', '');
                     <div class="table-responsive">
                     <?= GridView::widget([
                         'dataProvider' => $dataProvider,
+                        'filterModel' => new \yii\base\DynamicModel(['nombre']),
                         'tableOptions' => ['class' => 'table table-striped table-hover'],
                         'columns' => [
                             [
@@ -207,6 +238,20 @@ $estadoFiltro = Yii::$app->request->get('estado', '');
                                            . $icon . ' ' . Html::encode($model['nombre']) 
                                            . '</div>';
                                 },
+                                'filter' => '<div style="position: relative;">' . 
+                                    Html::textInput('buscar', $buscarInsumo, [
+                                        'class' => 'form-control form-control-sm',
+                                        'placeholder' => 'Buscar insumo...',
+                                        'id' => 'buscar-insumo-filter',
+                                        'style' => 'padding-right: 30px;'
+                                    ]) . 
+                                    Html::button('×', [
+                                        'class' => 'btn btn-sm',
+                                        'id' => 'clear-buscar-btn',
+                                        'style' => 'position: absolute; right: 8px; top: 10%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 18px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (empty($buscarInsumo) ? 'none' : 'block') . '; z-index: 10; cursor: pointer;',
+                                        'title' => 'Limpiar búsqueda'
+                                    ]) . 
+                                    '</div>',
                                 'headerOptions' => ['style' => 'width: 200px;'],
                             ],
                             [
@@ -454,14 +499,64 @@ $(document).ready(function() {
             $('#estado-filter').val(estado);
         }
         
+        // Sincronizar el campo oculto con el valor del filtro de búsqueda
+        $('#buscar-hidden').val($('#buscar-insumo-filter').val());
+        
         // Enviar el formulario
         $('#filter-form').submit();
     });
     
-    // Manejar botón de limpiar filtro
+    // Manejar botón de limpiar filtro de estado
     $('#clear-estado-filter').on('click', function() {
         $('#estado-filter').val('');
+        
+        // Sincronizar el campo oculto con el valor del filtro de búsqueda
+        $('#buscar-hidden').val($('#buscar-insumo-filter').val());
+        
         $('#filter-form').submit();
+    });
+    
+    // Manejar botón X para limpiar búsqueda
+    $('#clear-buscar-btn').on('click', function() {
+        $('#buscar-insumo-filter').val('');
+        $('#buscar-hidden').val('');
+        $(this).hide();
+        $('#filter-form').submit();
+    });
+    
+    // Mostrar/ocultar botón X según el contenido
+    $('#buscar-insumo-filter').on('input', function() {
+        if ($(this).val().length > 0) {
+            $('#clear-buscar-btn').show();
+        } else {
+            $('#clear-buscar-btn').hide();
+        }
+    });
+    
+    // Búsqueda en tiempo real en el filtro de la columna
+    var searchTimeout;
+    $('#buscar-insumo-filter').on('keyup', function() {
+        clearTimeout(searchTimeout);
+        var searchValue = $(this).val();
+        
+        // Actualizar el campo oculto
+        $('#buscar-hidden').val(searchValue);
+        
+        // Si el usuario escribe al menos 2 caracteres o borra todo, buscar después de 500ms
+        if (searchValue.length >= 2 || searchValue.length === 0) {
+            searchTimeout = setTimeout(function() {
+                $('#filter-form').submit();
+            }, 500);
+        }
+    });
+    
+    // Al presionar Enter en el filtro, enviar inmediatamente
+    $('#buscar-insumo-filter').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            e.preventDefault();
+            $('#buscar-hidden').val($(this).val());
+            $('#filter-form').submit();
+        }
     });
 });
 JS
