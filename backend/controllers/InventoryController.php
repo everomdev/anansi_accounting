@@ -331,6 +331,8 @@ public function actionCreate()
                 // calcular suma por modelo (todos los centros)
                 $sumaModel = 0;
                 $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
+                $precio = $precio / $model->ingredientStock->portions_per_unit;
+                //var_dump('precio: ' . $precio .''. 'porciones: ' . $model->ingredientStock->portions_per_unit);
                 foreach ($model->inventoryConsumptionCenters as $icc) {
                     $sumaModel += $icc->quantity;
                     if (isset($totalesPorCentroCantidad[$icc->consumption_center_id])) {
@@ -378,7 +380,7 @@ public function actionCreate()
             }
             foreach ($allModels as $model) {
                 $total = $model->inventario_almacen + $model->inventario_cocina + $model->inventario_barra + $model->inventario_servicio + $model->inventario_otro;
-                $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
+                $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) && isset($model->ingredientStock->portions_per_unit)) ? $model->ingredientStock->lastUnitPrice / $model->ingredientStock->portions_per_unit : 0;
                 $totalInventario += $total;
                 $totalDinero += $total * $precio;
                 foreach ($areas as $area) {
