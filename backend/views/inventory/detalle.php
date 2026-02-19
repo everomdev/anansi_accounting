@@ -245,7 +245,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
                     return $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ?
-                        formatPrice($model->ingredientStock->lastUnitPrice) : '-';
+                        formatPrice($model->ingredientStock->lastUnitPrice / $model->ingredientStock->portions_per_unit) : '-';
                 },
             ],
             [
