@@ -277,7 +277,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             $total += $icc->quantity;
                         }
                     }
-                    $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice : 0;
+                    $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice / $model->ingredientStock->portions_per_unit : 0;
                     return formatCost($total * $precio);
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#eaf7ea;text-align:center;'],
