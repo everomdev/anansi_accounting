@@ -125,8 +125,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     Html::button('×', [
                         'class' => 'btn btn-sm',
                         'id' => 'clear-detalle-title-btn',
-                        'onclick' => 'document.getElementById(\'detalle-title-filter\').value=\'\';this.form.submit();',
-                        'style' => 'position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (isset($searchModel) && !empty($searchModel->insumo) ? 'block' : 'none') . '; z-index: 10; cursor: pointer;',
+                        'onclick' => 'clearDetalleFilter()',
+                        'style' => 'position: absolute; right: 8px; top: 25%; transform: translateY(-50%); background: none; border: none; color: #999; font-size: 16px; line-height: 1; padding: 0; width: 20px; height: 20px; display: ' . (isset($searchModel) && !empty($searchModel->insumo) ? 'block' : 'none') . '; z-index: 10; cursor: pointer;',
                         'title' => 'Limpiar filtro'
                     ]) . 
                     '</div>',
@@ -403,6 +403,34 @@ $(document).ready(function() {
 
 </script>
 <script>
+    // Función para limpiar el filtro de insumo
+    function clearDetalleFilter() {
+        document.getElementById('detalle-title-filter').value = '';
+        document.getElementById('clear-detalle-title-btn').style.display = 'none';
+        
+        // Construir URL sin el parámetro de búsqueda
+        let url = new URL(window.location);
+        url.searchParams.delete('InventorySearch[insumo]');
+        
+        // Recargar la tabla con PJAX
+        $.pjax.reload({
+            container: '#inventory-detalle-pjax',
+            url: url.toString(),
+            timeout: 10000
+        });
+    }
+    
+    // Mostrar/ocultar botón × según el contenido del input
+    $(document).ready(function() {
+        $('#detalle-title-filter').on('input', function() {
+            if ($(this).val().length > 0) {
+                $('#clear-detalle-title-btn').show();
+            } else {
+                $('#clear-detalle-title-btn').hide();
+            }
+        });
+    });
+    
     // Función para guardar elementos por página en localStorage
     function savePerPageToStorage(pageSize) {
         localStorage.setItem('inventory-detalle-per-page', pageSize);
