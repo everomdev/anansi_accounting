@@ -1,6 +1,7 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\ArrayHelper;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
 
@@ -198,6 +199,36 @@ $this->registerCss('
                         'title' => 'Limpiar filtro'
                     ]) . 
                     '</div>',
+            ],
+            [
+                'attribute' => 'categoria',
+                'label' => 'Familia',
+                'value' => function ($data) {
+                    return $data->category ? $data->category->name : '-';
+                },
+                'filter' => \yii\helpers\Html::activeDropDownList(
+                    $searchModel,
+                    'categoria',
+                    \yii\helpers\ArrayHelper::map(
+                        \common\models\Category::find()
+                            ->where([
+                                'or',
+                                ['business_id' => $business->id],
+                                ['builtin' => 1]
+                            ])
+                            ->orderBy(['name' => SORT_ASC])
+                            ->all(),
+                        'id',
+                        'name'
+                    ),
+                    [
+                        'class' => 'form-control form-control-sm',
+                        'prompt' => 'Todas las familias',
+                        'data-trigger-change' => 'true'
+                    ]
+                ),
+                'contentOptions' => ['style' => 'text-align: center;'],
+                'headerOptions' => ['style' => 'text-align: center; min-width: 120px;'],
             ],
             [
                 'attribute' => 'brand',
