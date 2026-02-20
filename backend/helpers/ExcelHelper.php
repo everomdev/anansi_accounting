@@ -846,6 +846,7 @@ public static function generateIngredientsTemplate($id)
 
             $ingredients = IngredientStock::find()
                 ->where(['business_id' => $businessId])
+                ->orderBy(['ingredient' => SORT_ASC])
                 ->all();
 
             $row = 2;
