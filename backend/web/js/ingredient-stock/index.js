@@ -21,6 +21,36 @@ $(document).on('click', '#bulk-remove', function(event) {
         return false;
     }
     
+    // Verificar cuántas recetas y subrecetas se verán afectadas
+    var totalRecipes = 0;
+    var totalSubrecipes = 0;
+    
+    keys.forEach(function(key) {
+        var $row = $('tr[data-key="' + key + '"]');
+        var recipes = parseInt($row.find('.update-ingredient-link').attr('data-recipes')) || 0;
+        var subrecipes = parseInt($row.find('.update-ingredient-link').attr('data-subrecipes')) || 0;
+        totalRecipes += recipes;
+        totalSubrecipes += subrecipes;
+    });
+    
+    console.log('Total recetas afectadas:', totalRecipes, 'Total subrecetas afectadas:', totalSubrecipes);
+    
+    // Si hay recetas o subrecetas afectadas, mostrar advertencia
+    if (totalRecipes > 0 || totalSubrecipes > 0) {
+        var message = '⚠️ ADVERTENCIA: Los insumos seleccionados están siendo utilizados en:\n\n';
+        if (totalRecipes > 0) {
+            message += '• ' + totalRecipes + ' receta' + (totalRecipes > 1 ? 's' : '') + '\n';
+        }
+        if (totalSubrecipes > 0) {
+            message += '• ' + totalSubrecipes + ' subreceta' + (totalSubrecipes > 1 ? 's' : '') + '\n';
+        }
+        message += '\nEliminar estos insumos afectará estas recetas y puede causar errores en el sistema.\n\n¿Desea continuar?';
+        
+        if (!confirm(message)) {
+            return false;
+        }
+    }
+    
     // Si hay elementos seleccionados
     // Actualizar el mensaje con el número de elementos seleccionados
     $('#selected-count-message').text(keys.length);

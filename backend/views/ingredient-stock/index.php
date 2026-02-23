@@ -378,6 +378,18 @@ $this->registerCss('
                             \yii\bootstrap5\Html::tag('i', '', ['class' => 'bx bx-chart text-warning']),
                             \yii\helpers\Url::to(['ingredient-stock/price-trend', 'ingredientId' => $model->id])
                         );
+                    },
+                    'update' => function ($url, $model, $key) use ($count) {
+                        $recipeCount = $count[$model->id]['recipes'] ?? 0;
+                        $subRecipeCount = $count[$model->id]['subRecipes'] ?? 0;
+                        
+                        return '<a href="#" title="' . Yii::t('yii', 'Update') . '" class="update-ingredient-link text-warning" data-update-url="' . \yii\helpers\Html::encode($url) . '" data-recipes="' . $recipeCount . '" data-subrecipes="' . $subRecipeCount . '"><svg aria-hidden="true" style="display:inline-block;font-size:inherit;height:1em;overflow:visible;vertical-align:-.125em;width:1em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M497.9 142.1l-46.1 46.1c-4.7 4.7-12.3 4.7-17 0l-111-111c-4.7-4.7-4.7-12.3 0-17l46.1-46.1c18.7-18.7 49.1-18.7 67.9 0l60.1 60.1c18.8 18.7 18.8 49.1 0 67.9zM284.2 99.8L21.6 362.4.4 483.9c-2.9 16.4 11.4 30.6 27.8 27.8l121.5-21.3 262.6-262.6c4.7-4.7 4.7-12.3 0-17l-111-111c-4.8-4.7-12.4-4.7-17.1 0zM124.1 339.9c-5.5-5.5-5.5-14.3 0-19.8l154-154c5.5-5.5 14.3-5.5 19.8 0s5.5 14.3 0 19.8l-154 154c-5.5 5.5-14.3 5.5-19.8 0zM88 424h48v36.3l-64.5 11.3-31.1-31.1L51.7 376H88v48z"></path></svg></a>';
+                    },
+                    'delete' => function ($url, $model, $key) use ($count) {
+                        $recipeCount = $count[$model->id]['recipes'] ?? 0;
+                        $subRecipeCount = $count[$model->id]['subRecipes'] ?? 0;
+                        
+                        return '<a href="#" title="' . Yii::t('yii', 'Delete') . '" class="delete-ingredient-link text-warning" data-delete-url="' . \yii\helpers\Html::encode($url) . '" data-recipes="' . $recipeCount . '" data-subrecipes="' . $subRecipeCount . '"><svg aria-hidden="true" style="display:inline-block;font-size:inherit;height:1em;overflow:visible;vertical-align:-.125em;width:.875em" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M32 464a48 48 0 0048 48h288a48 48 0 0048-48V128H32zm272-256a16 16 0 0132 0v224a16 16 0 01-32 0zm-96 0a16 16 0 0132 0v224a16 16 0 01-32 0zm-96 0a16 16 0 0132 0v224a16 16 0 01-32 0zM432 32H312l-9-19a24 24 0 00-22-13H167a24 24 0 00-22 13l-9 19H16A16 16 0 000 48v32a16 16 0 0016 16h416a16 16 0 0016-16V48a16 16 0 00-16-16z"></path></svg></a>';
                     }
                 ]
             ],
@@ -701,6 +713,120 @@ $(document).ready(function() {
     $('[data-trigger-change]').each(function() {
         if ($(this).val().trim() !== '') {
             $(this).addClass('filter-active');
+        }
+    });
+    
+    // ===== MANEJO DE ADVERTENCIAS PARA EDITAR/ELIMINAR INSUMOS =====
+    console.log('=== HANDLERS DE INSUMOS REGISTRADOS (dentro de registerJs) ===');
+    console.log('jQuery disponible:', typeof $ !== 'undefined');
+    
+    // Función para verificar y loggear los links
+    function checkIngredientLinks() {
+        var updateLinks = $('.update-ingredient-link').length;
+        var deleteLinks = $('.delete-ingredient-link').length;
+        console.log('Links update encontrados:', updateLinks);
+        console.log('Links delete encontrados:', deleteLinks);
+        
+        // Verificar el HTML de los primeros links
+        $('.update-ingredient-link').slice(0, 2).each(function(i) {
+            console.log('Update link #' + i + ':');
+            console.log('  data-update-url:', $(this).attr('data-update-url'));
+            console.log('  data-recipes:', $(this).attr('data-recipes'));
+            console.log('  data-subrecipes:', $(this).attr('data-subrecipes'));
+        });
+    }
+    
+    // Ejecutar al inicio
+    checkIngredientLinks();
+    
+    // Re-ejecutar después de cada recarga PJAX
+    $(document).on('pjax:success', '#ingredient-stock-pjax', function() {
+        console.log('PJAX recargado, verificando links...');
+        checkIngredientLinks();
+    });
+    
+    // Manejar click en botón de editar insumo
+    $(document).on('click', '.update-ingredient-link', function(e) {
+        e.preventDefault();
+        console.log('>>> CLICK EN UPDATE DETECTADO');
+        
+        var link = $(this);
+        var url = link.attr('data-update-url');
+        var recipes = parseInt(link.attr('data-recipes')) || 0;
+        var subrecipes = parseInt(link.attr('data-subrecipes')) || 0;
+        
+        console.log('  URL:', url);
+        console.log('  Recipes:', recipes);
+        console.log('  Subrecipes:', subrecipes);
+        
+        // Si no tiene recetas ni subrecetas, ir directo
+        if (recipes === 0 && subrecipes === 0) {
+            console.log('  => Sin recetas/subrecetas, navegando directo');
+            window.location.href = url;
+            return;
+        }
+        
+        console.log('  => Tiene recetas/subrecetas, mostrando advertencia');
+        
+        // Construir mensaje de advertencia
+        var message = \"⚠️ ADVERTENCIA: Este insumo está siendo utilizado en:\\n\\n\";
+        if (recipes > 0) {
+            message += \"• \" + recipes + \" receta\" + (recipes > 1 ? \"s\" : \"\") + \"\\n\";
+        }
+        if (subrecipes > 0) {
+            message += \"• \" + subrecipes + \" subreceta\" + (subrecipes > 1 ? \"s\" : \"\") + \"\\n\";
+        }
+        message += \"\\nModificar este insumo puede afectar los costos y cálculos de estas recetas.\\n\\n¿Desea continuar?\";
+        
+        if (confirm(message)) {
+            console.log('  => Usuario confirmó, navegando');
+            window.location.href = url;
+        } else {
+            console.log('  => Usuario canceló');
+        }
+    });
+    
+    // Manejar click en botón de eliminar insumo individual
+    $(document).on('click', '.delete-ingredient-link', function(e) {
+        e.preventDefault();
+        console.log('>>> CLICK EN DELETE DETECTADO');
+        
+        var link = $(this);
+        var url = link.attr('data-delete-url');
+        var recipes = parseInt(link.attr('data-recipes')) || 0;
+        var subrecipes = parseInt(link.attr('data-subrecipes')) || 0;
+        
+        console.log('  URL:', url);
+        console.log('  Recipes:', recipes);
+        console.log('  Subrecipes:', subrecipes);
+        
+        var message = '';
+        
+        if (recipes > 0 || subrecipes > 0) {
+            console.log('  => Tiene recetas/subrecetas, mostrando advertencia');
+            message = \"⚠️ ADVERTENCIA: Este insumo está siendo utilizado en:\\n\\n\";
+            if (recipes > 0) {
+                message += \"• \" + recipes + \" receta\" + (recipes > 1 ? \"s\" : \"\") + \"\\n\";
+            }
+            if (subrecipes > 0) {
+                message += \"• \" + subrecipes + \" subreceta\" + (subrecipes > 1 ? \"s\" : \"\") + \"\\n\";
+            }
+            message += \"\\nEliminar este insumo afectará estas recetas y puede causar errores en el sistema.\\n\\n¿Está seguro de que desea eliminarlo?\";
+        } else {
+            console.log('  => Sin recetas/subrecetas, confirmación simple');
+            message = '¿Está seguro de que desea eliminar este insumo?';
+        }
+        
+        if (confirm(message)) {
+            console.log('  => Usuario confirmó eliminación, enviando formulario');
+            var form = $('<form>', { method: 'POST', action: url });
+            var csrfParam = $('meta[name=\"csrf-param\"]').attr('content');
+            var csrfToken = $('meta[name=\"csrf-token\"]').attr('content');
+            form.append($('<input>', { type: 'hidden', name: csrfParam, value: csrfToken }));
+            $('body').append(form);
+            form.submit();
+        } else {
+            console.log('  => Usuario canceló eliminación');
         }
     });
 });
