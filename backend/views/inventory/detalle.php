@@ -20,6 +20,8 @@ $this->params['breadcrumbs'][] = $this->title;
     }
     .sticky-header-table {
         margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
     }
     .sticky-header-table thead th {
         position: sticky;
@@ -30,13 +32,29 @@ $this->params['breadcrumbs'][] = $this->title;
         white-space: normal;
         vertical-align: middle;
     }
+    /* Columna fija horizontal (Insumo) */
     .sticky-col {
         position: sticky;
         left: 0;
         background: #fff !important;
-        background-clip: padding-box;
-        z-index: 100;
+        z-index: 20;
         box-shadow: 2px 0 4px -1px rgba(0,0,0,0.12);
+    }
+    /* Header de columna fija - debe estar encima de todo */
+    .sticky-header-table thead th.sticky-col {
+        position: sticky;
+        left: 0;
+        top: 0;
+        z-index: 30 !important; /* Más alto que las otras celdas */
+        background-color: #f8f9fa !important;
+    }
+    /* Fila de filtros - también debe ser sticky */
+    .sticky-header-table thead tr:nth-child(2) th.sticky-col {
+        position: sticky;
+        left: 0;
+        top: auto;
+        z-index: 25 !important;
+        background-color: #f8f9fa !important;
     }
 </style>
 <div class="inventory-detalle">
