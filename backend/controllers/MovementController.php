@@ -317,7 +317,8 @@ class MovementController extends Controller
                 
                 if (!$movement->save()) {
                     $errors = implode(', ', $movement->getFirstErrors());
-                    throw new \Exception('Error al crear requisición: ' . $errors);
+                    Yii::error('Error al guardar requisición: ' . $errors, __METHOD__);
+                    throw new \Exception('No se pudo guardar la requisición. Por favor, verifique los datos.');
                 }
                 
                 // Crear los items de la requisición
@@ -335,7 +336,8 @@ class MovementController extends Controller
                     
                     if (!$requisitionItem->save()) {
                         $errors = implode(', ', $requisitionItem->getFirstErrors());
-                        throw new \Exception('Error al guardar insumo: ' . $errors);
+                        Yii::error('Error al guardar item de requisición: ' . $errors, __METHOD__);
+                        throw new \Exception('Error al guardar uno de los insumos. Verifique las cantidades.');
                     }
                     
                     $savedCount++;
@@ -353,7 +355,21 @@ class MovementController extends Controller
                 
             } catch (\Exception $e) {
                 $transaction->rollBack();
-                Yii::$app->session->addFlash('error', 'Error al crear requisición: ' . $e->getMessage());
+                
+                // Registrar el error completo en el log para debugging
+                Yii::error('Error al crear requisición: ' . $e->getMessage(), __METHOD__);
+                
+                // Mostrar mensaje genérico al usuario (sin detalles SQL por seguridad)
+                $userMessage = 'Error al crear la requisición.';
+                
+                // Solo incluir mensaje técnico si NO contiene SQL (para evitar exponer estructura de BD)
+                if (!preg_match('/SQL|INSERT|UPDATE|DELETE|SELECT|CREATE|DROP|ALTER/i', $e->getMessage())) {
+                    $userMessage .= ' ' . $e->getMessage();
+                } else {
+                    $userMessage .= ' Por favor, revise los datos e intente nuevamente.';
+                }
+                
+                Yii::$app->session->addFlash('error', $userMessage);
             }
         }
         
@@ -501,7 +517,8 @@ class MovementController extends Controller
                 
                 if (!$newOutput->save()) {
                     $errors = implode(', ', $newOutput->getFirstErrors());
-                    throw new \Exception("Error al crear salida para {$ingredient->ingredient}: {$errors}");
+                    Yii::error("Error al crear salida para {$ingredient->ingredient}: {$errors}", __METHOD__);
+                    throw new \Exception("Error al crear salida para {$ingredient->ingredient}. Verifique el stock.");
                 }
                 
                 // Actualizar cantidad surtida en el item
@@ -546,7 +563,19 @@ class MovementController extends Controller
             
         } catch (\Exception $e) {
             $transaction->rollBack();
-            Yii::$app->session->addFlash('error', 'Error al convertir requisición: ' . $e->getMessage());
+            
+            // Registrar el error completo en el log
+            Yii::error('Error al convertir requisición: ' . $e->getMessage(), __METHOD__);
+            
+            // Mostrar mensaje genérico sin exponer SQL
+            $userMessage = 'Error al convertir la requisición.';
+            if (!preg_match('/SQL|INSERT|UPDATE|DELETE|SELECT|CREATE|DROP|ALTER/i', $e->getMessage())) {
+                $userMessage .= ' ' . $e->getMessage();
+            } else {
+                $userMessage .= ' Por favor, intente nuevamente.';
+            }
+            
+            Yii::$app->session->addFlash('error', $userMessage);
             return $this->redirect(['view', 'id' => $id]);
         }
     }

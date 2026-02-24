@@ -135,6 +135,10 @@ class RequisitionConfig extends ActiveRecord
         
         $percentage = ($requestedQuantity / $availableQuantity) * 100;
         
+        // Limitar el porcentaje a 999.99 para evitar overflow en la base de datos
+        // (la columna availability_percentage tiene un límite)
+        $percentage = min($percentage, 999.99);
+        
         if ($percentage <= $this->availability_green_threshold) {
             return [
                 'status' => 'available',

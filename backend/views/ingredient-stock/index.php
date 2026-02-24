@@ -717,22 +717,14 @@ $(document).ready(function() {
     });
     
     // ===== MANEJO DE ADVERTENCIAS PARA EDITAR/ELIMINAR INSUMOS =====
-    console.log('=== HANDLERS DE INSUMOS REGISTRADOS (dentro de registerJs) ===');
-    console.log('jQuery disponible:', typeof $ !== 'undefined');
     
     // Función para verificar y loggear los links
     function checkIngredientLinks() {
         var updateLinks = $('.update-ingredient-link').length;
         var deleteLinks = $('.delete-ingredient-link').length;
-        console.log('Links update encontrados:', updateLinks);
-        console.log('Links delete encontrados:', deleteLinks);
         
         // Verificar el HTML de los primeros links
         $('.update-ingredient-link').slice(0, 2).each(function(i) {
-            console.log('Update link #' + i + ':');
-            console.log('  data-update-url:', $(this).attr('data-update-url'));
-            console.log('  data-recipes:', $(this).attr('data-recipes'));
-            console.log('  data-subrecipes:', $(this).attr('data-subrecipes'));
         });
     }
     
@@ -741,32 +733,24 @@ $(document).ready(function() {
     
     // Re-ejecutar después de cada recarga PJAX
     $(document).on('pjax:success', '#ingredient-stock-pjax', function() {
-        console.log('PJAX recargado, verificando links...');
         checkIngredientLinks();
     });
     
     // Manejar click en botón de editar insumo
     $(document).on('click', '.update-ingredient-link', function(e) {
         e.preventDefault();
-        console.log('>>> CLICK EN UPDATE DETECTADO');
         
         var link = $(this);
         var url = link.attr('data-update-url');
         var recipes = parseInt(link.attr('data-recipes')) || 0;
         var subrecipes = parseInt(link.attr('data-subrecipes')) || 0;
         
-        console.log('  URL:', url);
-        console.log('  Recipes:', recipes);
-        console.log('  Subrecipes:', subrecipes);
         
         // Si no tiene recetas ni subrecetas, ir directo
         if (recipes === 0 && subrecipes === 0) {
-            console.log('  => Sin recetas/subrecetas, navegando directo');
             window.location.href = url;
             return;
         }
-        
-        console.log('  => Tiene recetas/subrecetas, mostrando advertencia');
         
         // Construir mensaje de advertencia
         var message = \"⚠️ ADVERTENCIA: Este insumo está siendo utilizado en:\\n\\n\";
@@ -779,7 +763,6 @@ $(document).ready(function() {
         message += \"\\nModificar este insumo puede afectar los costos y cálculos de estas recetas.\\n\\n¿Desea continuar?\";
         
         if (confirm(message)) {
-            console.log('  => Usuario confirmó, navegando');
             window.location.href = url;
         } else {
             console.log('  => Usuario canceló');
@@ -789,21 +772,16 @@ $(document).ready(function() {
     // Manejar click en botón de eliminar insumo individual
     $(document).on('click', '.delete-ingredient-link', function(e) {
         e.preventDefault();
-        console.log('>>> CLICK EN DELETE DETECTADO');
         
         var link = $(this);
         var url = link.attr('data-delete-url');
         var recipes = parseInt(link.attr('data-recipes')) || 0;
         var subrecipes = parseInt(link.attr('data-subrecipes')) || 0;
         
-        console.log('  URL:', url);
-        console.log('  Recipes:', recipes);
-        console.log('  Subrecipes:', subrecipes);
         
         var message = '';
         
         if (recipes > 0 || subrecipes > 0) {
-            console.log('  => Tiene recetas/subrecetas, mostrando advertencia');
             message = \"⚠️ ADVERTENCIA: Este insumo está siendo utilizado en:\\n\\n\";
             if (recipes > 0) {
                 message += \"• \" + recipes + \" receta\" + (recipes > 1 ? \"s\" : \"\") + \"\\n\";
@@ -813,12 +791,10 @@ $(document).ready(function() {
             }
             message += \"\\nEliminar este insumo afectará estas recetas y puede causar errores en el sistema.\\n\\n¿Está seguro de que desea eliminarlo?\";
         } else {
-            console.log('  => Sin recetas/subrecetas, confirmación simple');
             message = '¿Está seguro de que desea eliminar este insumo?';
         }
         
         if (confirm(message)) {
-            console.log('  => Usuario confirmó eliminación, enviando formulario');
             var form = $('<form>', { method: 'POST', action: url });
             var csrfParam = $('meta[name=\"csrf-param\"]').attr('content');
             var csrfToken = $('meta[name=\"csrf-token\"]').attr('content');
