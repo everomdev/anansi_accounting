@@ -22,7 +22,7 @@ class MovementSearch extends Movement
     {
         return [
             [['id', 'ingredient_id', 'business_id', 'consumption_center_id', 'requested_by_user_id', 'fulfilled_by_user_id', 'parent_requisition_id', 'category_id'], 'integer'],
-            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'requisition_number', 'status', 'required_date', 'client_timezone'], 'safe'],
+            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'requisition_number', 'status', 'required_date', 'client_timezone', 'urgency'], 'safe'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['is_without_requisition'], 'boolean'],
             [['name'], 'string']
@@ -117,6 +117,14 @@ class MovementSearch extends Movement
                     'total' => [
                         'asc' => ['movement.total' => SORT_ASC],
                         'desc' => ['movement.total' => SORT_DESC],
+                    ],
+                    'urgency' => [
+                        'asc' => ['movement.urgency' => SORT_ASC],
+                        'desc' => ['movement.urgency' => SORT_DESC],
+                    ],
+                    'requisition_number' => [
+                        'asc' => ['movement.requisition_number' => SORT_ASC],
+                        'desc' => ['movement.requisition_number' => SORT_DESC],
                     ]
                 ],
                 'defaultOrder' => ['created_at' => SORT_DESC]
@@ -170,7 +178,8 @@ class MovementSearch extends Movement
             ->andFilterWhere(['like', 'movement.invoice', $this->invoice])
             ->andFilterWhere(['like', 'movement.um', $this->um])
             ->andFilterWhere(['like', 'movement.observations', $this->observations])
-            ->andFilterWhere(['like', 'movement.requisition_number', $this->requisition_number]);
+            ->andFilterWhere(['like', 'movement.requisition_number', $this->requisition_number])
+            ->andFilterWhere(['movement.urgency' => $this->urgency]);
 
         // Filtro por nombre del ingrediente
         // Para movimientos normales, filtrar directamente

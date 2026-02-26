@@ -244,6 +244,47 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         },
     ];
 
+    // Columna urgencia (solo para requisiciones)
+    $columns[] = [
+        'attribute' => 'urgency',
+        'label' => 'Urgencia',
+        'format' => 'raw',
+        'value' => function ($model) {
+            if ($model->type !== 'requisition' || empty($model->urgency)) {
+                return '-';
+            }
+            
+            $urgencyLevels = \common\models\Movement::getUrgencyLevels();
+            $urgencyText = $urgencyLevels[$model->urgency] ?? $model->urgency;
+            
+            // Badges con colores según urgencia
+            $badgeClass = 'bg-secondary';
+            $icon = '';
+            if ($model->urgency === \common\models\Movement::URGENCY_VERY_URGENT) {
+                $badgeClass = 'bg-danger';
+                $icon = '<i class="bx bx-up-arrow-alt"></i> ';
+            } elseif ($model->urgency === \common\models\Movement::URGENCY_LOW) {
+                $badgeClass = 'bg-info';
+                $icon = '<i class="bx bx-down-arrow-alt"></i> ';
+            } else {
+                $badgeClass = 'bg-secondary';
+                $icon = '<i class="bx bx-minus"></i> ';
+            }
+            
+            return '<span class="badge ' . $badgeClass . '">' . $icon . Html::encode($urgencyText) . '</span>';
+        },
+        'filter' => Html::activeDropDownList(
+            $searchModel,
+            'urgency',
+            \common\models\Movement::getUrgencyLevels(),
+            [
+                'class' => 'form-control',
+                'prompt' => 'Todas las urgencias'
+            ]
+        ),
+        'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
+    ];
+
     // Columna de insumos
     $columns[] = [
         'attribute' => 'ingredient_id',
@@ -571,7 +612,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     // Columna de acciones
     $columns[] = [
         'class' => 'yii\grid\ActionColumn',
-        'template' => $isConsumptionRequester ? "{view}" : "{view} {update} {convert}",
+        'template' => $isConsumptionRequester ? "{view} {update}" : "{view} {update} {convert}",
         'buttons' => [
             'view' => function ($url, $model, $key) {
                 return \yii\bootstrap5\Html::a(
@@ -583,9 +624,43 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                     ]
                 );
             },
-            'update' => function ($url, $model, $key) {
-                // Solo mostrar el botón de editar si el usuario es administrador
-                if (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator')) {
+            'update' => function ($url, $model, $key) use ($isConsumptionRequester) {
+                // Para requisiciones: solo permitir editar si está en estado "Pendiente"
+                if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
+                    if ($model->status === 'pending') {
+                        return \yii\bootstrap5\Html::a(
+                            '<i class="bx bx-edit-alt"></i>',
+                            ['update-requisition', 'id' => $model->id],
+                            [
+                                'class' => 'text-warning ms-2',
+                                'title' => 'Editar requisición'
+                            ]
+                        );
+                    } else {
+                        // Mostrar botón deshabilitado con tooltip explicativo
+                        $statusLabels = [
+                            'partially_fulfilled' => 'Parcialmente Cumplida',
+                            'fulfilled' => 'Cumplida',
+                            'cancelled' => 'Cancelada'
+                        ];
+                        $statusLabel = $statusLabels[$model->status] ?? ucfirst($model->status);
+                        
+                        return \yii\bootstrap5\Html::tag(
+                            'span',
+                            '<i class="bx bx-edit-alt"></i>',
+                            [
+                                'class' => 'text-muted ms-2',
+                                'style' => 'opacity: 0.5; cursor: not-allowed;',
+                                'title' => 'No se puede editar. Estado: ' . $statusLabel,
+                                'data-bs-toggle' => 'tooltip',
+                                'data-bs-placement' => 'top'
+                            ]
+                        );
+                    }
+                }
+                
+                // Para otros tipos de movimientos: solo administradores (no consumption_requester)
+                if (!$isConsumptionRequester && (Yii::$app->user->can('manage_users') || Yii::$app->user->can('admin') || Yii::$app->user->can('administrator'))) {
                     return \yii\bootstrap5\Html::a(
                         '<i class="bx bx-edit-alt"></i>',
                         ['update', 'id' => $model->id],
@@ -612,45 +687,29 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 }
                 // Mostrar botón de convertir para requisiciones (a salidas)
                 if ($model->type === \common\models\Movement::TYPE_REQUISITION) {
-                    // Verificar si la fecha requerida ya pasó
-                    $now = new \DateTime('now', new \DateTimeZone($model->client_timezone ?: 'UTC'));
-                    $requiredDate = new \DateTime($model->required_date, new \DateTimeZone($model->client_timezone ?: 'UTC'));
-                    
-                    // Solo mostrar botón si la fecha requerida ya pasó
-                    if ($requiredDate <= $now) {
+                    // Solo mostrar botón si NO está completamente surtida
+                    if ($model->status !== 'fulfilled') {
                         return \yii\bootstrap5\Html::a(
                             '<i class="bx bx-transfer-alt"></i>',
-                            ['convert-to-output', 'id' => $model->id],
+                            ['view', 'id' => $model->id],
                             [
                                 'class' => 'text-danger ms-2 convert-requisition',
-                                'title' => 'Convertir a salida',
-                                'data-confirm' => '¿Confirmas que quieres convertir esta requisición en una salida?'
+                                'title' => 'Ver y convertir a salida',
+                                'data-bs-toggle' => 'tooltip',
+                                'data-bs-placement' => 'top'
                             ]
                         );
                     } else {
-                        // Mostrar botón deshabilitado con tooltip explicativo
-                        $daysRemaining = $now->diff($requiredDate)->days;
-                        $hoursRemaining = $now->diff($requiredDate)->h;
-                        
-                        $timeRemaining = '';
-                        if ($daysRemaining > 0) {
-                            $timeRemaining = $daysRemaining . ' día(s)';
-                        } else if ($hoursRemaining > 0) {
-                            $timeRemaining = $hoursRemaining . ' hora(s)';
-                        } else {
-                            $minutesRemaining = $now->diff($requiredDate)->i;
-                            $timeRemaining = $minutesRemaining . ' minuto(s)';
-                        }
-                        
+                        // Requisición completamente surtida
                         return \yii\bootstrap5\Html::tag(
                             'span',
-                            '<i class="bx bx-transfer-alt"></i>',
+                            '<i class="bx bx-check-circle"></i>',
                             [
-                                'class' => 'text-muted ms-2',
-                                'style' => 'opacity: 0.5; cursor: not-allowed;',
-                                'title' => 'No disponible hasta la fecha requerida (' . $requiredDate->format('d/m/Y H:i') . '). Faltan: ' . $timeRemaining,
+                                'class' => 'text-success ms-2',
+                                'title' => 'Requisición completamente surtida',
                                 'data-bs-toggle' => 'tooltip',
-                                'data-bs-placement' => 'top'
+                                'data-bs-placement' => 'top',
+                                'style' => 'cursor: default;'
                             ]
                         );
                     }

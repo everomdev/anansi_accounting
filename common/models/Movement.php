@@ -63,6 +63,11 @@ class Movement extends \yii\db\ActiveRecord
     const TIME_STATUS_OUT_OF_TIME = 'out_of_time';   // Fuera de días/horarios, sin motivo especial
     const TIME_STATUS_EXTEMPORANEOUS = 'extemporaneous'; // Fuera de días/horarios CON motivo justificado
 
+    // Niveles de urgencia para requisiciones
+    const URGENCY_VERY_URGENT = 'very_urgent';
+    const URGENCY_NORMAL = 'normal';
+    const URGENCY_LOW = 'low';
+
     // Tipos de pago genéricos (para compatibilidad)
     const PAYMENT_TYPE_CARD = 'card';
     const PAYMENT_TYPE_BANK_TRANSFERENCE = 'bank_transference';
@@ -145,6 +150,9 @@ class Movement extends \yii\db\ActiveRecord
             [['is_without_requisition'], 'boolean'],
             [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'status', 'client_timezone'], 'string', 'max' => 255],
             [['requisition_number'], 'string', 'max' => 50],
+            [['urgency'], 'string', 'max' => 20],
+            [['urgency'], 'in', 'range' => array_keys(self::getUrgencyLevels()), 'skipOnEmpty' => true],
+            [['urgency'], 'default', 'value' => self::URGENCY_NORMAL],
             [['status'], 'in', 'range' => ['pending', 'partially_fulfilled', 'fulfilled', 'cancelled']],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['ingredient_id'], 'exist', 'skipOnError' => true, 'targetClass' => IngredientStock::className(), 'targetAttribute' => ['ingredient_id' => 'id']],
@@ -438,6 +446,18 @@ class Movement extends \yii\db\ActiveRecord
             self::PAYMENT_METHOD_CREDIT_CARD => Yii::t('app', 'Tarjeta Crédito'),
             self::PAYMENT_METHOD_DEBIT_CARD => Yii::t('app', 'Tarjeta Débito'),
             self::PAYMENT_METHOD_OTHER => Yii::t('app', 'Otro')
+        ];
+    }
+
+    /**
+     * Obtiene los niveles de urgencia disponibles para requisiciones
+     */
+    public static function getUrgencyLevels()
+    {
+        return [
+            self::URGENCY_VERY_URGENT => Yii::t('app', 'Muy urgente'),
+            self::URGENCY_NORMAL => Yii::t('app', 'Normal'),
+            self::URGENCY_LOW => Yii::t('app', 'Poco urgente'),
         ];
     }
 

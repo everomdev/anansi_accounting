@@ -8,13 +8,14 @@ use kartik\select2\Select2Asset;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Movement */
+/* @var $existingItems array */
 /* @var $form yii\widgets\ActiveForm */
 /* @var $config common\models\RequisitionConfig */
 
 // Registrar Select2
 Select2Asset::register($this);
 
-$this->title = 'Crear Requisición';
+$this->title = 'Editar Requisición #' . $model->requisition_number;
 $this->params['breadcrumbs'][] = ['label' => 'Movimientos', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
@@ -26,9 +27,9 @@ $config = RequisitionConfig::getForBusiness($business->id);
 
 // Obtener centro de consumo del usuario
 $user = Yii::$app->user->identity;
-$defaultCenter = $user->getDefaultConsumptionCenter();
+$defaultCenter = \common\models\ConsumptionCenter::findOne($model->consumption_center_id);
 
-// Obtener reglas de requisición para el centro por defecto
+// Obtener reglas de requisición para el centro actual
 $defaultCenterRules = null;
 if ($defaultCenter) {
     $defaultCenterRules = \common\models\ConsumptionCenterRequisitionRules::getForConsumptionCenter(
@@ -151,6 +152,7 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
 ?>
 
 <div class="requisition-form">
+    
     <!-- Alerta de Requisición Extemporánea -->
     <div id="extemporaneous-alert" class="alert alert-warning alert-dismissible fade" role="alert" style="display: none;">
         <i class="bx bx-error-circle me-2"></i>
@@ -217,7 +219,7 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
                     <label class="form-label">Fecha Requerida <span class="text-danger">*</span></label>
                     <?= \kartik\datetime\DateTimePicker::widget([
                         'name' => 'required_date',
-                        'value' => '', // Se llenará con JavaScript
+                        'value' => $model->required_date, // Valor de la requisición existente
                         'options' => [
                             'placeholder' => 'Seleccionar fecha requerida...',
                             'required' => true,
@@ -256,7 +258,7 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
                     <label class="form-label">Urgencia <span class="text-danger">*</span></label>
                     <?= Html::dropDownList(
                         'urgency',
-                        Movement::URGENCY_NORMAL,
+                        $model->urgency ?? Movement::URGENCY_NORMAL, // Valor de la requisición existente
                         Movement::getUrgencyLevels(),
                         [
                             'class' => 'form-select',
@@ -308,7 +310,7 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
                 <!-- Observaciones -->
                 <div class="col-12">
                     <?= Html::label('Observaciones', 'observations', ['class' => 'form-label']) ?>
-                    <?= Html::textarea('observations', '', [
+                    <?= Html::textarea('observations', $model->observations, [ // Valor de la requisición existente
                         'class' => 'form-control',
                         'rows' => 3,
                         'placeholder' => 'Observaciones adicionales...'
@@ -328,7 +330,7 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
                 </div>
                 <div>
                     <?= Html::submitButton(
-                        '<i class="bx bx-send"></i> Enviar Requisición',
+                        '<i class="bx bx-save"></i> Actualizar Requisición',
                         [
                             'class' => 'btn btn-primary',
                             'id' => 'submit-btn'
@@ -353,6 +355,19 @@ $this->registerJsFile('@web/js/utils/client-timezone.js', ['depends' => [\yii\we
     
     <!-- Campo oculto para el motivo de requisición extemporánea -->
     <?= Html::hiddenInput('extemporaneous_reason_hidden', '', ['id' => 'extemporaneous-reason-hidden']) ?>
+    
+    <!-- Campo oculto para items existentes (usado en edición) -->
+    <input type="hidden" id="existing-items-data" value='<?= htmlspecialchars(json_encode(
+        isset($existingItems) && is_array($existingItems) 
+        ? array_values(array_map(function($item) {
+            return [
+                'ingredient_id' => (int)$item->ingredient_id,
+                'quantity' => (float)$item->quantity_requested,
+                'ingredient_name' => isset($item->ingredient) ? (string)$item->ingredient->ingredient : '',
+            ];
+        }, $existingItems))
+        : []
+    ), ENT_QUOTES, 'UTF-8') ?>' />
 
     <?php ActiveForm::end(); ?>
 </div>
@@ -738,18 +753,48 @@ $(document).ready(function() {
     
     let itemIndex = 0;
     
-    // Agregar primera fila automáticamente
-    addItemRow(false);
+    // Cargar items existentes de la requisición desde el campo oculto
+    let existingItems = [];
+    try {
+        const itemsDataElement = document.getElementById('existing-items-data');
+        if (itemsDataElement && itemsDataElement.value) {
+            existingItems = JSON.parse(itemsDataElement.value);
+            console.log('Items existentes parseados correctamente:', existingItems);
+        } else {
+            console.log('No se encontró el elemento existing-items-data o está vacío');
+        }
+    } catch (e) {
+        console.error('Error al parsear items existentes:', e);
+        console.log('Valor del campo:', document.getElementById('existing-items-data')?.value);
+        existingItems = [];
+    }
+    
+    console.log('Items existentes cargados:', existingItems);
+    
+    // Cargar items existentes si los hay
+    if (existingItems && existingItems.length > 0) {
+        console.log('Cargando ' + existingItems.length + ' items existentes...');
+        existingItems.forEach(function(item, idx) {
+            console.log('Cargando item ' + (idx + 1) + ':', item);
+            addItemRow(item.ingredient_id, item.quantity);
+        });
+    } else {
+        console.log('No hay items existentes, agregando fila vacía');
+        // Agregar primera fila vacía si no hay items
+        addItemRow();
+    }
     
     // Botón para agregar nueva fila
     $('#add-item-btn').on('click', function(e) {
         e.preventDefault();
-        addItemRow(true);
+        addItemRow(null, null, true);
     });
     
     // Función para agregar una fila de insumo
-    function addItemRow(autoOpen = false) {
+    function addItemRow(preselectedIngredientId = null, preselectedQuantity = null, autoOpen = false) {
         const index = itemIndex++;
+        
+        console.log('addItemRow llamado con:', { index, preselectedIngredientId, preselectedQuantity });
         
         // Crear opciones del select
         let optionsHtml = '<option value="">Seleccionar insumo...</option>';
@@ -799,8 +844,8 @@ $(document).ready(function() {
         $('#items-tbody').append(row);
         
         // Inicializar Select2 en el nuevo select
-        const $newSelect = $(`.ingredient-select[data-index="${index}"]`);
-        $newSelect.select2({
+        const $select = $(`.ingredient-select[data-index="${index}"]`);
+        $select.select2({
             placeholder: 'Buscar insumo...',
             allowClear: true,
             language: {
@@ -814,7 +859,7 @@ $(document).ready(function() {
         });
         
         // Forzar foco en el campo de búsqueda cada vez que se abre el dropdown
-        $newSelect.on('select2:open', function() {
+        $select.on('select2:open', function() {
             setTimeout(function() {
                 let searchField = document.querySelector('.select2-container--open .select2-search__field');
                 if (searchField) {
@@ -823,11 +868,27 @@ $(document).ready(function() {
             }, 0);
         });
         
-        // Abrir el dropdown automáticamente solo si se solicita (al hacer clic en "Agregar Item")
-        if (autoOpen === true) {
+        // Si hay valores preseleccionados, aplicarlos después de inicializar Select2
+        if (preselectedIngredientId) {
+            console.log('Estableciendo ingrediente seleccionado:', preselectedIngredientId);
+            // Usar setTimeout para asegurar que Select2 esté completamente inicializado
             setTimeout(function() {
-                $newSelect.select2('open');
+                $select.val(preselectedIngredientId).trigger('change');
+                console.log('Ingrediente establecido, valor actual:', $select.val());
             }, 100);
+        } else if (autoOpen === true) {
+            // Solo abrir el dropdown automáticamente si se solicita explícitamente (al hacer clic en "Agregar Item")
+            setTimeout(function() {
+                $select.select2('open');
+            }, 100);
+        }
+        
+        if (preselectedQuantity) {
+            console.log('Estableciendo cantidad:', preselectedQuantity);
+            // Usar setTimeout para que se establezca después del ingrediente
+            setTimeout(function() {
+                $(`.quantity-input[data-index="${index}"]`).val(preselectedQuantity).trigger('input');
+            }, 200);
         }
         
         updateItemsCount();
@@ -988,9 +1049,9 @@ $(document).ready(function() {
         $(`tr[data-index="${index}"]`).remove();
         updateItemsCount();
         
-        // Si no quedan filas, agregar una nueva
+        // Si no quedan filas, agregar una nueva (sin auto-abrir)
         if ($('#items-tbody tr').length === 0) {
-            addItemRow();
+            addItemRow(null, null, false);
         }
     });
     

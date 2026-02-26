@@ -64,6 +64,7 @@ class MovementController extends Controller
                         'actions' => [
                             'create',
                             'create-requisition',
+                            'update-requisition',
                         ],
                         'allow' => true,
                         'roles' => [
@@ -222,6 +223,7 @@ class MovementController extends Controller
                 $items = $post['items'] ?? [];
                 $isExtemporaneous = ($post['is_extemporaneous'] ?? '0') === '1';
                 $extemporaneousReason = $post['extemporaneous_reason_hidden'] ?? null;
+                $urgency = $post['urgency'] ?? Movement::URGENCY_NORMAL;
                 
                 // Obtener fecha/hora actual del cliente (no del servidor)
                 $clientCurrentDateTime = $post['client_current_datetime'] ?? date('Y-m-d H:i:s');
@@ -313,6 +315,7 @@ class MovementController extends Controller
                     'is_extemporaneous' => $isExtemporaneous,
                     'extemporaneous_reason' => !empty($extemporaneousReason) ? $extemporaneousReason : null,
                     'requisition_time_status' => $timeStatus,
+                    'urgency' => $urgency,
                 ]);
                 
                 if (!$movement->save()) {
@@ -409,6 +412,136 @@ class MovementController extends Controller
     }
 
     /**
+     * Actualiza una requisición existente
+     * Solo permite editar si está en estado "Pendiente"
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionUpdateRequisition($id)
+    {
+        $model = $this->findModel($id);
+        
+        // Verificar que sea una requisición
+        if ($model->type !== Movement::TYPE_REQUISITION) {
+            Yii::$app->session->addFlash('error', 'Solo se pueden editar requisiciones con esta acción.');
+            return $this->redirect(['index']);
+        }
+        
+        // Verificar que esté en estado "Pendiente"
+        if ($model->status !== 'pending') {
+            Yii::$app->session->addFlash('error', 'Solo se pueden editar requisiciones en estado "Pendiente".');
+            return $this->redirect(['index']);
+        }
+        
+        $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $business = \common\models\Business::findOne(['id' => $businessData['id']]);
+        
+        if (Yii::$app->request->isPost) {
+            $post = Yii::$app->request->post();
+            
+            $transaction = Yii::$app->db->beginTransaction();
+            
+            try {
+                // Actualizar datos básicos de la requisición
+                $model->consumption_center_id = $post['consumption_center_id'];
+                $model->required_date = $post['required_date'];
+                $model->urgency = $post['urgency'] ?? Movement::URGENCY_NORMAL;
+                $model->observations = $post['observations'] ?? '';
+                $model->client_timezone = $post['client_timezone'] ?? 'UTC';
+                
+                // Manejar requisición extemporánea
+                $isExtemporaneous = ($post['is_extemporaneous'] ?? '0') === '1';
+                $extemporaneousReason = $post['extemporaneous_reason_hidden'] ?? '';
+                
+                if ($isExtemporaneous && !empty($extemporaneousReason)) {
+                    $model->extemporaneous_reason = $extemporaneousReason;
+                } else {
+                    $model->extemporaneous_reason = null;
+                }
+                
+                if (!$model->save()) {
+                    throw new \Exception('Error al actualizar la requisición: ' . json_encode($model->errors));
+                }
+                
+                // Eliminar items antiguos
+                \common\models\RequisitionItem::deleteAll(['requisition_id' => $model->id]);
+                
+                // Guardar nuevos items
+                $items = $post['items'] ?? [];
+                foreach ($items as $item) {
+                    if (empty($item['ingredient_id']) || empty($item['quantity'])) {
+                        continue;
+                    }
+                    
+                    $requisitionItem = new \common\models\RequisitionItem();
+                    $requisitionItem->requisition_id = $model->id;
+                    $requisitionItem->ingredient_id = $item['ingredient_id'];
+                    $requisitionItem->quantity_requested = $item['quantity'];
+                    $requisitionItem->quantity_fulfilled = 0;
+                    
+                    if (!$requisitionItem->save()) {
+                        throw new \Exception('Error al guardar item: ' . json_encode($requisitionItem->errors));
+                    }
+                }
+                
+                $transaction->commit();
+                
+                Yii::$app->session->addFlash('success', 'La requisición ha sido actualizada exitosamente.');
+                return $this->redirect(['index']);
+                
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                Yii::error('Error al actualizar requisición: ' . $e->getMessage(), __METHOD__);
+                
+                $userMessage = 'Ocurrió un error al actualizar la requisición.';
+                if (!preg_match('/SQL|INSERT|UPDATE|DELETE|SELECT|CREATE|DROP|ALTER/i', $e->getMessage())) {
+                    $userMessage .= ' ' . $e->getMessage();
+                } else {
+                    $userMessage .= ' Por favor, revise los datos e intente nuevamente.';
+                }
+                
+                Yii::$app->session->addFlash('error', $userMessage);
+            }
+        }
+        
+        // Cargar items existentes con la relación ingredient
+        $existingItems = \common\models\RequisitionItem::find()
+            ->where(['requisition_id' => $model->id])
+            ->with('ingredient')
+            ->all();
+        
+        // Log de depuración
+        Yii::info('========== DEBUG UPDATE REQUISITION ==========', __METHOD__);
+        Yii::info('Requisition ID: ' . $model->id, __METHOD__);
+        Yii::info('Cantidad de items encontrados: ' . count($existingItems), __METHOD__);
+        foreach ($existingItems as $index => $item) {
+            Yii::info('Item #' . ($index + 1) . ':', __METHOD__);
+            Yii::info('  - ID: ' . $item->id, __METHOD__);
+            Yii::info('  - Ingredient ID: ' . $item->ingredient_id, __METHOD__);
+            Yii::info('  - Quantity Requested: ' . $item->quantity_requested, __METHOD__);
+            Yii::info('  - Ingredient loaded: ' . (isset($item->ingredient) ? 'YES' : 'NO'), __METHOD__);
+            if (isset($item->ingredient)) {
+                Yii::info('  - Ingredient Name: ' . $item->ingredient->ingredient, __METHOD__);
+            }
+        }
+        Yii::info('Items array para JSON: ' . json_encode(array_map(function($item) {
+            return [
+                'ingredient_id' => $item->ingredient_id,
+                'quantity' => $item->quantity_requested,
+                'has_ingredient' => isset($item->ingredient),
+                'ingredient_name' => isset($item->ingredient) ? $item->ingredient->ingredient : 'N/A',
+            ];
+        }, $existingItems)), __METHOD__);
+        Yii::info('========== END DEBUG ==========', __METHOD__);
+        
+        return $this->render('update_requisition', [
+            'model' => $model,
+            'existingItems' => $existingItems,
+        ]);
+    }
+
+    /**
      * Convierte una orden en una entrada
      * @param integer $id
      * @return mixed
@@ -455,7 +588,7 @@ class MovementController extends Controller
     }
 
     /**
-     * Convierte una requisición en una salida
+     * Convierte una requisición en salidas (completa o parcialmente)
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -466,15 +599,50 @@ class MovementController extends Controller
         
         // Verificar que sea una requisición
         if ($originalRequisition->type !== Movement::TYPE_REQUISITION) {
-            Yii::$app->session->addFlash('error', 'Solo se pueden convertir requisiciones en salidas.');
-            return $this->redirect(['view', 'id' => $id]);
+            $message = 'Solo se pueden convertir requisiciones en salidas.';
+            Yii::$app->session->addFlash('error', $message);
+            
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => false, 'message' => $message];
+            }
+            return $this->redirect(['index']);
         }
         
         // Verificar que la requisición tenga items
         $items = $originalRequisition->requisitionItems;
         if (empty($items)) {
-            Yii::$app->session->addFlash('error', 'La requisición no tiene insumos.');
+            $message = 'La requisición no tiene insumos.';
+            Yii::$app->session->addFlash('error', $message);
+            
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => false, 'message' => $message];
+            }
+            return $this->redirect(['index']);
+        }
+        
+        // Si no es POST, redirigir a la vista
+        if (!Yii::$app->request->isPost) {
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => false, 'message' => 'Método no permitido'];
+            }
             return $this->redirect(['view', 'id' => $id]);
+        }
+        
+        $post = Yii::$app->request->post();
+        $fulfillQuantities = $post['fulfill_quantities'] ?? [];
+        
+        if (empty($fulfillQuantities)) {
+            $message = 'Debe especificar al menos una cantidad a surtir.';
+            Yii::$app->session->addFlash('error', $message);
+            
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => false, 'message' => $message];
+            }
+            return $this->redirect(['index']);
         }
         
         $transaction = Yii::$app->db->beginTransaction();
@@ -482,22 +650,46 @@ class MovementController extends Controller
         try {
             $outputsCreated = 0;
             $insufficientStock = [];
+            $partiallyFulfilled = [];
             
-            // Crear una salida por cada item de la requisición
+            // Procesar cada item con cantidad especificada
             foreach ($items as $item) {
+                if (!isset($fulfillQuantities[$item->id])) {
+                    continue;
+                }
+                
+                $quantityToFulfill = floatval($fulfillQuantities[$item->id]);
+                
+                // Saltar si la cantidad es 0 o negativa
+                if ($quantityToFulfill <= 0) {
+                    continue;
+                }
+                
                 $ingredient = $item->ingredient;
                 
                 if (!$ingredient) {
                     continue;
                 }
                 
+                // Calcular saldo pendiente
+                $alreadyFulfilled = $item->quantity_fulfilled ?? 0;
+                $pendingQuantity = $item->quantity_requested - $alreadyFulfilled;
+                
+                // Validar que no exceda el saldo pendiente
+                if ($quantityToFulfill > $pendingQuantity) {
+                    $quantityToFulfill = $pendingQuantity;
+                }
+                
                 // Verificar disponibilidad de stock
                 $availableQuantity = $ingredient->quantity ?? 0;
                 
-                if ($availableQuantity < $item->quantity_requested) {
+                // Si no hay stock suficiente, surtir solo lo disponible
+                $actualQuantityToFulfill = min($quantityToFulfill, $availableQuantity);
+                
+                if ($actualQuantityToFulfill <= 0) {
                     $insufficientStock[] = [
                         'ingredient' => $ingredient->ingredient,
-                        'requested' => $item->quantity_requested,
+                        'requested' => $quantityToFulfill,
                         'available' => $availableQuantity,
                     ];
                     continue;
@@ -509,32 +701,71 @@ class MovementController extends Controller
                 $newOutput->business_id = $originalRequisition->business_id;
                 $newOutput->ingredient_id = $item->ingredient_id;
                 $newOutput->consumption_center_id = $originalRequisition->consumption_center_id;
-                $newOutput->quantity = $item->quantity_requested;
+                $newOutput->quantity = $actualQuantityToFulfill;
                 $newOutput->um = $ingredient->portion_um ?? $ingredient->um;
-                $newOutput->observations = "Salida de requisición {$originalRequisition->requisition_number}";
+                
+                // Construir observaciones
+                $outputObservations = "Salida de requisición {$originalRequisition->requisition_number}";
+                if ($actualQuantityToFulfill < $quantityToFulfill) {
+                    $outputObservations .= " (Surtido parcial: {$actualQuantityToFulfill} de {$quantityToFulfill} solicitados por stock insuficiente)";
+                }
+                
+                $newOutput->observations = $outputObservations;
                 $newOutput->parent_requisition_id = $originalRequisition->id;
                 $newOutput->created_at = date('Y-m-d H:i:s');
                 
                 if (!$newOutput->save()) {
                     $errors = implode(', ', $newOutput->getFirstErrors());
                     Yii::error("Error al crear salida para {$ingredient->ingredient}: {$errors}", __METHOD__);
-                    throw new \Exception("Error al crear salida para {$ingredient->ingredient}. Verifique el stock.");
+                    throw new \Exception("Error al crear salida para {$ingredient->ingredient}.");
                 }
                 
                 // Actualizar cantidad surtida en el item
-                $item->quantity_fulfilled = $item->quantity_requested;
+                $newFulfilledQuantity = $alreadyFulfilled + $actualQuantityToFulfill;
+                $item->quantity_fulfilled = $newFulfilledQuantity;
+                
+                // Agregar observaciones al item si es surtido parcial
+                if ($newFulfilledQuantity < $item->quantity_requested) {
+                    $partiallyFulfilled[] = [
+                        'ingredient' => $ingredient->ingredient,
+                        'fulfilled' => $actualQuantityToFulfill,
+                        'pending' => $item->quantity_requested - $newFulfilledQuantity,
+                    ];
+                }
+                
                 $item->save(false);
+                
+                // Si no se surtió la cantidad completa solicitada, registrar
+                if ($actualQuantityToFulfill < $quantityToFulfill) {
+                    $insufficientStock[] = [
+                        'ingredient' => $ingredient->ingredient,
+                        'requested' => $quantityToFulfill,
+                        'fulfilled' => $actualQuantityToFulfill,
+                        'available' => $availableQuantity,
+                    ];
+                }
                 
                 $outputsCreated++;
             }
             
             // Actualizar estado de la requisición
             if ($outputsCreated > 0) {
-                if (empty($insufficientStock)) {
+                // Verificar si todos los items están completamente surtidos
+                $allFulfilled = true;
+                foreach ($items as $item) {
+                    $pendingQuantity = $item->quantity_requested - ($item->quantity_fulfilled ?? 0);
+                    if ($pendingQuantity > 0.01) {
+                        $allFulfilled = false;
+                        break;
+                    }
+                }
+                
+                if ($allFulfilled) {
                     $originalRequisition->status = 'fulfilled';
                 } else {
                     $originalRequisition->status = 'partially_fulfilled';
                 }
+                
                 $originalRequisition->fulfilled_by_user_id = Yii::$app->user->id;
                 $originalRequisition->save(false);
             }
@@ -543,20 +774,49 @@ class MovementController extends Controller
             
             // Mostrar resultados
             if ($outputsCreated > 0) {
-                Yii::$app->session->addFlash('success', 
-                    "Se crearon {$outputsCreated} salida(s) exitosamente.");
+                $message = "Se crearon {$outputsCreated} salida(s) exitosamente.";
+                
+                if ($originalRequisition->status === 'fulfilled') {
+                    $message .= " La requisición está completamente surtida.";
+                    Yii::$app->session->addFlash('success', $message);
+                } else {
+                    $message .= " La requisición está parcialmente surtida.";
+                    Yii::$app->session->addFlash('warning', $message);
+                }
             }
             
+            // Mostrar detalles de items parcialmente surtidos
+            if (!empty($partiallyFulfilled)) {
+                $message = "Items con saldo pendiente:\n";
+                foreach ($partiallyFulfilled as $pItem) {
+                    $message .= "• {$pItem['ingredient']}: Surtido {$pItem['fulfilled']}, Pendiente {$pItem['pending']}\n";
+                }
+                Yii::$app->session->addFlash('info', $message);
+            }
+            
+            // Mostrar información sobre stock insuficiente
             if (!empty($insufficientStock)) {
-                $message = "No se pudo surtir todo. Stock insuficiente para:\n";
+                $message = "Algunos items tuvieron stock insuficiente:\n";
                 foreach ($insufficientStock as $stock) {
-                    $message .= "- {$stock['ingredient']}: solicitado {$stock['requested']}, disponible {$stock['available']}\n";
+                    if (isset($stock['fulfilled'])) {
+                        $message .= "• {$stock['ingredient']}: Solicitado {$stock['requested']}, " .
+                                   "Surtido {$stock['fulfilled']}\n";
+                    } else {
+                        $message .= "• {$stock['ingredient']}: Solicitado {$stock['requested']}, " .
+                                   "Sin stock disponible\n";
+                    }
                 }
                 Yii::$app->session->addFlash('warning', $message);
             }
             
             if ($outputsCreated == 0) {
-                Yii::$app->session->addFlash('error', 'No se pudo crear ninguna salida debido a stock insuficiente.');
+                Yii::$app->session->addFlash('error', 'No se pudo crear ninguna salida. Verifique las cantidades y el stock disponible.');
+            }
+            
+            // Si es una petición AJAX, devolver JSON
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => true, 'message' => 'Operación completada exitosamente'];
             }
             
             return $this->redirect(['index']);
@@ -576,7 +836,14 @@ class MovementController extends Controller
             }
             
             Yii::$app->session->addFlash('error', $userMessage);
-            return $this->redirect(['view', 'id' => $id]);
+            
+            // Si es una petición AJAX, devolver JSON con error
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                return ['success' => false, 'message' => $userMessage];
+            }
+            
+            return $this->redirect(['index']);
         }
     }
     

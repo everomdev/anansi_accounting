@@ -178,43 +178,127 @@ $this->registerCss("
                     <?php endif; ?>
 
                     <h6 class="mt-4 mb-3">Insumos Solicitados</h6>
+                    
+                    <?php if ($model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')): ?>
+                        <?php 
+                        $form = \yii\widgets\ActiveForm::begin([
+                            'action' => ['convert-to-output', 'id' => $model->id],
+                            'method' => 'post',
+                            'id' => 'fulfill-form'
+                        ]); 
+                        ?>
+                    <?php endif; ?>
+                    
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover">
                             <thead class="table-light">
                                 <tr>
                                     <th>Insumo</th>
-                                    <th>Cantidad Solicitada</th>
-                                    <th>Cantidad Surtida</th>
+                                    <th class="text-center">Cantidad Solicitada</th>
+                                    <th class="text-center">Ya Surtido</th>
+                                    <th class="text-center">Saldo Pendiente</th>
+                                    <?php if ($model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')): ?>
+                                        <th class="text-center">Cantidad a Surtir</th>
+                                    <?php endif; ?>
                                     <th>Disponibilidad</th>
                                     <?php if (!Yii::$app->user->can('consumption_requester')): ?>
-                                        <th>Costo Estimado</th>
+                                        <th class="text-end">Costo Estimado</th>
                                     <?php endif; ?>
-                                    <th>Estado</th>
-                                    <th>Observaciones</th>
+                                    <th class="text-center">Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php 
                                 $items = $model->requisitionItems;
                                 $totalEstimated = 0;
+                                $totalPending = 0;
+                                $hasPending = false;
+                                
                                 foreach ($items as $item): 
                                     $totalEstimated += $item->cost_at_request;
+                                    $fulfilledQty = $item->quantity_fulfilled ?? 0;
+                                    $pendingQty = $item->quantity_requested - $fulfilledQty;
+                                    
+                                    if ($pendingQty > 0.01) {
+                                        $hasPending = true;
+                                    }
+                                    
+                                    $totalPending += $pendingQty;
+                                    
+                                    // Determinar clase de fila según estado
+                                    $rowClass = '';
+                                    if ($pendingQty <= 0.01) {
+                                        $rowClass = 'table-success';
+                                    } elseif ($fulfilledQty > 0) {
+                                        $rowClass = 'table-warning';
+                                    }
+                                    
+                                    $availableStock = $item->ingredient ? $item->ingredient->quantity : 0;
+                                    $suggestedQty = min($pendingQty, $availableStock);
                                 ?>
-                                    <tr>
+                                    <tr class="<?= $rowClass ?>">
                                         <td>
-                                            <?= $item->ingredient ? Html::encode($item->ingredient->ingredient) : '-' ?>
+                                            <strong><?= $item->ingredient ? Html::encode($item->ingredient->ingredient) : '-' ?></strong>
                                             <?php if ($item->ingredient && $item->ingredient->brand): ?>
                                                 <br><small class="text-muted"><?= Html::encode($item->ingredient->brand) ?></small>
                                             <?php endif; ?>
+                                            <?php if ($item->ingredient && $item->ingredient->presentation): ?>
+                                                <br><small class="text-muted"><?= Html::encode($item->ingredient->presentation) ?></small>
+                                            <?php endif; ?>
                                         </td>
-                                        <td class="text-end">
-                                            <?= Yii::$app->formatter->asDecimal($item->quantity_requested, 2) ?>
-                                            <?= $item->ingredient ? Html::encode($item->ingredient->um) : '' ?>
+                                        <td class="text-center">
+                                            <strong><?= Yii::$app->formatter->asDecimal($item->quantity_requested, 2) ?></strong>
+                                            <?= $item->ingredient ? Html::encode($item->ingredient->portion_um ?? $item->ingredient->um) : '' ?>
                                         </td>
-                                        <td class="text-end">
-                                            <?= Yii::$app->formatter->asDecimal($item->quantity_fulfilled ?? 0, 2) ?>
-                                            <?= $item->ingredient ? Html::encode($item->ingredient->um) : '' ?>
+                                        <td class="text-center">
+                                            <?php if ($fulfilledQty > 0): ?>
+                                                <span class="badge bg-success">
+                                                    <?= Yii::$app->formatter->asDecimal($fulfilledQty, 2) ?>
+                                                </span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    (<?= number_format(($fulfilledQty / $item->quantity_requested) * 100, 1) ?>%)
+                                                </small>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
                                         </td>
+                                        <td class="text-center">
+                                            <?php if ($pendingQty > 0.01): ?>
+                                                <span class="badge bg-warning text-dark" style="font-size: 0.95rem;">
+                                                    <?= Yii::$app->formatter->asDecimal($pendingQty, 2) ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-success">✓ Completo</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <?php if ($model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')): ?>
+                                            <td class="text-center">
+                                                <?php if ($pendingQty > 0.01): ?>
+                                                    <?= Html::input('number', "fulfill_quantities[{$item->id}]", 
+                                                        number_format($suggestedQty, 2, '.', ''), 
+                                                        [
+                                                            'class' => 'form-control form-control-sm text-center',
+                                                            'style' => 'width: 100px; display: inline-block; font-weight: bold;',
+                                                            'min' => 0,
+                                                            'max' => $pendingQty,
+                                                            'step' => 0.01,
+                                                            'data-pending' => $pendingQty,
+                                                            'data-available' => $availableStock
+                                                        ]
+                                                    ) ?>
+                                                    <br>
+                                                    <small class="text-muted">Stock: <?= number_format($availableStock, 2) ?></small>
+                                                    <?php if ($availableStock < $pendingQty): ?>
+                                                        <br><small class="text-danger">
+                                                            <i class="bx bx-error-circle"></i> Insuficiente
+                                                        </small>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        <?php endif; ?>
                                         <td>
                                             <?php
                                             $statusMap = [
@@ -229,26 +313,26 @@ $this->registerCss("
                                             <span class="badge bg-<?= $status['class'] ?>">
                                                 <?= $status['icon'] ?> <?= $status['text'] ?>
                                             </span>
-                                            <?php if ($item->availability_percentage !== null): ?>
-                                                <small class="text-muted ms-1">(<?= round($item->availability_percentage) ?>%)</small>
-                                            <?php endif; ?>
                                         </td>
                                         <?php if (!Yii::$app->user->can('consumption_requester')): ?>
                                             <td class="text-end">
                                                 <?= Yii::$app->formatter->asCurrency($item->cost_at_request ?? 0) ?>
                                             </td>
                                         <?php endif; ?>
-                                        <td>
-                                            <?php if ($item->isFullyDelivered()): ?>
-                                                <span class="badge bg-success">Completo</span>
-                                            <?php elseif ($item->isPartiallyDelivered()): ?>
-                                                <span class="badge bg-warning">Parcial (<?= round($item->getDeliveryPercentage()) ?>%)</span>
+                                        <td class="text-center">
+                                            <?php if ($pendingQty <= 0.01): ?>
+                                                <span class="badge bg-success">
+                                                    <i class="bx bx-check-circle"></i> Surtido
+                                                </span>
+                                            <?php elseif ($fulfilledQty > 0): ?>
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="bx bx-time"></i> Parcial
+                                                </span>
                                             <?php else: ?>
-                                                <span class="badge bg-secondary">Pendiente</span>
+                                                <span class="badge bg-secondary">
+                                                    <i class="bx bx-hourglass"></i> Pendiente
+                                                </span>
                                             <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?= $item->observations ? Html::encode($item->observations) : '-' ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -256,26 +340,52 @@ $this->registerCss("
                             <?php if (!Yii::$app->user->can('consumption_requester')): ?>
                                 <tfoot class="table-light">
                                     <tr>
-                                        <td colspan="4" class="text-end"><strong>Total Estimado:</strong></td>
+                                        <?php 
+                                        $colspanBase = $model->status !== 'fulfilled' ? 5 : 4;
+                                        ?>
+                                        <td colspan="<?= $colspanBase ?>" class="text-end"><strong>Total Estimado:</strong></td>
+                                        <td></td>
                                         <td class="text-end"><strong><?= Yii::$app->formatter->asCurrency($totalEstimated) ?></strong></td>
-                                        <td colspan="2"></td>
+                                        <td></td>
                                     </tr>
+                                    <?php if ($hasPending && $model->status !== 'fulfilled'): ?>
+                                        <tr class="table-info">
+                                            <td colspan="<?= $colspanBase + 3 ?>" class="text-center">
+                                                <i class="bx bx-info-circle"></i>
+                                                <strong>Ajuste las cantidades a surtir según disponibilidad y presione "Convertir a Salida"</strong>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tfoot>
                             <?php endif; ?>
                         </table>
                     </div>
 
                     <?php if ($model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')): ?>
-                        <div class="d-flex gap-2 mt-4">
-                            <?= Html::a(
-                                '<i class="bx bx-transfer-alt"></i> Convertir a Salida', 
-                                ['convert-to-output', 'id' => $model->id], 
+                        <div class="d-flex gap-3 mt-4 align-items-center">
+                            <?= Html::submitButton(
+                                '<i class="bx bx-transfer-alt"></i> Convertir a Salida',
                                 [
                                     'class' => 'btn btn-danger btn-lg',
-                                    'data-confirm' => '¿Confirmas que quieres convertir esta requisición en salidas?\n\nSe crearán movimientos de salida para cada insumo según disponibilidad.',
-                                    'title' => 'Convertir requisición a salidas'
+                                    'form' => 'fulfill-form'
                                 ]
                             ) ?>
+                            
+                            <?php if ($model->status === 'partially_fulfilled'): ?>
+                                <div class="alert alert-warning mb-0" style="flex: 1;">
+                                    <i class="bx bx-info-circle"></i>
+                                    <strong>Requisición parcialmente surtida.</strong>
+                                    Puede continuar surtiendo los items pendientes.
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <?php \yii\widgets\ActiveForm::end(); ?>
+                    <?php elseif ($model->status === 'fulfilled'): ?>
+                        <div class="alert alert-success mt-3">
+                            <i class="bx bx-check-circle"></i>
+                            <strong>Requisición completamente surtida.</strong>
+                            Todos los items han sido entregados.
                         </div>
                     <?php endif; ?>
                 </div>
@@ -337,3 +447,59 @@ $this->registerCss("
     <?php endif; ?>
 
 </div>
+
+<?php
+// Script para manejar el envío del formulario desde el modal
+if ($model->type === \common\models\Movement::TYPE_REQUISITION && $model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')) {
+    $this->registerJs(<<<JS
+        $('#fulfill-form').on('beforeSubmit', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            
+            // Validar que haya al menos una cantidad mayor a 0
+            var hasQuantities = false;
+            form.find('input[name^="fulfill_quantities"]').each(function() {
+                if (parseFloat($(this).val()) > 0) {
+                    hasQuantities = true;
+                    return false;
+                }
+            });
+            
+            if (!hasQuantities) {
+                alert('Debe especificar al menos una cantidad a surtir.');
+                return false;
+            }
+            
+            // Confirmar antes de enviar
+            if (!confirm('¿Confirma que desea convertir esta requisición a salida con las cantidades especificadas?')) {
+                return false;
+            }
+            
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success !== false) {
+                        // Cerrar el modal
+                        $('#modal-details-movement').modal('hide');
+                        
+                        // Recargar la página para mostrar los mensajes flash
+                        location.reload();
+                    } else {
+                        alert(response.message || 'Error al procesar la requisición.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    alert('Error al procesar la requisición. Por favor intente nuevamente.');
+                }
+            });
+            
+            return false;
+        });
+JS
+    );
+}
+?>
