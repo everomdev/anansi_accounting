@@ -1150,5 +1150,95 @@ class RbacController extends Controller
 
     }
 
+    /**
+     * Crea un nuevo usuario super admin
+     * Uso: php yii rbac/create-admin <username> <email> <password>
+     * Ejemplo: php yii rbac/create-admin example example@gmail.com "MiPassword123!"
+     */
+    public function actionCreateAdmin($username, $email, $password)
+    {
+        $authManager = \Yii::$app->authManager;
+        
+        echo "Creando usuario super admin...\n";
+        echo "Usuario: {$username}\n";
+        echo "Email: {$email}\n\n";
+        
+        // Verificar si el usuario ya existe
+        $existingUser = \common\models\User::findOne(['username' => $username]);
+        if ($existingUser) {
+            echo "ERROR: El usuario '{$username}' ya existe!\n";
+            return 1;
+        }
+        
+        $existingEmail = \common\models\User::findOne(['email' => $email]);
+        if ($existingEmail) {
+            echo "ERROR: El email '{$email}' ya está registrado!\n";
+            return 1;
+        }
+        
+        $transaction = \Yii::$app->db->beginTransaction();
+        
+        try {
+            // Crear el usuario
+            $user = new \common\models\User();
+            $user->username = $username;
+            $user->email = $email;
+            $user->password = $password; // El modelo se encarga de hashearlo
+            $user->created_at = time();
+            $user->auth_key = \Yii::$app->security->generateRandomString();
+            $user->confirmed_at = time(); // Usuario confirmado automáticamente
+            
+            if (!$user->save()) {
+                echo "ERROR al crear el usuario:\n";
+                foreach ($user->getErrors() as $field => $errors) {
+                    foreach ($errors as $error) {
+                        echo "  - {$field}: {$error}\n";
+                    }
+                }
+                throw new \Exception("No se pudo crear el usuario");
+            }
+            
+            echo "✓ Usuario creado exitosamente (ID: {$user->id})\n";
+            
+            // Crear el perfil
+            $profile = new \common\models\Profile();
+            $profile->user_id = $user->id;
+            $profile->name = ucfirst(explode('.', $username)[0]); // Capitalizar primer nombre
+            
+            if ($profile->save()) {
+                echo "✓ Perfil creado\n";
+            } else {
+                echo "ADVERTENCIA: No se pudo crear el perfil (el usuario fue creado)\n";
+            }
+            
+            // Asignar rol de admin
+            $adminRole = $authManager->getRole('admin');
+            if (!$adminRole) {
+                echo "ERROR: El rol 'admin' no existe. Ejecuta primero: php yii rbac/init\n";
+                throw new \Exception("Rol admin no encontrado");
+            }
+            
+            $authManager->assign($adminRole, $user->id);
+            echo "✓ Rol 'admin' asignado al usuario\n\n";
+            
+            $transaction->commit();
+            
+            echo "========================================\n";
+            echo "USUARIO SUPER ADMIN CREADO EXITOSAMENTE\n";
+            echo "========================================\n";
+            echo "Usuario: {$username}\n";
+            echo "Email:   {$email}\n";
+            echo "Rol:     admin (super administrador)\n";
+            echo "Estado:  Confirmado y activo\n";
+            echo "========================================\n";
+            
+            return 0;
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            echo "\nERROR: No se pudo crear el usuario: {$e->getMessage()}\n";
+            return 1;
+        }
+    }
 
 }
