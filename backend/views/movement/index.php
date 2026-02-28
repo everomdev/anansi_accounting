@@ -224,7 +224,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'type',
                 \common\models\Movement::getFormattedTypes(),
                 [
-                    'class' => 'form-control',
+                    'class' => 'form-control form-control-sm',
                     'prompt' => Yii::t('app', "All")
                 ]
             ),
@@ -236,6 +236,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     $columns[] = [
         'attribute' => 'requisition_number',
         'label' => 'Número de Requisición',
+        'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'requisition_number', [
+                        'class' => 'form-control form-control-sm',
+                        'style' => 'padding-right: 30px; background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij4KPHBhdGggZD0iTSAxMC41IDEgQyA4LjAyNzI3MjcgMSA2IDMuMDI3MjcyIDYgNS41IEMgNiA2LjU1NDE0NTkgNi40MjI3OTM2IDcuNDg2MTgxIDcuMDM3MTA5NCA4LjI1NTg1OTQgTCAyLjA0Njg3NSAxMy4yNDYwOTQgTCAyLjc1MzkwNjIgMTMuOTUzMTI1IEwgNy43NDQxNDA2IDguOTYyODkwNiBDIDguNTEzODE4NSA5LjU3NzIwNjQgOS40NDU4NTQxIDEwIDEwLjUgMTAgQyAxMi45NzI3MjcgMTAgMTUgNy45NzI3MjcgMTUgNS41IEMgMTUgMy4wMjcyNzMgMTIuOTcyNzMgMSAxMC41IDEgeiBNIDEwLjUgMiBDIDEyLjQyNzI3MyAyIDE0IDMuNTcyNzI3MyAxNCA1LjUgQyAxNCA3LjQyNzI3MyAxMi40MjcyNzMgOSAxMC41IDkgQyA4LjU3MjcyNyA5IDcgNy40MjcyNzMgNyA1LjUgQyA3IDMuNTcyNzI3MyA4LjU3MjcyNyAyIDEwLjUgMiB6Ij48L3BhdGg+Cjwvc3ZnPgo=); background-repeat: no-repeat; background-position: right 10px center;'
+                    ]),
         'value' => function ($model) {
             if ($model->type === 'requisition') {
                 return $model->requisition_number ?? '-';
@@ -278,7 +282,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             'urgency',
             \common\models\Movement::getUrgencyLevels(),
             [
-                'class' => 'form-control',
+                'class' => 'form-control form-control-sm',
                 'prompt' => 'Todas las urgencias'
             ]
         ),
@@ -290,6 +294,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         'attribute' => 'ingredient_id',
         'label' => 'Insumo',
         'format' => 'raw',
+        'headerOptions' => ['style' => 'min-width: 250px; width: 25%;'],
         'value' => function ($model) {
             // Para requisiciones con un item específico (expanded row)
             if ($model->type === 'requisition' && isset($model->_expandedItem)) {
@@ -325,8 +330,10 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             return implode('  ', $parts);
         },
         'filter' => \yii\helpers\Html::activeTextInput($searchModel, 'name', [
-            'class' => 'form-control',
-            'placeholder' => 'Buscar por nombre del insumo...'
+            'class' => 'form-control form-control-sm',
+            'placeholder' => 'Buscar por nombre...',
+                        'style' => 'padding-right: 30px; background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij4KPHBhdGggZD0iTSAxMC41IDEgQyA4LjAyNzI3MjcgMSA2IDMuMDI3MjcyIDYgNS41IEMgNiA2LjU1NDE0NTkgNi40MjI3OTM2IDcuNDg2MTgxIDcuMDM3MTA5NCA4LjI1NTg1OTQgTCAyLjA0Njg3NSAxMy4yNDYwOTQgTCAyLjc1MzkwNjIgMTMuOTUzMTI1IEwgNy43NDQxNDA2IDguOTYyODkwNiBDIDguNTEzODE4NSA5LjU3NzIwNjQgOS40NDU4NTQxIDEwIDEwLjUgMTAgQyAxMi45NzI3MjcgMTAgMTUgNy45NzI3MjcgMTUgNS41IEMgMTUgMy4wMjcyNzMgMTIuOTcyNzMgMSAxMC41IDEgeiBNIDEwLjUgMiBDIDEyLjQyNzI3MyAyIDE0IDMuNTcyNzI3MyAxNCA1LjUgQyAxNCA3LjQyNzI3MyAxMi40MjcyNzMgOSAxMC41IDkgQyA4LjU3MjcyNyA5IDcgNy40MjcyNzMgNyA1LjUgQyA3IDMuNTcyNzI3MyA4LjU3MjcyNyAyIDEwLjUgMiB6Ij48L3BhdGg+Cjwvc3ZnPgo=); background-repeat: no-repeat; background-position: right 10px center;'
+            
         ]),
     ];
     // Columna de cantidad
@@ -335,6 +342,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         'attribute' => 'quantity',
         'label' => 'Cantidad',
         'format' => 'raw',
+        'filter'=> false,
         'value' => function ($model) {
             // Para requisiciones con un item específico (expanded row)
             if ($model->type === 'requisition' && isset($model->_expandedItem)) {
@@ -352,7 +360,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         },
         'contentOptions' => ['style' => 'text-align: right;'],
     ];
-     // Columna de unidad de medida
+         // Columna de unidad de medida
         $columns[] = [
             'attribute' => 'um',
             'filter' => \yii\bootstrap5\Html::activeDropDownList(
@@ -360,13 +368,11 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'um',
                 \yii\helpers\ArrayHelper::map(\common\models\Movement::find()->all(), 'um', 'um'),
                 [
-                    'class' => 'form-control',
+                    'class' => 'form-control form-control-sm',
                     'prompt' => '----'
                 ]
             )
-        ];
-
-    // Columna de familia
+        ];    // Columna de familia
     $columns[] = [
         'attribute' => 'category_id',
         'label' => 'Familia',
@@ -407,7 +413,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             $unique = array_values($unique);
             return \yii\helpers\ArrayHelper::map($unique, 'id', 'name');
             })(),
-            ['class' => 'form-control', 'prompt' => 'Todas las familias']
+            ['class' => 'form-control form-control-sm', 'prompt' => 'Todas las familias']
         ),
     ];
 
@@ -436,9 +442,13 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
     // Columnas adicionales solo para usuarios que no son consumption_requester
     if (!$isConsumptionRequester) {
-        $columns[] = 'invoice';
+        $columns[] = [
+            'attribute' => 'invoice',
+            'filter' => false,
+        ];
         $columns[] = [
             'attribute' => 'provider',
+            'filter' => false,
             'value' => function ($data) {
                 if ($data->type === \common\models\Movement::TYPE_INPUT) {
                     $provider = \common\models\Provider::find()
@@ -454,17 +464,6 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 
                 return '-';
             },
-            'filter' => \kartik\typeahead\Typeahead::widget([
-                'scrollable' => true,
-                'dataset' => [
-                    [
-                        'local' => \yii\helpers\ArrayHelper::getColumn(\common\models\Movement::find()->where(['type' => \common\models\Movement::TYPE_INPUT])->all(), 'provider'),
-                        'limit' => 10,
-                    ]
-                ],
-                'model' => $searchModel,
-                'attribute' => 'provider'
-            ])
         ];
         
         // Columna de tipo de pago
@@ -478,7 +477,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'payment_type',
                 \common\models\Movement::getFormattedPaymentTypes(),
                 [
-                    'class' => 'form-control',
+                    'class' => 'form-control form-control-sm',
                     'prompt' => '----'
                 ]
             )
@@ -489,6 +488,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         $columns[] = [
             'attribute' => 'total',
             'label' => Yii::t('app', 'Total'),
+            'filter' => false,
             'value' => function($model) {
                 if ($model->type === \common\models\Movement::TYPE_OUTPUT) {
                     return formatPrice(-$model->total);
@@ -520,7 +520,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 'id', 
                 'name'
             ), 
-            ['class' => 'form-control', 'prompt' => 'Todos']
+            ['class' => 'form-control form-control-sm', 'prompt' => 'Todos']
         ),
     ];
     
@@ -540,7 +540,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             \common\models\Movement::TIME_STATUS_ON_TIME => 'En tiempo',
             \common\models\Movement::TIME_STATUS_OUT_OF_TIME => 'Fuera de tiempo',
             \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS => 'Extemporánea',
-        ], ['class' => 'form-control', 'prompt' => 'Todos']),
+        ], ['class' => 'form-control form-control-sm', 'prompt' => 'Todos']),
         'visible' => !$isConsumptionRequester, // Solo visible para administradores
     ];
 
@@ -594,7 +594,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
                 \common\models\Movement::TIME_STATUS_ON_TIME => 'En tiempo',
                 \common\models\Movement::TIME_STATUS_OUT_OF_TIME => 'Fuera de tiempo',
                 \common\models\Movement::TIME_STATUS_EXTEMPORANEOUS => 'Extemporánea',
-            ], ['class' => 'form-control', 'prompt' => 'Todos']),
+            ], ['class' => 'form-control form-control-sm', 'prompt' => 'Todos']),
         ];
     }
 

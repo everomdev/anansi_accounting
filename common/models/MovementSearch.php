@@ -22,7 +22,7 @@ class MovementSearch extends Movement
     {
         return [
             [['id', 'ingredient_id', 'business_id', 'consumption_center_id', 'requested_by_user_id', 'fulfilled_by_user_id', 'parent_requisition_id', 'category_id'], 'integer'],
-            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'requisition_number', 'status', 'required_date', 'client_timezone', 'urgency'], 'safe'],
+            [['type', 'provider', 'payment_type', 'invoice', 'um', 'observations', 'requisition_number', 'status', 'required_date', 'client_timezone', 'urgency', 'ingredient_id'], 'safe'],
             [['quantity', 'amount', 'tax', 'retention', 'unit_price', 'total'], 'number'],
             [['is_without_requisition'], 'boolean'],
             [['name'], 'string']

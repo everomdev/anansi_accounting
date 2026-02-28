@@ -20,7 +20,7 @@ class ExpenseSearch extends Expense
     {
         return [
             [['id', 'business_id', 'provider_id', 'is_active'], 'integer'],
-            [['name', 'description', 'frequency', 'expense_date', 'observations', 'key', 'provider_name'], 'safe'],
+            [['name', 'description', 'frequency', 'observations'], 'safe'],
             [['amount'], 'number'],
         ];
     }
@@ -78,7 +78,6 @@ class ExpenseSearch extends Expense
             'id' => $this->id,
             'business_id' => $this->business_id,
             'provider_id' => $this->provider_id,
-            'amount' => $this->amount,
             'frequency' => $this->frequency,
             'expense_date' => $this->expense_date,
             'is_active' => $this->is_active,

@@ -18,7 +18,7 @@ class ExpenseCategorySearch extends ExpenseCategory
     {
         return [
             [['id', 'business_id'], 'integer'],
-            [['name', 'description', 'created_at', 'updated_at'], 'safe'],
+            [['name', 'created_at', 'updated_at'], 'safe'],
         ];
     }
 
