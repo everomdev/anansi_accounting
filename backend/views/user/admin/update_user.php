@@ -445,7 +445,7 @@ $(function(){
                 
                 var button = $('#update-button');
                 button.prop('disabled', false);
-                button.html('<?= Yii::t('app', "Update") ?>');
+                button.html(<?= json_encode(Yii::t('app', "Update")) ?>);
                 return false;
             } else {
                 $('#consumption-center-error').hide();
