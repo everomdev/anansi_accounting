@@ -262,7 +262,6 @@ $(function(){
         $('.permission-checkbox').prop('checked', false);
         perms.forEach(function(perm) {
             var permName = typeof perm === 'object' ? perm.name : perm;
-            console.log('Checking permission:', permName);
             $('#perm-' + permName).prop('checked', true);
         });
     }
@@ -345,11 +344,8 @@ $(function(){
             currentRolePerms = [];
             updateCheckboxes(additional);
             updateRolePermissionsDisplay([]);
-            console.log('Rol deseleccionado');
             return;
         }
-
-        console.log('Cambiando a rol:', selectedRole);
 
         // Fetch role permissions
         $.getJSON(rolePermsUrl, {role: selectedRole})
@@ -359,12 +355,10 @@ $(function(){
                     var allChecked = [...new Set(data.concat(additional))];
                     updateCheckboxes(allChecked);
                     updateRolePermissionsDisplay(data);
-                    console.log('Permisos del rol', selectedRole, ':', data);
                 } else {
                     currentRolePerms = [];
                     updateCheckboxes(additional);
                     updateRolePermissionsDisplay([]);
-                    console.log('No se encontraron permisos para el rol', selectedRole);
                 }
             })
             .fail(function(xhr, status, error) {
@@ -373,7 +367,6 @@ $(function(){
                 var allChecked = [...new Set(currentRolePerms.concat(additional))];
                 updateCheckboxes(allChecked);
                 updateRolePermissionsDisplay(currentRolePerms);
-                console.log('Permisos del rol (fallback)', selectedRole, ':', currentRolePerms);
             });
     });
 
@@ -387,9 +380,6 @@ $(function(){
         var additionalOnly = selected.filter(function(perm) {
             return currentRolePerms.indexOf(perm) === -1;
         });
-        console.log('Permisos seleccionados totales:', selected);
-        console.log('Permisos del rol actual:', currentRolePerms);
-        console.log('Permisos adicionales a guardar:', additionalOnly);
         $('#permissions-hidden').val(JSON.stringify(additionalOnly));
         updateAdditionalPermissionsDisplay(additionalOnly);
         $('#permissionsModal').modal('hide');
