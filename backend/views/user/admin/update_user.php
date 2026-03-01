@@ -405,13 +405,6 @@ $(function(){
 
     // Initial load
     $('#createuserform-role').trigger('change');
-
-    // Handle form submit loading
-    $('form').on('submit', function() {
-        var button = $('#update-button');
-        button.prop('disabled', true);
-        button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...');
-    });
     
     // Mostrar/ocultar centros de consumo según el rol seleccionado
     function toggleConsumptionCenters() {
@@ -433,24 +426,30 @@ $(function(){
     // Ejecutar al cargar la página
     toggleConsumptionCenters();
     
-    // Validar que al menos un centro esté seleccionado
+    // Handle form submit - ÚNICO MANEJADOR
     $('form').on('submit', function(e) {
         var selectedRole = $('#createuserform-role').val();
+        
+        // Validar centros de consumo solo si es consumption_requester
         if (selectedRole === 'consumption_requester') {
             var checkedCount = $('.consumption-center-checkbox:checked').length;
             if (checkedCount === 0) {
                 e.preventDefault();
                 $('#consumption-center-error').show();
                 $('.consumption-center-checkbox').first().focus();
-                
-                var button = $('#update-button');
-                button.prop('disabled', false);
-                button.html(<?= json_encode(Yii::t('app', "Update")) ?>);
                 return false;
             } else {
                 $('#consumption-center-error').hide();
             }
         }
+        
+        // Si pasó la validación, mostrar loading en el botón
+        var button = $('#update-button');
+        button.prop('disabled', true);
+        button.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Actualizando...');
+        
+        // Permitir que el formulario se envíe
+        return true;
     });
     
     // Ocultar error al seleccionar un checkbox
