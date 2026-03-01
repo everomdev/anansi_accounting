@@ -103,10 +103,12 @@ $this->registerCss('
 <div class="recipe-category-index">
 
     <p>
-        <?= Html::a(Yii::t('app', 'Create Category'), ['create'], [
-            'class' => 'btn btn-success',
-            'id' => 'create-recipe-category'
-        ]) ?>
+        <?php if (Yii::$app->user->can('recipe_category_create')): ?>
+            <?= Html::a(Yii::t('app', 'Create Category'), ['create'], [
+                'class' => 'btn btn-success',
+                'id' => 'create-recipe-category'
+            ]) ?>
+        <?php endif; ?>
     </p>
 <!-- Selector de elementos por página y filtros mejorados -->
 <div class="row mb-2 align-items-center">
@@ -211,9 +213,12 @@ $this->registerCss('
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update} {delete}",
                 'visibleButtons' => [
+                    'update' => function ($model, $key, $index) {
+                        return Yii::$app->user->can('recipe_category_update');
+                    },
                     'delete' => function ($model, $key, $index) {
-                        // Solo mostrar botón delete para categorías personalizadas
-                        return $model->custom == 1;
+                        // Solo mostrar botón delete para categorías personalizadas Y con permiso
+                        return $model->custom == 1 && Yii::$app->user->can('recipe_category_delete');
                     }
                 ],
                 'buttons' => [

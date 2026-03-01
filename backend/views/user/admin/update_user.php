@@ -51,19 +51,37 @@ $groups = [
 ];
 
 $prefixes = [
+    // Configuración Base
     'category_' => 'Configuración Base',
+    'recipe_category_' => 'Configuración Base',
+    'unit_measurement_' => 'Configuración Base',
+    'consumption_center_' => 'Configuración Base',
+    
+    // Costeo
     'recipe_' => 'Costeo',
     'subrecipe_' => 'Costeo',
     'convoy_' => 'Costeo',
     'combo_' => 'Costeo',
+    
+    // Gestión de Insumos y Proveedores
     'ingredients_' => 'Gestión de Insumos y Proveedores',
     'providers_' => 'Gestión de Insumos y Proveedores',
+    
+    // Gastos
+    'expense_' => 'Gastos',
+    
+    // Menú y Ventas
     'menu_' => 'Menú y Ventas',
     'sales_' => 'Menú y Ventas',
+    
+    // Almacén y Movimientos
     'movements_' => 'Almacén y Movimientos',
     'storage_' => 'Almacén y Movimientos',
     'price_trend_' => 'Almacén y Movimientos',
     'inventory_' => 'Almacén y Movimientos',
+    'requisitions_' => 'Almacén y Movimientos',
+    
+    // Rentabilidad y Análisis
     'theoretical_' => 'Rentabilidad y Análisis',
     'real_' => 'Rentabilidad y Análisis',
     'charts_' => 'Rentabilidad y Análisis',
@@ -72,6 +90,8 @@ $prefixes = [
     'profit_' => 'Rentabilidad y Análisis',
     'matrix_bcg' => 'Rentabilidad y Análisis',
     'abc_analysis_' => 'Rentabilidad y Análisis',
+    
+    // KPI's y Control
     'kpi_' => 'KPI\'s y Control',
     'control_' => 'KPI\'s y Control',
     'compras_' => 'KPI\'s y Control',
@@ -81,10 +101,13 @@ $prefixes = [
     'mix_' => 'KPI\'s y Control',
     'factibilidad' => 'KPI\'s y Control',
     'estado_' => 'KPI\'s y Control',
-    'expense_' => 'Gastos',
+    
+    // Administración y Configuración
     'users_' => 'Administración y Configuración',
     'roles_' => 'Administración y Configuración',
     'manage_' => 'Administración y Configuración',
+    
+    // Dashboard
     'dashboard_' => 'Dashboard',
 ];
 
@@ -278,27 +301,46 @@ $(function(){
         var roleGroups = {};
         perms.forEach(function(perm) {
             var category = 'Otros';
-            // Simple prefix matching for display
-            if (perm.includes('recipe_') || perm.includes('subrecipe_') || perm.includes('convoy_') || perm.includes('combo_')) {
-                category = 'Costeo';
-            } else if (perm.includes('ingredients_') || perm.includes('providers_')) {
-                category = 'Gestión de Insumos y Proveedores';
-            } else if (perm.includes('menu_') || perm.includes('sales_')) {
-                category = 'Menú y Ventas';
-            } else if (perm.includes('movements_') || perm.includes('storage_') || perm.includes('price_trend') || perm.includes('inventory_')) {
-                category = 'Almacén y Movimientos';
-            } else if (perm.includes('theoretical_') || perm.includes('real_') || perm.includes('charts_') || perm.includes('analytics_') || perm.includes('menu_improvement') || perm.includes('profit_') || perm.includes('matrix_bcg') || perm.includes('abc_analysis_')) {
-                category = 'Rentabilidad y Análisis';
-            } else if (perm.includes('kpi_') || perm.includes('control_') || perm.includes('compras_') || perm.includes('planeacion_') || perm.includes('comparativa_') || perm.includes('eficiencia_') || perm.includes('mix_') || perm.includes('factibilidad') || perm.includes('estado_')) {
-                category = "KPI's y Control";
-            } else if (perm.includes('expense_')) {
-                category = 'Gastos';
-            } else if (perm.includes('users_') || perm.includes('roles_') || perm.includes('manage_')) {
-                category = 'Administración y Configuración';
-            } else if (perm.includes('dashboard_')) {
-                category = 'Dashboard';
-            } else if (perm.includes('category_')) {
+            
+            // Configuración Base
+            if (perm.includes('category_') || perm.includes('recipe_category_') || perm.includes('unit_measurement_') || perm.includes('consumption_center_')) {
                 category = 'Configuración Base';
+            }
+            // Costeo
+            else if (perm.includes('recipe_') || perm.includes('subrecipe_') || perm.includes('convoy_') || perm.includes('combo_')) {
+                category = 'Costeo';
+            }
+            // Gestión de Insumos y Proveedores
+            else if (perm.includes('ingredients_') || perm.includes('providers_')) {
+                category = 'Gestión de Insumos y Proveedores';
+            }
+            // Gastos
+            else if (perm.includes('expense_')) {
+                category = 'Gastos';
+            }
+            // Menú y Ventas
+            else if (perm.includes('menu_') || perm.includes('sales_')) {
+                category = 'Menú y Ventas';
+            }
+            // Almacén y Movimientos
+            else if (perm.includes('movements_') || perm.includes('storage_') || perm.includes('price_trend') || perm.includes('inventory_') || perm.includes('requisitions_')) {
+                category = 'Almacén y Movimientos';
+            }
+            // Rentabilidad y Análisis
+            else if (perm.includes('theoretical_') || perm.includes('real_') || perm.includes('charts_') || perm.includes('analytics_') || perm.includes('menu_improvement') || perm.includes('profit_') || perm.includes('matrix_bcg') || perm.includes('abc_analysis_')) {
+                category = 'Rentabilidad y Análisis';
+            }
+            // KPI's y Control
+            else if (perm.includes('kpi_') || perm.includes('control_') || perm.includes('compras_') || perm.includes('planeacion_') || perm.includes('comparativa_') || perm.includes('eficiencia_') || perm.includes('mix_') || perm.includes('factibilidad') || perm.includes('estado_')) {
+                category = "KPI's y Control";
+            }
+            // Administración y Configuración
+            else if (perm.includes('users_') || perm.includes('roles_') || perm.includes('manage_')) {
+                category = 'Administración y Configuración';
+            }
+            // Dashboard
+            else if (perm.includes('dashboard_')) {
+                category = 'Dashboard';
             }
 
             if (!roleGroups[category]) {

@@ -96,6 +96,8 @@ class Business extends \yii\db\ActiveRecord
             $this->initUm();
             $this->initRecipeCategories();
             $this->initConsumptionCenters();
+            $this->initExpenseUnitMeasurements();
+            $this->initExpenseCategories();
         }
 
         parent::afterSave($insert, $changedAttributes);
@@ -1009,6 +1011,153 @@ public function getBcgData($type = 'all', $year = null)
             return Yii::t('app', 'Día no permitido');
         } else {
             return Yii::t('app', 'Fuera del horario permitido');
+        }
+    }
+    
+    /**
+     * Inicializar unidades de medida de gastos
+     */
+    private function initExpenseUnitMeasurements()
+    {
+        $units = [
+            'Litro', 'Mililitro', 'Galón', 'Bote', 'Botella', 'Bidón', 'Garrafa', 'Paquete', 'Caja', 'Pieza',
+            'Unidad', 'Kilogramo', 'Rollo', 'Paca', 'kWh', 'm3', 'Recarga', 'Mes', 'Año', 'Bimestre', 'Trimestre', 
+            'Semestral', 'Evento', 'Servicio', 'Contrato', 'Licencia', 'Suscripción', 'Proyecto', 'Set', 
+            'Docena', 'Bolsa', 'Lote', 'Kit', 'Hora', 'Visita técnica', 'Reparación', 'Instalación', 
+            'Viaje', 'Km', 'Campaña', 'Anuncio', 'Pauta', 'Crédito', 'Post', 'Contenido', 'Sesión', 
+            'Dispositivo', 'Póliza'
+        ];
+
+        foreach ($units as $unit) {
+            Yii::$app->db->createCommand()->insert('expense_unit_measurements', [
+                'name' => $unit,
+                'business_id' => $this->id,
+            ])->execute();
+        }
+    }
+
+    /**
+     * Inicializar categorías principales de gastos
+     */
+    private function initExpenseCategories()
+    {
+        $mainCategories = [
+            ['name' => 'Nómina / Costo de Personal', 'description' => 'Gastos relacionados con sueldos, prestaciones y personal', 'sort_order' => 1],
+            ['name' => 'Gastos Variables Operativos', 'description' => 'Suministros y materiales operativos variables', 'sort_order' => 2],
+            ['name' => 'Energía y Servicios', 'description' => 'Electricidad, agua, gas y servicios básicos', 'sort_order' => 3],
+            ['name' => 'Gastos Comerciales', 'description' => 'Publicidad, promociones y comisiones', 'sort_order' => 4],
+            ['name' => 'Gastos Administrativos', 'description' => 'Honorarios, papelería y servicios administrativos', 'sort_order' => 5],
+            ['name' => 'Gastos Fijos', 'description' => 'Renta, seguros, licencias y suscripciones', 'sort_order' => 6],
+            ['name' => 'Gastos de Dirección', 'description' => 'Consultoría, asesoría y gastos ejecutivos', 'sort_order' => 7],
+            ['name' => 'Gastos Financieros', 'description' => 'Comisiones bancarias, intereses y costos financieros', 'sort_order' => 8],
+        ];
+
+        foreach ($mainCategories as $category) {
+            $categoryId = Yii::$app->db->createCommand()->insert('expense_categories', [
+                'name' => $category['name'],
+                'description' => $category['description'],
+                'business_id' => $this->id,
+                'is_main_category' => true,
+                'sort_order' => $category['sort_order'],
+            ])->execute();
+            
+            $categoryId = Yii::$app->db->getLastInsertID();
+            
+            // Insertar subcategorías correspondientes
+            $this->initExpenseSubcategories($categoryId, $category['name']);
+        }
+    }
+
+    /**
+     * Inicializar subcategorías de gastos según la categoría principal
+     * @param int $categoryId ID de la categoría principal
+     * @param string $categoryName Nombre de la categoría principal
+     */
+    private function initExpenseSubcategories($categoryId, $categoryName)
+    {
+        $subcategories = [
+            'Nómina / Costo de Personal' => [
+                ['name' => 'Sueldos operativos', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Sueldos administrativos', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Impuestos de nómina', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Prestaciones', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Bonos y comisiones', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Uniformes', 'inventoriable' => false, 'order' => 6],
+                ['name' => 'Capacitación operativa', 'inventoriable' => false, 'order' => 7],
+                ['name' => 'Capacitación administrativa', 'inventoriable' => false, 'order' => 8],
+                ['name' => 'Equipos de protección personal', 'inventoriable' => false, 'order' => 9],
+            ],
+            'Gastos Variables Operativos' => [
+                ['name' => 'Suministros de limpieza', 'inventoriable' => true, 'order' => 1],
+                ['name' => 'Suministros de baño', 'inventoriable' => true, 'order' => 2],
+                ['name' => 'Artículos de cocina', 'inventoriable' => true, 'order' => 3],
+                ['name' => 'Artículos de servicio', 'inventoriable' => true, 'order' => 4],
+                ['name' => 'Papelería operativa', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Empaques internos (no vendidos)', 'inventoriable' => false, 'order' => 6],
+                ['name' => 'Combustibles operativos (si aplica)', 'inventoriable' => false, 'order' => 7],
+            ],
+            'Energía y Servicios' => [
+                ['name' => 'Electricidad', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Agua', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Gas', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Recolección de basura', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Drenaje / servicios municipales', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Servicios externos recurrentes', 'inventoriable' => false, 'order' => 6],
+            ],
+            'Gastos Comerciales' => [
+                ['name' => 'Publicidad digital', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Promociones', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Diseño gráfico', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Fotografía / video', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Influencers', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Comisiones de plataformas de delivery', 'inventoriable' => false, 'order' => 6],
+                ['name' => 'Plataformas de reservaciones', 'inventoriable' => false, 'order' => 7],
+            ],
+            'Gastos Administrativos' => [
+                ['name' => 'Honorarios contables', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Honorarios legales', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Servicios administrativos externos', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Papelería administrativa', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Mensajería y paquetería', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Capacitación administrativa', 'inventoriable' => false, 'order' => 6],
+            ],
+            'Gastos Fijos' => [
+                ['name' => 'Renta', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Mantenimiento preventivo', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Seguros', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Licencias y permisos', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Suscripciones fijas (software, POS, cámaras)', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Internet', 'inventoriable' => false, 'order' => 6],
+                ['name' => 'Teléfono', 'inventoriable' => false, 'order' => 7],
+            ],
+            'Gastos de Dirección' => [
+                ['name' => 'Consultoría', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Asesoría estratégica', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Coaching', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Viajes de dirección', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Representación', 'inventoriable' => false, 'order' => 5],
+                ['name' => 'Comidas ejecutivas', 'inventoriable' => false, 'order' => 6],
+            ],
+            'Gastos Financieros' => [
+                ['name' => 'Comisiones bancarias', 'inventoriable' => false, 'order' => 1],
+                ['name' => 'Comisiones TPV', 'inventoriable' => false, 'order' => 2],
+                ['name' => 'Intereses', 'inventoriable' => false, 'order' => 3],
+                ['name' => 'Penalizaciones', 'inventoriable' => false, 'order' => 4],
+                ['name' => 'Costos de financiamiento', 'inventoriable' => false, 'order' => 5],
+            ],
+        ];
+
+        if (isset($subcategories[$categoryName])) {
+            foreach ($subcategories[$categoryName] as $sub) {
+                Yii::$app->db->createCommand()->insert('expense_subcategories', [
+                    'category_id' => $categoryId,
+                    'name' => $sub['name'],
+                    'description' => null,
+                    'is_inventoriable' => $sub['inventoriable'],
+                    'sort_order' => $sub['order'],
+                    'business_id' => $this->id,
+                ])->execute();
+            }
         }
     }
     

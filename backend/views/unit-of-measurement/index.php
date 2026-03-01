@@ -104,10 +104,12 @@ $this->registerCss('
     <div class="unit-of-measurement-index">
 
         <p>
-            <?= Html::a(Yii::t('app', 'Add Unit Of Measurement'), ['create'], [
-                    'class' => 'btn btn-success',
-                'id' => 'create-um'
-            ]) ?>
+            <?php if (Yii::$app->user->can('unit_measurement_create')): ?>
+                <?= Html::a(Yii::t('app', 'Add Unit Of Measurement'), ['create'], [
+                        'class' => 'btn btn-success',
+                    'id' => 'create-um'
+                ]) ?>
+            <?php endif; ?>
         </p>
 <!-- Selector de elementos por página y filtros mejorados -->
 <div class="row mb-2 align-items-center">
@@ -251,9 +253,12 @@ $this->registerCss('
                     'class' => 'yii\grid\ActionColumn',
                     'template' => "{update} {delete}",
                     'visibleButtons' => [
+                        'update' => function ($model, $key, $index) {
+                            return Yii::$app->user->can('unit_measurement_update');
+                        },
                         'delete' => function ($model, $key, $index) {
-                            // Solo mostrar botón delete para unidades personalizadas
-                            return $model->custom == 1;
+                            // Solo mostrar botón delete para unidades personalizadas Y con permiso
+                            return $model->custom == 1 && Yii::$app->user->can('unit_measurement_delete');
                         }
                     ],
                     'buttons' => [

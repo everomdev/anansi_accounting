@@ -80,10 +80,12 @@ $this->registerCss('
 <div class="category-index">
 
     <p>
-        <?= Html::a(Yii::t('app', 'Create Family'), ['create'], [
-            'class' => 'btn btn-success',
-            'id' => 'create-category'
-        ]) ?>
+        <?php if (Yii::$app->user->can('category_create')): ?>
+            <?= Html::a(Yii::t('app', 'Create Family'), ['create'], [
+                'class' => 'btn btn-success',
+                'id' => 'create-category'
+            ]) ?>
+        <?php endif; ?>
     </p>
 
     <?php Pjax::begin(['id' => 'family-pjax']); ?>
@@ -166,10 +168,10 @@ $this->registerCss('
                 'template' => "{update} {delete}",
                 'visibleButtons' => [
                     'update' => function ($model) use ($business) {
-                        return $business['id'] == $model->business_id;
+                        return $business['id'] == $model->business_id && Yii::$app->user->can('category_update');
                     },
                     'delete' => function ($model) use ($business) {
-                        return $business['id'] == $model->business_id;
+                        return $business['id'] == $model->business_id && Yii::$app->user->can('category_delete');
                     }
                 ],
                 'buttons' => [

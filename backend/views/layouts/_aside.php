@@ -86,7 +86,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         </li>
 
         <!-- Configuración Base -->
-        <?php if (($isAdmin || Yii::$app->user->can('ingredients_list') || Yii::$app->user->can('recipe_list') || Yii::$app->user->can('subrecipe_list')) && !Yii::$app->user->can('consumption_requester')): ?>
+        <?php if (($isAdmin || Yii::$app->user->can('category_list') || Yii::$app->user->can('recipe_category_list') || Yii::$app->user->can('unit_measurement_list') || Yii::$app->user->can('consumption_center_list')) && !Yii::$app->user->can('consumption_requester')): ?>
         <li class="menu-item <?= $configBaseActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#configuracionBase" role="button" 
                aria-expanded="<?= $configBaseActive ? 'true' : 'false' ?>" 
@@ -95,28 +95,28 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
             <div class="collapse <?= $configBaseActive ? 'show' : '' ?>" id="configuracionBase">
                 <ul class="sub-menu">
-                    <?php if ($isAdmin || Yii::$app->user->can('ingredients_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('category_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'category' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/category/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Familias de insumos') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if ($isAdmin || Yii::$app->user->can('recipe_list') || Yii::$app->user->can('subrecipe_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('recipe_category_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'recipe-category' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/recipe-category/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Categorías de recetas') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if ($isAdmin || Yii::$app->user->can('ingredients_list')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('unit_measurement_list')): ?>
                         <li class="menu-item <?= $currentControllerId == 'unit-of-measurement' ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/unit-of-measurement/index']) ?>" class="menu-link">
                                 <div><?= Yii::t('app', 'Unidades de medida') ?></div>
                             </a>
                         </li>
                     <?php endif; ?>
-                    <?php if ($isAdmin || Yii::$app->user->can('manage_users') || Yii::$app->user->can('administrator')): ?>
+                    <?php if ($isAdmin || Yii::$app->user->can('consumption_center_list')): ?>
                             <li class="menu-item <?= $centrosConsumoActive ? 'active open' : '' ?>">
                                 <a class="menu-link" data-bs-toggle="collapse" href="#centrosConsumo" role="button"
                                    aria-expanded="<?= $centrosConsumoActive ? 'true' : 'false' ?>"
