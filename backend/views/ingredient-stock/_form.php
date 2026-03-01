@@ -376,7 +376,7 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
 <?php
 \yii\bootstrap5\Modal::begin([
     'id' => 'kitchen-unit-change-warning-modal',
-    'title' => '<i class="fas fa-exclamation-triangle text-warning"></i> Advertencia de cambio de unidad de cocina',
+    'title' => '<i class="fas fa-exclamation-triangle text-warning"></i> Advertencia de cambio de unidad de uso',
     'size' => \yii\bootstrap5\Modal::SIZE_DEFAULT,
     'options' => [
         'data-bs-backdrop' => 'static',
@@ -388,7 +388,7 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
 <div class="modal-body">
     <div class="alert alert-warning d-flex align-items-center" role="alert">
         <div>
-            <strong>⚠️ Cambiar la unidad de cocina de este insumo modificará todas las subrecetas y recetas que lo utilizan.</strong>
+            <strong>⚠️ Cambiar la unidad de uso de este insumo modificará todas las subrecetas y recetas que lo utilizan.</strong>
             <br><br>
             Esta acción puede generar inconsistencias en las equivalencias y proporciones de las recetas.
             <br><br>
@@ -644,7 +644,7 @@ echo \yii\bootstrap5\Html::button(Yii::t('app', 'Aceptar'), [
             if (alertDiv) {
                 let message = '';
                 if (modalId.includes('kitchen')) {
-                    message = '<strong>⚠️ Cambiar la unidad de cocina de este insumo modificará ';
+                    message = '<strong>⚠️ Cambiar la unidad de uso de este insumo modificará ';
                 } else {
                     message = '<strong>⚠️ Cambiar la unidad de compra de este insumo modificará ';
                 }

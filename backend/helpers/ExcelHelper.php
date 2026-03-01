@@ -458,9 +458,9 @@ public static function generateIngredientsTemplate($id)
     // CAMBIO: Cambiar "Categoría*" por "Familia de insumos*"
     $activeWorksheet->setCellValue("E1", "Familia de insumos*");
     $activeWorksheet->setCellValue("F1", "Unidad de compra*");
-    $activeWorksheet->setCellValue("G1", "Unidad de cocina*");
+    $activeWorksheet->setCellValue("G1", "Unidad de uso*");
     $activeWorksheet->setCellValue("H1", "Factor de Rendimiento*");
-    $activeWorksheet->setCellValue("I1", "EQ. UNI. Cocina*");
+    $activeWorksheet->setCellValue("I1", "EQ. UNI. Uso*");
     $activeWorksheet->setCellValue("J1", "Precio*");
     $activeWorksheet->setCellValue("K1", "Observaciones");
     
@@ -1605,6 +1605,26 @@ if ($ccRow > 2) {
                 $cellIterator->next();
                 $data['observations'] = $cellIterator->current()->getValue(); // H - Observaciones
                 $cellIterator->next();
+                
+                // Validar campos requeridos para evitar divisiones por cero
+                $errors = [];
+                
+                if (empty($data['portion_um']) || trim($data['portion_um']) === '') {
+                    $errors[] = "La 'Unidad de Uso' es obligatoria para el insumo '{$data['ingredient']}'";
+                }
+                
+                if (empty($data['portions_per_unit']) || !is_numeric($data['portions_per_unit']) || $data['portions_per_unit'] <= 0) {
+                    $errors[] = "Las 'Equivalencias' son obligatorias y deben ser un número mayor a 0 para el insumo '{$data['ingredient']}'";
+                }
+                
+                if (empty($data['yield']) || !is_numeric($data['yield']) || $data['yield'] <= 0) {
+                    $errors[] = "El 'Factor de Rendimiento' es obligatorio y debe ser un número mayor a 0 para el insumo '{$data['ingredient']}'";
+                }
+                
+                if (!empty($errors)) {
+                    throw new \Exception(implode("\n", $errors));
+                }
+                
                 $price = preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
                 $data['unit_price'] = $price / $data['portions_per_unit'];
                 $yield = preg_replace('/[^\d.]/', '', $data['yield']); // Eliminar símbolos no numéricos

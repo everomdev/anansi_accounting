@@ -436,10 +436,21 @@ class IngredientStockController extends Controller
         if ($file) {
             try {
                 ExcelHelper::importIngredients($business, $file->tempName);
+                Yii::$app->session->setFlash('success', 'Insumos importados correctamente.');
             }catch (\Exception $e) {
+                // Intentar decodificar como JSON (errores de validación)
                 $errors = json_decode($e->getMessage(), true);
-                foreach ($errors as $field => $fieldErrors) {
-                    Yii::$app->session->setFlash('error', implode("\n", $fieldErrors));
+                
+                if (is_array($errors) && !empty($errors)) {
+                    // Son errores de validación de Yii
+                    foreach ($errors as $field => $fieldErrors) {
+                        if (is_array($fieldErrors)) {
+                            Yii::$app->session->setFlash('error', implode("\n", $fieldErrors));
+                        }
+                    }
+                } else {
+                    // Es un error general (como campos faltantes en Excel)
+                    Yii::$app->session->setFlash('error', $e->getMessage());
                 }
             }
         }
