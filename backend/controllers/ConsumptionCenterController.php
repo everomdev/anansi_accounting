@@ -35,15 +35,24 @@ class ConsumptionCenterController extends Controller
                 'class' => AccessControl::className(),
                 'rules' => [
                     [
-                        'actions' => [
-                            'index',
-                            'view',
-                            'create',
-                            'update',
-                            'delete'
-                        ],
+                        'actions' => ['index', 'view'],
                         'allow' => true,
-                        'roles' => ['movements_list']
+                        'roles' => ['consumption_center_list']
+                    ],
+                    [
+                        'actions' => ['create'],
+                        'allow' => true,
+                        'roles' => ['consumption_center_create']
+                    ],
+                    [
+                        'actions' => ['update'],
+                        'allow' => true,
+                        'roles' => ['consumption_center_update']
+                    ],
+                    [
+                        'actions' => ['delete'],
+                        'allow' => true,
+                        'roles' => ['consumption_center_delete']
                     ],
                 ],
             ],

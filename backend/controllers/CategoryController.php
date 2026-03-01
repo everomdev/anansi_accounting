@@ -40,15 +40,24 @@ class CategoryController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => [
-                            'create',
-                            'delete',
-                            'index',
-                            'update',
-                            'view'
-                        ],
+                        'actions' => ['index', 'view'],
                         'allow' => true,
-                        'roles' => ['ingredients_list'],
+                        'roles' => ['category_list'],
+                    ],
+                    [
+                        'actions' => ['create'],
+                        'allow' => true,
+                        'roles' => ['category_create'],
+                    ],
+                    [
+                        'actions' => ['update'],
+                        'allow' => true,
+                        'roles' => ['category_update'],
+                    ],
+                    [
+                        'actions' => ['delete'],
+                        'allow' => true,
+                        'roles' => ['category_delete'],
                     ],
                 ],
             ],

@@ -38,16 +38,24 @@ class RecipeCategoryController extends Controller
                         'allow' => true,
                     ],
                     [
-                        'actions' => [
-                            'create',
-                            'delete',
-                            'index',
-                            'update',
-                            'view',
-                            'autocomplete'
-                        ],
+                        'actions' => ['index', 'view', 'autocomplete'],
                         'allow' => true,
-                        'roles' => ['recipe_list', 'subrecipe_list'],
+                        'roles' => ['recipe_category_list'],
+                    ],
+                    [
+                        'actions' => ['create'],
+                        'allow' => true,
+                        'roles' => ['recipe_category_create'],
+                    ],
+                    [
+                        'actions' => ['update'],
+                        'allow' => true,
+                        'roles' => ['recipe_category_update'],
+                    ],
+                    [
+                        'actions' => ['delete'],
+                        'allow' => true,
+                        'roles' => ['recipe_category_delete'],
                     ],
                 ],
             ],

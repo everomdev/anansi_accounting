@@ -105,6 +105,154 @@ class RbacController extends Controller
 //        $authManager->add($permissionStorageUpdate);
 //        $authManager->add($permissionStorageDelete);
 
+        // Category (Categorías de insumos) permissions
+        $permissionCategoryList = $authManager->getPermission('category_list');
+        if (!$permissionCategoryList) {
+            $permissionCategoryList = $authManager->createPermission('category_list');
+            $permissionCategoryList->description = "Ver lista de categorías de insumos";
+            $permissionCategoryList->ruleName = $paymentRule->name;
+            $authManager->add($permissionCategoryList);
+        }
+        // $permissionCategoryView = $authManager->getPermission('category_view');
+        // if (!$permissionCategoryView) {
+        //     $permissionCategoryView = $authManager->createPermission('category_view');
+        //     $permissionCategoryView->description = "Ver detalles de categoría de insumos";
+        //     $permissionCategoryView->ruleName = $paymentRule->name;
+        //     $authManager->add($permissionCategoryView);
+        // }
+        $permissionCategoryCreate = $authManager->getPermission('category_create');
+        if (!$permissionCategoryCreate) {
+            $permissionCategoryCreate = $authManager->createPermission('category_create');
+            $permissionCategoryCreate->description = "Crear familia de insumos";
+            $permissionCategoryCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionCategoryCreate);
+        }
+        $permissionCategoryUpdate = $authManager->getPermission('category_update');
+        if (!$permissionCategoryUpdate) {
+            $permissionCategoryUpdate = $authManager->createPermission('category_update');
+            $permissionCategoryUpdate->description = "Actualizar familia de insumos";
+            $permissionCategoryUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionCategoryUpdate);
+        }
+        $permissionCategoryDelete = $authManager->getPermission('category_delete');
+        if (!$permissionCategoryDelete) {
+            $permissionCategoryDelete = $authManager->createPermission('category_delete');
+            $permissionCategoryDelete->description = "Eliminar familia de insumos";
+            $permissionCategoryDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionCategoryDelete);
+        }
+
+        // Recipe Category (Categorías de recetas) permissions
+        $permissionRecipeCategoryList = $authManager->getPermission('recipe_category_list');
+        if (!$permissionRecipeCategoryList) {
+            $permissionRecipeCategoryList = $authManager->createPermission('recipe_category_list');
+            $permissionRecipeCategoryList->description = "Ver lista de categorías de recetas";
+            $permissionRecipeCategoryList->ruleName = $paymentRule->name;
+            $authManager->add($permissionRecipeCategoryList);
+        }
+        // $permissionRecipeCategoryView = $authManager->getPermission('recipe_category_view');
+        // if (!$permissionRecipeCategoryView) {
+        //     $permissionRecipeCategoryView = $authManager->createPermission('recipe_category_view');
+        //     $permissionRecipeCategoryView->description = "Ver detalles de categoría de recetas";
+        //     $permissionRecipeCategoryView->ruleName = $paymentRule->name;
+        //     $authManager->add($permissionRecipeCategoryView);
+        // }
+        $permissionRecipeCategoryCreate = $authManager->getPermission('recipe_category_create');
+        if (!$permissionRecipeCategoryCreate) {
+            $permissionRecipeCategoryCreate = $authManager->createPermission('recipe_category_create');
+            $permissionRecipeCategoryCreate->description = "Crear categoría de recetas";
+            $permissionRecipeCategoryCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionRecipeCategoryCreate);
+        }
+        $permissionRecipeCategoryUpdate = $authManager->getPermission('recipe_category_update');
+        if (!$permissionRecipeCategoryUpdate) {
+            $permissionRecipeCategoryUpdate = $authManager->createPermission('recipe_category_update');
+            $permissionRecipeCategoryUpdate->description = "Actualizar categoría de recetas";
+            $permissionRecipeCategoryUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionRecipeCategoryUpdate);
+        }
+        $permissionRecipeCategoryDelete = $authManager->getPermission('recipe_category_delete');
+        if (!$permissionRecipeCategoryDelete) {
+            $permissionRecipeCategoryDelete = $authManager->createPermission('recipe_category_delete');
+            $permissionRecipeCategoryDelete->description = "Eliminar categoría de recetas";
+            $permissionRecipeCategoryDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionRecipeCategoryDelete);
+        }
+
+        // Unit of Measurement (Unidades de medida) permissions
+        $permissionUnitMeasurementList = $authManager->getPermission('unit_measurement_list');
+        if (!$permissionUnitMeasurementList) {
+            $permissionUnitMeasurementList = $authManager->createPermission('unit_measurement_list');
+            $permissionUnitMeasurementList->description = "Ver lista de unidades de medida";
+            $permissionUnitMeasurementList->ruleName = $paymentRule->name;
+            $authManager->add($permissionUnitMeasurementList);
+        }
+        // $permissionUnitMeasurementView = $authManager->getPermission('unit_measurement_view');
+        // if (!$permissionUnitMeasurementView) {
+        //     $permissionUnitMeasurementView = $authManager->createPermission('unit_measurement_view');
+        //     $permissionUnitMeasurementView->description = "Ver detalles de unidad de medida";
+        //     $permissionUnitMeasurementView->ruleName = $paymentRule->name;
+        //     $authManager->add($permissionUnitMeasurementView);
+        // }
+        $permissionUnitMeasurementCreate = $authManager->getPermission('unit_measurement_create');
+        if (!$permissionUnitMeasurementCreate) {
+            $permissionUnitMeasurementCreate = $authManager->createPermission('unit_measurement_create');
+            $permissionUnitMeasurementCreate->description = "Crear unidad de medida";
+            $permissionUnitMeasurementCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionUnitMeasurementCreate);
+        }
+        $permissionUnitMeasurementUpdate = $authManager->getPermission('unit_measurement_update');
+        if (!$permissionUnitMeasurementUpdate) {
+            $permissionUnitMeasurementUpdate = $authManager->createPermission('unit_measurement_update');
+            $permissionUnitMeasurementUpdate->description = "Actualizar unidad de medida";
+            $permissionUnitMeasurementUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionUnitMeasurementUpdate);
+        }
+        $permissionUnitMeasurementDelete = $authManager->getPermission('unit_measurement_delete');
+        if (!$permissionUnitMeasurementDelete) {
+            $permissionUnitMeasurementDelete = $authManager->createPermission('unit_measurement_delete');
+            $permissionUnitMeasurementDelete->description = "Eliminar unidad de medida";
+            $permissionUnitMeasurementDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionUnitMeasurementDelete);
+        }
+
+        // Consumption Center (Centros de consumo) permissions
+        $permissionConsumptionCenterList = $authManager->getPermission('consumption_center_list');
+        if (!$permissionConsumptionCenterList) {
+            $permissionConsumptionCenterList = $authManager->createPermission('consumption_center_list');
+            $permissionConsumptionCenterList->description = "Ver lista de centros de consumo";
+            $permissionConsumptionCenterList->ruleName = $paymentRule->name;
+            $authManager->add($permissionConsumptionCenterList);
+        }
+        // $permissionConsumptionCenterView = $authManager->getPermission('consumption_center_view');
+        // if (!$permissionConsumptionCenterView) {
+        //     $permissionConsumptionCenterView = $authManager->createPermission('consumption_center_view');
+        //     $permissionConsumptionCenterView->description = "Ver detalles de centro de consumo";
+        //     $permissionConsumptionCenterView->ruleName = $paymentRule->name;
+        //     $authManager->add($permissionConsumptionCenterView);
+        // }
+        $permissionConsumptionCenterCreate = $authManager->getPermission('consumption_center_create');
+        if (!$permissionConsumptionCenterCreate) {
+            $permissionConsumptionCenterCreate = $authManager->createPermission('consumption_center_create');
+            $permissionConsumptionCenterCreate->description = "Crear centro de consumo";
+            $permissionConsumptionCenterCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionConsumptionCenterCreate);
+        }
+        $permissionConsumptionCenterUpdate = $authManager->getPermission('consumption_center_update');
+        if (!$permissionConsumptionCenterUpdate) {
+            $permissionConsumptionCenterUpdate = $authManager->createPermission('consumption_center_update');
+            $permissionConsumptionCenterUpdate->description = "Actualizar centro de consumo";
+            $permissionConsumptionCenterUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionConsumptionCenterUpdate);
+        }
+        $permissionConsumptionCenterDelete = $authManager->getPermission('consumption_center_delete');
+        if (!$permissionConsumptionCenterDelete) {
+            $permissionConsumptionCenterDelete = $authManager->createPermission('consumption_center_delete');
+            $permissionConsumptionCenterDelete->description = "Eliminar centro de consumo";
+            $permissionConsumptionCenterDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionConsumptionCenterDelete);
+        }
+
         // Subrecipe permissions
         $permissionSubrecipeList = $authManager->getPermission('subrecipe_list');
         if (!$permissionSubrecipeList) {
