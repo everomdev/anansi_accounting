@@ -249,8 +249,6 @@ $this->registerCss('
         <?= Html::a('Exportar Subrecetas en Excel', ['#'], ['class' => 'btn btn-success', 'id' => 'download-recipes-complete-excel']) ?>
 
     </p>
-    <?php Pjax::begin(['id' => 'sub-standard-recipes-pjax']); ?>
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
     <div class="row mb-2 align-items-center">
     <div class="col-md-4">
         <div class="input-group input-group-sm">
@@ -264,6 +262,8 @@ $this->registerCss('
         </div>
     </div>
 </div>
+    <?php Pjax::begin(['id' => 'sub-standard-recipes-pjax']); ?>
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
     <div class="table-responsive sticky-header-container">
     <div class="row"></div>
     <?= GridView::widget([

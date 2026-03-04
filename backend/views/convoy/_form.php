@@ -66,7 +66,10 @@ $data = \yii\helpers\ArrayHelper::map(array_merge($ingredients, $recipes), 'id',
             <?= $form->field($model, 'observations')->textarea() ?>
             <?php if (!$model->isNewRecord): ?>
                 <?php \yii\widgets\Pjax::begin(['id' => 'pjax-ingredients', 'timeout' => false]) ?>
-                <?= $form->field($model, 'plates')->textInput(['type' => 'number']) ?>
+                <?= $form->field($model, 'plates')->textInput([
+                    'type' => 'number',
+                    'min' => 1,
+                ])->label(Yii::t('app', 'Sold Plates') . ' <span class="text-danger">*</span>') ?>
 
                 <?= \yii\bootstrap5\Html::label(Yii::t('app', "Cost")) ?>                <?= \yii\bootstrap5\Html::tag('span', formatPrice($model->amount), [
                     'class' => 'form-control'

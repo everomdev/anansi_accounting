@@ -106,6 +106,7 @@ class ConvoyController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $model->scenario = 'update';
 
         $post = Yii::$app->request->post();
         if (array_key_exists('ajax', $post)) {

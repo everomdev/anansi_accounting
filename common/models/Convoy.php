@@ -52,7 +52,9 @@ class Convoy extends \yii\db\ActiveRecord
     {
         return [
             [['business_id', 'type', 'name'], 'required'],
+            [['plates'], 'required', 'on' => 'update', 'message' => 'Los platillos vendidos son requeridos.'],
             [['business_id', 'plates'], 'integer'],
+            [['plates'], 'integer', 'min' => 1, 'message' => 'Los platillos vendidos deben ser al menos 1.'],
             [['um', 'type', 'name', 'observations'], 'string', 'max' => 255],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['type'], 'in', 'range' => [self::TYPE_GENERAL, self::TYPE_FAMILY]],

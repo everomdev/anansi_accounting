@@ -151,7 +151,6 @@ $this->registerCss('
                 ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'btn-delete-recipes']) ?>
             </div>
         </div>
-    <?php Pjax::begin(['id' => 'standard-recipes-pjax']); ?>
     <!-- Selector de elementos por página y filtros mejorados -->
     <div class="row mb-2 align-items-center">
     <div class="col-md-4">
@@ -166,6 +165,7 @@ $this->registerCss('
         </div>
     </div>
 </div>
+    <?php Pjax::begin(['id' => 'standard-recipes-pjax']); ?>
     
 <div class="table-responsive sticky-header-container">
     <div class="row"></div>
