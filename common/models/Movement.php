@@ -268,14 +268,25 @@ class Movement extends \yii\db\ActiveRecord
                 ->one();
             
             if ($lastStockPrice && $ingredient->portions_per_unit > 0) {
-                // Calcular precio por porción: price de stock_prices / portions_per_unit
-                $pricePerPortion = $lastStockPrice->price / $ingredient->portions_per_unit;
+                $pricePerPortion = null;
                 
-                // Calcular total: precio por porción * cantidad de salida
-                $this->total = round($pricePerPortion * $this->quantity, 2);
+                // Prioridad 1: Si hay adjusted_price, dividirlo entre porciones
+                if (!empty($lastStockPrice->adjusted_price)) {
+                    $pricePerPortion = $lastStockPrice->adjusted_price / $ingredient->portions_per_unit;
+                }
+                // Prioridad 2: Si hay unit_price, dividirlo entre porciones
+                elseif (!empty($lastStockPrice->unit_price)) {
+                    $pricePerPortion = $lastStockPrice->unit_price / $ingredient->portions_per_unit;
+                }
+                // Prioridad 3: Calcular desde price (fallback)
+                else {
+                    $pricePerPortion = $lastStockPrice->price / $ingredient->portions_per_unit;
+                }
                 
                 // Guardar el precio por porción en unit_price para referencia
                 $this->unit_price = round($pricePerPortion, 4);
+                // Calcular total: precio por porción * cantidad de salida
+                $this->total = round($this->unit_price * $this->quantity, 2);
             }
         }
 
