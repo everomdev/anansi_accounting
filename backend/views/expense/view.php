@@ -111,9 +111,15 @@ $frequencies = $model::getFrequencyOptions();
                             $<?= number_format($model->getMonthlyAmount(), 2) ?>
                         </h3>
                         <p class="text-muted mb-0">Monto Mensual Prorrateado</p>
+                        <?php if ($model->frequency): ?>
                         <small class="text-muted">
-                            Calculado según la frecuencia: <strong><?= $frequencies[$model->frequency] ?></strong>
+                            Calculado según la frecuencia: <strong><?= isset($frequencies[$model->frequency]) ? $frequencies[$model->frequency] : $model->frequency ?></strong>
                         </small>
+                        <?php else: ?>
+                        <small class="text-muted">
+                            <em>Gasto no recurrente</em>
+                        </small>
+                        <?php endif; ?>
                     </div>
                     
                     <hr class="my-3">

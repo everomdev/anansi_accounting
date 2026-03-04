@@ -14,6 +14,8 @@ use yii\db\ActiveRecord;
  * @property int $expense_id
  * @property string $type
  * @property float $amount
+ * @property float|null $quantity
+ * @property float|null $unit_amount
  * @property string|null $payment_type
  * @property string|null $invoice
  * @property string|null $observations
@@ -58,9 +60,22 @@ class ExpenseMovement extends ActiveRecord
     public function rules()
     {
         return [
-            [['business_id', 'expense_id', 'type', 'amount', 'movement_date'], 'required'],
+            [['business_id', 'expense_id', 'type', 'movement_date'], 'required'],
             [['business_id', 'expense_id'], 'integer'],
-            [['amount'], 'number'],
+            [['amount', 'quantity', 'unit_amount'], 'number'],
+            // Si quantity está presente, unit_amount es requerido y amount se calcula automáticamente
+            [['quantity'], 'required', 'when' => function($model) {
+                return $model->isInventoriableExpense();
+            }, 'whenClient' => "function (attribute, value) {
+                return $('#expensemovement-expense_id').val() && window.isInventoriableExpense;
+            }"],
+            [['unit_amount'], 'required', 'when' => function($model) {
+                return !empty($model->quantity);
+            }],
+            // Si NO hay quantity, amount es requerido
+            [['amount'], 'required', 'when' => function($model) {
+                return empty($model->quantity);
+            }],
             [['observations'], 'string'],
             [['movement_date', 'created_at', 'updated_at'], 'safe'],
             [['type'], 'string', 'max' => 50],
@@ -81,7 +96,9 @@ class ExpenseMovement extends ActiveRecord
             'business_id' => 'Negocio',
             'expense_id' => 'Gasto',
             'type' => 'Tipo de Movimiento',
-            'amount' => 'Monto',
+            'amount' => 'Monto Total',
+            'quantity' => 'Cantidad',
+            'unit_amount' => 'Monto Unitario',
             'payment_type' => 'Tipo de Pago',
             'invoice' => 'Factura',
             'observations' => 'Observaciones',
@@ -156,5 +173,39 @@ class ExpenseMovement extends ActiveRecord
         }
         $types = self::getPaymentTypes();
         return $types[$this->payment_type] ?? $this->payment_type;
+    }
+    
+    /**
+     * Verifica si el gasto asociado es inventariable
+     */
+    public function isInventoriableExpense()
+    {
+        if (!$this->expense) {
+            return false;
+        }
+        
+        return $this->expense->subcategory && $this->expense->subcategory->is_inventoriable;
+    }
+    
+    /**
+     * Calcula el monto total antes de guardar
+     */
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        
+        // Si tiene cantidad y monto unitario, calcular el total
+        if (!empty($this->quantity) && !empty($this->unit_amount)) {
+            $this->amount = $this->quantity * $this->unit_amount;
+        }
+        // Si no tiene cantidad pero sí monto total, limpiar quantity y unit_amount
+        elseif (!empty($this->amount) && empty($this->quantity)) {
+            $this->quantity = null;
+            $this->unit_amount = null;
+        }
+        
+        return true;
     }
 }
