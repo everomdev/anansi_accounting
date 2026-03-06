@@ -726,6 +726,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
+        'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
         'columns' => $columns,
         'rowOptions' => function ($model, $key, $index, $grid) {
             // Solo aplicar colores a requisiciones
