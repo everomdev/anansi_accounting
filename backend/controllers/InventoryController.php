@@ -172,18 +172,29 @@ public function actionCreate()
             $fechaInicialFormatted = date('Y-m-d H:i:s', strtotime($fechaInicial));
             $fechaFinalFormatted = date('Y-m-d H:i:s', strtotime($fechaFinal));
             
-            // Eliminar registros existentes para esta fecha
-            $existingInventories = Inventory::find()->where(['fecha' => $fecha, 'business_id' => $businessId])->all();
+            // Obtener centros de consumo del negocio
+            $consumptionCenters = ConsumptionCenter::find()->where(['business_id' => $businessId])->all();
+            
+            // IMPORTANTE: Obtener TODOS los insumos del inventario original, no solo los que vienen en POST
+            $existingInventories = Inventory::find()
+                ->where(['fecha' => $fecha, 'business_id' => $businessId])
+                ->with('inventoryConsumptionCenters')
+                ->all();
+            
+            // Crear un array con todos los ingredient_stock_id del inventario original
+            $allIngredientIds = [];
+            foreach ($existingInventories as $inv) {
+                $allIngredientIds[$inv->ingredient_stock_id] = $inv;
+            }
+            
+            // Eliminar todos los registros existentes para esta fecha
             foreach ($existingInventories as $inv) {
                 InventoryConsumptionCenter::deleteAll(['inventory_id' => $inv->id]);
                 $inv->delete();
             }
             
-            // Obtener centros de consumo del negocio
-            $consumptionCenters = ConsumptionCenter::find()->where(['business_id' => $businessId])->all();
-            
-            // Guardar nuevos datos
-            foreach ($inventarios as $ingredientId => $data) {
+            // Guardar TODOS los insumos (los que vienen en POST + los que no fueron modificados)
+            foreach ($allIngredientIds as $ingredientId => $oldInventory) {
                 $inv = new Inventory();
                 $inv->ingredient_stock_id = $ingredientId;
                 $inv->business_id = $businessId;
@@ -192,7 +203,20 @@ public function actionCreate()
                 
                 if ($inv->save()) {
                     foreach ($consumptionCenters as $center) {
-                        $quantity = isset($data[$center->id]) && $data[$center->id] !== '' ? $data[$center->id] : 0;
+                        // Si el insumo viene en POST, usar esos valores
+                        if (isset($inventarios[$ingredientId][$center->id])) {
+                            $quantity = $inventarios[$ingredientId][$center->id] !== '' ? $inventarios[$ingredientId][$center->id] : 0;
+                        } else {
+                            // Si no viene en POST, mantener los valores originales
+                            $quantity = 0;
+                            foreach ($oldInventory->inventoryConsumptionCenters as $oldIcc) {
+                                if ($oldIcc->consumption_center_id == $center->id) {
+                                    $quantity = $oldIcc->quantity;
+                                    break;
+                                }
+                            }
+                        }
+                        
                         $icc = new InventoryConsumptionCenter();
                         $icc->inventory_id = $inv->id;
                         $icc->consumption_center_id = $center->id;
