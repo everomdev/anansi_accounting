@@ -1628,7 +1628,8 @@ if ($ccRow > 2) {
                 $price = preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
                 $data['unit_price'] = $price / $data['portions_per_unit'];
                 $yield = preg_replace('/[^\d.]/', '', $data['yield']); // Eliminar símbolos no numéricos
-                $data['adjusted_price'] = $data['unit_price'] / ($yield / 100);
+                //$data['adjusted_price'] = $data['unit_price'] / ($yield / 100);
+                $data['adjusted_price'] = $price;
                 $data['business_id'] = $business->id;
                 $data['quantity'] = 0;
                 /// extract category id
