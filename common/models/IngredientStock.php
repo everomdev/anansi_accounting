@@ -251,7 +251,8 @@ class IngredientStock extends \yii\db\ActiveRecord
                 'price' => $this->price,
                 'date' => date('Y-m-d'),
                 'unit_price' => $this->price,
-                'adjusted_price' => $this->adjustedPrice,
+                //'adjusted_price' => $this->adjustedPrice,
+                'adjusted_price' => $this->price,
             ]);
             $stockPrice->save(false);
         }
