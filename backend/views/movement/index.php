@@ -721,6 +721,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
     // Renderizar GridView con las columnas definidas
     ?>
+    <div class="table-responsive">
     <?= GridView::widget([
         'id' => 'movements-grid',
         'dataProvider' => $dataProvider,
@@ -761,6 +762,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             return [];
         },
     ]); ?>
+    </div>
 
     <?php Pjax::end(); ?>
 
