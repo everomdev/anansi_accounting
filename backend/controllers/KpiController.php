@@ -967,7 +967,14 @@ public function actionComparacionInsumos()
     {
         if (Yii::$app->request->isPost) {
             $ajustes = Yii::$app->request->post('ajustes', []);
+            $fecha = Yii::$app->request->post('fecha'); // Necesitamos la fecha del inventario
             
+            // Si viene la fecha, ignorar los ajustes del POST y procesar TODOS los insumos de esa fecha
+            if ($fecha) {
+                return $this->procesarAjusteMasivoCompleto($fecha);
+            }
+            
+            // Si no viene fecha, procesar solo los ajustes enviados (comportamiento antiguo)
             if (empty($ajustes)) {
                 return $this->asJson(['success' => false, 'message' => 'No hay ajustes para procesar']);
             }
@@ -1048,6 +1055,121 @@ public function actionComparacionInsumos()
         }
         
         return $this->asJson(['success' => false, 'message' => 'Método no permitido']);
+    }
+    
+    /**
+     * Procesa el ajuste masivo completo de TODOS los insumos de una fecha
+     */
+    private function procesarAjusteMasivoCompleto($fecha)
+    {
+        $business = \backend\helpers\RedisKeys::getBusiness();
+        
+        // Obtener todos los inventarios de esa fecha
+        $inventarioModels = \common\models\Inventory::find()
+            ->where(['business_id' => $business->id, 'fecha' => $fecha])
+            ->with(['ingredientStock', 'inventoryConsumptionCenters'])
+            ->all();
+        
+        if (empty($inventarioModels)) {
+            return $this->asJson(['success' => false, 'message' => 'No se encontraron inventarios para esa fecha']);
+        }
+        
+        // Obtener el centro de consumo "Almacén"
+        $almacenCenter = \common\models\ConsumptionCenter::find()
+            ->where(['business_id' => $business->id, 'name' => 'Almacén'])
+            ->one();
+        
+        if (!$almacenCenter) {
+            return $this->asJson(['success' => false, 'message' => 'No se encontró el centro de consumo "Almacén"']);
+        }
+        
+        // Crear mapa de inventario por ingredient_stock_id
+        $inventarioMap = [];
+        foreach ($inventarioModels as $inv) {
+            foreach ($inv->inventoryConsumptionCenters as $icc) {
+                if ($icc->consumption_center_id == $almacenCenter->id) {
+                    $inventarioMap[$inv->ingredient_stock_id] = [
+                        'inventario_almacen' => $icc->quantity,
+                        'ingrediente' => $inv->ingredientStock
+                    ];
+                    break;
+                }
+            }
+        }
+        
+        $transaction = Yii::$app->db->beginTransaction();
+        $ajustados = 0;
+        $errores = [];
+        
+        try {
+            foreach ($inventarioMap as $ingredientStockId => $data) {
+                $ingredientStock = $data['ingrediente'];
+                if (!$ingredientStock) {
+                    $errores[] = "Insumo no encontrado ID: $ingredientStockId";
+                    continue;
+                }
+                
+                $existenciaAnterior = $ingredientStock->quantity;
+                $nuevaExistencia = $data['inventario_almacen'];
+                
+                // Solo ajustar si hay diferencia significativa
+                if (abs($existenciaAnterior - $nuevaExistencia) < 0.001) {
+                    continue; // Sin cambios, no hacer nada
+                }
+                
+                // Actualizar la existencia
+                $ingredientStock->quantity = $nuevaExistencia;
+                if (!$ingredientStock->save()) {
+                    $errores[] = "Error al actualizar: " . $ingredientStock->ingredient;
+                    continue;
+                }
+                
+                // Crear el log
+                $log = new \common\models\LogsInventario();
+                $log->ingredient_stock_id = $ingredientStockId;
+                $log->existencia_anterior = $existenciaAnterior;
+                $log->existencia_nueva = $nuevaExistencia;
+                $log->motivo = "Ajuste masivo al inventario físico (fecha: $fecha)";
+                $log->fecha_ajuste = date('Y-m-d H:i:s');
+                
+                if (!Yii::$app->user->isGuest) {
+                    $log->user_id = Yii::$app->user->id;
+                }
+                
+                $businessData = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+                if ($businessData && isset($businessData['id'])) {
+                    $log->business_id = $businessData['id'];
+                }
+                
+                if (!$log->save()) {
+                    $errores[] = "Error al guardar log para: " . $ingredientStock->ingredient;
+                    continue;
+                }
+                
+                $ajustados++;
+            }
+            
+            $transaction->commit();
+            
+            $mensaje = "Se ajustaron $ajustados insumos correctamente.";
+            if (!empty($errores)) {
+                $mensaje .= " Errores: " . implode(', ', array_slice($errores, 0, 10));
+                if (count($errores) > 10) {
+                    $mensaje .= " (y " . (count($errores) - 10) . " más)";
+                }
+            }
+            
+            return $this->asJson([
+                'success' => true,
+                'message' => $mensaje,
+                'ajustados' => $ajustados,
+                'errores' => $errores
+            ]);
+            
+        } catch (\Exception $e) {
+            $transaction->rollback();
+            return $this->asJson(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     /**

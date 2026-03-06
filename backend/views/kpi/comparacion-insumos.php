@@ -208,62 +208,35 @@ function cerrarModal() {
 }
 
 function ajustarTodos() {
-    if (!confirm('¿Estás seguro de que quieres ajustar TODOS los insumos con diferencias al valor del inventario físico?')) {
+    if (!confirm('¿Estás seguro de que quieres ajustar TODOS los insumos con diferencias al valor del inventario físico?\n\nEsto procesará TODOS los insumos del inventario, no solo los visibles en esta página.')) {
         return;
     }
     
-    // Recopilar todos los datos de la tabla
-    var ajustes = [];
-    $('table tbody tr').each(function() {
-        var $row = $(this);
-        
-        // Buscar el botón de ajustar para obtener los valores correctos
-        var ajusteBtn = $row.find('button[onclick*="ajustarExistencia"]');
-        if (ajusteBtn.length > 0) {
-            var onclick = ajusteBtn.attr('onclick');
-            // Capturar los valores numéricos directamente del onclick
-            // Formato: ajustarExistencia(123, "Nombre", 0.75, 1.5)
-            var matches = onclick.match(/ajustarExistencia\((\d+),\s*"([^"]+)",\s*([\d.]+),\s*([\d.]+)\)/);
-            if (matches) {
-                var existenciaActual = parseFloat(matches[3]);
-                var inventarioFisico = parseFloat(matches[4]);
-                
-                // Solo si hay diferencia
-                if (Math.abs(existenciaActual - inventarioFisico) > 0.001) {
-                    ajustes.push({
-                        ingredient_stock_id: matches[1],
-                        nombre: matches[2],
-                        existencia_anterior: existenciaActual,
-                        nueva_existencia: inventarioFisico,
-                        motivo: 'Ajuste masivo al inventario físico'
-                    });
-                }
-            }
-        }
-    });
+    // Obtener la fecha del inventario
+    var fecha = '<?= Html::encode($fecha) ?>';
     
-    if (ajustes.length === 0) {
-        alert('No hay insumos con diferencias para ajustar.');
+    if (!fecha) {
+        alert('No se puede realizar el ajuste sin una fecha de inventario.');
         return;
     }
     
     // Mostrar progreso
     var progressHtml = '<div class="alert alert-info" id="progressAlert">' +
-        '<i class="fas fa-spinner fa-spin"></i> Ajustando ' + ajustes.length + ' insumos...' +
+        '<i class="fas fa-spinner fa-spin"></i> Ajustando todos los insumos del inventario...' +
         '</div>';
     $('.mt-3').prepend(progressHtml);
     
-    // Enviar ajustes por lote
+    // Enviar solo la fecha - el backend cargará TODOS los insumos
     $.ajax({
         url: '<?= \yii\helpers\Url::to(['/kpi/ajustar-existencia-masivo']) ?>',
         type: 'POST',
         data: {
-            ajustes: ajustes
+            fecha: fecha
         },
         success: function(response) {
             $('#progressAlert').remove();
             if (response.success) {
-                alert('Se ajustaron ' + response.ajustados + ' insumos correctamente.');
+                alert('✓ Se ajustaron ' + response.ajustados + ' insumos correctamente.');
                 location.reload();
             } else {
                 alert('Error: ' + (response.message || 'No se pudieron ajustar los insumos'));
