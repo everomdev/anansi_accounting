@@ -106,6 +106,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <option value="20" <?= $dataProvider->pagination->pageSize == 20 ? 'selected' : '' ?>>20</option>
                     <option value="50" <?= $dataProvider->pagination->pageSize == 50 ? 'selected' : '' ?>>50</option>
                     <option value="100" <?= $dataProvider->pagination->pageSize == 100 ? 'selected' : '' ?>>100</option>
+                    <option value="500" <?= $dataProvider->pagination->pageSize == 500 ? 'selected' : '' ?>>500</option>
                 </select>
                 <span class="input-group-text bg-light"><?= Yii::t('app', 'elementos por página') ?></span>
             </div>

@@ -113,6 +113,69 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     .requisition-available-stock td {
         color: inherit !important;
     }
+    
+    /* Contenedor sticky con scroll */
+    .sticky-header-container {
+        position: relative;
+        overflow: auto;
+        max-height: calc(100vh - 280px);
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    
+    /* Tabla con headers fijos */
+    .sticky-header-table {
+        margin-bottom: 0;
+    }
+    
+    .sticky-header-table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 10;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        white-space: normal;
+        vertical-align: middle;
+    }
+    
+    /* Scrollbar horizontal siempre visible */
+    .sticky-header-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Forzar que el scrollbar horizontal siempre sea visible */
+    .sticky-header-container::-webkit-scrollbar {
+        height: 12px;
+        -webkit-appearance: none;
+    }
+    
+    .sticky-header-container::-webkit-scrollbar-track {
+        background-color: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .sticky-header-container::-webkit-scrollbar-thumb {
+        background-color: #888;
+        border-radius: 10px;
+        border: 2px solid #f1f1f1;
+    }
+    
+    .sticky-header-container::-webkit-scrollbar-thumb:hover {
+        background-color: #555;
+    }
+    
+    /* Scrollbar vertical también visible */
+    .sticky-header-container::-webkit-scrollbar:vertical {
+        width: 12px;
+    }
+    
+    /* Para Firefox */
+    .sticky-header-container {
+        scrollbar-width: auto;
+        scrollbar-color: #888 #f1f1f1;
+    }
     </style>
 
     <script>
@@ -180,7 +243,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             <div class="input-group input-group-sm">
                 <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
                 <select id="per-page-selector-movements" class="form-select form-select-sm" style="width: auto; max-width: 78px;">
-                    <?php foreach ([10, 25, 50, 100, 250] as $value): ?>
+                    <?php foreach ([10, 25, 50, 100, 250, 500] as $value): ?>
                     <option value="<?= $value ?>" <?= $dataProvider->pagination->pageSize == $value ? 'selected' : '' ?>><?= $value ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -721,12 +784,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
 
     // Renderizar GridView con las columnas definidas
     ?>
-    <div class="table-responsive">
+    <div class="sticky-header-container">
     <?= GridView::widget([
         'id' => 'movements-grid',
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'formatter' => $business->getFormatter(),
+        'tableOptions' => ['class' => 'table table-striped sticky-header-table'],
+        'options' => ['class' => 'grid-view'],
         'layout' => "{items}\n<div class='d-flex justify-content-between align-items-center mt-3'><div>{pager}</div><div>{summary}</div></div>",
         'columns' => $columns,
         'rowOptions' => function ($model, $key, $index, $grid) {
