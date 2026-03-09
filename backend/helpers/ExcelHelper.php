@@ -2187,7 +2187,7 @@ if ($ccRow > 2) {
             $activeWorksheet->setCellValue("G$currentRow", $ingredient->portion_um);
             $activeWorksheet->setCellValue("H$currentRow", $ingredient->yield);
             $activeWorksheet->setCellValue("I$currentRow", $ingredient->portions_per_unit);
-            $activeWorksheet->setCellValue("J$currentRow", $ingredient->lastPrice);
+            $activeWorksheet->setCellValue("J$currentRow", $ingredient->lastUnitPrice);
             $activeWorksheet->setCellValue("K$currentRow", $ingredient->observations);
 
             $currentRow++;
