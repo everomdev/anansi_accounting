@@ -658,7 +658,10 @@ class MovementController extends Controller
                     continue;
                 }
                 
-                $quantityToFulfill = floatval($fulfillQuantities[$item->id]);
+                // Normalizar el valor: reemplazar coma por punto si existe
+                $quantityValue = $fulfillQuantities[$item->id];
+                $quantityValue = str_replace(',', '.', $quantityValue);
+                $quantityToFulfill = floatval($quantityValue);
                 
                 // Saltar si la cantidad es 0 o negativa
                 if ($quantityToFulfill <= 0) {
@@ -675,9 +678,12 @@ class MovementController extends Controller
                 $alreadyFulfilled = $item->quantity_fulfilled ?? 0;
                 $pendingQuantity = $item->quantity_requested - $alreadyFulfilled;
                 
-                // Validar que no exceda el saldo pendiente
-                if ($quantityToFulfill > $pendingQuantity) {
-                    $quantityToFulfill = $pendingQuantity;
+                // Permitir hasta 30% adicional del saldo pendiente
+                $maxAllowed = $pendingQuantity * 1.30;
+                
+                // Validar que no exceda el máximo permitido (130%)
+                if ($quantityToFulfill > $maxAllowed) {
+                    $quantityToFulfill = $maxAllowed;
                 }
                 
                 // Verificar disponibilidad de stock

@@ -1,18 +1,68 @@
 // Interceptar solo los clics en ver detalles, no en conversión
 $(document).on('click', ".movement-details:not(.convert-order)", function (event) {
     event.preventDefault();
-    let href = $(this).attr('href')
+    event.stopPropagation();
+    
+    let href = $(this).attr('href');
+    
+    // Mostrar indicador de carga
+    $("#container-modal-details-movement").html('<div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
+    
     $.ajax({
         url: href,
         type: 'get',
-    }).done(function (response) {
-        $("#container-modal-details-movement").html(response);
-        $("#modal-details-movement").modal('show');
+        success: function(response) {
+            $("#container-modal-details-movement").html(response);
+            
+            // Abrir el modal usando Bootstrap 5
+            var modalElement = document.getElementById('modal-details-movement');
+            if (modalElement) {
+                var modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al cargar detalles:', error);
+            $("#container-modal-details-movement").html('<div class="alert alert-danger">Error al cargar los detalles. Por favor intente nuevamente.</div>');
+        }
     });
+    
     return false;
 })
 
-// Permitir navegación normal para botones de conversión
+// Interceptar clics en botón de convertir requisición a salida
+$(document).on('click', ".convert-requisition", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    let href = $(this).attr('href');
+    
+    // Mostrar indicador de carga
+    $("#container-modal-details-movement").html('<div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
+    
+    $.ajax({
+        url: href,
+        type: 'get',
+        success: function(response) {
+            $("#container-modal-details-movement").html(response);
+            
+            // Abrir el modal usando Bootstrap 5
+            var modalElement = document.getElementById('modal-details-movement');
+            if (modalElement) {
+                var modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al cargar detalles de requisición:', error);
+            $("#container-modal-details-movement").html('<div class="alert alert-danger">Error al cargar los detalles de la requisición. Por favor intente nuevamente.</div>');
+        }
+    });
+    
+    return false;
+})
+
+// Permitir navegación normal para botones de conversión de orden
 $(document).on('click', ".convert-order", function (event) {
     // No interceptar - permitir navegación normal
     return true;

@@ -275,20 +275,27 @@ $this->registerCss("
                                         <?php if ($model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')): ?>
                                             <td class="text-center">
                                                 <?php if ($pendingQty > 0.01): ?>
-                                                    <?= Html::input('number', "fulfill_quantities[{$item->id}]", 
-                                                        number_format($suggestedQty, 2, '.', ''), 
+                                                    <?php 
+                                                    // Permitir hasta 30% más de la cantidad solicitada
+                                                    $maxAllowed = $pendingQty * 1.30;
+                                                    ?>
+                                                    <?= Html::input('text', "fulfill_quantities[{$item->id}]", 
+                                                        number_format($suggestedQty, 2, ',', ''), 
                                                         [
-                                                            'class' => 'form-control form-control-sm text-center',
+                                                            'class' => 'form-control form-control-sm text-center fulfill-quantity-input',
                                                             'style' => 'width: 100px; display: inline-block; font-weight: bold;',
-                                                            'min' => 0,
-                                                            'max' => $pendingQty,
-                                                            'step' => 0.01,
                                                             'data-pending' => $pendingQty,
-                                                            'data-available' => $availableStock
+                                                            'data-available' => $availableStock,
+                                                            'data-max-allowed' => $maxAllowed,
+                                                            'placeholder' => '0,00',
+                                                            'pattern' => '[0-9]+([,\.][0-9]+)?'
                                                         ]
                                                     ) ?>
                                                     <br>
-                                                    <small class="text-muted">Stock: <?= number_format($availableStock, 2) ?></small>
+                                                    <small class="text-muted">
+                                                        Stock: <?= number_format($availableStock, 2, ',', '') ?> | 
+                                                        Máx: <?= number_format($maxAllowed, 2, ',', '') ?> (+30%)
+                                                    </small>
                                                     <?php if ($availableStock < $pendingQty): ?>
                                                         <br><small class="text-danger">
                                                             <i class="bx bx-error-circle"></i> Insuficiente
@@ -452,16 +459,80 @@ $this->registerCss("
 // Script para manejar el envío del formulario desde el modal
 if ($model->type === \common\models\Movement::TYPE_REQUISITION && $model->status !== 'fulfilled' && !Yii::$app->user->can('consumption_requester')) {
     $this->registerJs(<<<JS
+        // Permitir entrada con coma decimal en los inputs de cantidad con validación en tiempo real
+        $(document).on('input', '.fulfill-quantity-input', function() {
+            var input = $(this);
+            var inputValue = input.val();
+            
+            // Permitir vacío, números, coma y punto
+            if (inputValue === '') {
+                input.removeClass('is-invalid is-valid');
+                return;
+            }
+            
+            // Reemplazar coma por punto para validación numérica
+            var normalizedValue = inputValue.replace(',', '.');
+            
+            // Validar que sea un número válido
+            if (!isNaN(normalizedValue) && normalizedValue !== '') {
+                var value = parseFloat(normalizedValue);
+                var maxAllowed = parseFloat(input.attr('data-max-allowed'));
+                
+                // Validar rango
+                if (value > 0 && value <= maxAllowed) {
+                    input.removeClass('is-invalid').addClass('is-valid');
+                } else if (value > maxAllowed) {
+                    input.removeClass('is-valid').addClass('is-invalid');
+                } else {
+                    input.removeClass('is-invalid is-valid');
+                }
+                
+                // Guardar valor normalizado
+                input.attr('data-normalized-value', normalizedValue);
+            } else {
+                input.removeClass('is-valid').addClass('is-invalid');
+            }
+        });
+        
         $('#fulfill-form').on('beforeSubmit', function(e) {
             e.preventDefault();
             var form = $(this);
             
+            // Normalizar todos los valores antes de validar y enviar
+            form.find('input[name^="fulfill_quantities"]').each(function() {
+                var inputValue = $(this).val();
+                if (inputValue) {
+                    // Reemplazar coma por punto para envío al servidor
+                    var normalizedValue = inputValue.replace(',', '.');
+                    $(this).val(normalizedValue);
+                }
+            });
+            
             // Validar que haya al menos una cantidad mayor a 0
             var hasQuantities = false;
+            var validationErrors = [];
+            
             form.find('input[name^="fulfill_quantities"]').each(function() {
-                if (parseFloat($(this).val()) > 0) {
+                var inputValue = $(this).val();
+                if (!inputValue) return;
+                
+                // Convertir a número (ya está con punto decimal)
+                var value = parseFloat(inputValue);
+                var maxAllowed = parseFloat($(this).attr('data-max-allowed'));
+                var pending = parseFloat($(this).attr('data-pending'));
+                
+                if (isNaN(value)) {
+                    validationErrors.push('Una de las cantidades ingresadas no es un número válido.');
+                    return;
+                }
+                
+                if (value > 0) {
                     hasQuantities = true;
-                    return false;
+                    
+                    // Validar que no exceda el máximo permitido (130%)
+                    if (value > maxAllowed) {
+                        validationErrors.push('Una cantidad excede el límite permitido (+30% de la cantidad pendiente).');
+                    }
                 }
             });
             
@@ -470,10 +541,35 @@ if ($model->type === \common\models\Movement::TYPE_REQUISITION && $model->status
                 return false;
             }
             
+            if (validationErrors.length > 0) {
+                alert(validationErrors.join('\\n'));
+                return false;
+            }
+            
             // Confirmar antes de enviar
             if (!confirm('¿Confirma que desea convertir esta requisición a salida con las cantidades especificadas?')) {
                 return false;
             }
+            
+            // Deshabilitar el botón de submit y mostrar indicador de carga
+            var submitBtn = form.find('button[type="submit"]');
+            var originalBtnText = submitBtn.html();
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Procesando...');
+            
+            // Agregar overlay de carga al modal
+            var modalBody = form.closest('.card-body');
+            if (modalBody.length === 0) {
+                modalBody = form.closest('.modal-body');
+            }
+            var loadingOverlay = $('<div class="loading-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">' +
+                '<div class="text-center">' +
+                '<div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>' +
+                '<div class="mt-3"><strong>Convirtiendo requisición a salida...</strong></div>' +
+                '<div class="text-muted">Por favor espere</div>' +
+                '</div>' +
+                '</div>');
+            modalBody.css('position', 'relative').append(loadingOverlay);
             
             $.ajax({
                 url: form.attr('action'),
@@ -482,18 +578,61 @@ if ($model->type === \common\models\Movement::TYPE_REQUISITION && $model->status
                 dataType: 'json',
                 success: function(response) {
                     if (response.success !== false) {
-                        // Cerrar el modal
-                        $('#modal-details-movement').modal('hide');
+                        // Cambiar mensaje del overlay a éxito
+                        loadingOverlay.html(
+                            '<div class="text-center">' +
+                            '<i class="bx bx-check-circle text-success" style="font-size: 4rem;"></i>' +
+                            '<div class="mt-3"><strong class="text-success">¡Conversión exitosa!</strong></div>' +
+                            '<div class="text-muted">Recargando página...</div>' +
+                            '</div>'
+                        );
                         
-                        // Recargar la página para mostrar los mensajes flash
-                        location.reload();
+                        // Cerrar el modal si existe (Bootstrap 5)
+                        setTimeout(function() {
+                            var modalElement = document.getElementById('modal-details-movement');
+                            if (modalElement) {
+                                var modalInstance = bootstrap.Modal.getInstance(modalElement);
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
+                            }
+                            
+                            // Recargar la página para mostrar los mensajes flash
+                            location.reload();
+                        }, 1000);
                     } else {
+                        // Remover overlay y restaurar botón
+                        loadingOverlay.remove();
+                        submitBtn.prop('disabled', false);
+                        submitBtn.html(originalBtnText);
+                        
                         alert(response.message || 'Error al procesar la requisición.');
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('Error:', error);
-                    alert('Error al procesar la requisición. Por favor intente nuevamente.');
+                    
+                    // Remover overlay y restaurar botón
+                    loadingOverlay.remove();
+                    submitBtn.prop('disabled', false);
+                    submitBtn.html(originalBtnText);
+                    
+                    var errorMessage = 'Error al procesar la requisición.';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                errorMessage = response.message;
+                            }
+                        } catch (e) {
+                            // Si no es JSON, usar mensaje por defecto
+                        }
+                    }
+                    
+                    alert(errorMessage);
                 }
             });
             

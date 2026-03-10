@@ -162,7 +162,7 @@ $this->registerJs("
 
 <div class="cost-center-container">
     <div class="cost-center-header">
-        <h5>Consumo por Centro de Costo</h5>        <div class="cost-center-total">
+        <h5>Consumo por Centro de Consumo</h5>        <div class="cost-center-total">
             <?= formatPrice($totalConsumption) ?>
         </div>
     </div>
