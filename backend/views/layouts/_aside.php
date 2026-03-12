@@ -60,6 +60,7 @@ $menuVentasActive = in_array($currentControllerId, ['sales', 'menu-recipes','sav
 $rentabilidadAnalisisActive = in_array($currentControllerId, ['theoretical-yield', 'real-yield', 'charts', 'analytics', 'menu-improvement', 'profit-comparison', 'matrix-bcg']);
 $kpisControlActive = in_array($currentControllerId, ['control-insumos', 'control-almacen', 'compras-vs-consumo', 'planeacion-compras', 'comparativa-costo', 'eficiencia-uso', 'mix-ventas', 'factibilidad', 'estado-resultados']);
 $gastosActive = in_array($currentControllerId, ['expense', 'expense-movement', 'expense-unit-measurement', 'expense-category', 'expense-subcategory']);
+$rrhhActive = in_array($currentControllerId, ['empleado', 'plantilla']);
 $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'business']);
 ?>
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
@@ -264,6 +265,36 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         </a>
                     </li>
                     <?php endif; ?>
+                </ul>
+            </div>
+        </li>
+        <?php endif; ?>
+
+        <!-- Recursos Humanos -->
+        <?php if ($isAdmin || Yii::$app->user->can('rrhh_access')): ?>
+        <li class="menu-item <?= $rrhhActive ? 'active open' : '' ?>">
+            <a class="menu-link" data-bs-toggle="collapse" href="#recursosHumanos" role="button" 
+               aria-expanded="<?= $rrhhActive ? 'true' : 'false' ?>" 
+               aria-controls="recursosHumanos">
+                <div><?= Yii::t('app', 'Recursos Humanos') ?></div>
+            </a>
+            <div class="collapse <?= $rrhhActive ? 'show' : '' ?>" id="recursosHumanos">
+                <ul class="sub-menu">
+                    <li class="menu-item <?= ($currentControllerId == 'empleado' && in_array($action, ['index', 'view', 'create', 'update'])) ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/empleado/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Empleados') ?></div>
+                        </a>
+                    </li>
+                    <li class="menu-item <?= ($currentControllerId == 'plantilla') ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/plantilla/index']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Plantilla vs Realidad') ?></div>
+                        </a>
+                    </li>
+                    <li class="menu-item <?= ($currentControllerId == 'empleado' && $action == 'estadisticas') ? 'active' : '' ?>">
+                        <a href="<?= \yii\helpers\Url::to(['/empleado/estadisticas']) ?>" class="menu-link">
+                            <div><?= Yii::t('app', 'Estadísticas de Documentación') ?></div>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </li>
