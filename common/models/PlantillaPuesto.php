@@ -58,7 +58,7 @@ class PlantillaPuesto extends ActiveRecord
     public function rules()
     {
         return [
-            [['business_id', 'area_trabajo_id', 'nombre_puesto'], 'required'],
+            [['business_id', 'area_trabajo_id', 'nombre_puesto', 'cantidad_minima'], 'required'],
             [['business_id', 'area_trabajo_id', 'cantidad_minima', 'cantidad_ideal'], 'integer'],
             [['cantidad_minima', 'cantidad_ideal'], 'integer', 'min' => 0],
             [['descripcion'], 'string'],
