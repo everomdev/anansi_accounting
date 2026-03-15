@@ -686,19 +686,20 @@ class MovementController extends Controller
                     $quantityToFulfill = $maxAllowed;
                 }
                 
-                // Verificar disponibilidad de stock
+                // Obtener cantidad disponible (solo para mostrar advertencias)
                 $availableQuantity = $ingredient->quantity ?? 0;
                 
-                // Si no hay stock suficiente, surtir solo lo disponible
-                $actualQuantityToFulfill = min($quantityToFulfill, $availableQuantity);
+                // Permitir crear salidas incluso con stock insuficiente (puede quedar negativo)
+                $actualQuantityToFulfill = $quantityToFulfill;
                 
-                if ($actualQuantityToFulfill <= 0) {
+                // Registrar si hubo stock insuficiente (solo informativo)
+                if ($availableQuantity < $quantityToFulfill) {
                     $insufficientStock[] = [
                         'ingredient' => $ingredient->ingredient,
                         'requested' => $quantityToFulfill,
                         'available' => $availableQuantity,
+                        'fulfilled' => $actualQuantityToFulfill,
                     ];
-                    continue;
                 }
                 
                 // Crear movimiento de salida
@@ -712,8 +713,8 @@ class MovementController extends Controller
                 
                 // Construir observaciones
                 $outputObservations = "Salida de requisición {$originalRequisition->requisition_number}";
-                if ($actualQuantityToFulfill < $quantityToFulfill) {
-                    $outputObservations .= " (Surtido parcial: {$actualQuantityToFulfill} de {$quantityToFulfill} solicitados por stock insuficiente)";
+                if ($availableQuantity < $quantityToFulfill) {
+                    $outputObservations .= " (ADVERTENCIA: Stock insuficiente al momento de la salida. Disponible: {$availableQuantity})";
                 }
                 
                 $newOutput->observations = $outputObservations;
@@ -730,7 +731,7 @@ class MovementController extends Controller
                 $newFulfilledQuantity = $alreadyFulfilled + $actualQuantityToFulfill;
                 $item->quantity_fulfilled = $newFulfilledQuantity;
                 
-                // Agregar observaciones al item si es surtido parcial
+                // Agregar observaciones al item si aún falta por surtir
                 if ($newFulfilledQuantity < $item->quantity_requested) {
                     $partiallyFulfilled[] = [
                         'ingredient' => $ingredient->ingredient,
@@ -740,16 +741,6 @@ class MovementController extends Controller
                 }
                 
                 $item->save(false);
-                
-                // Si no se surtió la cantidad completa solicitada, registrar
-                if ($actualQuantityToFulfill < $quantityToFulfill) {
-                    $insufficientStock[] = [
-                        'ingredient' => $ingredient->ingredient,
-                        'requested' => $quantityToFulfill,
-                        'fulfilled' => $actualQuantityToFulfill,
-                        'available' => $availableQuantity,
-                    ];
-                }
                 
                 $outputsCreated++;
             }
@@ -800,23 +791,18 @@ class MovementController extends Controller
                 Yii::$app->session->addFlash('info', $message);
             }
             
-            // Mostrar información sobre stock insuficiente
+            // Mostrar información sobre stock insuficiente (advertencia, no error)
             if (!empty($insufficientStock)) {
-                $message = "Algunos items tuvieron stock insuficiente:\n";
+                $message = "ADVERTENCIA: Algunos items tenían stock insuficiente (el inventario quedó negativo):\n";
                 foreach ($insufficientStock as $stock) {
-                    if (isset($stock['fulfilled'])) {
-                        $message .= "• {$stock['ingredient']}: Solicitado {$stock['requested']}, " .
-                                   "Surtido {$stock['fulfilled']}\n";
-                    } else {
-                        $message .= "• {$stock['ingredient']}: Solicitado {$stock['requested']}, " .
-                                   "Sin stock disponible\n";
-                    }
+                    $message .= "• {$stock['ingredient']}: Solicitado {$stock['requested']}, " .
+                               "Disponible {$stock['available']}, Surtido {$stock['fulfilled']}\n";
                 }
-                Yii::$app->session->addFlash('warning', $message);
+                Yii::$app->session->addFlash('info', $message);
             }
             
             if ($outputsCreated == 0) {
-                Yii::$app->session->addFlash('error', 'No se pudo crear ninguna salida. Verifique las cantidades y el stock disponible.');
+                Yii::$app->session->addFlash('error', 'No se pudo crear ninguna salida. Verifique las cantidades ingresadas.');
             }
             
             // Si es una petición AJAX, devolver JSON

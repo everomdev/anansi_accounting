@@ -604,9 +604,15 @@ class Movement extends \yii\db\ActiveRecord
     
     /**
      * Valida que haya suficiente stock disponible para movimientos de salida
+     * NOTA: Validación deshabilitada - se permite inventario negativo
      */
     public function validateStockAvailability($attribute, $params)
     {
+        // Validación deshabilitada - permitir salidas incluso con stock insuficiente
+        // El sistema permite inventario negativo para mayor flexibilidad operativa
+        return;
+        
+        /* CÓDIGO COMENTADO - Validación original que bloqueaba salidas
         // Solo validar para movimientos de salida
         if ($this->type !== self::TYPE_OUTPUT) {
             return;
@@ -639,6 +645,7 @@ class Movement extends \yii\db\ActiveRecord
                 "No hay suficiente stock disponible. Cantidad disponible: {$availableQuantity} {$ingredient->portion_um}, Cantidad solicitada: {$this->quantity} {$ingredient->portion_um}"
             );
         }
+        */
     }
     
     /**
