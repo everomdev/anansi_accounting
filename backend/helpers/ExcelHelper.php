@@ -460,7 +460,7 @@ public static function generateIngredientsTemplate($id)
     $activeWorksheet->setCellValue("F1", "Unidad de compra*");
     $activeWorksheet->setCellValue("G1", "Unidad de uso*");
     $activeWorksheet->setCellValue("H1", "Factor de Rendimiento*");
-    $activeWorksheet->setCellValue("I1", "EQ. UNI. Uso*");
+    $activeWorksheet->setCellValue("I1", "Equivalencia*");
     $activeWorksheet->setCellValue("J1", "Precio*");
     $activeWorksheet->setCellValue("K1", "Observaciones");
     
