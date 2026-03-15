@@ -141,7 +141,7 @@ class Movement extends \yii\db\ActiveRecord
                 var isWithoutRequisition = $('#movement-is_without_requisition').is(':checked');
                 return type === 'output' && isWithoutRequisition;
             }", 'message' => 'Las observaciones son obligatorias para salidas sin requisición'],
-            [['quantity'], 'number', 'min' => 0.01, 'message' => 'La cantidad debe ser un número mayor a 0'],
+            [['quantity'], 'number', 'min' => 0.001, 'message' => 'La cantidad debe ser un número mayor a 0'],
             [['amount'], 'number', 'min' => 0, 'message' => 'El precio de compra debe ser un número válido'],
             [['tax', 'retention'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],
             [['unit_price', 'total'], 'number', 'min' => 0, 'message' => 'Este campo debe ser un número válido'],

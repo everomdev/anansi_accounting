@@ -410,7 +410,7 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             // Para requisiciones con un item específico (expanded row)
             if ($model->type === 'requisition' && isset($model->_expandedItem)) {
                 $item = $model->_expandedItem;
-                $quantity = Yii::$app->formatter->asDecimal($item->quantity_requested, 2);
+                $quantity = Yii::$app->formatter->asDecimal($item->quantity_requested, 3);
                 return '<strong>' . $quantity . '</strong>';
             }
 

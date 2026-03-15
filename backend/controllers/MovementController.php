@@ -331,17 +331,33 @@ class MovementController extends Controller
                         continue;
                     }
                     
+                    // Normalizar la cantidad: agregar 0 inicial si empieza con punto
+                    $quantity = $item['quantity'];
+                    if (is_string($quantity) && strpos($quantity, '.') === 0) {
+                        $quantity = '0' . $quantity;
+                    }
+                    
+                    // Log temporal para debug
+                    Yii::warning("Cantidad recibida: " . var_export($item['quantity'], true) . " (tipo: " . gettype($item['quantity']) . ")", __METHOD__);
+                    Yii::warning("Cantidad normalizada: " . var_export($quantity, true), __METHOD__);
+                    
                     $requisitionItem = new \common\models\RequisitionItem([
                         'requisition_id' => $movement->id,
                         'ingredient_id' => $item['ingredient_id'],
-                        'quantity_requested' => $item['quantity'],
+                        'quantity_requested' => $quantity,
                     ]);
+                    
+                    // Log después de asignar
+                    Yii::warning("Cantidad asignada al modelo: " . var_export($requisitionItem->quantity_requested, true), __METHOD__);
                     
                     if (!$requisitionItem->save()) {
                         $errors = implode(', ', $requisitionItem->getFirstErrors());
                         Yii::error('Error al guardar item de requisición: ' . $errors, __METHOD__);
                         throw new \Exception('Error al guardar uno de los insumos. Verifique las cantidades.');
                     }
+                    
+                    // Log después de guardar
+                    Yii::warning("Cantidad guardada en BD: " . var_export($requisitionItem->quantity_requested, true), __METHOD__);
                     
                     $savedCount++;
                 }

@@ -1169,7 +1169,7 @@ $(document).ready(function() {
                 itemsHtml += `
                     <tr class="${statusClass}">
                         <td>${ingredientName}</td>
-                        <td class="text-end fw-bold">${quantity.toFixed(2)} ${um}</td>
+                        <td class="text-end fw-bold">${quantity.toFixed(3)} ${um}</td>
                         <td class="text-center">${stock.toFixed(2)} ${um}</td>
                         <td class="text-center">${statusBadge}</td>
                     </tr>
@@ -1218,11 +1218,23 @@ $(document).ready(function() {
     // Confirmar y enviar desde el modal
     $('#confirm-submit-btn').on('click', function() {
         // Cerrar modal
-        bootstrap.Modal.getInstance(document.getElementById('confirmationModal')).hide();
+        const modalElement = document.getElementById('confirmationModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
         
         // Enviar formulario (sin validación beforeSubmit para evitar loop)
         const form = $('#requisition-form')[0];
         form.submit();
+    });
+    
+    // Limpiar backdrop cuando el modal se cierra (para evitar que quede el fondo gris)
+    $('#confirmationModal').on('hidden.bs.modal', function () {
+        // Eliminar cualquier backdrop residual
+        $('.modal-backdrop').remove();
+        // Restaurar scroll del body
+        $('body').removeClass('modal-open').css('overflow', '').css('padding-right', '');
     });
 });
 JS
