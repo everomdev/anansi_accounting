@@ -75,15 +75,12 @@ class CategoryController extends Controller
     {
         $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
         $searchModel = new CategorySearch();
-        $perPage = (int)Yii::$app->request->get('per-page');
-        if (!in_array($perPage, [10, 25, 50, 100])) {
-            $perPage = 10; // Valor predeterminado
-        }
         if (!Yii::$app->user->can('admin')) {
             $searchModel->business_id = $business['id'];
         }
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-        $dataProvider->pagination->pageSize = $perPage;
+        
+        // Configurar ordenamiento
         $dataProvider->setSort([
             'attributes' => [
                 'category_group.color',
@@ -95,6 +92,13 @@ class CategoryController extends Controller
                 'key_prefix' => SORT_ASC,
             ]
         ]);
+        
+        // Configurar paginación
+        $perPage = (int)Yii::$app->request->get('per-page');
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10; // Valor predeterminado
+        }
+        $dataProvider->pagination->pageSize = $perPage;
 
         return $this->render('index', [
             'searchModel' => $searchModel,

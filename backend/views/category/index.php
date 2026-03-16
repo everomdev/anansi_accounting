@@ -88,9 +88,8 @@ $this->registerCss('
         <?php endif; ?>
     </p>
 
-    <?php Pjax::begin(['id' => 'family-pjax']); ?>
-    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
-    <div class="row mb-2 align-items-center">
+<!-- Selector de elementos por página y filtros mejorados -->
+<div class="row mb-2 align-items-center">
     <div class="col-md-4">
         <div class="input-group input-group-sm">
             <span class="input-group-text bg-light"><?= Yii::t('app', 'Mostrar') ?></span>
@@ -103,6 +102,8 @@ $this->registerCss('
         </div>
     </div>
 </div>
+    <?php Pjax::begin(['id' => 'family-pjax']); ?>
+    <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
     <div class="table-responsive sticky-header-container">
     <div class="row"></div>
     <?= GridView::widget([
