@@ -38,7 +38,10 @@ class ExpenseCategory extends ActiveRecord
     public function behaviors()
     {
         return [
-            TimestampBehavior::class,
+            [
+                'class' => TimestampBehavior::class,
+                'value' => new \yii\db\Expression('NOW()'),
+            ],
         ];
     }
 
