@@ -1587,9 +1587,21 @@ if ($ccRow > 2) {
                 $cellIterator->next();
                 $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
                 $cellIterator->next();
-                $data['brand'] = $cellIterator->current()->getValue(); // B - Insumo
+                $data['brand'] = $cellIterator->current()->getValue(); // C - Marca
                 $cellIterator->next();
-                $data['presentation'] = $cellIterator->current()->getValue(); // B - Insumo
+                // Obtener presentación como string, manejando cualquier tipo de contenido
+                // Usar getFormattedValue() para obtener el texto tal como se ve en Excel
+                // Esto maneja correctamente números, texto, símbolos y fórmulas
+                $presentationCell = $cellIterator->current();
+                try {
+                    // Intentar obtener el valor formateado (como aparece en Excel)
+                    $presentationValue = $presentationCell->getFormattedValue();
+                } catch (\Exception $e) {
+                    // Si falla, usar el valor calculado o el raw value
+                    $presentationValue = $presentationCell->getCalculatedValue() ?? $presentationCell->getValue();
+                }
+                // Asegurar que sea string y manejar null/empty
+                $data['presentation'] = $presentationValue !== null ? strval($presentationValue) : '';
                 $cellIterator->next();
                 $data['category_id'] = $cellIterator->current()->getValue(); // C - Categoría
                 $cellIterator->next();
