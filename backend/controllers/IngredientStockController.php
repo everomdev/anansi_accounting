@@ -132,7 +132,7 @@ class IngredientStockController extends Controller
         $perPage = Yii::$app->request->get('per-page');
         
         // Si perPage no viene en la URL o no es válido, usar el valor guardado en la cookie
-        if (!$perPage || !in_array((int)$perPage, [10, 25, 50, 100])) {
+        if (!$perPage || !in_array((int)$perPage, [10, 25, 50, 100, 500])) {
             $perPage = $savedPageSize;
         } else {
             // Solo guardar una nueva cookie si el valor es diferente al que ya tenemos
