@@ -500,7 +500,7 @@ class Movement extends \yii\db\ActiveRecord
     private function applyInput()
     {
         $ingredient = $this->ingredient;
-        $ingredient->quantity += $this->quantity;
+        $ingredient->quantity += $this->quantity * $ingredient->portions_per_unit;
         $ingredient->save();
         $ingredient->addPrice($this);
         $menus = Menu::findAll(['business_id' => $this->business_id]);
