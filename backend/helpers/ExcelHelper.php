@@ -1680,15 +1680,18 @@ if ($ccRow > 2) {
                 $_price = $data['price'];
                 unset($data['price']);
                 if ($ingredientStock->load($data, '') && $ingredientStock->save()) {
-                    $price = new StockPrice([
-                        'price' => $_price,
-                        'stock_id' => $ingredientStock->id,
-                        'date' => date('Y-m-d')
+                    if( $_price != 0) {
+                        $price = new StockPrice([
+                            'price' => $_price,
+                            'stock_id' => $ingredientStock->id,
+                            'date' => date('Y-m-d')
                         ]);
-
-                    if (!($price->load($data, '') && $price->save()) && $price->hasErrors()) {
+                        if (!($price->load($data, '') && $price->save()) && $price->hasErrors()) {
                         throw new HttpException(400, json_encode($price->errors));
                     }
+                    }
+
+                    
                 }elseif ($ingredientStock->hasErrors()) {
                     throw new HttpException(400, json_encode($ingredientStock->errors));
                 }
