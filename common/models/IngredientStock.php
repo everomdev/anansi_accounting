@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 use yii\db\Query;
@@ -95,6 +96,7 @@ class IngredientStock extends \yii\db\ActiveRecord
             [['providers'], 'each', 'rule' => ['integer']],
             [['min_stock', 'max_stock'], 'number', 'min' => 0],
             [['max_stock'], 'validateMaxStock'],
+            [['ingredient', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
         ];
     }
 
@@ -245,7 +247,7 @@ class IngredientStock extends \yii\db\ActiveRecord
     {
         parent::afterSave($insert, $changedAttributes);
 
-        if ($insert && !empty($this->price)) {
+        if ($insert && !empty($this->price) && $this->price > 0) {
             $stockPrice = new StockPrice([
                 'stock_id' => $this->id,
                 'price' => $this->price,
