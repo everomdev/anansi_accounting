@@ -1,3 +1,36 @@
+// REEMPLAZAR el listener existente de ingredient con este:
+$(document).on('select2:select change', '#movement-ingredient_id', function(e) {
+    // Obtener el tipo de movimiento de múltiples fuentes posibles
+    var movementType = (typeof currentMovementType !== 'undefined' && currentMovementType)
+        ? currentMovementType
+        : $('#movement-type').val();
+
+    // Solo ejecutar para movimientos de entrada
+    // Comparar con el valor literal también, por si movementTypeInput no está definido
+    var isInput = (typeof movementTypeInput !== 'undefined')
+        ? (movementType === movementTypeInput)
+        : (movementType === 'input');
+
+    if (!isInput) return;
+
+    var ingredientId = $(this).val();
+    if (!ingredientId) return;
+
+    $.ajax({
+        url: '/movement/get-last-input-price',
+        method: 'GET',
+        data: { ingredientId: ingredientId },
+        dataType: 'json',
+        success: function(resp) {
+            if (resp.success && resp.amount !== null) {
+                $('#movement-amount').val(resp.amount).trigger('change');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.warn('Error al obtener último precio:', error);
+        }
+    });
+});
 $(document).on("change", "#movement-type", function (event) {
     event.preventDefault();
     let value = $(this).val();

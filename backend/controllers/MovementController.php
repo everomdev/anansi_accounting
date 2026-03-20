@@ -94,6 +94,13 @@ class MovementController extends Controller
                             'movements_list',
                         ],
                     ],
+                    [
+                        'actions' => [
+                            'get-last-input-price',
+                        ],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
                 ],
             ],
             'backupReminder' => [
@@ -183,6 +190,25 @@ class MovementController extends Controller
         ]);
         $post = Yii::$app->request->post();
 
+        // Precargar amount con el último precio de compra si es input y hay ingrediente seleccionado
+        if ($type === Movement::TYPE_INPUT && empty($post) && empty($model->amount)) {
+            $ingredientId = Yii::$app->request->get('ingredient_id');
+            if ($ingredientId) {
+                $lastInput = Movement::find()
+                    ->where([
+                        'type' => Movement::TYPE_INPUT,
+                        'ingredient_id' => $ingredientId,
+                        'business_id' => $business['id']
+                    ])
+                    ->andWhere(['not', ['amount' => null]])
+                    ->orderBy(['created_at' => SORT_DESC, 'id' => SORT_DESC])
+                    ->one();
+                if ($lastInput) {
+                    $model->amount = $lastInput->amount;
+                }
+            }
+        }
+
         if (array_key_exists('ajax', $post)) {
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
             return;
@@ -200,6 +226,28 @@ class MovementController extends Controller
         return $this->render('create', [
             'model' => $model,
         ]);
+    }
+    /**
+     * Devuelve el último precio de compra (amount) para un ingrediente y negocio (AJAX)
+     */
+    public function actionGetLastInputPrice($ingredientId)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $business = RedisKeys::getValue(RedisKeys::BUSINESS_KEY);
+        $lastInput = \common\models\Movement::find()
+            ->where([
+                'type' => \common\models\Movement::TYPE_INPUT,
+                'ingredient_id' => $ingredientId,
+                'business_id' => $business['id']
+            ])
+            ->andWhere(['not', ['amount' => null]])
+            ->orderBy(['created_at' => SORT_DESC, 'id' => SORT_DESC])
+            ->one();
+        if ($lastInput) {
+            return ['success' => true, 'amount' => $lastInput->amount];
+        } else {
+            return ['success' => false, 'amount' => null];
+        }
     }
     
     /**
