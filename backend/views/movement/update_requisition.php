@@ -1279,11 +1279,27 @@ $(document).ready(function() {
     // Confirmar y enviar desde el modal
     $('#confirm-submit-btn').on('click', function() {
         // Cerrar modal
-        bootstrap.Modal.getInstance(document.getElementById('confirmationModal')).hide();
-        
+        const modalEl = document.getElementById('confirmationModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+        // Eliminar backdrop y clase modal-open si quedan
+        setTimeout(function() {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+        }, 300);
         // Enviar formulario (sin validación beforeSubmit para evitar loop)
         const form = $('#requisition-form')[0];
         form.submit();
+    });
+
+    // Al cerrar el modal con botón 'Regresar a Revisar' o la X, limpiar backdrop y clase modal-open
+    $('#confirmationModal').on('hidden.bs.modal', function () {
+        setTimeout(function() {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+        }, 100);
     });
 });
 JS

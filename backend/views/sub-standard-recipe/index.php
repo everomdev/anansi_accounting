@@ -418,10 +418,21 @@ $this->registerCss('
                 'class' => 'yii\grid\ActionColumn',
                 'template' => "{update}",
                 'buttons' => [
-                    'update' => function ($url, $model, $key) {
-                        return Html::a('<i class="fas fa-pencil-alt"></i>', \yii\helpers\Url::to(['standard-recipe/update', 'id' => $model->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]), ['class' => 'text-warning']);
-                    },
+                    'update' => function ($url, $model, $key) use ($ingredientCount) {
+                        $recipeCount    = $ingredientCount[$model->id]['RecipeCount']    ?? 0;
+                        $subRecipeCount = $ingredientCount[$model->id]['subRecipeCount'] ?? 0;
 
+                        return Html::a(
+                            '<i class="fas fa-pencil-alt"></i>',
+                            'javascript:void(0)',   // <-- evita navegación nativa
+                            [
+                                'class'           => 'update-subrecipe-link text-warning',
+                                'data-update-url' => \yii\helpers\Url::to(['standard-recipe/update', 'id' => $model->id, 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB]),
+                                'data-recipes'    => $recipeCount,
+                                'data-subrecipes' => $subRecipeCount,
+                            ]
+                        );
+                    },
                 ],
             ],
         ],
@@ -800,5 +811,35 @@ $this->registerJs("
             errorModal.show();
         }
     });
+", \yii\web\View::POS_READY);
+$this->registerJs("
+$(document).on('click', '.update-subrecipe-link', function(e) {
+    e.preventDefault();
+
+    var link       = \$(this);
+    var url        = link.attr('data-update-url');
+    var recipes    = parseInt(link.attr('data-recipes'))    || 0;
+    var subrecipes = parseInt(link.attr('data-subrecipes')) || 0;
+
+    // Sin vínculos: ir directo
+    if (recipes === 0 && subrecipes === 0) {
+        window.location.href = url;
+        return;
+    }
+
+    // Construir mensaje de advertencia
+    var message = '⚠️ ADVERTENCIA: Esta subreceta está siendo utilizada en:\\n\\n';
+    if (recipes > 0) {
+        message += '• ' + recipes + ' receta' + (recipes > 1 ? 's' : '') + '\\n';
+    }
+    if (subrecipes > 0) {
+        message += '• ' + subrecipes + ' subreceta' + (subrecipes > 1 ? 's' : '') + '\\n';
+    }
+    message += '\\nModificar esta subreceta puede afectar los costos y cálculos de estas recetas.\\n\\n¿Desea continuar?';
+
+    if (confirm(message)) {
+        window.location.href = url;
+    }
+});
 ", \yii\web\View::POS_READY);
 ?>

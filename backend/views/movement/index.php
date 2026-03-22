@@ -311,6 +311,21 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         },
     ];
 
+    // Columna fecha requerida (después de número de requisición)
+    $columns[] = [
+        'attribute' => 'required_date',
+        'label' => 'Fecha Requerida',
+        'value' => function($model) {
+            if ($model->type === \common\models\Movement::TYPE_REQUISITION && $model->required_date) {
+                $dt = new \DateTime($model->required_date);
+                return $dt->format('d/m/Y');
+            }
+            return '-';
+        },
+        'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
+        'visible' => true,
+    ];
+
     // Columna urgencia (solo para requisiciones)
     $columns[] = [
         'attribute' => 'urgency',
@@ -607,21 +622,20 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
         'visible' => !$isConsumptionRequester, // Solo visible para administradores
     ];
 
-    // Fecha requerida (solo para requisiciones/consumption_requester)
-    if ($isConsumptionRequester) {
-        $columns[] = [
-            'attribute' => 'required_date',
-            'label' => 'Fecha Requerida',
-            'value' => function($model) {
-                if ($model->required_date) {
-                    $dt = new \DateTime($model->required_date);
-                    return $dt->format('d/m/Y');
-                }
-                return '-';
-            },
-            'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
-        ];
-    }
+    // Fecha requerida (para todas las requisiciones)
+    $columns[] = [
+        'attribute' => 'required_date',
+        'label' => 'Fecha Requerida',
+        'value' => function($model) {
+            if ($model->type === \common\models\Movement::TYPE_REQUISITION && $model->required_date) {
+                $dt = new \DateTime($model->required_date);
+                return $dt->format('d/m/Y');
+            }
+            return '-';
+        },
+        'contentOptions' => ['style' => 'text-align: center; white-space: nowrap;'],
+        'visible' => true,
+    ];
 
     // Estado (solo para requisiciones/consumption_requester)
     if ($isConsumptionRequester) {
