@@ -23,6 +23,55 @@ class EmpleadoController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'only' => ['index', 'view', 'create', 'update', 'delete', 'upload-documento', 'delete-documento', 'estadisticas'],
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'actions' => ['index'],
+                        'matchCallback' => function ($rule, $action) {
+                            return \Yii::$app->user->can('empleado_list');
+                        },
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => ['view', 'estadisticas'],
+                        'matchCallback' => function ($rule, $action) {
+                            return \Yii::$app->user->can('empleado_view');
+                        },
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => ['create'],
+                        'matchCallback' => function ($rule, $action) {
+                            return \Yii::$app->user->can('empleado_create');
+                        },
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => ['update'],
+                        'matchCallback' => function ($rule, $action) {
+                            return \Yii::$app->user->can('empleado_update');
+                        },
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => ['delete'],
+                        'matchCallback' => function ($rule, $action) {
+                            return \Yii::$app->user->can('empleado_delete');
+                        },
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => ['upload-documento', 'delete-documento'],
+                        'matchCallback' => function ($rule, $action) {
+                            // Permitir si puede actualizar empleados (por ejemplo, gestión de documentos)
+                            return \Yii::$app->user->can('empleado_update');
+                        },
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [

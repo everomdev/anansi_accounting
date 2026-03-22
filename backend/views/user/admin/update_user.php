@@ -45,11 +45,13 @@ $groups = [
     'Almacén y Movimientos' => [],
     'Rentabilidad y Análisis' => [],
     'KPI\'s y Control' => [],
+    'Recursos Humanos' => [],
     'Administración y Configuración' => [],
     'Dashboard' => [],
     'Otros' => [],
 ];
 
+// Añadir los permisos de empleados (RRHH) al grupo de Administración y Configuración
 $prefixes = [
     // Configuración Base
     'category_' => 'Configuración Base',
@@ -69,6 +71,9 @@ $prefixes = [
     
     // Gastos
     'expense_' => 'Gastos',
+    'expensecategory_' => 'Gastos',
+    'expensemovement_' => 'Gastos',
+    'expenseunitmeasurement_' => 'Gastos',
     
     // Menú y Ventas
     'menu_' => 'Menú y Ventas',
@@ -106,6 +111,8 @@ $prefixes = [
     'users_' => 'Administración y Configuración',
     'roles_' => 'Administración y Configuración',
     'manage_' => 'Administración y Configuración',
+    // Recursos Humanos
+    'empleado_' => 'Recursos Humanos',
     
     // Dashboard
     'dashboard_' => 'Dashboard',

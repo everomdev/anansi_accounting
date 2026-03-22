@@ -11,6 +11,38 @@ class RbacController extends Controller
     {
         $authManager = \Yii::$app->authManager;
 
+        // Empleados (RRHH) permissions
+        $permissionEmpleadoList = $authManager->getPermission('empleado_list');
+        if (!$permissionEmpleadoList) {
+            $permissionEmpleadoList = $authManager->createPermission('empleado_list');
+            $permissionEmpleadoList->description = 'Ver lista de empleados';
+            $authManager->add($permissionEmpleadoList);
+        }
+        $permissionEmpleadoView = $authManager->getPermission('empleado_view');
+        if (!$permissionEmpleadoView) {
+            $permissionEmpleadoView = $authManager->createPermission('empleado_view');
+            $permissionEmpleadoView->description = 'Ver detalles de empleado';
+            $authManager->add($permissionEmpleadoView);
+        }
+        $permissionEmpleadoCreate = $authManager->getPermission('empleado_create');
+        if (!$permissionEmpleadoCreate) {
+            $permissionEmpleadoCreate = $authManager->createPermission('empleado_create');
+            $permissionEmpleadoCreate->description = 'Crear empleado';
+            $authManager->add($permissionEmpleadoCreate);
+        }
+        $permissionEmpleadoUpdate = $authManager->getPermission('empleado_update');
+        if (!$permissionEmpleadoUpdate) {
+            $permissionEmpleadoUpdate = $authManager->createPermission('empleado_update');
+            $permissionEmpleadoUpdate->description = 'Actualizar empleado';
+            $authManager->add($permissionEmpleadoUpdate);
+        }
+        $permissionEmpleadoDelete = $authManager->getPermission('empleado_delete');
+        if (!$permissionEmpleadoDelete) {
+            $permissionEmpleadoDelete = $authManager->createPermission('empleado_delete');
+            $permissionEmpleadoDelete->description = 'Eliminar empleado';
+            $authManager->add($permissionEmpleadoDelete);
+        }
+
         // Helper function to safely add child
         $addChildSafely = function($parent, $child) use ($authManager) {
             try {
@@ -490,6 +522,154 @@ class RbacController extends Controller
             $permissionProvidersDelete->description = "Eliminar un proveedor";
             $permissionProvidersDelete->ruleName = $paymentRule->name;
             $authManager->add($permissionProvidersDelete);
+        }
+
+        // Expenses (Gastos) permissions
+        $permissionExpenseList = $authManager->getPermission('expense_list');
+        if (!$permissionExpenseList) {
+            $permissionExpenseList = $authManager->createPermission('expense_list');
+            $permissionExpenseList->description = "Ver lista de gastos";
+            $permissionExpenseList->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseList);
+        }
+        $permissionExpenseView = $authManager->getPermission('expense_view');
+        if (!$permissionExpenseView) {
+            $permissionExpenseView = $authManager->createPermission('expense_view');
+            $permissionExpenseView->description = "Ver detalles de gasto";
+            $permissionExpenseView->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseView);
+        }
+        $permissionExpenseCreate = $authManager->getPermission('expense_create');
+        if (!$permissionExpenseCreate) {
+            $permissionExpenseCreate = $authManager->createPermission('expense_create');
+            $permissionExpenseCreate->description = "Crear un nuevo gasto";
+            $permissionExpenseCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseCreate);
+        }
+        $permissionExpenseUpdate = $authManager->getPermission('expense_update');
+        if (!$permissionExpenseUpdate) {
+            $permissionExpenseUpdate = $authManager->createPermission('expense_update');
+            $permissionExpenseUpdate->description = "Actualizar información de gasto";
+            $permissionExpenseUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseUpdate);
+        }
+        $permissionExpenseDelete = $authManager->getPermission('expense_delete');
+        if (!$permissionExpenseDelete) {
+            $permissionExpenseDelete = $authManager->createPermission('expense_delete');
+            $permissionExpenseDelete->description = "Eliminar un gasto";
+            $permissionExpenseDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseDelete);
+        }
+
+        // Expense Category (Categorías de gastos) permissions
+        $permissionExpenseCategoryList = $authManager->getPermission('expensecategory_list');
+        if (!$permissionExpenseCategoryList) {
+            $permissionExpenseCategoryList = $authManager->createPermission('expensecategory_list');
+            $permissionExpenseCategoryList->description = "Ver lista de categorías de gastos";
+            $permissionExpenseCategoryList->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseCategoryList);
+        }
+        $permissionExpenseCategoryView = $authManager->getPermission('expensecategory_view');
+        if (!$permissionExpenseCategoryView) {
+            $permissionExpenseCategoryView = $authManager->createPermission('expensecategory_view');
+            $permissionExpenseCategoryView->description = "Ver detalles de categoría de gasto";
+            $permissionExpenseCategoryView->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseCategoryView);
+        }
+        $permissionExpenseCategoryCreate = $authManager->getPermission('expensecategory_create');
+        if (!$permissionExpenseCategoryCreate) {
+            $permissionExpenseCategoryCreate = $authManager->createPermission('expensecategory_create');
+            $permissionExpenseCategoryCreate->description = "Crear categoría de gasto";
+            $permissionExpenseCategoryCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseCategoryCreate);
+        }
+        $permissionExpenseCategoryUpdate = $authManager->getPermission('expensecategory_update');
+        if (!$permissionExpenseCategoryUpdate) {
+            $permissionExpenseCategoryUpdate = $authManager->createPermission('expensecategory_update');
+            $permissionExpenseCategoryUpdate->description = "Actualizar categoría de gasto";
+            $permissionExpenseCategoryUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseCategoryUpdate);
+        }
+        $permissionExpenseCategoryDelete = $authManager->getPermission('expensecategory_delete');
+        if (!$permissionExpenseCategoryDelete) {
+            $permissionExpenseCategoryDelete = $authManager->createPermission('expensecategory_delete');
+            $permissionExpenseCategoryDelete->description = "Eliminar categoría de gasto";
+            $permissionExpenseCategoryDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseCategoryDelete);
+        }
+
+        // Expense Movement (Movimientos de gastos) permissions
+        $permissionExpenseMovementList = $authManager->getPermission('expensemovement_list');
+        if (!$permissionExpenseMovementList) {
+            $permissionExpenseMovementList = $authManager->createPermission('expensemovement_list');
+            $permissionExpenseMovementList->description = "Ver lista de movimientos de gastos";
+            $permissionExpenseMovementList->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseMovementList);
+        }
+        $permissionExpenseMovementView = $authManager->getPermission('expensemovement_view');
+        if (!$permissionExpenseMovementView) {
+            $permissionExpenseMovementView = $authManager->createPermission('expensemovement_view');
+            $permissionExpenseMovementView->description = "Ver detalles de movimiento de gasto";
+            $permissionExpenseMovementView->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseMovementView);
+        }
+        $permissionExpenseMovementCreate = $authManager->getPermission('expensemovement_create');
+        if (!$permissionExpenseMovementCreate) {
+            $permissionExpenseMovementCreate = $authManager->createPermission('expensemovement_create');
+            $permissionExpenseMovementCreate->description = "Registrar movimiento de gasto";
+            $permissionExpenseMovementCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseMovementCreate);
+        }
+        $permissionExpenseMovementUpdate = $authManager->getPermission('expensemovement_update');
+        if (!$permissionExpenseMovementUpdate) {
+            $permissionExpenseMovementUpdate = $authManager->createPermission('expensemovement_update');
+            $permissionExpenseMovementUpdate->description = "Actualizar movimiento de gasto";
+            $permissionExpenseMovementUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseMovementUpdate);
+        }
+        $permissionExpenseMovementDelete = $authManager->getPermission('expensemovement_delete');
+        if (!$permissionExpenseMovementDelete) {
+            $permissionExpenseMovementDelete = $authManager->createPermission('expensemovement_delete');
+            $permissionExpenseMovementDelete->description = "Eliminar movimiento de gasto";
+            $permissionExpenseMovementDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseMovementDelete);
+        }
+
+        // Expense Unit Measurement (Unidades de medida de gastos) permissions
+        $permissionExpenseUnitMeasurementList = $authManager->getPermission('expenseunitmeasurement_list');
+        if (!$permissionExpenseUnitMeasurementList) {
+            $permissionExpenseUnitMeasurementList = $authManager->createPermission('expenseunitmeasurement_list');
+            $permissionExpenseUnitMeasurementList->description = "Ver lista de unidades de medida de gastos";
+            $permissionExpenseUnitMeasurementList->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseUnitMeasurementList);
+        }
+        $permissionExpenseUnitMeasurementView = $authManager->getPermission('expenseunitmeasurement_view');
+        if (!$permissionExpenseUnitMeasurementView) {
+            $permissionExpenseUnitMeasurementView = $authManager->createPermission('expenseunitmeasurement_view');
+            $permissionExpenseUnitMeasurementView->description = "Ver detalles de unidad de medida de gasto";
+            $permissionExpenseUnitMeasurementView->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseUnitMeasurementView);
+        }
+        $permissionExpenseUnitMeasurementCreate = $authManager->getPermission('expenseunitmeasurement_create');
+        if (!$permissionExpenseUnitMeasurementCreate) {
+            $permissionExpenseUnitMeasurementCreate = $authManager->createPermission('expenseunitmeasurement_create');
+            $permissionExpenseUnitMeasurementCreate->description = "Crear unidad de medida de gasto";
+            $permissionExpenseUnitMeasurementCreate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseUnitMeasurementCreate);
+        }
+        $permissionExpenseUnitMeasurementUpdate = $authManager->getPermission('expenseunitmeasurement_update');
+        if (!$permissionExpenseUnitMeasurementUpdate) {
+            $permissionExpenseUnitMeasurementUpdate = $authManager->createPermission('expenseunitmeasurement_update');
+            $permissionExpenseUnitMeasurementUpdate->description = "Actualizar unidad de medida de gasto";
+            $permissionExpenseUnitMeasurementUpdate->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseUnitMeasurementUpdate);
+        }
+        $permissionExpenseUnitMeasurementDelete = $authManager->getPermission('expenseunitmeasurement_delete');
+        if (!$permissionExpenseUnitMeasurementDelete) {
+            $permissionExpenseUnitMeasurementDelete = $authManager->createPermission('expenseunitmeasurement_delete');
+            $permissionExpenseUnitMeasurementDelete->description = "Eliminar unidad de medida de gasto";
+            $permissionExpenseUnitMeasurementDelete->ruleName = $paymentRule->name;
+            $authManager->add($permissionExpenseUnitMeasurementDelete);
         }
 
         // Menu permissions

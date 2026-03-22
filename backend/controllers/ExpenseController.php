@@ -34,9 +34,60 @@ class ExpenseController extends Controller
                 'class' => \yii\filters\AccessControl::class,
                 'rules' => [
                     [
-                        'actions' => ['index', 'view', 'create', 'update', 'delete', 'bulk-remove', 'provider-list', 'abc-analysis'],
+                        'actions' => ['index'],
                         'allow' => true,
-                        'roles' => ['@'], // Cualquier usuario autenticado
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('expense_list');
+                        }
+                    ],
+                    [
+                        'actions' => ['view'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('expense_view');
+                        }
+                    ],
+                    [
+                        'actions' => ['create'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('expense_create');
+                        }
+                    ],
+                    [
+                        'actions' => ['update'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('expense_update');
+                        }
+                    ],
+                    [
+                        'actions' => ['delete', 'bulk-remove'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('expense_delete');
+                        }
+                    ],
+                    [
+                        'actions' => ['provider-list'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('providers_list');
+                        }
+                    ],
+                    [
+                        'actions' => ['abc-analysis'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                        'matchCallback' => function ($rule, $action) {
+                            return Yii::$app->user->can('expense_list');
+                        }
                     ],
                 ],
             ],
