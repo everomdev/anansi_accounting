@@ -271,7 +271,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
         <?php endif; ?>
 
         <!-- Recursos Humanos -->
-        <?php if ($isAdmin || Yii::$app->user->can('rrhh_access')): ?>
+        <?php if ($isAdmin || Yii::$app->user->can('empleado_list')): ?>
         <li class="menu-item <?= $rrhhActive ? 'active open' : '' ?>">
             <a class="menu-link" data-bs-toggle="collapse" href="#recursosHumanos" role="button" 
                aria-expanded="<?= $rrhhActive ? 'true' : 'false' ?>" 

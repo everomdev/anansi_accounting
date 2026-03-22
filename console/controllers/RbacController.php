@@ -1288,6 +1288,13 @@ class RbacController extends Controller
             $authManager->add($roleConsumptionRequester);
         }
 
+        $roleHR = $authManager->getRole('human_resources');
+        if (!$roleHR) {
+            $roleHR = $authManager->createRole('human_resources');
+            $roleHR->description = 'Recursos Humanos';
+            $authManager->add($roleHR);
+        }
+
 
 
         // Assign permissions to General Manager
@@ -1475,6 +1482,13 @@ class RbacController extends Controller
         $addChildSafely($roleConsumptionRequester, $permissionIngredientsView);
         $addChildSafely($roleConsumptionRequester, $permissionMovementsList);
         $addChildSafely($roleConsumptionRequester, $permissionMovementsView);
+
+        // Assign permissions to Human Resources
+        $addChildSafely($roleHR, $permissionEmpleadoList);
+        $addChildSafely($roleHR, $permissionEmpleadoView);
+        $addChildSafely($roleHR, $permissionEmpleadoCreate);
+        $addChildSafely($roleHR, $permissionEmpleadoUpdate);
+        $addChildSafely($roleHR, $permissionEmpleadoDelete);
 
     }
 
