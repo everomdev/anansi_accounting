@@ -873,19 +873,23 @@ class StandardRecipeController extends Controller
     public function actionUpdateSelectedIngredient($id, $ingredientId, $isRecipe = false)
 {
     $model = $this->findModel($id);
+
     $quantity = Yii::$app->request->post('quantity');
     $newItemId = Yii::$app->request->post('newItemId', $ingredientId);
-    
+    $newIsRecipe = Yii::$app->request->post('isRecipe', $isRecipe); // Usar el tipo del nuevo elemento
+
     // Si el ingrediente/subreceta ha cambiado
-    if ($newItemId != $ingredientId) {
+    if ($newItemId != $ingredientId || $newIsRecipe != $isRecipe) {
         // Eliminar el ingrediente/subreceta actual
         if ($isRecipe) {
             $model->removeSubRecipe($ingredientId);
-            // Agregar el nuevo con la cantidad proporcionada
-            $model->addUpdateSubRecipe($newItemId, $quantity);
         } else {
             $model->removeIngredient($ingredientId);
-            // Agregar el nuevo with la cantidad proporcionada
+        }
+        // Agregar el nuevo elemento según su tipo
+        if ($newIsRecipe) {
+            $model->addUpdateSubRecipe($newItemId, $quantity);
+        } else {
             $model->addUpdateIngredient($newItemId, $quantity);
         }
     } else {

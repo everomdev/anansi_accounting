@@ -300,108 +300,98 @@ $(document).on('change', "#standardrecipe-price", (event) => {
     }
 });
 
+
 $(document).on('click', '.update-ingredient', function (event) {
     event.preventDefault();
     let url = $(this).attr('href');
     let quantity = $(this).data('current');
     let isRecipe = $(this).data('is-recipe');
-    let model = $(this).data('model');
     let currentItemName = $(this).data('name');
-    let currentItemId = $(this).data('id');  // Guarda el ID del elemento actual
-    
+    let currentItemId = $(this).data('id');
+
     // Limpiar el select
     $("#ingredient-select").empty();
-    
-    // Cargar los ingredientes o subrecetas disponibles
-    if (isRecipe === 1) {
-        console.log('Es una subreceta');
-        
-        // Cargar lista de subrecetas
-        $.ajax({
-            url: '/standard-recipe/get-sub-standard-recipes',
-            type: 'GET',
-            success: function(response) {
-                let selectOptions = '';
-                
-                // Usar el ID guardado anteriormente
-                selectOptions += `<option value="${currentItemId}" selected>${currentItemName}</option>`;
-                
-                // Agregar el resto de subrecetas disponibles
-                response.forEach(function(subrecipe) {
-                    if (subrecipe.title !== currentItemName) {
-                        selectOptions += `<option value="${subrecipe.id}">${subrecipe.title} (${subrecipe.um})</option>`;
-                    }
-                });
-                
-                $("#ingredient-select").html(selectOptions);
-            }
-        });
-    } else {
-        // Cargar lista de ingredientes
-        // Mostrar indicador de carga en el select
-        $("#ingredient-select").html('<option>Cargando ingredientes...</option>');
-        
-        $.ajax({
-            url: '/standard-recipe/get-available-ingredients',
-            type: 'GET',
-            success: function(response) {
-                let selectOptions = '';
-                // Usar el ID guardado anteriormente
-                selectOptions += `<option value="${currentItemId}" selected>${currentItemName}</option>`;
-                
-                // Agregar el resto de ingredientes disponibles
-                response.ingredients.forEach(function(ingredient) {
-                    if (ingredient.name !== currentItemName) {
-                        selectOptions += `<option value="${ingredient.id}">${ingredient.name} (${ingredient.um})</option>`;
-                    }
-                });
-                
-                $("#ingredient-select").html(selectOptions);
-            }
-        });
-    }
-    
+    $("#ingredient-select").html('<option>Cargando...</option>');
+
+    // Cargar ambos catálogos en paralelo
+    $.when(
+        $.get('/standard-recipe/get-available-ingredients'),
+        $.get('/standard-recipe/get-sub-standard-recipes')
+    ).done(function(ingredientsRes, subrecipesRes) {
+        // ingredientsRes[0] y subrecipesRes[0] contienen los datos
+        let ingredients = ingredientsRes[0].ingredients || [];
+        let subrecipes = subrecipesRes[0] || [];
+        let selectOptions = '';
+
+        // Ingredientes (mayúsculas)
+        if (ingredients.length > 0) {
+            selectOptions += '<optgroup label="INGREDIENTES">';
+            ingredients.forEach(function(ingredient) {
+                let label = (ingredient.name + ' (' + ingredient.um + ')').toUpperCase();
+                let selected = (isRecipe !== 1 && ingredient.id == currentItemId) ? 'selected' : '';
+                selectOptions += `<option value="${ingredient.id}" data-type="ingredient" ${selected}>${label}</option>`;
+            });
+            selectOptions += '</optgroup>';
+        }
+
+        // Subrecetas (minúsculas)
+        if (subrecipes.length > 0) {
+            selectOptions += '<optgroup label="subrecetas">';
+            subrecipes.forEach(function(subrecipe) {
+                let label = (subrecipe.title + ' (' + subrecipe.um + ')').toLowerCase();
+                let selected = (isRecipe === 1 && subrecipe.id == currentItemId) ? 'selected' : '';
+                selectOptions += `<option value="${subrecipe.id}" data-type="subrecipe" ${selected}>${label}</option>`;
+            });
+            selectOptions += '</optgroup>';
+        }
+
+        $("#ingredient-select").html(selectOptions);
+    });
+
     // Almacenar la URL y el tipo en el botón de actualización
     $("#btn-update-ingredient").data('url', url);
     $("#btn-update-ingredient").data('is-recipe', isRecipe);
-    
+
     // Establecer la cantidad en el campo correspondiente
     $("#ingredient-update-quantity").val(quantity);
-    
+
     // Actualizar el título del modal según el tipo
     let modalTitle = isRecipe ? 'Modificar subreceta' : 'Modificar ingrediente';
     $("#modal-update-ingredient .modal-title").text(modalTitle);
-    
+
     // Mostrar el modal
     $("#modal-update-ingredient").modal('show');
-    
+
     return false;
 });
+
 
 $(document).on('click', '#btn-update-ingredient', function (event) {
     event.preventDefault();
     let url = $(this).data('url');
     let quantity = $("#ingredient-update-quantity").val();
     let selectedItem = $("#ingredient-select").val();
-    let isRecipe = $(this).data('is-recipe');
-    console.log(selectedItem,quantity, isRecipe);
-    
-    
+    // Detectar el tipo del nuevo elemento seleccionado
+    let selectedOption = $("#ingredient-select option:selected");
+    let isRecipe = selectedOption.data('type') === 'subrecipe' ? 1 : 0;
+    console.log(selectedItem, quantity, isRecipe);
+
     // Validar que la cantidad sea un número válido
     if (!quantity || isNaN(parseFloat(quantity))) {
         alert('Por favor, ingresa una cantidad válida');
         return false;
     }
-    
+
     // Mostrar indicador de carga
     $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Guardando...');
-    
+
     $.ajax({
         url: url,
         type: 'post',
-        data: { 
+        data: {
             quantity: quantity,
-            newItemId: selectedItem
+            newItemId: selectedItem,
+            isRecipe: isRecipe
         }
     }).done((response) => {
         $.pjax.reload({container: "#pjax-ingredients-selection"});
