@@ -101,13 +101,24 @@ $(document).on('beforeSubmit', "#form_ingredient", function (event) {
 
     return false;
 });
+
 $(document).on('pjax:complete', "#pjax-ingredients-selection", (event) => {
+    // Ocultar el modal y limpiar backdrop y clases del body
     $("#modal-add-ingredient").modal('hide');
-    $(".modal-backdrop").remove();
-    $('body').removeAttr('style');
-    $('body').removeAttr('class');
+    setTimeout(function() {
+        $(".modal-backdrop").remove();
+        $('body').removeClass('modal-open').removeAttr('style');
+    }, 100);
     computeCost();
-})
+});
+
+// Refuerzo: limpiar backdrop y clases del body al cerrar cualquier modal de ingredientes
+$(document).on('hidden.bs.modal', "#modal-add-ingredient", function (event) {
+    setTimeout(function() {
+        $(".modal-backdrop").remove();
+        $('body').removeClass('modal-open').removeAttr('style');
+    }, 100);
+});
 
 $(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', function (event) {
     computeCost();
