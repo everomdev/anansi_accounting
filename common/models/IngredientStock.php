@@ -49,6 +49,10 @@ class IngredientStock extends \yii\db\ActiveRecord
     public $_key;
     public $providers = [];
 
+    // Para resumen de pendientes
+    public $pending_fields = [];
+    public $pending_updated_at;
+
     /**
      * {@inheritdoc}
      */
@@ -96,7 +100,26 @@ class IngredientStock extends \yii\db\ActiveRecord
             [['providers'], 'each', 'rule' => ['integer']],
             [['min_stock', 'max_stock'], 'number', 'min' => 0],
             [['max_stock'], 'validateMaxStock'],
-            [['ingredient', 'business_id'], 'unique', 'targetAttribute' => ['ingredient', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
+            [
+        ['ingredient', 'business_id'],
+        'unique',
+        'targetAttribute' => ['ingredient', 'business_id'],
+        'message' => Yii::t('app', "This name is already taken"),
+        'when' => function($model) {
+            // Solo validar si ingredient tiene valor
+            return !empty($model->ingredient);
+        },
+        'filter' => function ($query) {
+    \Yii::warning([
+        'isNewRecord' => $this->isNewRecord,
+        'id' => $this->id,
+        'ingredient' => $this->ingredient,
+    ], 'UniqueFilter');
+    if (!$this->isNewRecord && !empty($this->id)) {
+        $query->andWhere(['not', ['id' => $this->id]]);
+    }
+}
+    ],
         ];
     }
 
@@ -246,6 +269,15 @@ class IngredientStock extends \yii\db\ActiveRecord
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
+
+        // Guardar campos pendientes si vienen en la request
+        $pendingFields = \Yii::$app->request->post('pending_fields', []);
+        if (is_string($pendingFields)) {
+            $pendingFields = json_decode($pendingFields, true);
+        }
+        if (is_array($pendingFields)) {
+            $this->savePendingFields($pendingFields);
+        }
 
         if ($insert && !empty($this->price) && $this->price > 0) {
             $stockPrice = new StockPrice([
@@ -582,4 +614,40 @@ public function addPrice($source)
         \Yii::error('Error al guardar el precio del stock: ' . json_encode($stockPrice->errors), __METHOD__);
     }
 }
+    /**
+     * Guarda los campos pendientes para este insumo
+     * @param string[] $fields
+     */
+    public function savePendingFields($fields)
+    {
+        \common\models\PendingField::deleteAll([
+            'model_type' => 'ingredient',
+            'model_id' => $this->id
+        ]);
+        $now = time();
+        foreach ($fields as $field) {
+            $pending = new \common\models\PendingField();
+            $pending->model_type = 'ingredient';
+            $pending->model_id = $this->id;
+            $pending->field = $field;
+            $pending->created_at = $now;
+            $pending->updated_at = $now;
+            $pending->save(false);
+        }
+    }
+
+    /**
+     * Devuelve un array de campos pendientes para este insumo
+     * @return string[]
+     */
+    public function getPendingFields()
+    {
+        return \common\models\PendingField::find()
+            ->select('field')
+            ->where([
+                'model_type' => 'ingredient',
+                'model_id' => $this->id
+            ])->column();
+    }
+
 }

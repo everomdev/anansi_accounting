@@ -59,7 +59,8 @@ class IngredientStockController extends Controller
                     [
                         'actions' => [
                             'update',
-                            'generate-key'
+                            'generate-key',
+                            'pending-ingredients'
                         ],
                         'allow' => true,
                         'roles' => ['ingredients_update'],
@@ -314,20 +315,29 @@ class IngredientStockController extends Controller
     {
         $model = $this->findModel($id);
         $post = Yii::$app->request->post();
+ 
         if (array_key_exists('ajax', $post)) {
+            // Para validación AJAX, forzar isNewRecord=false y asegurarnos
+            // de que el id esté disponible antes de que corra la regla unique
+            $model->load($post);
+            // Asegurar que business_id no se haya perdido en el load
+            if (empty($model->business_id)) {
+                $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+                $model->business_id = $business['id'];
+            }
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+ 
+        if ($model->load($post) && $model->save()) {
             return $this->redirect(['index']);
-        } elseif ($model->hasErrors()) {
-            var_dump($model->errors);
         }
-
+        \Yii::warning($model->errors, 'SaveErrors');
+\Yii::warning($model->attributes, 'SaveAttributes');
+ 
         return $this->render('update', [
             'model' => $model,
         ]);
     }
-
     /**
      * Deletes an existing IngredientStock model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
@@ -628,5 +638,41 @@ class IngredientStockController extends Controller
                 }, $highStockIngredients)
             ]
         ];
+    }
+        /**
+     * Muestra un resumen de todos los insumos con campos pendientes
+     */
+    public function actionPendingIngredients()
+    {
+        $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
+        $query = \common\models\IngredientStock::find()
+            ->where(['business_id' => $business['id']]);
+
+        // Solo mostrar insumos con al menos un campo pendiente
+        $query->andWhere(['in', 'id', (new \yii\db\Query())
+            ->select('model_id')
+            ->from('pending_field')
+            ->where(['model_type' => 'ingredient'])
+        ]);
+
+        $dataProvider = new \yii\data\ActiveDataProvider([
+            'query' => $query,
+            'pagination' => [ 'pageSize' => 50 ],
+        ]);
+
+        // Adjuntar los campos pendientes a cada modelo
+        $models = $dataProvider->getModels();
+        foreach ($models as $model) {
+            $pending = \common\models\PendingField::find()
+                ->select(['field', 'updated_at'])
+                ->where(['model_type' => 'ingredient', 'model_id' => $model->id])
+                ->asArray()->all();
+            $model->pending_fields = array_column($pending, 'field');
+            $model->pending_updated_at = !empty($pending) ? max(array_column($pending, 'updated_at')) : null;
+        }
+
+        return $this->render('pending-ingredients', [
+            'dataProvider' => $dataProvider,
+        ]);
     }
 }
