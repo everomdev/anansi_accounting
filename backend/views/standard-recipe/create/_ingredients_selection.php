@@ -42,6 +42,18 @@ $counter = 0; // Inicializamos el contador en 0
 ?>
 
 <?php
+// Obtener los campos pendientes de ingredientes para esta receta
+$pendingIngredientFields = \common\models\PendingField::find()
+    ->select('field')
+    ->where([
+        'model_type' => 'recipe_ingredient',
+        'model_id' => $model->id
+    ])->column();
+// Convertir a un array asociativo para lookup rápido
+$pendingIngredientFieldsAssoc = array_flip($pendingIngredientFields);
+?>
+
+<?php
 $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), [
     'depends' => [\yii\web\YiiAsset::class]
 ]);
@@ -54,15 +66,24 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
 <div class="row gap-3 mt-3">
     <div class="col-12">
         <h4><?= Yii::t('app', "Ingredients") ?></h4>
+        <input type="hidden" id="pendingFieldsRecipeIngredients" name="pendingFieldsRecipeIngredients" value="">
         <div class="table-responsive">
             <table class="table">
                 <thead>
                 <th></th>
-                <th><?= Yii::t('app', "Ingredient") ?></th>
-                <th><?= Yii::t('app', "Quantity") ?></th>
+                <th>
+                    <?= Yii::t('app', "Ingredient") ?>
+                </th>
+                <th>
+                    <?= Yii::t('app', "Quantity") ?>
+                </th>
                 <th><?= Yii::t('app', "Cost") ?></th>
-                <th><?= Yii::t('app', "Excluído del costeo") ?></th> <!-- Nueva columna para excluir del costeo -->
-                <th><?= Yii::t('app', "Porcentaje") ?></th> <!-- Nueva columna para el porcentaje de costo -->
+                <th>
+                    <?= Yii::t('app', "Excluído del costeo") ?>
+                </th>
+                <th>
+                    <?= Yii::t('app', "Porcentaje") ?>
+                </th>
                 <th>
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
                             data-bs-target="#modal-add-ingredient">
@@ -70,18 +91,38 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                     </button>
                 </th>
                 </thead>
-                <tbody>                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): 
-                    $counter++; // Incrementamos el contador
+                <?php foreach ($model->ingredientRelations as $index => $ingredientStandardRecipe): 
+                    $counter++;
                     $cost = (float)($ingredientStandardRecipe->lastUnitPrice * $ingredientStandardRecipe->quantity);
-                    $total += $cost; // Usar += en lugar de asignación completa
-                    ?>
+                    $total += $cost;
+                ?>
                     <tr>
                         <td><?= $counter ?></td>
                         <td>
-                            <?= $ingredientStandardRecipe->ingredient->ingredient ?>
+                            <div class="d-flex align-items-center">
+                                <span><?= $ingredientStandardRecipe->ingredient->ingredient ?></span>
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="ingredient"
+                                    data-ingredient-id="<?= $ingredientStandardRecipe->ingredient_id ?>"
+                                    data-is-recipe="0"
+                                    title="Marcar ingrediente como pendiente"
+                                    <?php $key = $ingredientStandardRecipe->ingredient_id . ':ingredient:0'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
-                            <?= sprintf("%s %s", $ingredientStandardRecipe->quantity, $ingredientStandardRecipe->ingredient->portion_um) ?>
+                            <div class="d-flex align-items-center">
+                                <span><?= sprintf("%s %s", $ingredientStandardRecipe->quantity, $ingredientStandardRecipe->ingredient->portion_um) ?></span>
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="quantity"
+                                    data-ingredient-id="<?= $ingredientStandardRecipe->ingredient_id ?>"
+                                    data-is-recipe="0"
+                                    title="Marcar cantidad como pendiente"
+                                    <?php $key = $ingredientStandardRecipe->ingredient_id . ':quantity:0'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -94,23 +135,41 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                             </div>
                         </td>
                         <td>
-                            <!-- Checkbox para excluir del costeo -->
-                            <input type="checkbox" 
-                                name="excludeFromCost[<?= $ingredientStandardRecipe->ingredient_id ?>]" 
-                                class="exclude-checkbox"
-                                data-ingredient-id="<?= $ingredientStandardRecipe->ingredient_id ?>"
-                                <?= $ingredientStandardRecipe->exclude_from_cost ? 'checked' : '' ?>>
+                            <div class="d-flex align-items-center">
+                                <input type="checkbox" 
+                                    name="excludeFromCost[<?= $ingredientStandardRecipe->ingredient_id ?>]" 
+                                    class="exclude-checkbox"
+                                    data-ingredient-id="<?= $ingredientStandardRecipe->ingredient_id ?>"
+                                    <?= $ingredientStandardRecipe->exclude_from_cost ? 'checked' : '' ?>>
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="exclude_from_cost"
+                                    data-ingredient-id="<?= $ingredientStandardRecipe->ingredient_id ?>"
+                                    data-is-recipe="0"
+                                    title="Marcar exclusión del costeo como pendiente"
+                                    <?php $key = $ingredientStandardRecipe->ingredient_id . ':exclude_from_cost:0'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
-                            <!-- Input para el porcentaje de costo -->
-                            <input type="number" 
-                                   name="costPercentage[<?= $ingredientStandardRecipe->ingredient_id ?>]" 
-                                   min="0" 
-                                   max="100" 
-                                   step="1" 
-                                   class="form-control form-control-sm cost-percentage" 
-                                   style="width: 80px;" 
-                                   value="<?= $ingredientStandardRecipe->cost_percentage ?? 0 ?>">
+                            <div class="d-flex align-items-center">
+                                <input type="number" 
+                                       name="costPercentage[<?= $ingredientStandardRecipe->ingredient_id ?>]" 
+                                       min="0" 
+                                       max="100" 
+                                       step="1" 
+                                       class="form-control form-control-sm cost-percentage" 
+                                       style="width: 80px;" 
+                                       value="<?= $ingredientStandardRecipe->cost_percentage ?? 0 ?>">
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="cost_percentage"
+                                    data-ingredient-id="<?= $ingredientStandardRecipe->ingredient_id ?>"
+                                    data-is-recipe="0"
+                                    title="Marcar porcentaje como pendiente"
+                                    <?php $key = $ingredientStandardRecipe->ingredient_id . ':cost_percentage:0'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
 <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $ingredientStandardRecipe->ingredient_id]), [
@@ -130,19 +189,41 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                             ]) ?>
                         </td>
                     </tr>
-                <?php endforeach; ?>                <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): 
-                    $counter++; // Incrementamos el contador para las subrecetas
+                <?php endforeach; ?>
+
+                <?php foreach ($model->getSubStandardRecipes()->all() as $subStandardRecipe): 
+                    $counter++;
                     $quantity = (float)$subStandardRecipe->getQuantityLinked($model->id);
                     $cost = (float)($subStandardRecipe->custom_cost * $quantity);
-                    $total += $cost; // Usar += en lugar de asignación completa
-                    ?>
+                    $total += $cost;
+                ?>
                     <tr>
                         <td><?= $counter ?></td>
                         <td>
-                            <?= $subStandardRecipe->title ?>
+                            <div class="d-flex align-items-center">
+                                <span><?= $subStandardRecipe->title ?></span>
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="ingredient"
+                                    data-ingredient-id="<?= $subStandardRecipe->id ?>"
+                                    data-is-recipe="1"
+                                    title="Marcar subreceta como pendiente"
+                                    <?php $key = $subStandardRecipe->id . ':ingredient:1'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
-                            <?= sprintf("%s %s", $quantity, $subStandardRecipe->um); ?>
+                            <div class="d-flex align-items-center">
+                                <span><?= sprintf("%s %s", $quantity, $subStandardRecipe->um); ?></span>
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="quantity"
+                                    data-ingredient-id="<?= $subStandardRecipe->id ?>"
+                                    data-is-recipe="1"
+                                    title="Marcar cantidad como pendiente"
+                                    <?php $key = $subStandardRecipe->id . ':quantity:1'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -155,12 +236,30 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                             </div>
                         </td>
                         <td>
-                            <!-- Checkbox para excluir del costeo -->
-                            <input type="checkbox" name="excludeFromCost[<?= $subStandardRecipe->id ?>]" class="exclude-checkbox">
+                            <div class="d-flex align-items-center">
+                                <input type="checkbox" name="excludeFromCost[<?= $subStandardRecipe->id ?>]" class="exclude-checkbox">
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="exclude_from_cost"
+                                    data-ingredient-id="<?= $subStandardRecipe->id ?>"
+                                    data-is-recipe="1"
+                                    title="Marcar exclusión del costeo como pendiente"
+                                    <?php $key = $subStandardRecipe->id . ':exclude_from_cost:1'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
-                            <!-- Input para el porcentaje de costo -->
-                            <input type="number" name="costPercentage[<?= $subStandardRecipe->id ?>]" min="0" max="100" step="1" class="form-control form-control-sm cost-percentage" style="width: 80px;" value="0">
+                            <div class="d-flex align-items-center">
+                                <input type="number" name="costPercentage[<?= $subStandardRecipe->id ?>]" min="0" max="100" step="1" class="form-control form-control-sm cost-percentage" style="width: 80px;" value="0">
+                                <input type="checkbox"
+                                    class="form-check-input ms-2 pending-checkbox d-none"
+                                    data-field="cost_percentage"
+                                    data-ingredient-id="<?= $subStandardRecipe->id ?>"
+                                    data-is-recipe="1"
+                                    title="Marcar porcentaje como pendiente"
+                                    <?php $key = $subStandardRecipe->id . ':cost_percentage:1'; if (isset($pendingIngredientFieldsAssoc[$key])) echo 'checked'; ?>
+                                >
+                            </div>
                         </td>
                         <td>
                             <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modify"), \yii\helpers\Url::to(['standard-recipe/update-selected-ingredient', 'id' => $model->id, 'ingredientId' => $subStandardRecipe->id, 'isRecipe' => true]), [
@@ -230,6 +329,35 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
 <?php
 $this->registerJs(<<<'JS'
 let deleteIngredientUrl = '';
+
+
+// --- Pendientes modo toggle global ---
+document.addEventListener('pending-mode-toggle', function(e) {
+    const isPendingMode = !!e.detail.enabled;
+    if (isPendingMode) {
+        $('.pending-checkbox').removeClass('d-none');
+        $('.pending-mode-header').removeClass('d-none');
+    } else {
+        $('.pending-checkbox').addClass('d-none').prop('checked', false);
+        $('.pending-mode-header').addClass('d-none');
+    }
+});
+
+// --- Recolectar pendientes al guardar (puedes adaptar el selector del botón de guardar principal si es diferente) ---
+$(document).on('submit', 'form', function(e) {
+    // Solo si hay checkboxes visibles (modo pendiente activo)
+    if ($('.pending-checkbox:visible').length > 0) {
+        let pendientes = [];
+        $('.pending-checkbox:visible:checked').each(function() {
+            pendientes.push({
+                ingredient_id: $(this).data('ingredient-id'),
+                field: $(this).data('field'),
+                is_recipe: $(this).data('is-recipe')
+            });
+        });
+        $('#pendingFieldsRecipeIngredients').val(JSON.stringify(pendientes));
+    }
+});
 
 $(document).on('click', '.delete-ingredient', function(e) {
     e.preventDefault();

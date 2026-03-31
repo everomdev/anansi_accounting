@@ -181,9 +181,56 @@ class StandardRecipe extends \yii\db\ActiveRecord
         ];
     }
 
+
+    /**
+     * Guarda los campos pendientes para esta receta o subreceta
+     * @param string[] $fields
+     */
+    public function savePendingFields($fields)
+    {
+        $modelType = ($this->type == self::STANDARD_RECIPE_TYPE_SUB) ? 'subrecipe' : 'recipe';
+        \common\models\PendingField::deleteAll([
+            'model_type' => $modelType,
+            'model_id' => $this->id
+        ]);
+        $now = time();
+        foreach ($fields as $field) {
+            $pending = new \common\models\PendingField();
+            $pending->model_type = $modelType;
+            $pending->model_id = $this->id;
+            $pending->field = $field;
+            $pending->created_at = $now;
+            $pending->updated_at = $now;
+            $pending->save(false);
+        }
+    }
+
+    /**
+     * Devuelve un array de campos pendientes para esta receta
+     * @return string[]
+     */
+    public function getPendingFields()
+    {
+        return \common\models\PendingField::find()
+            ->select('field')
+            ->where([
+                'model_type' => 'recipe',
+                'model_id' => $this->id
+            ])->column();
+    }
+
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
+
+        // Guardar campos pendientes si vienen en la request
+        $pendingFields = \Yii::$app->request->post('pending_fields', []);
+        if (is_string($pendingFields)) {
+            $pendingFields = json_decode($pendingFields, true);
+        }
+        if (is_array($pendingFields)) {
+            $this->savePendingFields($pendingFields);
+        }
 
         $this->uploadImages();
     }

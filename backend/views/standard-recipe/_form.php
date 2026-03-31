@@ -1,3 +1,29 @@
+<style>
+.standard-recipe-form label .asterisk,
+.standard-recipe-form label .required {
+    color: #dc3545 !important;
+    font-weight: bold;
+}
+.pending-checkbox {
+    /* display: inline-block !important;  <-- Eliminado para que d-none funcione */
+    position: static !important;
+    transform: none !important;
+    width: 15px;
+    height: 15px;
+    margin-left: 8px;
+    vertical-align: middle;
+    cursor: pointer;
+    accent-color: #007bff;
+    border: 2px solid #007bff !important;
+    box-shadow: none !important;
+}
+.pending-mode .pending-field-group > label,
+.pending-mode .pending-field-group label {
+    display: inline-flex !important;
+    align-items: center !important;
+}
+</style>
+
 <?php
 
 use kartik\editors\Summernote;
@@ -86,6 +112,11 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
 ?>
 
 <div class="standard-recipe-form">
+    <div class="d-flex justify-content-end mb-2">
+        <button type="button" id="btn-toggle-pending" class="btn btn-warning">
+            <i class="bi bi-exclamation-circle"></i> Pendientes
+        </button>
+    </div>
 
     <?php $form = ActiveForm::begin([
         'id' => 'form-recipe',
@@ -108,6 +139,7 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                         <?= $form->field($model, 'custom_cost')->hiddenInput()->label(false) ?>
                     <?php endif; ?>
                     <?php if (!$model->isNewRecord): ?>
+                    <div class="pending-field-group" data-field="title">
                         <?= $form->field($model, 'title', [
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->textInput([
@@ -121,62 +153,67 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                                 : 'Nombre de la subreceta',
                             ['class' => 'col-sm-4 text-start required']
                         ) ?>
+                    </div>
                     <?php endif; ?>
-                    <?= $form->field($model, 'type_of_recipe', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                    ])->dropDownList($recipesCategoriesMap)->label(
-                        $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
-                            ? Yii::t('app', 'Tipo de subreceta')
-                            : Yii::t('app', 'Tipo de receta'),
-                        ['class' => 'col-sm-4 text-start required']
-                    ) ?>
-                    <div class="row mb-3">
-                        <label class="col-sm-4 text-start"><?= $model->getAttributeLabel('time_of_preparation') ?></label>
-                        <div class="col-sm-8">
-                            <div class="input-group">
-                                <?= Html::textInput(
-                                    'time_value',
-                                    $model->time_of_preparation ? preg_replace('/[^0-9]/', '', $model->time_of_preparation) : '',
-                                    [
-                                        'id' => 'time-value-input',
-                                        'class' => 'form-control',
-                                        'placeholder' => Yii::t('app', 'Tiempo'),
-                                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
-                                        'style' => 'max-width: 100px;'
-                                    ]
-                                )
-                                ?>
-                                <?php
-                                // Determinar el valor por defecto para time_unit
-                                $timeUnitValue = '';
-                                if ($model->time_of_preparation) {
-                                    // Si hay datos, detectar la unidad
-                                    if (strpos($model->time_of_preparation, 'día') !== false) {
-                                        $timeUnitValue = 'días';
-                                    } elseif (strpos($model->time_of_preparation, 'hora') !== false) {
-                                        $timeUnitValue = 'horas';
-                                    } elseif (strpos($model->time_of_preparation, 'minuto') !== false) {
-                                        $timeUnitValue = 'minutos';
+                    <div class="pending-field-group" data-field="type_of_recipe">
+                        <?= $form->field($model, 'type_of_recipe', [
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                        ])->dropDownList($recipesCategoriesMap)->label(
+                            $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+                                ? Yii::t('app', 'Tipo de subreceta')
+                                : Yii::t('app', 'Tipo de receta'),
+                            ['class' => 'col-sm-4 text-start required']
+                        ) ?>
+                    </div>
+                    <div class="pending-field-group" data-field="time_of_preparation">
+                        <div class="row mb-3">
+                            <label class="col-sm-4 text-start"><?= $model->getAttributeLabel('time_of_preparation') ?></label>
+                            <div class="col-sm-8">
+                                <div class="input-group">
+                                    <?= Html::textInput(
+                                        'time_value',
+                                        $model->time_of_preparation ? preg_replace('/[^0-9]/', '', $model->time_of_preparation) : '',
+                                        [
+                                            'id' => 'time-value-input',
+                                            'class' => 'form-control',
+                                            'placeholder' => Yii::t('app', 'Tiempo'),
+                                            'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
+                                            'style' => 'max-width: 100px;'
+                                        ]
+                                    )
+                                    ?>
+                                    <?php
+                                    // Determinar el valor por defecto para time_unit
+                                    $timeUnitValue = '';
+                                    if ($model->time_of_preparation) {
+                                        // Si hay datos, detectar la unidad
+                                        if (strpos($model->time_of_preparation, 'día') !== false) {
+                                            $timeUnitValue = 'días';
+                                        } elseif (strpos($model->time_of_preparation, 'hora') !== false) {
+                                            $timeUnitValue = 'horas';
+                                        } elseif (strpos($model->time_of_preparation, 'minuto') !== false) {
+                                            $timeUnitValue = 'minutos';
+                                        }
                                     }
-                                }
-                                ?>
-                                <?= Html::dropDownList(
-                                    'time_unit',
-                                    $timeUnitValue,
-                                    [
-                                        '' => Yii::t('app', 'Seleccionar...'),
-                                        'minutos' => Yii::t('app', 'minutos'),
-                                        'horas' => Yii::t('app', 'horas'),
-                                        'días' => Yii::t('app', 'días')
-                                    ],
-                                    [
-                                        'id' => 'time-unit-select',
-                                        'class' => 'form-select',
-                                        'style' => 'max-width: 150px;'
-                                    ]
-                                )
-                                ?>
-                                <?= $form->field($model, 'time_of_preparation', ['template' => '{input}{error}'])->hiddenInput(['id' => 'time-of-preparation-hidden'])->label(false) ?>
+                                    ?>
+                                    <?= Html::dropDownList(
+                                        'time_unit',
+                                        $timeUnitValue,
+                                        [
+                                            '' => Yii::t('app', 'Seleccionar...'),
+                                            'minutos' => Yii::t('app', 'minutos'),
+                                            'horas' => Yii::t('app', 'horas'),
+                                            'días' => Yii::t('app', 'días')
+                                        ],
+                                        [
+                                            'id' => 'time-unit-select',
+                                            'class' => 'form-select',
+                                            'style' => 'max-width: 150px;'
+                                        ]
+                                    )
+                                    ?>
+                                    <?= $form->field($model, 'time_of_preparation', ['template' => '{input}{error}'])->hiddenInput(['id' => 'time-of-preparation-hidden'])->label(false) ?>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -196,15 +233,18 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     //var_dump($model);
                     $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList($yieldUmOptions, ['class' => 'form-control', 'id' => 'standardrecipe-yield_um'])->label(false);
                     ?>
-                    <?= $form->field($model, 'yield', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
-                    ])->textInput()->label(null, ['class' => 'col-sm-4 text-start required']) ?>
+                    <div class="pending-field-group" data-field="yield">
+                        <?= $form->field($model, 'yield', [
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
+                        ])->textInput()->label(null, ['class' => 'col-sm-4 text-start required']) ?>
+                    </div>
                     <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
-                        <?= $form->field($model, 'convoy_id', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                        ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Convoy::findAll(['business_id' => $business['id']]), 'id', 'label'), ['prompt' => Yii::t('app', "No convoy")])->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                        <div class="pending-field-group" data-field="convoy_id">
+                            <?= $form->field($model, 'convoy_id', [
+                                'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                            ])->dropDownList(\yii\helpers\ArrayHelper::map(\common\models\Convoy::findAll(['business_id' => $business['id']]), 'id', 'label'), ['prompt' => Yii::t('app', "No convoy")])->label(null, ['class' => 'col-sm-4 text-start']) ?>
+                        </div>
                     <?php endif; ?>
-                    <?php  ?>
                     <?php
                     // Convertir null a vacío para preseleccionar "Sin unidades"
                     if ($model->um === null) {
@@ -218,6 +258,7 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     }
                     $finalUmOptions = \yii\helpers\ArrayHelper::map($finalUms, 'name', 'name');
                     $finalUmOptions = ['' => 'Sin unidades'] + $finalUmOptions;
+                    echo '<div class="pending-field-group" data-field="um">';
                     echo $form->field($model, 'um', [
                         'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                     ])->dropDownList($finalUmOptions)->label(
@@ -226,15 +267,15 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                             : Yii::t('app', 'Unidad final'),
                         ['class' => 'col-sm-4 text-start required']
                     );
+                    echo '</div>';
                     ?>
-                    <?php ?>
                     <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
                         <?= $form->field($model, 'is_food')->widget(\kartik\switchinput\SwitchInput::class, [
                             'pluginOptions' => [
                                 'onText' => "Alimentos",
                                 'offText' => "Bebidas"
                             ]
-                        ])->label("Alimentos o bebidas?") ?>
+                        ])->label("¿Alimentos o bebidas?") ?>
                     <?php endif; ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">
@@ -251,69 +292,76 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
 
                     <!-- Campo de porciones (ahora segundo) -->
                     <div id="portions-container">
-                        <?= $form->field($model, 'portions', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
-                        ])->textInput()->label(null, ['class' => 'col-sm-3 text-start required']) ?>
+                        <div class="pending-field-group" data-field="portions">
+                            <?= $form->field($model, 'portions', [
+                                'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'>{input}{error}</div></div>"
+                            ])->textInput()->label(null, ['class' => 'col-sm-3 text-start required']) ?>
+                        </div>
                     </div>
-                    <div class="row mb-3">
-                        <label class="col-sm-3 text-start"><?= $model->getAttributeLabel('lifetime') ?></label>
-                        <div class="col-sm-9">
-                            <div class="input-group">
-                                <?= Html::textInput(
-                                    'lifetime_value',
-                                    $model->lifetime ? preg_replace('/[^0-9]/', '', $model->lifetime) : '',
-                                    [
-                                        'id' => 'lifetime-value-input',
-                                        'class' => 'form-control',
-                                        'placeholder' => Yii::t('app', 'Duración'),
-                                        'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
-                                        'style' => 'max-width: 100px;'
-                                    ]
-                                )
-                                ?>
-                                <?php
-                                // Determinar el valor por defecto para lifetime_unit
-                                $lifetimeUnitValue = '';
-                                if ($model->lifetime) {
-                                    // Si hay datos, detectar la unidad
-                                    if (strpos($model->lifetime, 'día') !== false) {
-                                        $lifetimeUnitValue = 'días';
-                                    } elseif (strpos($model->lifetime, 'hora') !== false) {
-                                        $lifetimeUnitValue = 'horas';
-                                    } elseif (strpos($model->lifetime, 'minuto') !== false) {
-                                        $lifetimeUnitValue = 'minutos';
+                    <div class="pending-field-group" data-field="lifetime">
+                        <div class="row mb-3">
+                            <label class="col-sm-3 text-start"><?= $model->getAttributeLabel('lifetime') ?></label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    <?= Html::textInput(
+                                        'lifetime_value',
+                                        $model->lifetime ? preg_replace('/[^0-9]/', '', $model->lifetime) : '',
+                                        [
+                                            'id' => 'lifetime-value-input',
+                                            'class' => 'form-control',
+                                            'placeholder' => Yii::t('app', 'Duración'),
+                                            'onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57',
+                                            'style' => 'max-width: 100px;'
+                                        ]
+                                    )
+                                    ?>
+                                    <?php
+                                    // Determinar el valor por defecto para lifetime_unit
+                                    $lifetimeUnitValue = '';
+                                    if ($model->lifetime) {
+                                        // Si hay datos, detectar la unidad
+                                        if (strpos($model->lifetime, 'día') !== false) {
+                                            $lifetimeUnitValue = 'días';
+                                        } elseif (strpos($model->lifetime, 'hora') !== false) {
+                                            $lifetimeUnitValue = 'horas';
+                                        } elseif (strpos($model->lifetime, 'minuto') !== false) {
+                                            $lifetimeUnitValue = 'minutos';
+                                        }
                                     }
-                                }
-                                ?>
-                                <?= Html::dropDownList(
-                                    'lifetime_unit',
-                                    $lifetimeUnitValue,
-                                    [
-                                        '' => Yii::t('app', 'Seleccionar...'),
-                                        'minutos' => Yii::t('app', 'minutos'),
-                                        'horas' => Yii::t('app', 'horas'),
-                                        'días' => Yii::t('app', 'días')
-                                    ],
-                                    [
-                                        'id' => 'lifetime-unit-select',
-                                        'class' => 'form-select',
-                                        'style' => 'max-width: 150px;'
-                                    ]
-                                )
-                                ?>
-                                <?= $form->field($model, 'lifetime', ['template' => '{input}{error}'])->hiddenInput(['id' => 'lifetime-hidden'])->label(false) ?>
+                                    ?>
+                                    <?= Html::dropDownList(
+                                        'lifetime_unit',
+                                        $lifetimeUnitValue,
+                                        [
+                                            '' => Yii::t('app', 'Seleccionar...'),
+                                            'minutos' => Yii::t('app', 'minutos'),
+                                            'horas' => Yii::t('app', 'horas'),
+                                            'días' => Yii::t('app', 'días')
+                                        ],
+                                        [
+                                            'id' => 'lifetime-unit-select',
+                                            'class' => 'form-select',
+                                            'style' => 'max-width: 150px;'
+                                        ]
+                                    )
+                                    ?>
+                                    <?= $form->field($model, 'lifetime', ['template' => '{input}{error}'])->hiddenInput(['id' => 'lifetime-hidden'])->label(false) ?>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>                        
-                    <?= $form->field($model, 'price', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div>{error}</div></div>"
-                        ])->textInput([
-                            'id' => 'price-input',
-                            'value' => $model->price !== null && $model->price !== '' ? formatPrice($model->price) : '',
-                            'class' => 'form-control format-price-input',
-                            'data-raw-value' => $model->price
-                        ])->label('Precio sin IVA', ['class' => 'col-sm-3 text-start']) ?>                        <div class="row mb-3">
+                    <?php if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN): ?>
+                        <div class="pending-field-group" data-field="price">
+                            <?= $form->field($model, 'price', [
+                                    'template' => "<div class='row mb-3'>{label}<div class='col-sm-9'><div class='input-group'><span class='input-group-text'>$currencySymbol</span>{input}</div>{error}</div></div>"
+                                ])->textInput([
+                                    'id' => 'price-input',
+                                    'value' => $model->price !== null && $model->price !== '' ? formatPrice($model->price) : '',
+                                    'class' => 'form-control format-price-input',
+                                    'data-raw-value' => $model->price
+                                ])->label('Precio sin IVA', ['class' => 'col-sm-3 text-start']) ?>
+                        </div>
+                        <div class="row mb-3">
                             <div class="col-sm-3 text-start">
                                 <?= Yii::t('app', "Cost") ?>
                             </div>
@@ -324,7 +372,8 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                                         data-value="<?= $model->lastPrice ?>"><?= formatCost($model->lastPrice) ?></span>
                                 </div>
                             </div>
-                        </div>                        <div class="row mb-3">
+                        </div>
+                        <div class="row mb-3">
                             <div class="col-sm-3 text-start">
                                 <?= Yii::t('app', "Cost %") ?>
                             </div>
@@ -339,7 +388,6 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                                 </small>
                             </div>
                         </div>
-
                     <?php endif; ?>
                     <?= $form->field($model, 'observation')->widget(Summernote::class, [
                         'useKrajeePresets' => true,
@@ -359,7 +407,63 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
             <?= $this->render('create/_ingredients_selection', [
                 'model' => $model
             ]) ?>
+            <input type="hidden" name="pending_fields" id="pending-fields-input" value="">
             <br>
+<?php
+$pendingFields = isset($model) && method_exists($model, 'getPendingFields') ? $model->getPendingFields() : [];
+$pendingFieldsJson = json_encode($pendingFields);
+$js = <<<JS
+(function($) {
+    var pendingMode = false;
+    var pendingFields = $pendingFieldsJson;
+
+    function updatePendingCheckboxes() {
+        $('.pending-field-group').each(function() {
+            var field = $(this).data('field');
+            if (field === 'observation') return; // No permitir checkbox en Observaciones
+            var \$existing = \$(this).find('.pending-checkbox');
+
+            if (pendingMode) {
+                if (\$existing.length === 0) {
+                    var checked = pendingFields && pendingFields.includes(field) ? 'checked' : '';
+                    var \$label = \$(this).find('label').first();
+                    var cbHtml = ' <input type="checkbox" class="form-check-input pending-checkbox" data-field="' + field + '" ' + checked + ' title="Marcar como pendiente">';
+                    if (\$label.length) {
+                        \$label.append(cbHtml);
+                    } else {
+                        $(this).prepend(cbHtml);
+                    }
+                }
+            } else {
+                \$existing.remove();
+            }
+        });
+    }
+
+    $('#btn-toggle-pending').on('click', function() {
+        pendingMode = !pendingMode;
+        $('.standard-recipe-form').toggleClass('pending-mode', pendingMode);
+        updatePendingCheckboxes();
+        // Disparar evento global para ingredientes
+        document.dispatchEvent(new CustomEvent('pending-mode-toggle', { detail: { enabled: pendingMode } }));
+    });
+
+    $('.standard-recipe-form form').on('submit', function() {
+        var fields = [];
+        // Solo checkboxes de campos principales, NO de ingredientes
+        $('.pending-checkbox:checked:not([data-ingredient-id])').each(function() {
+            fields.push($(this).data('field'));
+        });
+        $('#pending-fields-input').val(JSON.stringify(fields));
+    });
+
+    if (pendingFields && pendingFields.length > 0) {
+        $('#btn-toggle-pending').addClass('btn-danger').removeClass('btn-warning');
+    }
+})(jQuery);
+JS;
+$this->registerJs($js);
+?>
             
             <!-- Sección colapsable: Imagen de la receta -->
             <div class="card mb-3">

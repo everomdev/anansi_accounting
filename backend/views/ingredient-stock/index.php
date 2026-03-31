@@ -121,9 +121,9 @@ $this->registerCss('
                 'icon' => ""
             ]), ['ingredient-stock/export', 'id' => $business->id], ['class' => 'btn btn-warning']) ?>
         </div>
-        <div class="p-2">
+        <!-- <div class="p-2">
             <?= Html::a('<i class="bi bi-exclamation-circle"></i> Insumos Pendientes', ['ingredient-stock/pending-ingredients'], ['class' => 'btn btn-success']) ?>
-        </div>
+        </div> -->
         <div class="p-2">
         <?= \yii\bootstrap5\Html::a(Yii::t('app', '{icon} Eliminar Seleccionados', ['icon' => ""
             ]), ['#'], ['class' => 'btn btn-danger', 'id' => 'bulk-remove']) ?>

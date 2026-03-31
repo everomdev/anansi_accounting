@@ -86,6 +86,12 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
             </a>
         </li>
 
+        <li class="menu-item <?= $currentControllerId == 'pending' ? 'active' : '' ?>">
+            <a href="<?= \yii\helpers\Url::to(['/pending/global']) ?>" class="menu-link">
+                <div><?= Yii::t('app', 'Pendientes') ?></div>
+            </a>
+        </li>
+
         <!-- Configuración Base -->
         <?php if (($isAdmin || Yii::$app->user->can('category_list') || Yii::$app->user->can('recipe_category_list') || Yii::$app->user->can('unit_measurement_list') || Yii::$app->user->can('consumption_center_list')) && !Yii::$app->user->can('consumption_requester')): ?>
         <li class="menu-item <?= $configBaseActive ? 'active open' : '' ?>">

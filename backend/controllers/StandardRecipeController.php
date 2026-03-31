@@ -736,44 +736,52 @@ class StandardRecipeController extends Controller
             $this->make(AjaxRequestModelValidator::class, [$model])->validate();
         }
         if ($model->load($post) && $model->save()) {
-                // Procesar excludeFromCost y costPercentage
+            // Procesar excludeFromCost y costPercentage
             $excludeFromCost = Yii::$app->request->post('excludeFromCost', []);
             $costPercentage = Yii::$app->request->post('costPercentage', []);
-            
+
             // Actualizar relaciones de ingredientes
             foreach ($model->ingredientRelations as $relation) {
                 $ingredientId = $relation->ingredient_id;
-                
+
                 // Actualizar exclude_from_cost
                 $relation->exclude_from_cost = isset($excludeFromCost[$ingredientId]);
-                
+
                 // Actualizar cost_percentage
                 if (isset($costPercentage[$ingredientId])) {
                     $relation->cost_percentage = intval($costPercentage[$ingredientId]);
                 } else {
                     $relation->cost_percentage = 0; // Valor por defecto
                 }
-                
+
                 $relation->save(false); // Guardar sin validación
             }
-            
-            // También procesar subrecetas si es necesario
-            /*foreach ($model->getSubStandardRecipesRelation()->all() as $relation) {
-                $subRecipeId = $relation->sub_recipe_id;
-                
-                // Actualizar exclude_from_cost
-                $relation->exclude_from_cost = isset($excludeFromCost[$subRecipeId]);
-                
-                // Actualizar cost_percentage
-                if (isset($costPercentage[$subRecipeId])) {
-                    $relation->cost_percentage = intval($costPercentage[$subRecipeId]);
-                } else {
-                    $relation->cost_percentage = 100;
+
+            // --- Guardar pendientes de ingredientes ---
+            $pendingIngredients = Yii::$app->request->post('pendingFieldsRecipeIngredients', '');
+            \common\models\PendingField::deleteAll([
+                'model_type' => 'recipe_ingredient',
+                'model_id' => $model->id
+            ]);
+            if (!empty($pendingIngredients)) {
+                $pendingIngredientsArr = @json_decode($pendingIngredients, true);
+                if (is_array($pendingIngredientsArr)) {
+                    $now = time();
+                    foreach ($pendingIngredientsArr as $pending) {
+                        if (!empty($pending['ingredient_id']) && !empty($pending['field'])) {
+                            $isRecipe = isset($pending['is_recipe']) ? $pending['is_recipe'] : 0;
+                            $pf = new \common\models\PendingField();
+                            $pf->model_type = 'recipe_ingredient';
+                            $pf->model_id = $model->id;
+                            $pf->field = $pending['ingredient_id'] . ':' . $pending['field'] . ':' . $isRecipe;
+                            $pf->created_at = $now;
+                            $pf->updated_at = $now;
+                            $pf->save(false);
+                        }
+                    }
                 }
-                
-                $relation->save(false);
-            }*/
-            // return $this->redirect(Url::previous('index-recipe'));
+            }
+
             if ($model->type == $model::STANDARD_RECIPE_TYPE_MAIN) {
                 return $this->redirect(['standard-recipe/index', 'type' => $model->type]);
             } else {
@@ -1085,26 +1093,51 @@ public function actionGetSubStandardRecipes()
         }
 
         if ($model->load($post) && $model->save()) {
-                // Procesar excludeFromCost y costPercentage
-                $excludeFromCost = Yii::$app->request->post('excludeFromCost', []);
-                $costPercentage = Yii::$app->request->post('costPercentage', []);
-                
-                // Actualizar relaciones de ingredientes
-                foreach ($model->ingredientRelations as $relation) {
-                    $ingredientId = $relation->ingredient_id;
-                    
-                    // Actualizar exclude_from_cost
-                    $relation->exclude_from_cost = isset($excludeFromCost[$ingredientId]);
-                    
-                    // Actualizar cost_percentage
-                    if (isset($costPercentage[$ingredientId])) {
-                        $relation->cost_percentage = intval($costPercentage[$ingredientId]);
-                    } else {
-                        $relation->cost_percentage = 0; // Valor por defecto
-                    }
-                    
-                    $relation->save(false); // Guardar sin validación
+            // Procesar excludeFromCost y costPercentage
+            $excludeFromCost = Yii::$app->request->post('excludeFromCost', []);
+            $costPercentage = Yii::$app->request->post('costPercentage', []);
+
+            // Actualizar relaciones de ingredientes
+            foreach ($model->ingredientRelations as $relation) {
+                $ingredientId = $relation->ingredient_id;
+
+                // Actualizar exclude_from_cost
+                $relation->exclude_from_cost = isset($excludeFromCost[$ingredientId]);
+
+                // Actualizar cost_percentage
+                if (isset($costPercentage[$ingredientId])) {
+                    $relation->cost_percentage = intval($costPercentage[$ingredientId]);
+                } else {
+                    $relation->cost_percentage = 0; // Valor por defecto
                 }
+
+                $relation->save(false); // Guardar sin validación
+            }
+
+            // --- Guardar pendientes de ingredientes ---
+            $pendingIngredients = Yii::$app->request->post('pendingFieldsRecipeIngredients', '');
+            \common\models\PendingField::deleteAll([
+                'model_type' => 'recipe_ingredient',
+                'model_id' => $model->id
+            ]);
+            if (!empty($pendingIngredients)) {
+                $pendingIngredientsArr = @json_decode($pendingIngredients, true);
+                if (is_array($pendingIngredientsArr)) {
+                    $now = time();
+                    foreach ($pendingIngredientsArr as $pending) {
+                        if (!empty($pending['ingredient_id']) && !empty($pending['field'])) {
+                            $isRecipe = isset($pending['is_recipe']) ? $pending['is_recipe'] : 0;
+                            $pf = new \common\models\PendingField();
+                            $pf->model_type = 'recipe_ingredient';
+                            $pf->model_id = $model->id;
+                            $pf->field = $pending['ingredient_id'] . ':' . $pending['field'] . ':' . $isRecipe;
+                            $pf->created_at = $now;
+                            $pf->updated_at = $now;
+                            $pf->save(false);
+                        }
+                    }
+                }
+            }
             if ($model->type == $model::STANDARD_RECIPE_TYPE_SUB) {
                 return $this->redirect(['sub-standard-recipe/index']);
             }
