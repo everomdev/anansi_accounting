@@ -984,6 +984,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar
     restoreMenuState();
+    // Quitar la clase de ocultado inicial (ya aplicamos el estado correcto)
+    document.documentElement.classList.remove('menu-collapsed-init');
+
+    // Neutralizar los métodos del Sneat theme que interfieren con nuestro estado
+    // main.js llama setCollapsed(true) y setAutoUpdate(true) automáticamente
+    if (window.Helpers) {
+        window.Helpers.setCollapsed = function() {};
+        window.Helpers.toggleCollapsed = function() {};
+        window.Helpers.setAutoUpdate = function() {};
+    }
+    // También interceptarlo antes de que main.js lo llame (por si carga después)
+    var _origHelpers = window.Helpers;
+    Object.defineProperty(window, 'Helpers', {
+        get: function() { return _origHelpers; },
+        set: function(val) {
+            if (val) {
+                val.setCollapsed = function() {};
+                val.toggleCollapsed = function() {};
+                val.setAutoUpdate = function() {};
+            }
+            _origHelpers = val;
+        },
+        configurable: true
+    });
 });
 JS;
 

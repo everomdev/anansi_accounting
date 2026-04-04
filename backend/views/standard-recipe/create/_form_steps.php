@@ -1,9 +1,3 @@
-<script>
-// Cambia el id por el de tu contenedor PJAX de la lista de pasos si es diferente
-$(document).on('pjax:end', '#pjax-list-steps', function() {
-    location.reload();
-});
-</script>
 <?php
 /** @var $recipe \common\models\StandardRecipe */
 /** @var $model \common\models\RecipeStep */
@@ -19,7 +13,6 @@ $(document).on('pjax:end', '#pjax-list-steps', function() {
         'method' => 'post',
         'options' => [
             'enctype' => 'multipart/form-data',
-            'data-pjax' => $pjaxId
         ]
     ]) ?>
     <?= $form->field($model, 'type')->hiddenInput()->label(false) ?>
@@ -38,7 +31,7 @@ $(document).on('pjax:end', '#pjax-list-steps', function() {
         <div class="col-4">
             <label for="input-seconds" class="form-label">Segundos</label>
             <input type="number" min="0" max="59" class="form-control" id="input-seconds" name="input-seconds" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[2] : '00' ?>">
-     </div>
+        </div>
         <div class="form-text">Selecciona la duración: horas, minutos y segundos. Ejemplo: 0 horas, 5 minutos y 40 segundos.</div>
     </div>
     <div class="col-12">
@@ -49,8 +42,45 @@ $(document).on('pjax:end', '#pjax-list-steps', function() {
     </div>
     <div class="col-12">
         <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Add'), [
-            'class' => 'btn btn-success'
+            'class' => 'btn btn-success',
+            'id' => 'btn-submit-step'
         ]) ?>
     </div>
     <?php \yii\bootstrap5\ActiveForm::end(); ?>
 </div>
+
+<script>
+$(document).on('submit', '#form_step', function(e) {
+    e.preventDefault();
+    var $form = $(this);
+    var $btn = $form.find('#btn-submit-step');
+    var originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+
+    var formData = new FormData(this);
+
+    $.ajax({
+        url: $form.attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Activar flag en window para que _steps.php lo capture en pjax:complete
+                window._stepJustAdded = true;
+                $.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
+                $form[0].reset();
+            } else {
+                alert(response.message || 'Error al agregar el paso');
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        },
+        error: function() {
+            alert('Error al agregar el paso');
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+});
+</script>

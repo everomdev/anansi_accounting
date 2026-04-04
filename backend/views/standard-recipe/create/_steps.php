@@ -59,13 +59,11 @@ use yii\helpers\ArrayHelper;
                         </td>
                         <td class="text-center">
                             <div class="btn-group" role="group" style="gap: 5px;">
-                                <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/remove-step', 'recipeId' => $model->id, 'id' => $step->id]), [
-                                    'class' => "btn btn-sm btn-danger delete",
-                                    'data' => [
-                                        'confirm-message' => Yii::t('app', 'Are you sure you want to delete this step?'),
-                                        'pjax' => "#pjax-list-steps"
-                                    ]
-                                ]) ?>
+                                <button type="button"
+                                    class="btn btn-sm btn-danger btn-delete-step"
+                                    data-url="<?= \yii\helpers\Url::to(['standard-recipe/remove-step', 'recipeId' => $model->id, 'id' => $step->id]) ?>">
+                                    <?= Yii::t('app', "Remove") ?>
+                                </button>
                                 <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modificar"), '#', [
                                     'class' => "btn btn-sm btn-warning edit-step",
                                     'data-bs-toggle' => "modal",
@@ -293,5 +291,66 @@ document.addEventListener('DOMContentLoaded', function() {
             removeInput.value = '1';
         });
     }
+
+    // --- Eliminar paso con AJAX (sin recargar página) ---
+    $(document).on('click', '.btn-delete-step', function() {
+        var url = $(this).data('url');
+        if (!confirm('<?= Yii::t('app', 'Are you sure you want to delete this step?') ?>')) return;
+        $.ajax({
+            url: url,
+            type: 'POST',
+            dataType: 'json',
+            data: { _csrf: yii.getCsrfToken() },
+            success: function(response) {
+                if (response.success) {
+                    $.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
+                } else {
+                    alert(response.message || 'Error al eliminar el paso');
+                }
+            },
+            error: function() {
+                alert('Error al eliminar el paso');
+            }
+        });
+    });
+
+    // --- Abrir collapse de procedimientos tras agregar/eliminar paso ---
+    $(document).on('pjax:complete', '#pjax-list-steps', function() {
+        if (!window._stepJustAdded) return;
+        window._stepJustAdded = false;
+
+        var collapseEl = document.getElementById('collapseSteps');
+        if (!collapseEl) return;
+
+        // Forzar apertura sin animación para evitar conflictos con Bootstrap
+        collapseEl.style.transition = 'none';
+        collapseEl.classList.remove('collapsing');
+        collapseEl.classList.add('show');
+        collapseEl.style.height = '';
+
+        var toggleBtn = document.querySelector('[data-bs-target="#collapseSteps"]');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+
+        setTimeout(function() {
+            collapseEl.style.transition = '';
+            collapseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    });
+
+    // --- Cerrar modal y limpiar backdrop tras pjax ---
+    $(document).on('pjax:end', '#pjax-list-steps', function() {
+        ['modal-add-step', 'modal-add-special-step'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                var instance = bootstrap.Modal.getInstance(el);
+                if (instance) instance.hide();
+            }
+        });
+        document.body.classList.remove('modal-open');
+        document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    });
 });
 </script>

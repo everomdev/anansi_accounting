@@ -26,6 +26,20 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
     <title><?= Html::encode($this->title) ?>
     </title>
     <?php $this->head() ?>
+    <!-- Aplicar estado del menú ANTES de renderizar para evitar flash -->
+    <script>
+    (function() {
+        if (localStorage.getItem('menuCollapsed') === 'true') {
+            document.documentElement.classList.add('menu-collapsed-init');
+        }
+    })();
+    </script>
+    <style>
+    html.menu-collapsed-init #layout-menu {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    </style>
 </head>
 
 <body>
