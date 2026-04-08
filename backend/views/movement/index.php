@@ -425,14 +425,14 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             // Para requisiciones con un item específico (expanded row)
             if ($model->type === 'requisition' && isset($model->_expandedItem)) {
                 $item = $model->_expandedItem;
-                $quantity = Yii::$app->formatter->asDecimal($item->quantity_requested, 3);
+                $quantity = formatNumber($item->quantity_requested, 3);
                 return '<strong>' . $quantity . '</strong>';
             }
 
             // Para otros tipos
             // Si quantity es numérico, formatearlo; si no, devolver tal cual
             if ($model->quantity !== null && is_numeric($model->quantity)) {
-                return '<strong>' . Yii::$app->formatter->asDecimal($model->quantity, 2) . '</strong>';
+                return '<strong>' . formatNumber($model->quantity, 2) . '</strong>';
             }
             return Html::encode($model->quantity ?? '-');
         },

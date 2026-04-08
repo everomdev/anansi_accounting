@@ -48,39 +48,3 @@
     </div>
     <?php \yii\bootstrap5\ActiveForm::end(); ?>
 </div>
-
-<script>
-$(document).on('submit', '#form_step', function(e) {
-    e.preventDefault();
-    var $form = $(this);
-    var $btn = $form.find('#btn-submit-step');
-    var originalHtml = $btn.html();
-    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
-
-    var formData = new FormData(this);
-
-    $.ajax({
-        url: $form.attr('action'),
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                // Activar flag en window para que _steps.php lo capture en pjax:complete
-                window._stepJustAdded = true;
-                $.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
-                $form[0].reset();
-            } else {
-                alert(response.message || 'Error al agregar el paso');
-                $btn.prop('disabled', false).html(originalHtml);
-            }
-        },
-        error: function() {
-            alert('Error al agregar el paso');
-            $btn.prop('disabled', false).html(originalHtml);
-        }
-    });
-});
-</script>

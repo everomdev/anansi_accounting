@@ -160,8 +160,8 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                             'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
                         ])->dropDownList($recipesCategoriesMap)->label(
                             $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
-                                ? Yii::t('app', 'Tipo de subreceta')
-                                : Yii::t('app', 'Tipo de receta'),
+                                ? Yii::t('app', 'Categoría de subreceta')
+                                : Yii::t('app', 'Categoría de receta'),
                             ['class' => 'col-sm-4 text-start required']
                         ) ?>
                     </div>
@@ -463,6 +463,157 @@ $js = <<<JS
 })(jQuery);
 JS;
 $this->registerJs($js);
+
+// --- JS de pasos de procedimiento (aquí para que pjax no lo duplique) ---
+$confirmStepMsg = Yii::t('app', 'Are you sure you want to delete this step?');
+$addBtnLabel = Yii::t('app', 'Add');
+$this->registerJs(<<<JS
+(function() {
+    function cleanModalBackdrop() {
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    }
+
+    // --- Agregar paso con AJAX ---
+    \$(document).on('submit', '#form_step', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        var \$form = \$(this);
+        var \$btn = \$form.find('#btn-submit-step');
+        var originalHtml = \$btn.html();
+        \$btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+        \$.ajax({
+            url: \$form.attr('action'),
+            type: 'POST',
+            data: new FormData(\$form[0]),
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    window._stepJustAdded = true;
+                    \$form[0].reset();
+                    \$.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
+                } else {
+                    alert(response.message || 'Error al agregar el paso');
+                    \$btn.prop('disabled', false).html(originalHtml);
+                }
+            },
+            error: function() {
+                alert('Error al agregar el paso');
+                \$btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+
+    // --- Restaurar botón al cerrar modal ---
+    \$(document).on('hidden.bs.modal', '#modal-add-step, #modal-add-special-step', function() {
+        var \$btn = \$(this).find('#btn-submit-step');
+        \$btn.prop('disabled', false).html('$addBtnLabel');
+        var \$form = \$(this).find('#form_step');
+        if (\$form.length) \$form[0].reset();
+        cleanModalBackdrop();
+    });
+
+    // --- Eliminar paso con AJAX ---
+    \$(document).on('click', '.btn-delete-step', function() {
+        var url = \$(this).data('url');
+        if (!confirm('$confirmStepMsg')) return;
+        \$.ajax({
+            url: url,
+            type: 'POST',
+            dataType: 'json',
+            data: { _csrf: yii.getCsrfToken() },
+            success: function(response) {
+                if (response.success) {
+                    \$.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
+                } else {
+                    alert(response.message || 'Error al eliminar el paso');
+                }
+            },
+            error: function() { alert('Error al eliminar el paso'); }
+        });
+    });
+
+    // --- Abrir collapse y scroll tras agregar paso ---
+    \$(document).on('pjax:complete', '#pjax-list-steps', function() {
+        if (!window._stepJustAdded) return;
+        window._stepJustAdded = false;
+        var collapseEl = document.getElementById('collapseSteps');
+        if (!collapseEl) return;
+        collapseEl.style.transition = 'none';
+        collapseEl.classList.remove('collapsing');
+        collapseEl.classList.add('show');
+        collapseEl.style.height = '';
+        var toggleBtn = document.querySelector('[data-bs-target="#collapseSteps"]');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+        setTimeout(function() {
+            collapseEl.style.transition = '';
+            collapseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    });
+
+    // --- Cerrar modal y limpiar backdrop tras pjax ---
+    \$(document).on('pjax:end', '#pjax-list-steps', function() {
+        ['modal-add-step', 'modal-add-special-step'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { var inst = bootstrap.Modal.getInstance(el); if (inst) inst.hide(); }
+        });
+        cleanModalBackdrop();
+    });
+
+    // --- Modal imagen grande de paso ---
+    \$(document).on('click', '.procedure-step-img-link', function(e) {
+        e.preventDefault();
+        document.getElementById('procedure-step-modal-img').src = \$(this).data('img');
+        new bootstrap.Modal(document.getElementById('procedureStepImageModal')).show();
+    });
+    \$(document).on('hidden.bs.modal', '#procedureStepImageModal', function() { cleanModalBackdrop(); });
+
+    // --- Modal editar paso ---
+    \$(document).on('hidden.bs.modal', '#modal-edit-step', function() {
+        cleanModalBackdrop();
+        var c = document.getElementById('edit-step-image-preview-container');
+        var p = document.getElementById('edit-step-image-preview');
+        var r = document.getElementById('edit-step-remove-image');
+        if (c) c.style.display = 'none';
+        if (p) p.src = '';
+        if (r) r.value = '0';
+    });
+    \$(document).on('click', '#save-edit-step', function() {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('modal-edit-step'));
+        if (modal) modal.hide();
+        setTimeout(cleanModalBackdrop, 500);
+    });
+    \$(document).on('click', '.edit-step', function() {
+        var imgUrl = this.getAttribute('data-img');
+        var previewContainer = document.getElementById('edit-step-image-preview-container');
+        var previewImg = document.getElementById('edit-step-image-preview');
+        var removeInput = document.getElementById('edit-step-remove-image');
+        var removeBtn = document.getElementById('edit-step-remove-image-btn');
+        if (removeInput.value !== '1') removeInput.value = '0';
+        if (imgUrl && removeInput.value !== '1') {
+            previewImg.src = imgUrl;
+            previewContainer.style.display = 'block';
+            if (removeBtn) removeBtn.style.display = 'flex';
+        } else {
+            previewImg.src = '';
+            previewContainer.style.display = 'none';
+            if (removeBtn) removeBtn.style.display = 'none';
+        }
+    });
+    \$(document).on('click', '#edit-step-remove-image-btn', function(e) {
+        e.preventDefault();
+        document.getElementById('edit-step-image-preview-container').style.display = 'none';
+        document.getElementById('edit-step-image-preview').src = '';
+        document.getElementById('edit-step-remove-image').value = '1';
+    });
+})();
+JS, \yii\web\View::POS_READY);
 ?>
             
             <!-- Sección colapsable: Imagen de la receta -->

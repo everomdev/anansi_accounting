@@ -1,7 +1,7 @@
 <?php
 use yii\grid\GridView;
 use yii\helpers\Html;
-$this->title = 'Comparación de Insumos';
+$this->title = 'Inventario vs Existencias en Almacén';
 $this->params['breadcrumbs'][] = ['label' => 'KPI', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>

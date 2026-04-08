@@ -159,12 +159,12 @@ class ExcelHelper
             'Desventajas',
             'Observaciones',
             // Columnas de métodos de pago con descripción
-            'Metodo de pago 1 (Efectivo)',
-            'Metodo de pago 2 (Transferencia Bancaria)',
-            'Metodo de pago 3 (Cheque)',
-            'Metodo de pago 4 (Tarjeta de Credito)',
-            'Metodo de pago 5 (Tarjeta de Debito)',
-            'Metodo de pago 6 (Otro Metodo)'
+            'Método de pago 1 (Efectivo)',
+            'Método de pago 2 (Transferencia Bancaria)',
+            'Método de pago 3 (Cheque)',
+            'Método de pago 4 (Tarjeta de Crédito)',
+            'Método de pago 5 (Tarjeta de Débito)',
+            'Método de pago 6 (Otro método)'
         ];
 
         // Escribir cabeceras
