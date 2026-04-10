@@ -2084,6 +2084,8 @@ if ($ccRow > 2) {
             // Limpiar datos innecesarios
             unset($movement['key']);
             unset($movement['ingredient_name']);
+            // Guardar el número de fila como referencia (sin enviarlo al modelo Movement)
+            $movement['row_number_ref'] = $movement['row_number'];
             unset($movement['row_number']);
             
             if ($ingredient) {
@@ -2120,15 +2122,55 @@ if ($ccRow > 2) {
                 $outputCount++;
             }
         }
+
+        // Caché de stock disponible por ingrediente (para validar múltiples salidas del mismo insumo)
+        $stockCache = [];
         
         $transaction = \Yii::$app->db->beginTransaction();
         try {
             foreach ($processedMovements as $movementData) {
+
+                // Validar stock disponible para salidas antes de guardar
+                if ($movementData['type'] === Movement::TYPE_OUTPUT) {
+                    $ingredientId = $movementData['ingredient_id'];
+
+                    // Cargar stock actual si no está en caché
+                    if (!isset($stockCache[$ingredientId])) {
+                        $ing = IngredientStock::findOne($ingredientId);
+                        $stockCache[$ingredientId] = $ing ? (float)$ing->quantity : 0;
+                    }
+
+                    $stockDisponible = $stockCache[$ingredientId];
+                    $cantidadSolicitada = (float)$movementData['quantity'];
+
+                    if ($stockDisponible < $cantidadSolicitada) {
+                        $ing = IngredientStock::findOne($ingredientId);
+                        $nombreInsumo = $ing ? $ing->ingredient : "ID $ingredientId";
+                        $errors[] = "Fila {$movementData['row_number_ref']}: Salida de \"$nombreInsumo\" no importada — stock insuficiente (disponible: $stockDisponible, solicitado: $cantidadSolicitada)";
+                        continue;
+                    }
+
+                    // Descontar del caché para las siguientes filas del mismo insumo
+                    $stockCache[$ingredientId] -= $cantidadSolicitada;
+                }
+
+                // Quitar campo interno antes de pasar al modelo
+                unset($movementData['row_number_ref']);
                 $movement = new Movement($movementData);
                 // El tipo ya viene definido desde el Excel en $movementData['type']
                 
                 if ($movement->save()) {
                     $savedCount++;
+
+                    // Actualizar caché de stock para entradas (suman stock)
+                    // para que las salidas posteriores del mismo insumo vean el stock correcto
+                    if ($movementData['type'] === Movement::TYPE_INPUT) {
+                        $ingredientId = $movementData['ingredient_id'];
+                        $ing = IngredientStock::findOne($ingredientId);
+                        if (isset($stockCache[$ingredientId])) {
+                            $stockCache[$ingredientId] = $ing ? (float)$ing->quantity : $stockCache[$ingredientId];
+                        }
+                    }
                 } else {
                     $validationErrors = [];
                     foreach ($movement->errors as $field => $fieldErrors) {

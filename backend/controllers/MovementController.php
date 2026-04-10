@@ -967,18 +967,37 @@ class MovementController extends Controller
         if ($file) {
             try {
                 $result = ExcelHelper::importMovements($business, $file->tempName);
-                
-                if ($result['success']) {
-                    //Yii::$app->session->setFlash('success', 
-                     //   "Importación completada. Se guardaron {$result['saved_count']} movimientos.");
-                } else {
-                    Yii::$app->session->setFlash('error', 'Error en la importación.');
+
+                $savedCount = $result['saved_count'] ?? 0;
+                $errors = $result['errors'] ?? [];
+                $errorCount = count($errors);
+                $totalRows = $savedCount + $errorCount;
+
+                if ($savedCount > 0) {
+                    $successMsg = '<strong>' . Yii::t('app', 'Importación completada') . '</strong>';
+                    $successMsg .= '<br>' . Yii::t('app', '{count} movimiento(s) importado(s) correctamente.', ['count' => $savedCount]);
+                    if ($errorCount > 0) {
+                        $successMsg .= ' ' . Yii::t('app', '{count} fila(s) no pudieron importarse (ver advertencia abajo).', ['count' => $errorCount]);
+                    }
+                    Yii::$app->session->setFlash('success', $successMsg);
+                } elseif ($errorCount === 0) {
+                    Yii::$app->session->setFlash('warning', Yii::t('app', 'El archivo no contenía movimientos para importar.'));
                 }
+
+                if (!empty($errors)) {
+                    $warningMsg = '<strong>' . Yii::t('app', '{count} fila(s) no se importaron:', ['count' => $errorCount]) . '</strong><ul class="mb-0 mt-1">';
+                    foreach ($errors as $err) {
+                        $warningMsg .= '<li>' . htmlspecialchars($err, ENT_QUOTES, 'UTF-8') . '</li>';
+                    }
+                    $warningMsg .= '</ul>';
+                    Yii::$app->session->setFlash('warning', $warningMsg);
+                }
+
             } catch (\Exception $e) {
-                Yii::$app->session->setFlash('error', 'Error durante la importación: ' . $e->getMessage());
+                Yii::$app->session->setFlash('error', Yii::t('app', 'Error durante la importación: ') . $e->getMessage());
             }
         } else {
-            Yii::$app->session->setFlash('error', 'No se seleccionó ningún archivo.');
+            Yii::$app->session->setFlash('error', Yii::t('app', 'No se seleccionó ningún archivo.'));
         }
 
         return $this->redirect(['movement/index']);

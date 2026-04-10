@@ -501,7 +501,7 @@ class Movement extends \yii\db\ActiveRecord
     {
         $ingredient = $this->ingredient;
         $ingredient->quantity += $this->quantity * $ingredient->portions_per_unit;
-        $ingredient->save();
+        $ingredient->save(false); // false = omitir validación, solo actualizar el campo
         $ingredient->addPrice($this);
         $menus = Menu::findAll(['business_id' => $this->business_id]);
         foreach ($menus as $menu) {
@@ -513,7 +513,7 @@ class Movement extends \yii\db\ActiveRecord
     {
         $ingredient = $this->ingredient;
         $ingredient->quantity -= $this->quantity;
-        $ingredient->save();
+        $ingredient->save(false); // false = omitir validación, solo actualizar el campo
     }
 
     /**

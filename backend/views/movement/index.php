@@ -53,8 +53,8 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             echo '<div class="alert ' . $alertClass . ' alert-dismissible fade show mb-3" role="alert">';
             echo '<i class="' . $iconClass . ' me-2"></i>';
             
-            // Permitir HTML en mensajes de éxito para mostrar botones
-            if ($key === 'success') {
+            // Permitir HTML en mensajes de éxito y warning para mostrar listas de errores
+            if ($key === 'success' || $key === 'warning') {
                 echo $message;
             } else {
                 echo Html::encode($message);
