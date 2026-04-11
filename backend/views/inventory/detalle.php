@@ -56,6 +56,14 @@ $this->params['breadcrumbs'][] = $this->title;
         z-index: 25 !important;
         background-color: #f8f9fa !important;
     }
+    /* Celda <td> del filtro también sticky */
+    .sticky-header-table thead tr.filters td.sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 25 !important;
+        background-color: #f8f9fa !important;
+        box-shadow: 2px 0 4px -1px rgba(0,0,0,0.12);
+    }
 </style>
 <div class="inventory-detalle">
     <h2>Inventario del <?= date('d/m/Y H:i', strtotime($dateEnd)) ?></h2>
@@ -121,6 +129,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'ingredient_stock_id',
                 'headerOptions' => ['class' => 'sticky-col', 'style' => 'min-width: 250px; width: 25%;text-align:center;'],
                 'contentOptions' => ['class' => 'sticky-col','style' => 'text-align:center;'],
+                'filterOptions' => ['class' => 'sticky-col', 'style' => 'background-color:#f8f9fa !important;'],
                 'value' => function($model) {
                     if ($model->ingredientStock) {
                         $insumo = $model->ingredientStock->ingredient;

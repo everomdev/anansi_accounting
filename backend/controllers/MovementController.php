@@ -525,7 +525,11 @@ class MovementController extends Controller
                 }
                 
                 if (!$model->save()) {
-                    throw new \Exception('Error al actualizar la requisición: ' . json_encode($model->errors));
+                    $errorMessages = [];
+                    foreach ($model->getFirstErrors() as $field => $error) {
+                        $errorMessages[] = $error;
+                    }
+                    throw new \Exception('Error al actualizar la requisición: ' . implode('. ', $errorMessages));
                 }
                 
                 // Eliminar items antiguos
@@ -545,7 +549,8 @@ class MovementController extends Controller
                     $requisitionItem->quantity_fulfilled = 0;
                     
                     if (!$requisitionItem->save()) {
-                        throw new \Exception('Error al guardar item: ' . json_encode($requisitionItem->errors));
+                        $itemErrors = implode('. ', $requisitionItem->getFirstErrors());
+                        throw new \Exception('Error al guardar item: ' . $itemErrors);
                     }
                 }
                 
