@@ -1491,15 +1491,15 @@ if ($ccRow > 2) {
 
         // Habilitar protección de la hoja (las celdas L y M ya están bloqueadas)
         $mainSheet->getProtection()->setSheet(true);
-        $mainSheet->getProtection()->setPassword(''); // Sin contraseña para facilitar uso
-        $mainSheet->getProtection()->setSort(false);
-        $mainSheet->getProtection()->setInsertRows(false); // Bloquear inserción de filas
-        $mainSheet->getProtection()->setDeleteRows(false); // Bloquear eliminación de filas
+        $mainSheet->getProtection()->setPassword('asd'); // Sin contraseña para facilitar uso
+        $mainSheet->getProtection()->setSort(true);
+        $mainSheet->getProtection()->setInsertRows(true); // Permitir inserción de filas
+        $mainSheet->getProtection()->setDeleteRows(true); // Permitir eliminación de filas
         $mainSheet->getProtection()->setInsertColumns(false); // Bloquear inserción de columnas
         $mainSheet->getProtection()->setDeleteColumns(false); // Bloquear eliminación de columnas
-        $mainSheet->getProtection()->setFormatCells(false);
-        $mainSheet->getProtection()->setFormatColumns(false); // Cambiar a false para mayor protección
-        $mainSheet->getProtection()->setFormatRows(false); // Cambiar a false para mayor protección
+        $mainSheet->getProtection()->setFormatCells(true);
+        $mainSheet->getProtection()->setFormatColumns(false);
+        $mainSheet->getProtection()->setFormatRows(true);
         
         // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
         $spreadsheet->getActiveSheet()->setSelectedCell('A2');
