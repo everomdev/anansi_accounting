@@ -425,14 +425,17 @@ $business = \common\models\Business::findOne(['id' => $businessData['id']]);
             // Para requisiciones con un item específico (expanded row)
             if ($model->type === 'requisition' && isset($model->_expandedItem)) {
                 $item = $model->_expandedItem;
-                $quantity = formatNumber($item->quantity_requested, 3);
+                $val = (float)$item->quantity_requested;
+                $quantity = ($val == floor($val)) ? formatNumber($val, 0) : formatNumber($val, 3);
                 return '<strong>' . $quantity . '</strong>';
             }
 
             // Para otros tipos
             // Si quantity es numérico, formatearlo; si no, devolver tal cual
             if ($model->quantity !== null && is_numeric($model->quantity)) {
-                return '<strong>' . formatNumber($model->quantity, 2) . '</strong>';
+                $val = (float)$model->quantity;
+                $formatted = ($val == floor($val)) ? formatNumber($val, 0) : formatNumber($val, 2);
+                return '<strong>' . $formatted . '</strong>';
             }
             return Html::encode($model->quantity ?? '-');
         },
