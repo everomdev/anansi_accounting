@@ -1495,8 +1495,8 @@ if ($ccRow > 2) {
         $mainSheet->getProtection()->setPassword('asd');
         $mainSheet->getProtection()->setSort(false);           // false = permitido en OOXML
         $mainSheet->getProtection()->setAutoFilter(false);     // false = permitido en OOXML (true lo bloquearía)
-        $mainSheet->getProtection()->setInsertRows(false);     // false = permitido en OOXML
-        $mainSheet->getProtection()->setDeleteRows(false);     // false = permitido en OOXML
+        $mainSheet->getProtection()->setInsertRows(true);     // false = permitido en OOXML
+        $mainSheet->getProtection()->setDeleteRows(true);     // false = permitido en OOXML
         $mainSheet->getProtection()->setInsertColumns(true);   // true = bloqueado en OOXML
         $mainSheet->getProtection()->setDeleteColumns(true);   // true = bloqueado en OOXML
         $mainSheet->getProtection()->setFormatCells(false);    // false = permitido en OOXML
