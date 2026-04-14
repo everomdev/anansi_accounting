@@ -707,20 +707,20 @@ public static function generateIngredientsTemplate($id)
         // Aplicar estilo centrado ANTES de configurar RichText para no sobrescribir
         $activeWorksheet->getStyle('A1:N1')->applyFromArray($centerStyle);
 
-        // Encabezados principales (texto simple, los asteriscos rojos se aplicarán al final)
-        $activeWorksheet->setCellValue("A1", "Movimiento*");
+        // Encabezados en texto plano con indicadores: [T]=Todos, [E]=Entrada, [S]=Salida
+        $activeWorksheet->setCellValue("A1", "Movimiento [T]");
+        $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia) [T]");
+        $activeWorksheet->setCellValue("C1", "Insumo [T]");
         $activeWorksheet->setCellValue("D1", "Clave");
-        $activeWorksheet->setCellValue("C1", "Insumo*");
-        $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia)*");
-        $activeWorksheet->setCellValue("E1", "Proveedor*");
-        $activeWorksheet->setCellValue("F1", "Tipo de Pago*");
+        $activeWorksheet->setCellValue("E1", "Proveedor [E]");
+        $activeWorksheet->setCellValue("F1", "Tipo de Pago [E]");
         $activeWorksheet->setCellValue("G1", "Factura");
-        $activeWorksheet->setCellValue("H1", "Centro de Consumo*");
-        $activeWorksheet->setCellValue("I1", "Cantidad*");
-        $activeWorksheet->setCellValue("J1", "Precio de Compra*");
+        $activeWorksheet->setCellValue("H1", "Centro de Consumo [S]");
+        $activeWorksheet->setCellValue("I1", "Cantidad [T]");
+        $activeWorksheet->setCellValue("J1", "Precio de Compra [E]");
         $activeWorksheet->setCellValue("K1", "Impuesto");
-        $activeWorksheet->setCellValue("L1", "Precio Unitario*");
-        $activeWorksheet->setCellValue("M1", "Total*");
+        $activeWorksheet->setCellValue("L1", "Precio Unitario [E]");
+        $activeWorksheet->setCellValue("M1", "Total [E]");
         $activeWorksheet->setCellValue("N1", "Observaciones");
 
         // Agregar comentarios descriptivos a los encabezados
@@ -815,18 +815,18 @@ public static function generateIngredientsTemplate($id)
         $activeWorksheet->getStyle('A2:N500')->applyFromArray($centerStyle);
 
         // Configurar anchos de columnas
-        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(15); // Movimiento
+        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(19); // Movimiento
         $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(15); // Clave
         $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(22); // Fecha
+        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(27); // Fecha
         $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(25); // Proveedor
         $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(25); // Tipo de Pago
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(15); // Factura
-        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(25); // Centro de Consumo
-        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(12); // Cantidad
-        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(20); // Precio de Compra
-        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(12); // Impuesto
-        $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(15); // Precio Unitario
+        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(26); // Centro de Consumo
+        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(17); // Cantidad
+        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(25); // Precio de Compra
+        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(15); // Impuesto
+        $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(21); // Precio Unitario
         $spreadsheet->getActiveSheet()->getColumnDimension('M')->setWidth(15); // Total
         $spreadsheet->getActiveSheet()->getColumnDimension('N')->setWidth(30); // Observaciones
 
@@ -1485,77 +1485,29 @@ if ($ccRow > 2) {
         // Configurar protección de celdas
         $mainSheet = $spreadsheet->getActiveSheet();
         
-        // Desbloquear las celdas que sí se pueden editar (todas excepto L y M que ya están bloqueadas)
+        // Desbloquear las celdas editables: fila de headers + datos (excepto L y M)
+        $mainSheet->getStyle('A1:N1')->getProtection()->setLocked(false);   // fila headers (necesario para AutoFilter)
         $mainSheet->getStyle('A2:K500')->getProtection()->setLocked(false);
         $mainSheet->getStyle('N2:N500')->getProtection()->setLocked(false);
 
         // Habilitar protección de la hoja (las celdas L y M ya están bloqueadas)
         $mainSheet->getProtection()->setSheet(true);
-        $mainSheet->getProtection()->setPassword('asd'); // Sin contraseña para facilitar uso
-        $mainSheet->getProtection()->setSort(true);
-        $mainSheet->getProtection()->setInsertRows(true); // Permitir inserción de filas
-        $mainSheet->getProtection()->setDeleteRows(true); // Permitir eliminación de filas
-        $mainSheet->getProtection()->setInsertColumns(false); // Bloquear inserción de columnas
-        $mainSheet->getProtection()->setDeleteColumns(false); // Bloquear eliminación de columnas
-        $mainSheet->getProtection()->setFormatCells(true);
-        $mainSheet->getProtection()->setFormatColumns(false);
-        $mainSheet->getProtection()->setFormatRows(true);
+        $mainSheet->getProtection()->setPassword('asd');
+        $mainSheet->getProtection()->setSort(false);           // false = permitido en OOXML
+        $mainSheet->getProtection()->setAutoFilter(false);     // false = permitido en OOXML (true lo bloquearía)
+        $mainSheet->getProtection()->setInsertRows(false);     // false = permitido en OOXML
+        $mainSheet->getProtection()->setDeleteRows(false);     // false = permitido en OOXML
+        $mainSheet->getProtection()->setInsertColumns(true);   // true = bloqueado en OOXML
+        $mainSheet->getProtection()->setDeleteColumns(true);   // true = bloqueado en OOXML
+        $mainSheet->getProtection()->setFormatCells(false);    // false = permitido en OOXML
+        $mainSheet->getProtection()->setFormatColumns(true);   // true = bloqueado en OOXML
+        $mainSheet->getProtection()->setFormatRows(false);     // false = permitido en OOXML
         
         // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
         $spreadsheet->getActiveSheet()->setSelectedCell('A2');
 
-        // APLICAR INDICADORES ROJOS AL FINAL - [T] = Todos, [E] = Entrada, [S] = Salida
-        $mainSheet = $spreadsheet->getActiveSheet();
-        
-        // Array de campos con sus indicadores
-        $fieldsWithIndicators = [
-            'A1' => ['label' => 'Movimiento', 'indicator' => '[T]'],
-            'B1' => ['label' => 'Fecha (año-mes-dia)', 'indicator' => '[T]'], 
-            'C1' => ['label' => 'Insumo', 'indicator' => '[T]'],
-            'E1' => ['label' => 'Proveedor', 'indicator' => ''], // Asterisco
-            'F1' => ['label' => 'Tipo de Pago', 'indicator' => '[E]'],
-            'H1' => ['label' => 'Centro de Consumo', 'indicator' => '[S]'],
-            'I1' => ['label' => 'Cantidad', 'indicator' => '[T]'], 
-            'J1' => ['label' => 'Precio de Compra', 'indicator' => '[E]'],
-            'L1' => ['label' => 'Precio Unitario', 'indicator' => ''], // Asterisco
-            'M1' => ['label' => 'Total', 'indicator' => ''] // Asterisco
-        ];
-        
-        // Aplicar texto normal + indicador rojo
-        foreach($fieldsWithIndicators as $cell => $data) {
-            $label = $data['label'];
-            $indicator = $data['indicator'];
-            
-            // Enfoque directo: crear RichText paso a paso de forma simple
-            $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
-            
-            // Agregar el texto normal
-            $richText->createText($label . ' ');
-            
-            // Agregar el indicador rojo
-            $indicatorRun = $richText->createTextRun($indicator);
-            $indicatorRun->getFont()->setBold(true);
-            $indicatorRun->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFF0000'));
-            
-            // Asignar el RichText a la celda
-            $mainSheet->setCellValue($cell, $richText);
-            
-            // Aplicar estilo base a la celda (sin afectar el RichText)
-            $baseStyle = [
-                'alignment' => [
-                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                ],
-                'borders' => [
-                    'outline' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        'color' => ['rgb' => '000000'],
-                    ],
-                ],
-            ];
-            
-            $mainSheet->getStyle($cell)->applyFromArray($baseStyle);
-        }
+        // Activar filtros rápidos en los encabezados
+        $spreadsheet->getActiveSheet()->setAutoFilter('A1:N1');
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Plantilla_para_importar_movimientos.xlsx';
