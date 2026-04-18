@@ -198,24 +198,48 @@ class SecurityController extends Controller
                     RedisKeys::setValue(RedisKeys::BUSINESS_KEY, json_encode($business->attributes));
                     Yii::$app->setTimeZone($business->timezone);
                     
-                    // Verificar el estado de la suscripción
-                    if ($planToCheck && $planToCheck->stripe_subscription_status === 'canceled') {
-                        // Guardar un mensaje flash para informar al usuario
-                        Yii::$app->session->setFlash('warning', Yii::t('app', 'Tu suscripción ha expirado. Por favor renuévala para seguir usando todas las funcionalidades.'));
-
-                        // Redireccionar a la página de pago
-                        Yii::$app->session->setFlash('promotion', '15% de descuento por renovación de suscripción.');
-                        // Redirect with query parameter to identify the origin
-                        return $this->redirect(['/site/enable-subscription', 'source' => 'expired_subscription', 'promo' => '15']);
-                    }
-                    if (!$planToCheck || 
-                        empty($planToCheck->stripe_subscription_id) || 
-                        empty($planToCheck->stripe_subscription_status) || 
-                        $planToCheck->stripe_subscription_status === null) {
-                        // Guardar un mensaje flash para informar al usuario
+                    // Verificar el estado de la suscripción directamente en Stripe
+                    if (!$planToCheck || empty($planToCheck->stripe_subscription_id)) {
                         Yii::$app->session->setFlash('warning', Yii::t('app', 'Para poder usar todas las funcionalidades, por favor activa tu suscripción.'));
-                        // Redirect with query parameter to identify the origin
                         return $this->redirect(['/site/enable-subscription']);
+                    }
+
+                    try {
+                        $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+                        $stripeSubscription = $stripe->subscriptions->retrieve($planToCheck->stripe_subscription_id);
+                        $subscriptionStatus = $stripeSubscription->status;
+
+                        // Sincronizar el estado local con el de Stripe
+                        if ($planToCheck->stripe_subscription_status !== $subscriptionStatus) {
+                            $planToCheck->stripe_subscription_status = $subscriptionStatus;
+                            $planToCheck->save(false);
+                        }
+
+                        if ($subscriptionStatus === 'canceled') {
+                            Yii::$app->session->setFlash('warning', Yii::t('app', 'Tu suscripción ha expirado. Por favor renuévala para seguir usando todas las funcionalidades.'));
+                            Yii::$app->session->setFlash('promotion', '15% de descuento por renovación de suscripción.');
+                            return $this->redirect(['/site/enable-subscription', 'source' => 'expired_subscription', 'promo' => '15']);
+                        }
+
+                        $activeStatuses = ['active', 'trialing'];
+                        if (!in_array($subscriptionStatus, $activeStatuses)) {
+                            Yii::$app->session->setFlash('warning', Yii::t('app', 'Tu suscripción no está activa ({status}). Por favor revisa tu cuenta.', ['status' => $subscriptionStatus]));
+                            return $this->redirect(['/site/enable-subscription', 'source' => 'inactive_subscription']);
+                        }
+
+                    } catch (\Stripe\Exception\InvalidRequestException $e) {
+                        // Suscripción no encontrada en Stripe (ID inválido o eliminada)
+                        Yii::error('Suscripción no encontrada en Stripe: ' . $e->getMessage(), __METHOD__);
+                        Yii::$app->session->setFlash('warning', Yii::t('app', 'No se pudo verificar tu suscripción. Por favor contacta soporte.'));
+                        return $this->redirect(['/site/enable-subscription', 'source' => 'stripe_error']);
+                    } catch (\Exception $e) {
+                        // Error de red u otro error inesperado — usar estado local como fallback
+                        Yii::error('Error al verificar suscripción en Stripe durante login: ' . $e->getMessage(), __METHOD__);
+                        $activeStatuses = ['active', 'trialing'];
+                        if (!in_array($planToCheck->stripe_subscription_status, $activeStatuses)) {
+                            Yii::$app->session->setFlash('warning', Yii::t('app', 'Tu suscripción no está activa. Por favor renuévala.'));
+                            return $this->redirect(['/site/enable-subscription', 'source' => 'stripe_unavailable']);
+                        }
                     }
                 }
                 return $this->goBack();

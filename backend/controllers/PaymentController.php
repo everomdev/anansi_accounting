@@ -165,37 +165,36 @@ class PaymentController extends Controller
         }
     }
 
-    public function actionCreateCheckoutSession($price, $priceAmount, $coupon_id,$nickname)
+    public function actionCreateCheckoutSession($price, $priceAmount, $coupon_id = null, $nickname = null)
     {
         $user = User::findOne(['id' => \Yii::$app->user->id]);
-        //die(var_dump($nickname));
         if ($priceAmount >= 0) {
-            $session = $user->plan->generateCheckoutSession($user, $price, $priceAmount, $coupon_id, $nickname);
-            //die(var_dump($session));
+            // Normalize coupon_id: treat 'null' string, empty, or non-numeric values as null
+            $couponIdNormalized = (!$coupon_id || $coupon_id === 'null' || !is_numeric($coupon_id)) ? null : $coupon_id;
+
+            try {
+                $session = $user->plan->generateCheckoutSession($user, $price, $priceAmount, $couponIdNormalized, $nickname);
+            } catch (\Exception $e) {
+                \Yii::$app->session->setFlash('danger', "Error Stripe: " . $e->getMessage());
+                return $this->redirect(['site/enable-subscription']);
+            }
+
             if (empty($session)) {
                 \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
                 return $this->redirect(['site/enable-subscription']);
             }
-            if ($coupon_id !== 'null') {
+            if ($couponIdNormalized !== null) {
                 $coupon = \common\models\Coupon::find()
-                ->where(['id' => $coupon_id])
+                ->where(['id' => $couponIdNormalized])
                 ->one();
-                $coupon->usages = $coupon->usages + 1;
-                $coupon->save();
+                if ($coupon) {
+                    $coupon->usages = $coupon->usages + 1;
+                    $coupon->save();
+                }
             }
            
             return $this->redirect($session->url);
         } 
-        /*if($priceAmount == 0 ){
-            $subscription = $user->plan->createManualSubscription($user,$coupon_id);
-            if (empty($subscription)) {
-                \Yii::$app->session->setFlash('danger', "Parece que algo no va bien! Contacta al equipo de soporte.");
-                return $this->redirect(['site/enable-subscription']);
-            }
-
-            \Yii::$app->session->setFlash('success', "Subscription started");
-            return $this->redirect(['site/index']);
-        }*/
     }
 
     public function actionStripeCheckoutSuccess($session_id, $plan, $user)

@@ -815,9 +815,9 @@ $(document).ready(function() {
                            name="items[${index}][quantity]" 
                            class="form-control quantity-input" 
                            data-index="${index}"
-                           step="0.01" 
-                           min="0.01" 
-                           placeholder="0.00"
+                           step="0.001" 
+                           min="0.001" 
+                           placeholder="0.000"
                            required>
                 </td>
                 <td>

@@ -407,6 +407,24 @@ class User extends \Da\User\Model\User
         $business = RedisKeys::getBusiness();
         // Usar el plan del owner del business, no del usuario autenticado
         $plan = $business->user->plan;
+
+        // Verificar directamente en Stripe si la suscripción está activa
+        $userPlan = $business->user->userPlan;
+        if ($userPlan && $userPlan->stripe_subscription_id) {
+            try {
+                $stripe = new \Stripe\StripeClient(Yii::$app->params['stripe.secretKey']);
+                $subscription = $stripe->subscriptions->retrieve($userPlan->stripe_subscription_id);
+                $activeStatuses = ['active', 'trialing'];
+                if (!in_array($subscription->status, $activeStatuses)) {
+                    return true; // Suscripción inactiva en Stripe: bloquear creación
+                }
+            } catch (\Exception $e) {
+                Yii::error('Error al verificar suscripción en Stripe: ' . $e->getMessage(), __METHOD__);
+                // Si no se puede verificar, bloquear por seguridad
+                return true;
+            }
+        }
+
         switch ($restriction) {
             case 'recipes':
                 $recipesCount = StandardRecipe::find()

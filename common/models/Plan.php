@@ -330,18 +330,53 @@ class Plan extends \yii\db\ActiveRecord
                     'address' => 'auto', // Actualizar automáticamente la dirección del cliente
                 ],
             ];
-            // Agregar line_items según si hay un coupon_id o no
-            if ($coupon_id !== 'null') {
+            // Resolver si hay un cupón de DB válido
+            $stripeCouponId = null;
+            if ($coupon_id !== null && $coupon_id !== 'null') {
+                $coupon = Coupon::findOne(['id' => $coupon_id]);
+                if ($coupon && $coupon->stripe_coupon_id) {
+                    $stripeCouponId = $coupon->stripe_coupon_id;
+                }
+            }
+
+            if ($stripeCouponId) {
+                // Hay un cupón de DB: usar el precio original de Stripe + descuento vía cupón
                 $sessionData['line_items'][] = [
                     'price' => $priceId,
                     'quantity' => 1
                 ];
-                $coupon = Coupon::findOne(['id' => $coupon_id]);
                 $sessionData['discounts'] = [
-                    ['coupon' => $coupon->stripe_coupon_id]
+                    ['coupon' => $stripeCouponId]
                 ];
+            } elseif ($priceAmount !== null) {
+                // No hay cupón pero hay un monto custom (ej. promo 15%): recuperar precio de Stripe para comparar
+                $stripePrice = $stripe->prices->retrieve($priceId);
+                $stripeUnitAmount = $stripePrice->unit_amount; // en centavos
+                $requestedUnitAmount = (int) round($priceAmount * 100);
+
+                if ($requestedUnitAmount !== $stripeUnitAmount) {
+                    // El monto es diferente (hay descuento): usar price_data con el monto descontado
+                    $sessionData['line_items'][] = [
+                        'price_data' => [
+                            'currency'    => $stripePrice->currency,
+                            'unit_amount' => $requestedUnitAmount,
+                            'product'     => $stripePrice->product,
+                            'recurring'   => [
+                                'interval'       => $stripePrice->recurring->interval,
+                                'interval_count' => $stripePrice->recurring->interval_count,
+                            ],
+                        ],
+                        'quantity' => 1
+                    ];
+                } else {
+                    // Mismo precio: usar el price ID original
+                    $sessionData['line_items'][] = [
+                        'price'    => $priceId,
+                        'quantity' => 1
+                    ];
+                }
             } else {
-                // Always add line_items even without a coupon
+                // Sin descuento: usar el precio original de Stripe
                 $sessionData['line_items'][] = [
                     'price' => $priceId,
                     'quantity' => 1
@@ -356,10 +391,13 @@ class Plan extends \yii\db\ActiveRecord
             return $session;
         } catch (\Exception $e) {
             // Registrar el error en los logs
+            Yii::error('generateCheckoutSession ERROR: ' . $e->getMessage(), __METHOD__);
             Yii::error(Yaml::dump([
                 'message' => $e->getMessage(),
                 'trace' => $e->getTrace()
             ]));
+            // Lanzar la excepción para que el controlador pueda mostrarla
+            throw $e;
         }
 
         return null;
