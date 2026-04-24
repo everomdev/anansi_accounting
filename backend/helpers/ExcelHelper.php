@@ -1534,7 +1534,7 @@ if ($ccRow > 2) {
                     break;
                 }
                 $data = [];
-               
+                $data['_row'] = $rowIterator->current()->getRowIndex(); // Guardar número de fila para mensajes de error
                 $data['key'] = strval($cellIterator->current()->getValue()); // A - Clave
                 $cellIterator->next();
                 $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
@@ -1628,6 +1628,8 @@ if ($ccRow > 2) {
         $transaction = \Yii::$app->db->beginTransaction();
         try {
             foreach ($ingredientData as $data) {
+                $rowNumber = $data['_row'] ?? '?';
+                unset($data['_row']);
                 $ingredientStock = new IngredientStock();
                 $_price = $data['price'];
                 unset($data['price']);
@@ -1645,7 +1647,15 @@ if ($ccRow > 2) {
 
                     
                 }elseif ($ingredientStock->hasErrors()) {
-                    throw new HttpException(400, json_encode($ingredientStock->errors));
+                    $errors = $ingredientStock->errors;
+                    // Agregar número de fila a cada mensaje de error
+                    $errorMessages = [];
+                    foreach ($errors as $attribute => $messages) {
+                        foreach ($messages as $msg) {
+                            $errorMessages[] = "Fila {$rowNumber}: {$msg}";
+                        }
+                    }
+                    throw new HttpException(400, implode('; ', $errorMessages));
                 }
             }
             $transaction->commit();

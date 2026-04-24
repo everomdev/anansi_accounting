@@ -307,7 +307,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                         </li>
                         <li class="menu-item <?= ($currentControllerId == 'empleado' && $action == 'estadisticas') ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/empleado/estadisticas']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Estadísticas de Documentación') ?></div>
+                                <div><?= Yii::t('app', 'Expedientes') ?></div>
                             </a>
                         </li>
                     </ul>

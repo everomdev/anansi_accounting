@@ -190,7 +190,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'ingredient',
-                'label' => 'Ingrediente',
+                'label' => 'Insumo',
                 'headerOptions' => ['style' => 'min-width: 250px; width: 25%;'],
                 'filter' => '<div style="position: relative;">' . 
                     Html::textInput('IngredientStockSearch[ingredient]', $searchModel->ingredient, [
