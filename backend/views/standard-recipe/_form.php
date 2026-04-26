@@ -270,12 +270,60 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     echo '</div>';
                     ?>
                     <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
-                        <?= $form->field($model, 'is_food')->widget(\kartik\switchinput\SwitchInput::class, [
-                            'pluginOptions' => [
-                                'onText' => "Alimentos",
-                                'offText' => "Bebidas"
-                            ]
-                        ])->label("¿Alimentos o bebidas?") ?>
+                        <?php
+                        // Build map: category name → is_food for JS dynamic update
+                        $categoryIsFoodMap = [];
+                        foreach ($recipesCategories as $_cat) {
+                            $categoryIsFoodMap[$_cat->name] = $_cat->is_food; // null | 0 | 1
+                        }
+                        // Determine current category
+                        $_currentCat = null;
+                        if (!empty($model->type_of_recipe)) {
+                            foreach ($recipesCategories as $_cat) {
+                                if ($_cat->name === $model->type_of_recipe) {
+                                    $_currentCat = $_cat;
+                                    break;
+                                }
+                            }
+                        }
+                        function _isFoodBadgeHtml($cat) {
+                            if ($cat === null || $cat->is_food === null) {
+                                return '<span class="badge bg-warning text-dark">Sin definir en la categoría</span>';
+                            }
+                            return $cat->is_food
+                                ? '<span class="badge bg-primary">Alimentos</span>'
+                                : '<span class="badge bg-info text-dark">Bebidas</span>';
+                        }
+                        ?>
+                        <div class="row mb-3">
+                            <label class="col-sm-4 text-start"><?= Yii::t('app', 'Alimentos o Bebidas') ?></label>
+                            <div class="col-sm-8">
+                                <div class="form-control-plaintext" id="is-food-badge">
+                                    <?= _isFoodBadgeHtml($_currentCat) ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php $this->registerJs('
+                        (function() {
+                            var categoryIsFoodMap = ' . json_encode($categoryIsFoodMap) . ';
+                            function updateIsFoodBadge(categoryName) {
+                                var badge = document.getElementById("is-food-badge");
+                                if (!badge) return;
+                                if (categoryName && categoryIsFoodMap.hasOwnProperty(categoryName) && categoryIsFoodMap[categoryName] !== null) {
+                                    badge.innerHTML = categoryIsFoodMap[categoryName] == 1
+                                        ? \'<span class="badge bg-primary">Alimentos</span>\'
+                                        : \'<span class="badge bg-info text-dark">Bebidas</span>\';
+                                } else {
+                                    badge.innerHTML = \'<span class="badge bg-warning text-dark">Sin definir en la categoría</span>\';
+                                }
+                            }
+                            $(document).ready(function() {
+                                $("#standardrecipe-type_of_recipe").on("change", function() {
+                                    updateIsFoodBadge(this.value);
+                                });
+                            });
+                        })();
+                        '); ?>
                     <?php endif; ?>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6">

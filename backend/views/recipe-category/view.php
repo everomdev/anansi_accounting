@@ -31,6 +31,16 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'name',
+            [
+                'attribute' => 'type',
+                'value' => \common\models\RecipeCategory::getFormattedTypes()[$model->type] ?? $model->type,
+            ],
+            [
+                'attribute' => 'is_food',
+                'label' => 'Alimentos/Bebidas',
+                'value' => $model->getIsFoodLabel(),
+                'visible' => $model->type === \common\models\RecipeCategory::TYPE_MAIN,
+            ],
         ],
     ]) ?>
 

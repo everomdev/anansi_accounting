@@ -244,6 +244,20 @@ class StandardRecipe extends \yii\db\ActiveRecord
         if ($insert) {
             $this->in_menu = true;
         }
+
+        // Auto-derive is_food from the recipe category for main recipes
+        if ($this->type === self::STANDARD_RECIPE_TYPE_MAIN && !empty($this->type_of_recipe)) {
+            $category = RecipeCategory::find()
+                ->where([
+                    'name' => $this->type_of_recipe,
+                    'business_id' => $this->business_id,
+                    'type' => RecipeCategory::TYPE_MAIN,
+                ])
+                ->one();
+            if ($category && $category->is_food !== null) {
+                $this->is_food = (bool)$category->is_food;
+            }
+        }
         
         // Convert comma to dot in decimal values and remove thousands separators
         if (is_string($this->price)) {

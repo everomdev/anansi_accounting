@@ -12,6 +12,7 @@ use yii\helpers\ArrayHelper;
  * @property string $name
  * @property int|null $business_id
  * @property int $custom
+ * @property bool|null $is_food
  *
  * @property Business $business
  * @property string $type [varchar(255)]
@@ -39,9 +40,15 @@ class RecipeCategory extends \yii\db\ActiveRecord
             [['business_id', 'custom'], 'integer'],
             [['name', 'type'], 'string', 'max' => 255],
             [['custom'], 'default', 'value' => 0],
+            [['is_food'], 'boolean'],
             [['business_id'], 'exist', 'skipOnError' => true, 'targetClass' => Business::className(), 'targetAttribute' => ['business_id' => 'id']],
             [['type'], 'in', 'range' => [self::TYPE_MAIN, self::TYPE_SUB]],
             [['name', 'type'], 'unique', 'targetAttribute' => ['name', 'business_id', 'type'], 'message' => "Ya existe una categoría con este nombre"],
+            [['is_food'], 'required', 'when' => function ($model) {
+                return $model->type === self::TYPE_MAIN;
+            }, 'whenClient' => "function(attribute, value) {
+                return $('#recipecategory-type').val() === 'main';
+            }", 'message' => 'Debe indicar si la categoría es de Alimentos o Bebidas.'],
         ];
     }
 
@@ -56,6 +63,7 @@ class RecipeCategory extends \yii\db\ActiveRecord
             'type' => Yii::t('app', 'Type'),
             'business_id' => Yii::t('app', 'Business ID'),
             'custom' => Yii::t('app', 'Categoría personalizada'),
+            'is_food' => Yii::t('app', 'Alimentos o Bebidas'),
         ];
     }
 
@@ -75,6 +83,17 @@ class RecipeCategory extends \yii\db\ActiveRecord
             \common\models\RecipeCategory::TYPE_MAIN => Yii::t('app', 'For recipes'),
             \common\models\RecipeCategory::TYPE_SUB => Yii::t('app', 'For sub-recipes'),
         ];
+    }
+
+    public function getIsFoodLabel()
+    {
+        if ($this->type !== self::TYPE_MAIN) {
+            return null;
+        }
+        if ($this->is_food === null) {
+            return Yii::t('app', 'Sin definir');
+        }
+        return $this->is_food ? Yii::t('app', 'Alimentos') : Yii::t('app', 'Bebidas');
     }
 
     public function getTotalSales($month = null, $year = null)

@@ -28,6 +28,15 @@ use yii\bootstrap5\Modal;
         \common\models\RecipeCategory::TYPE_MAIN => Yii::t('app', 'For recipes'),
         \common\models\RecipeCategory::TYPE_SUB => Yii::t('app', 'For sub-recipes'),
     ]) ?>
+
+    <div id="is-food-field" style="<?= $model->type === \common\models\RecipeCategory::TYPE_SUB ? 'display:none;' : '' ?>">
+        <?= $form->field($model, 'is_food')->dropDownList([
+            '1' => Yii::t('app', 'Alimentos'),
+            '0' => Yii::t('app', 'Bebidas'),
+        ], [
+            'prompt' => Yii::t('app', 'Seleccionar...'),
+        ])->label(Yii::t('app', '¿Alimentos o Bebidas?')) ?>
+    </div>
     
     <?= $form->field($model, 'name')->textInput([
         'maxlength' => true,
@@ -99,6 +108,17 @@ $(document).ready(function() {
     var nameInput = $('#recipecategory-name');
     var typeSelect = $('#recipecategory-type');
     
+    // Mostrar/ocultar campo is_food según el tipo seleccionado
+    function toggleIsFoodField() {
+        var selectedType = typeSelect.val();
+        if (selectedType === 'main') {
+            $('#is-food-field').show();
+        } else {
+            $('#is-food-field').hide();
+            $('#recipecategory-is_food').val(''); // reset value for sub-recipes
+        }
+    }
+    
     // Mostrar/ocultar advertencia según el tipo seleccionado
     function toggleWarning() {
         var selectedType = typeSelect.val();
@@ -133,11 +153,13 @@ $(document).ready(function() {
     }
     
     // Verificar tipo inicial al cargar la página
+    toggleIsFoodField();
     toggleWarning();
     updateModalContent(); // Configurar modal inicial
     
     // Actualizar advertencia cuando cambie el tipo
     typeSelect.on('change', function() {
+        toggleIsFoodField();
         toggleWarning();
         nameInput.trigger('input'); // También actualizar autocompletado
     });
@@ -392,3 +414,24 @@ $(document).ready(function() {
 }
 </style>
 <?php endif; ?>
+<script>
+// Toggle is_food field — runs for both create and update
+$(document).ready(function() {
+    var typeSelect = $('#recipecategory-type');
+
+    function toggleIsFoodField() {
+        if (typeSelect.val() === 'main') {
+            $('#is-food-field').show();
+        } else {
+            $('#is-food-field').hide();
+            $('#recipecategory-is_food').val('');
+        }
+    }
+
+    toggleIsFoodField();
+
+    typeSelect.on('change.isFoodToggle', function() {
+        toggleIsFoodField();
+    });
+});
+</script>

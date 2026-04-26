@@ -8,6 +8,7 @@ use common\models\Ingredient;
 use common\models\Convoy;
 use common\models\IngredientStock;
 use common\models\IngredientStandardRecipe;
+use common\models\RecipeCategory;
 use common\models\StandardRecipe;
 use common\models\Movement;
 use common\models\Provider;
@@ -2564,9 +2565,6 @@ if ($ccRow > 2) {
                     }
                 }
                 $cellIterator->next();
-                $isFoodValue = trim($cellIterator->current()->getValue()); // K - Alimento o Bebida
-                $data['is_food'] = $isFoodValue === 'Alimento';
-                $cellIterator->next();
                 $convoyName = trim($cellIterator->current()->getValue()); // L - Convoy
                 if (!empty($convoyName)) {
                     $convoy = Convoy::find()->where(['name' => $convoyName, 'business_id' => $business->id])->one();
@@ -2580,6 +2578,16 @@ if ($ccRow > 2) {
 
                 $data['business_id'] = $business->id;
                 $data['row_number'] = $rowNumber;
+
+                // Derive is_food from the recipe category (TYPE_MAIN only)
+                $recipeCategory = RecipeCategory::find()
+                    ->where([
+                        'name' => $data['type_of_recipe'],
+                        'business_id' => $business->id,
+                        'type' => RecipeCategory::TYPE_MAIN,
+                    ])
+                    ->one();
+                $data['is_food'] = $recipeCategory ? (bool)$recipeCategory->is_food : true;
 
                 $recipeData[] = $data;
                 $rowIterator->next();

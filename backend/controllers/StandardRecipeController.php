@@ -2306,7 +2306,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $row = 2;
         foreach ($recipes as $recipe) {
             if ($type == StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
-                $sheet->setCellValue('A' . $row, $recipe->is_food == 1 ? 'Alimento' : 'Bebida');
+                $sheet->setCellValue('A' . $row, ($recipe->category->is_food === null) ? 'Sin definir' : ($recipe->category->is_food ? 'Alimento' : 'Bebida'));
                 $sheet->setCellValue('B' . $row, $recipe->title);
                 $sheet->setCellValue('C' . $row, $recipe->category ? $recipe->category->name : '');
                 $sheet->setCellValue('D' . $row, '$' . number_format($recipe->recipeLastPrice, 2));
@@ -2611,6 +2611,12 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         $mpdf->AddPage();
         
         // 3. CONTENIDO DE RECETAS
+        // Build category is_food map
+        $_catIsFoodMapPdf = [];
+        foreach (RecipeCategory::find()->where(['business_id' => $business->id, 'type' => RecipeCategory::TYPE_MAIN])->all() as $_c) {
+            $_catIsFoodMapPdf[$_c->name] = $_c->is_food;
+        }
+
         $html = '';
         $isFirst = true;
         
@@ -2634,6 +2640,12 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
             $html .= '<h3><strong>Tipo de receta:</strong> ' . htmlspecialchars($recipe->type_of_recipe ?? '') . '</h3>';
             $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+            if ($recipe->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN) {
+                $_isFoodVal = $_catIsFoodMapPdf[$recipe->type_of_recipe] ?? null;
+                $_isFoodLabel = ($_isFoodVal === null) ? 'Sin definir' : ($_isFoodVal ? 'Alimento' : 'Bebida');
+                $html .= '<h3><strong>Alimento o Bebida:</strong> ' . $_isFoodLabel . '</h3>';
+                $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
+            }
             $html .= '<h3 style="margin-bottom: 15px"><strong>Tiempo de preparación:</strong> ' . htmlspecialchars($recipe->time_of_preparation ?? '') . '</h3>';
             $html .= '<hr style="margin: 20px 0; border: 1px solid #ccc;">';
             $html .= '<h3 style="margin-bottom: 15px"><strong>Rendimiento:</strong> ' . htmlspecialchars($recipe->yield ?? '') . ' ' . htmlspecialchars($recipe->yield_um ?? '') . '</h3>';
@@ -3071,6 +3083,12 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         }
     
         // 6. Llenar las datos de recetas con el nuevo formato
+        // Build category is_food map
+        $_catIsFoodMapExport = [];
+        foreach (RecipeCategory::find()->where(['business_id' => $business->id, 'type' => RecipeCategory::TYPE_MAIN])->all() as $_c) {
+            $_catIsFoodMapExport[$_c->name] = $_c->is_food;
+        }
+
         $recipesRow = 2;
         $ingredientsRow = 2;
     
@@ -3147,7 +3165,9 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
             $recipesSheet->setCellValue($col++.$recipesRow, $durationUnit);
             if (!$isSubrecipe) {
                 $recipesSheet->setCellValue($col++.$recipesRow, $recipe->price);
-                $recipesSheet->setCellValue($col++.$recipesRow, $recipe->is_food ? 'Alimento' : 'Bebida');
+                // Derive is_food from recipe category
+                $_isFoodVal = $_catIsFoodMapExport[$recipe->type_of_recipe] ?? null;
+                $recipesSheet->setCellValue($col++.$recipesRow, ($_isFoodVal === null) ? '' : ($_isFoodVal ? 'Alimento' : 'Bebida'));
                 $recipesSheet->setCellValue($col++.$recipesRow, Convoy::find()->where(['id' => $recipe->convoy_id])->one()->name ?? '');
             }
             // NUEVO: Costo y % Costo
@@ -3285,7 +3305,6 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
         'Duración', 
         'Unidad de duración', 
         'Precio*', 
-        'Alimento o Bebida*', 
         'Convoy'
         
       ];
@@ -3565,20 +3584,6 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
          $ingredientsSheet->getCell('A'.$row)->setDataValidation(clone $validation);
      }
      
-     // b) Validación para Alimento o Bebida
-     $dataValidationFoodOrDrink = $recipesSheet->getCell('L2')->getDataValidation();
-     $dataValidationFoodOrDrink->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-     $dataValidationFoodOrDrink->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-     $dataValidationFoodOrDrink->setAllowBlank(false);
-     $dataValidationFoodOrDrink->setShowInputMessage(true);
-     $dataValidationFoodOrDrink->setShowErrorMessage(true);
-     $dataValidationFoodOrDrink->setShowDropDown(true);
-     $dataValidationFoodOrDrink->setErrorTitle('Error de entrada');
-     $dataValidationFoodOrDrink->setError('Este valor no es admitido');
-     $dataValidationFoodOrDrink->setPromptTitle('Selecciona una opción');
-     $dataValidationFoodOrDrink->setPrompt('Por favor, selecciona un valor del desplegable.');
-     $dataValidationFoodOrDrink->setFormula1('"Alimento,Bebida"');
-     
      // c) Validación para unidades de medida (UM) en INGREDIENTES - usar todas las unidades disponibles
      $dataValidationUM = $ingredientsSheet->getCell('E2')->getDataValidation();
      $dataValidationUM->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
@@ -3628,8 +3633,8 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationYield->setFormula1(0);
      $dataValidationYield->setFormula2(999999);
      
-     // f) Validación para convoy
-     $dataValidationConvoy = $recipesSheet->getCell('M2')->getDataValidation();
+     // f) Validación para convoy (ahora en columna L, ya que Alimento/Bebida fue eliminado)
+     $dataValidationConvoy = $recipesSheet->getCell('L2')->getDataValidation();
      $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
      $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
      $dataValidationConvoy->setAllowBlank(false);
@@ -3775,8 +3780,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
          }
          
          $recipesSheet->getCell("E$i")->setDataValidation(clone $dataValidationYield);
-         $recipesSheet->getCell("M$i")->setDataValidation(clone $dataValidationConvoy);
-         $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationFoodOrDrink);
+         $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationConvoy);
          $recipesSheet->getCell("D$i")->setDataValidation(clone $dataValidationTimeUnits);
          $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationTimeUnits);
          $recipesSheet->getCell("C$i")->setDataValidation(clone $dataValidationTimeValue);

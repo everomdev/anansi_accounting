@@ -194,6 +194,23 @@ $this->registerCss('
                 'headerOptions' => ['style' => 'width: 150px;'],
             ],
             [
+                'attribute' => 'is_food',
+                'label' => 'Alimentos/Bebidas',
+                'format' => 'raw',
+                'value' => function ($model) {
+                    if ($model->type !== \common\models\RecipeCategory::TYPE_MAIN) {
+                        return '<span class="text-muted">—</span>';
+                    }
+                    if ($model->is_food === null) {
+                        return '<span class="badge bg-danger"><i class="fas fa-exclamation-circle"></i> Sin definir</span>';
+                    }
+                    return $model->is_food
+                        ? '<span class="badge bg-primary"><i class="fas fa-utensils"></i> Alimentos</span>'
+                        : '<span class="badge bg-info text-dark"><i class="fas fa-glass-martini-alt"></i> Bebidas</span>';
+                },
+                'headerOptions' => ['style' => 'width: 160px;'],
+            ],
+            [
                 'attribute' => 'subrecipes_count',
                 'value' => function ($data) {
                     return $data->getSubRecipes()->count();
