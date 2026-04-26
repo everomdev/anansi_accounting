@@ -226,6 +226,13 @@ $(document).ready(function () {
 
     // Código para guardar los cambios de paso especial
     $('#save-edit-special-step').on('click', function () {
+        var $btn     = $(this);
+        var $spinner = $('#save-edit-special-step-spinner');
+        var $text    = $('#save-edit-special-step-text');
+        $btn.prop('disabled', true);
+        if ($spinner.length) $spinner.show();
+        if ($text.length) $text.text('Guardando...');
+
         var stepId = $('#edit-special-step-id').val();
         var activity = $('#edit-special-step-activity').val();
         var time = $('#edit-special-step-time').val();
@@ -240,9 +247,6 @@ $(document).ready(function () {
         formData.append('indicator', indicator);
         if (_image) formData.append('_image', _image);
         formData.append('remove_image', removeImage);
-        formData.append('type', 'special');
-        // Depuración
-        console.log('remove_image (special):', removeImage);
         $.ajax({
             url: '/standard-recipe/edit-step',
             type: 'POST',
@@ -250,16 +254,18 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function (response) {
-                // Mover el foco fuera del modal antes de ocultarlo para evitar advertencia aria-hidden
                 $('body').focus();
                 $('#modal-edit-special-step').modal('hide');
-                console.log('Cambios guardados exitosamente (special):', response);
                 $.pjax.reload({container: '#pjax-list-special-steps'});
-                location.reload(); // Recargar la página para reflejar los cambios
             },
             error: function (xhr, status, error) {
                 console.error('Error al guardar los cambios (special):', error);
                 alert('Error al guardar los cambios.');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+                if ($spinner.length) $spinner.hide();
+                if ($text.length) $text.text('Guardar');
             }
         });
     });

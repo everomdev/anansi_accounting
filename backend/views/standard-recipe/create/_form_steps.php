@@ -13,6 +13,7 @@
         'method' => 'post',
         'options' => [
             'enctype' => 'multipart/form-data',
+            'data-pjax-container' => $pjaxId,
         ]
     ]) ?>
     <?= $form->field($model, 'type')->hiddenInput()->label(false) ?>

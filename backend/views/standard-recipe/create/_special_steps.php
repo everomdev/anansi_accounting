@@ -76,12 +76,20 @@ use yii\helpers\ArrayHelper;
                                     'data-activity' => $step->activity,
                                     'data-time' => $step->time,
                                     'data-indicator' => $step->indicator,
-                                    'data-img' => $image ? $image->getUrl() : '',
+                                    'data-img' => $isRealImage ? $imgUrl : '',
                                 ]) ?>
                             </div>
                         </td>
                     </tr>
-<!-- Modal para mostrar imagen grande -->
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<?php \yii\widgets\Pjax::end(); ?>
+
+<!-- Modal imagen grande (fuera del pjax para evitar duplicados) -->
 <div class="modal fade" id="specialStepImageModal" tabindex="-1" aria-labelledby="specialStepImageModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -96,7 +104,7 @@ use yii\helpers\ArrayHelper;
   </div>
 </div>
 
-<!-- Modal edición paso especial -->
+<!-- Modal edición paso especial (fuera del pjax para evitar duplicados) -->
 <div class="modal fade" id="modal-edit-special-step" tabindex="-1" aria-labelledby="modal-edit-special-step-label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -109,15 +117,15 @@ use yii\helpers\ArrayHelper;
                     <input type="hidden" id="edit-special-step-id" name="id">
                     <div class="mb-3">
                         <label for="edit-special-step-activity" class="form-label"><?= Yii::t('app', 'Activity') ?></label>
-<input type="text" class="form-control" id="edit-special-step-activity" name="activity" autocomplete="off" autocorrect="off" spellcheck="false">
+                        <input type="text" class="form-control" id="edit-special-step-activity" name="activity" autocomplete="off" autocorrect="off" spellcheck="false">
                     </div>
                     <div class="mb-3">
                         <label for="edit-special-step-time" class="form-label"><?= Yii::t('app', 'Time') ?></label>
-<input type="text" class="form-control" id="edit-special-step-time" name="time" autocomplete="off" autocorrect="off" spellcheck="false">
+                        <input type="text" class="form-control" id="edit-special-step-time" name="time" autocomplete="off" autocorrect="off" spellcheck="false">
                     </div>
                     <div class="mb-3">
                         <label for="edit-special-step-indicator" class="form-label"><?= Yii::t('app', 'Indicator') ?></label>
-<input type="text" class="form-control" id="edit-special-step-indicator" name="indicator" autocomplete="off" autocorrect="off" spellcheck="false">
+                        <input type="text" class="form-control" id="edit-special-step-indicator" name="indicator" autocomplete="off" autocorrect="off" spellcheck="false">
                     </div>
                     <div class="mb-3">
                         <label for="edit-special-step-image" class="form-label"><?= Yii::t('app', 'Imagen') ?></label>
@@ -142,90 +150,3 @@ use yii\helpers\ArrayHelper;
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Loading spinner para el botón de guardar
-    var saveBtn = document.getElementById('save-edit-special-step');
-    var saveSpinner = document.getElementById('save-edit-special-step-spinner');
-    var saveText = document.getElementById('save-edit-special-step-text');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function() {
-            if (saveSpinner && saveText) {
-                saveSpinner.style.display = 'inline-block';
-                saveText.textContent = 'Cargando...';
-                saveBtn.disabled = true;
-            }
-        });
-    }
-    // Modal imagen grande
-    document.querySelectorAll('.special-step-img-link').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            var imgSrc = this.getAttribute('data-img');
-            var modalImg = document.getElementById('special-step-modal-img');
-            modalImg.src = imgSrc;
-            var modal = new bootstrap.Modal(document.getElementById('specialStepImageModal'));
-            modal.show();
-        });
-    });
-    var specialStepImageModal = document.getElementById('specialStepImageModal');
-    if (specialStepImageModal) {
-        specialStepImageModal.addEventListener('hidden.bs.modal', function () {
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = '';
-            document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
-        });
-    }
-
-    // Modal edición paso especial
-    document.querySelectorAll('.edit-special-step').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var id = this.getAttribute('data-id');
-            var activity = this.getAttribute('data-activity');
-            var time = this.getAttribute('data-time');
-            var indicator = this.getAttribute('data-indicator');
-            var imgUrl = this.getAttribute('data-img');
-            var previewContainer = document.getElementById('edit-special-step-image-preview-container');
-            var previewImg = document.getElementById('edit-special-step-image-preview');
-            var removeInput = document.getElementById('edit-special-step-remove-image');
-            var removeBtn = document.getElementById('edit-special-step-remove-image-btn');
-            document.getElementById('edit-special-step-id').value = id;
-            document.getElementById('edit-special-step-activity').value = activity;
-            document.getElementById('edit-special-step-time').value = time;
-            document.getElementById('edit-special-step-indicator').value = indicator;
-            // Reset remove_image
-            removeInput.value = '0';
-            if (imgUrl) {
-                previewImg.src = imgUrl;
-                previewContainer.style.display = 'block';
-                removeBtn.style.display = 'flex';
-            } else {
-                previewImg.src = '';
-                previewContainer.style.display = 'none';
-                removeBtn.style.display = 'none';
-            }
-        });
-    });
-    // Lógica para eliminar imagen con la X
-    var removeBtn = document.getElementById('edit-special-step-remove-image-btn');
-    if (removeBtn) {
-        removeBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            var previewContainer = document.getElementById('edit-special-step-image-preview-container');
-            var previewImg = document.getElementById('edit-special-step-image-preview');
-            var removeInput = document.getElementById('edit-special-step-remove-image');
-            previewImg.src = '';
-            previewContainer.style.display = 'none';
-            removeInput.value = '1';
-        });
-    }
-});
-</script>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<?php \yii\widgets\Pjax::end(); ?>

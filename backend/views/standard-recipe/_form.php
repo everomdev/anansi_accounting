@@ -515,6 +515,7 @@ $this->registerJs($js);
 // --- JS de pasos de procedimiento (aquí para que pjax no lo duplique) ---
 $confirmStepMsg = Yii::t('app', 'Are you sure you want to delete this step?');
 $addBtnLabel = Yii::t('app', 'Add');
+$editStepUrl = \yii\helpers\Url::to(['standard-recipe/edit-step']);
 $this->registerJs(<<<JS
 (function() {
     function cleanModalBackdrop() {
@@ -540,9 +541,10 @@ $this->registerJs(<<<JS
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    window._stepJustAdded = true;
+                    var container = \$form[0].getAttribute('data-pjax-container') || '#pjax-list-steps';
+                    if (container === '#pjax-list-steps') window._stepJustAdded = true;
                     \$form[0].reset();
-                    \$.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
+                    \$.pjax.reload({ container: container, timeout: 10000 });
                 } else {
                     alert(response.message || 'Error al agregar el paso');
                     \$btn.prop('disabled', false).html(originalHtml);
@@ -585,7 +587,7 @@ $this->registerJs(<<<JS
     });
 
     // --- Abrir collapse y scroll tras agregar paso ---
-    \$(document).on('pjax:complete', '#pjax-list-steps', function() {
+    \$(document).off('pjax:complete.steps').on('pjax:complete.steps', '#pjax-list-steps', function() {
         if (!window._stepJustAdded) return;
         window._stepJustAdded = false;
         var collapseEl = document.getElementById('collapseSteps');
@@ -605,8 +607,27 @@ $this->registerJs(<<<JS
         }, 50);
     });
 
+    \$(document).off('pjax:complete.special-steps').on('pjax:complete.special-steps', '#pjax-list-special-steps', function() {
+        window._stepJustAdded = false;
+        var collapseEl = document.getElementById('collapseSpecialSteps');
+        if (!collapseEl) return;
+        collapseEl.style.transition = 'none';
+        collapseEl.classList.remove('collapsing');
+        collapseEl.classList.add('show');
+        collapseEl.style.height = '';
+        var toggleBtn = document.querySelector('[data-bs-target="#collapseSpecialSteps"]');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+        setTimeout(function() {
+            collapseEl.style.transition = '';
+            collapseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    });
+
     // --- Cerrar modal y limpiar backdrop tras pjax ---
-    \$(document).on('pjax:end', '#pjax-list-steps', function() {
+    \$(document).on('pjax:end', '#pjax-list-steps, #pjax-list-special-steps', function() {
         ['modal-add-step', 'modal-add-special-step'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) { var inst = bootstrap.Modal.getInstance(el); if (inst) inst.hide(); }
@@ -660,6 +681,43 @@ $this->registerJs(<<<JS
         document.getElementById('edit-step-image-preview').src = '';
         document.getElementById('edit-step-remove-image').value = '1';
     });
+
+    // --- Modal editar paso especial ---
+    \$(document).on('click', '.edit-special-step', function() {
+        var imgUrl           = this.getAttribute('data-img');
+        var previewContainer = document.getElementById('edit-special-step-image-preview-container');
+        var previewImg       = document.getElementById('edit-special-step-image-preview');
+        var removeInput      = document.getElementById('edit-special-step-remove-image');
+        var removeBtn        = document.getElementById('edit-special-step-remove-image-btn');
+        var fileInput        = document.getElementById('edit-special-step-image');
+        document.getElementById('edit-special-step-id').value        = this.getAttribute('data-id');
+        document.getElementById('edit-special-step-activity').value  = this.getAttribute('data-activity');
+        document.getElementById('edit-special-step-time').value      = this.getAttribute('data-time');
+        document.getElementById('edit-special-step-indicator').value = this.getAttribute('data-indicator');
+        if (removeInput) removeInput.value = '0';
+        if (fileInput) fileInput.value = '';
+        if (imgUrl) {
+            if (previewImg) previewImg.src = imgUrl;
+            if (previewContainer) previewContainer.style.display = 'block';
+            if (removeBtn) removeBtn.style.display = 'flex';
+        } else {
+            if (previewImg) previewImg.src = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (removeBtn) removeBtn.style.display = 'none';
+        }
+    });
+    \$(document).on('click', '#edit-special-step-remove-image-btn', function(e) {
+        e.preventDefault();
+        document.getElementById('edit-special-step-image-preview-container').style.display = 'none';
+        document.getElementById('edit-special-step-image-preview').src = '';
+        document.getElementById('edit-special-step-remove-image').value = '1';
+    });
+    \$(document).on('click', '#save-edit-special-step', function() {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('modal-edit-special-step'));
+        if (modal) modal.hide();
+        setTimeout(cleanModalBackdrop, 500);
+    });
+    \$(document).on('hidden.bs.modal', '#modal-edit-special-step', function() { cleanModalBackdrop(); });
 })();
 JS, \yii\web\View::POS_READY);
 ?>
