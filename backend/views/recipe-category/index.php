@@ -195,7 +195,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'is_food',
-                'label' => 'Alimentos/Bebidas',
+                'label' => 'Rubro',
                 'format' => 'raw',
                 'value' => function ($model) {
                     if ($model->type !== \common\models\RecipeCategory::TYPE_MAIN) {
