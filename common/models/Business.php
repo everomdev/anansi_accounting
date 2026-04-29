@@ -192,42 +192,45 @@ class Business extends \yii\db\ActiveRecord
     public function initRecipeCategories()
     {
         $data = [
-            ["Salsas", $this->id, RecipeCategory::TYPE_SUB],
-            ["Transformados", $this->id, RecipeCategory::TYPE_SUB],
-            ["Porcionados", $this->id, RecipeCategory::TYPE_SUB],
-            ["Fondos", $this->id, RecipeCategory::TYPE_SUB],
-            ["Bases", $this->id, RecipeCategory::TYPE_SUB],
-            ["Guarnición", $this->id, RecipeCategory::TYPE_SUB],
-            ["Masas", $this->id, RecipeCategory::TYPE_SUB],
-            ["Mezcladores", $this->id, RecipeCategory::TYPE_SUB],
-            ["Mezclas simples", $this->id, RecipeCategory::TYPE_SUB],
-            ["Preparados", $this->id, RecipeCategory::TYPE_SUB],
-            ["Conservados", $this->id, RecipeCategory::TYPE_SUB],
-            ["Coberturas", $this->id, RecipeCategory::TYPE_SUB],
-            ["Bebidas base", $this->id, RecipeCategory::TYPE_SUB],
-            ["Decoraciones comestibles", $this->id, RecipeCategory::TYPE_SUB],
-            ["Sopas", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Ensaladas", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Aves", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Carnes", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Plato Fuerte", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Especialidad", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Pescado", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Postres", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Vegetariano", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Hamburguesas", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Bebidas Calientes", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Bebidas Frías", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Refrescos", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Cervezas", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Vinos", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Destilados", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Cócteles", $this->id, RecipeCategory::TYPE_MAIN],
-            ["Mezcladores", $this->id, RecipeCategory::TYPE_MAIN],
+            // TYPE_SUB — sin clasificación de alimento/bebida
+            ["Salsas", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Transformados", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Porcionados", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Fondos", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Bases", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Guarnición", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Masas", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Mezcladores", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Mezclas simples", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Preparados", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Conservados", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Coberturas", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Bebidas base", $this->id, RecipeCategory::TYPE_SUB, null],
+            ["Decoraciones comestibles", $this->id, RecipeCategory::TYPE_SUB, null],
+            // TYPE_MAIN — Alimentos (is_food = true)
+            ["Sopas", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Ensaladas", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Aves", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Carnes", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Plato Fuerte", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Especialidad", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Pescado", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Postres", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Vegetariano", $this->id, RecipeCategory::TYPE_MAIN, true],
+            ["Hamburguesas", $this->id, RecipeCategory::TYPE_MAIN, true],
+            // TYPE_MAIN — Bebidas (is_food = false)
+            ["Bebidas Calientes", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Bebidas Frías", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Refrescos", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Cervezas", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Vinos", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Destilados", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Cócteles", $this->id, RecipeCategory::TYPE_MAIN, false],
+            ["Mezcladores", $this->id, RecipeCategory::TYPE_MAIN, false],
         ];
 
         Yii::$app->db->createCommand()
-            ->batchInsert('recipe_category', ['name', 'business_id', 'type'], $data)
+            ->batchInsert('recipe_category', ['name', 'business_id', 'type', 'is_food'], $data)
             ->execute();
     }
 
