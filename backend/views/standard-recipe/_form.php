@@ -437,6 +437,7 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                             </div>
                         </div>
                     <?php endif; ?>
+                    <div class="pending-field-group" data-field="observation">
                     <?= $form->field($model, 'observation')->widget(Summernote::class, [
                         'useKrajeePresets' => true,
                         'useKrajeeStyle' => false,
@@ -450,6 +451,7 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                             ]
                         ]
                     ]) ?>
+                    </div>
                 </div>
             </div>
             <?= $this->render('create/_ingredients_selection', [
@@ -468,7 +470,6 @@ $js = <<<JS
     function updatePendingCheckboxes() {
         $('.pending-field-group').each(function() {
             var field = $(this).data('field');
-            if (field === 'observation') return; // No permitir checkbox en Observaciones
             var \$existing = \$(this).find('.pending-checkbox');
 
             if (pendingMode) {
