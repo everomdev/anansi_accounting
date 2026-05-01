@@ -25,7 +25,19 @@ use common\models\AreaTrabajo;
         </div>
     </div>
 
-    <?= $form->field($model, 'descripcion')->textarea(['rows' => 3, 'placeholder' => 'Descripción del área (opcional)']) ?>
+    <?= $form->field($model, 'descripcion')
+        ->textarea(['rows' => 3, 'placeholder' => 'Descripción del área (opcional)', 'maxlength' => 255, 'id' => 'area-descripcion'])
+        ->hint('<small class="text-muted"><span id="desc-count">' . (255 - strlen($model->descripcion ?? '')) . '</span> caracteres restantes de 255</small>') ?>
+
+    <?php $this->registerJs(<<<JS
+        var descInput = document.getElementById('area-descripcion');
+        var descCount = document.getElementById('desc-count');
+        descInput.addEventListener('input', function () {
+            var remaining = 255 - this.value.length;
+            descCount.textContent = remaining;
+            descCount.style.color = remaining < 20 ? '#dc3545' : '';
+        });
+    JS); ?>
 
     <div class="form-group mt-3">
         <?= Html::submitButton('<i class="bx bx-save"></i> Guardar', ['class' => 'btn btn-success']) ?>

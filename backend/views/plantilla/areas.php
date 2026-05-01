@@ -62,19 +62,25 @@ $this->params['breadcrumbs'][] = $this->title;
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <?php $empleadosCount = $area->getEmpleadosCount(); ?>
                                         <?= Html::a('<i class="bx bx-show"></i>', ['puestos', 'area_id' => $area->id], [
                                             'class' => 'btn btn-sm btn-success',
                                             'title' => 'Ver puestos'
                                         ]) ?>
                                         <?= Html::a('<i class="bx bx-edit"></i>', ['update-area', 'id' => $area->id], [
                                             'class' => 'btn btn-sm btn-success',
-                                            'title' => 'Editar'
+                                            'title' => 'Editar',
+                                            'onclick' => $empleadosCount > 0
+                                                ? 'return confirm("Esta área tiene ' . $empleadosCount . ' ' . ($empleadosCount === 1 ? 'empleado asignado' : 'empleados asignados') . '. Los cambios que realice afectarán a ' . ($empleadosCount === 1 ? 'ese empleado' : 'esos empleados') . '. ¿Desea continuar?");'
+                                                : null,
                                         ]) ?>
                                         <?= Html::a('<i class="bx bx-trash"></i>', ['delete-area', 'id' => $area->id], [
                                             'class' => 'btn btn-sm btn-success',
                                             'title' => 'Eliminar',
                                             'data' => [
-                                                'confirm' => '¿Está seguro de eliminar esta área? Se eliminarán todos los puestos asociados.',
+                                                'confirm' => $empleadosCount > 0
+                                                    ? '¿Está seguro de eliminar esta área? Tiene ' . $empleadosCount . ' ' . ($empleadosCount === 1 ? 'empleado asignado que se verá afectado' : 'empleados asignados que se verán afectados') . '. Se eliminarán todos los puestos asociados.'
+                                                    : '¿Está seguro de eliminar esta área? Se eliminarán todos los puestos asociados.',
                                                 'method' => 'post',
                                             ],
                                         ]) ?>
