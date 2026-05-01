@@ -340,18 +340,18 @@ $buildRecipeGrid = function (
                 <div class="gp-card-label">Insumos</div>
             </div>
         </div>
-        <div class="gp-card" data-tab="recipe">
-            <div class="gp-card-icon gp-icon-recipe"><i class="fas fa-utensils"></i></div>
-            <div class="gp-card-body">
-                <div class="gp-card-count"><?= $counts['recipe'] ?></div>
-                <div class="gp-card-label">Recetas</div>
-            </div>
-        </div>
         <div class="gp-card" data-tab="subrecipe">
             <div class="gp-card-icon gp-icon-subrecipe"><i class="fas fa-layer-group"></i></div>
             <div class="gp-card-body">
                 <div class="gp-card-count"><?= $counts['subrecipe'] ?></div>
                 <div class="gp-card-label">Subrecetas</div>
+            </div>
+        </div>
+        <div class="gp-card" data-tab="recipe">
+            <div class="gp-card-icon gp-icon-recipe"><i class="fas fa-utensils"></i></div>
+            <div class="gp-card-body">
+                <div class="gp-card-count"><?= $counts['recipe'] ?></div>
+                <div class="gp-card-label">Recetas</div>
             </div>
         </div>
     </div>
@@ -362,13 +362,13 @@ $buildRecipeGrid = function (
             <i class="fas fa-boxes"></i> Insumos
             <span class="gp-tab-badge"><?= $counts['ingredient'] ?></span>
         </button>
-        <button class="gp-tab-btn" data-tab="recipe">
-            <i class="fas fa-utensils"></i> Recetas
-            <span class="gp-tab-badge"><?= $counts['recipe'] ?></span>
-        </button>
         <button class="gp-tab-btn" data-tab="subrecipe">
             <i class="fas fa-layer-group"></i> Subrecetas
             <span class="gp-tab-badge"><?= $counts['subrecipe'] ?></span>
+        </button>
+        <button class="gp-tab-btn" data-tab="recipe">
+            <i class="fas fa-utensils"></i> Recetas
+            <span class="gp-tab-badge"><?= $counts['recipe'] ?></span>
         </button>
     </div>
 
@@ -412,18 +412,6 @@ $buildRecipeGrid = function (
             <?php endif; ?>
         </div>
 
-        <!-- ── Recetas ── -->
-        <div class="gp-panel" id="panel-recipe">
-            <?php if ($counts['recipe'] === 0): ?>
-                <div class="gp-empty">
-                    <i class="fas fa-check-circle"></i>
-                    <p>No hay recetas con campos pendientes.</p>
-                </div>
-            <?php else: ?>
-                <?= $buildRecipeGrid($recipeProvider, 'standard-recipe/update') ?>
-            <?php endif; ?>
-        </div>
-
         <!-- ── Subrecetas ── -->
         <div class="gp-panel" id="panel-subrecipe">
             <?php if ($counts['subrecipe'] === 0): ?>
@@ -433,6 +421,18 @@ $buildRecipeGrid = function (
                 </div>
             <?php else: ?>
                 <?= $buildRecipeGrid($subrecipeProvider, 'standard-recipe/update') ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- ── Recetas ── -->
+        <div class="gp-panel" id="panel-recipe">
+            <?php if ($counts['recipe'] === 0): ?>
+                <div class="gp-empty">
+                    <i class="fas fa-check-circle"></i>
+                    <p>No hay recetas con campos pendientes.</p>
+                </div>
+            <?php else: ?>
+                <?= $buildRecipeGrid($recipeProvider, 'standard-recipe/update') ?>
             <?php endif; ?>
         </div>
 
@@ -462,7 +462,7 @@ $js = <<<JS
     cards.forEach(card => card.addEventListener('click', () => activate(card.dataset.tab)));
 
     // Auto-select first tab with items
-    const order = ['ingredient', 'recipe', 'subrecipe'];
+    const order = ['ingredient', 'subrecipe', 'recipe'];
     const first = order.find(t => {
         const badge = document.querySelector('.gp-tab-btn[data-tab="' + t + '"] .gp-tab-badge');
         return badge && parseInt(badge.textContent) > 0;
