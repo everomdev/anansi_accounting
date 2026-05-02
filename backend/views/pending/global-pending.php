@@ -28,6 +28,7 @@ $fieldLabels = [
     'max_stock'         => 'Stock Máximo',
     'key'               => 'Clave',
     'adjustedPrice'     => 'Precio ajustado',
+    'observations'      => 'Observaciones',
     // Recetas / subrecetas
     'title'               => 'Nombre',
     'type'                => 'Tipo',

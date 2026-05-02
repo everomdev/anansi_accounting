@@ -204,7 +204,7 @@ $providers = \yii\helpers\ArrayHelper::map(Provider::find()->where(['business_id
                     ])->label("Proveedores") ?>
                 </div>
 
-                <div class="col-12 mb-3">
+                <div class="col-12 mb-3 pending-field-group" data-field="observations">
                     <?= $form->field($model, 'observations')->textarea([
                         'rows' => 4, 'placeholder' => 'Añada aquí cualquier nota relevante sobre el insumo...'
                     ])->label('Observaciones') ?>
@@ -512,7 +512,6 @@ $js = <<<JS
     function updatePendingCheckboxes() {
         \$('.pending-field-group').each(function() {
             var field = \$(this).data('field');
-            if (field === 'observations') return; // No permitir checkbox en Observaciones
             var \$existing = \$(this).find('.pending-checkbox');
 
             if (pendingMode) {
