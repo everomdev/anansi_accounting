@@ -1540,7 +1540,7 @@ if ($ccRow > 2) {
                 $cellIterator->next();
                 $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
                 $cellIterator->next();
-                $data['brand'] = $cellIterator->current()->getValue(); // C - Marca
+                $data['brand'] = $cellIterator->current()->getValue() !== null ? strval($cellIterator->current()->getValue()) : ''; // C - Marca
                 $cellIterator->next();
                 // Obtener presentación como string, manejando cualquier tipo de contenido
                 // Usar getFormattedValue() para obtener el texto tal como se ve en Excel
