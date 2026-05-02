@@ -360,7 +360,7 @@ $(document).on('change', ".allergen-checkbox", function (event) {
 })
 
 $(document).on('keyup', "#allergies-other", function (event) {
-    if(event.keyCode !== 186){
+    if(event.key !== ';'){
         return;
     }
     let input = $(this);
