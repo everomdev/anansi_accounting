@@ -1614,7 +1614,7 @@ if ($ccRow > 2) {
                     ])
                     ->one();
                 if(empty($category)){
-                    throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data[2]}\"");
+                    throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data['category_id']}\"");
                 }
 
                 $data['category_id'] = $category->id;
