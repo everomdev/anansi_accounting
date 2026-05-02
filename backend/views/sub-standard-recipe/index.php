@@ -73,10 +73,17 @@ window.clearTypeFilter = function() {
 // Handlers para los eventos
 window.titleInputHandler = function(event) {
     const clearTitleBtn = document.getElementById('clear-title-btn');
+    const titleInput = document.getElementById('title-filter');
     if (clearTitleBtn) {
-        // Usar event.target.value en lugar de this.value para mayor seguridad
         const value = event && event.target ? event.target.value : '';
         clearTitleBtn.style.display = value ? 'block' : 'none';
+    }
+    if (titleInput) {
+        if (titleInput.value) {
+            titleInput.classList.add('filter-has-value');
+        } else {
+            titleInput.classList.remove('filter-has-value');
+        }
     }
 };
 
@@ -100,7 +107,12 @@ window.setupFilterButtons = function() {
     if (titleInput && clearTitleBtn) {
         // Mostrar/ocultar botón según el estado actual
         clearTitleBtn.style.display = titleInput.value ? 'block' : 'none';
-        
+        // Ocultar/mostrar lupa según el estado actual
+        if (titleInput.value) {
+            titleInput.classList.add('filter-has-value');
+        } else {
+            titleInput.classList.remove('filter-has-value');
+        }
         try {
             // Remover listeners anteriores y agregar nuevo
             titleInput.removeEventListener('input', window.titleInputHandler);
@@ -229,6 +241,12 @@ $this->registerCss('
         color: #dc3545;
         background-color: rgba(220, 53, 69, 0.1);
         border-radius: 50%;
+    }
+
+    /* Ocultar lupa cuando el campo tiene valor */
+    #title-filter.filter-has-value {
+        background-image: none !important;
+        padding-right: 22px !important;
     }
 ');
 ?>

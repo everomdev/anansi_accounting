@@ -105,6 +105,12 @@ $this->registerCss('
         background-color: rgba(220, 53, 69, 0.1);
         border-radius: 50%;
     }
+
+    /* Ocultar lupa cuando el campo tiene valor */
+    #title-filter.filter-has-value {
+        background-image: none !important;
+        padding-right: 22px !important;
+    }
 ');
 ?>
 <div class="standard-recipe-index">
@@ -570,6 +576,12 @@ window.titleInputHandler = function() {
     if (clearTitleBtn) {
         clearTitleBtn.style.display = this.value ? 'block' : 'none';
     }
+    // Ocultar/mostrar lupa
+    if (this.value) {
+        this.classList.add('filter-has-value');
+    } else {
+        this.classList.remove('filter-has-value');
+    }
 };
 
 window.typeSelectHandler = function() {
@@ -589,7 +601,12 @@ window.setupFilterButtons = function() {
     if (titleInput && clearTitleBtn) {
         // Mostrar/ocultar botón según el estado actual
         clearTitleBtn.style.display = titleInput.value ? 'block' : 'none';
-        
+        // Ocultar/mostrar lupa según el estado actual
+        if (titleInput.value) {
+            titleInput.classList.add('filter-has-value');
+        } else {
+            titleInput.classList.remove('filter-has-value');
+        }
         // Remover listeners anteriores y agregar nuevo
         titleInput.removeEventListener('input', titleInputHandler);
         titleInput.addEventListener('input', titleInputHandler);

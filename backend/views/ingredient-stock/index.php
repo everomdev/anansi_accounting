@@ -93,6 +93,37 @@ $this->registerCss('
         outline: 0;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
+
+    /* Ocultar lupa cuando el campo tiene valor */
+    [data-trigger-change].filter-has-value,
+    #title-filter.filter-has-value {
+        background-image: none !important;
+        padding-right: 22px !important;
+    }
+
+    /* Wrapper y botón X para filtros */
+    .filter-input-wrapper {
+        position: relative;
+        display: block;
+    }
+    .filter-clear-btn {
+        position: absolute;
+        right: 5px;
+        top: 35%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #aaa;
+        font-size: 15px;
+        line-height: 1;
+        padding: 0;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        display: none;
+        z-index: 5;
+    }
+    .filter-clear-btn:hover { color: #333; }
 ');
 ?>
 <div class="ingredient-stock-index">
@@ -731,6 +762,64 @@ $(document).ready(function() {
         if ($(this).val().trim() !== '') {
             $(this).addClass('filter-active');
         }
+    });
+
+    // ===== ICONO LUPA / BOTÓN X =====
+    function setupFilterClearButtons() {
+        \$('[data-trigger-change]').each(function() {
+            var \$input = \$(this);
+            if (\$input.is('select')) return;
+            if (\$input.parent().hasClass('filter-input-wrapper')) return;
+            \$input.wrap(\$('<div>').addClass('filter-input-wrapper'));
+            var \$btn = \$('<button>').attr('type', 'button').addClass('filter-clear-btn').attr('title', 'Limpiar filtro').text('\u00d7');
+            \$input.after(\$btn);
+        });
+    }
+
+    function updateFilterIcon(el) {
+        if (!el) return;
+        var \$el = \$(el);
+        var hasValue = \$el.val().trim() !== '';
+        if (hasValue) {
+            \$el.addClass('filter-has-value');
+        } else {
+            \$el.removeClass('filter-has-value');
+        }
+        // Botón X para inputs envueltos
+        \$el.siblings('.filter-clear-btn').toggle(hasValue);
+        // Botón X especial para #title-filter
+        if (el.id === 'title-filter') {
+            var btn = document.getElementById('clear-title-btn');
+            if (btn) btn.style.display = hasValue ? 'block' : 'none';
+        }
+    }
+
+    // Click en botón X de filtros genéricos
+    \$(document).on('click', '.filter-clear-btn', function() {
+        var \$input = \$(this).siblings('[data-trigger-change]');
+        \$input.val('');
+        updateFilterIcon(\$input[0]);
+        var form = \$input.closest('form');
+        \$.pjax.reload({ container: '#ingredient-stock-pjax', data: form.serialize(), timeout: 10000 });
+    });
+
+    // Estado inicial
+    setupFilterClearButtons();
+    \$('[data-trigger-change], #title-filter').each(function() {
+        updateFilterIcon(this);
+    });
+
+    // Al escribir
+    \$(document).on('input', '[data-trigger-change], #title-filter', function() {
+        updateFilterIcon(this);
+    });
+
+    // Después de recarga PJAX
+    \$(document).on('pjax:success', '#ingredient-stock-pjax', function() {
+        setupFilterClearButtons();
+        \$('[data-trigger-change], #title-filter').each(function() {
+            updateFilterIcon(this);
+        });
     });
     
     // ===== MANEJO DE ADVERTENCIAS PARA EDITAR/ELIMINAR INSUMOS =====
