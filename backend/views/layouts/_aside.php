@@ -297,7 +297,7 @@ $administracionConfiguracionActive = in_array($currentControllerId, ['users', 'b
                     <ul class="sub-menu">
                         <li class="menu-item <?= ($currentControllerId == 'empleado' && in_array($action, ['index', 'view', 'create', 'update'])) ? 'active' : '' ?>">
                             <a href="<?= \yii\helpers\Url::to(['/empleado/index']) ?>" class="menu-link">
-                                <div><?= Yii::t('app', 'Empleados') ?></div>
+                                <div><?= Yii::t('app', 'Colaboradores') ?></div>
                             </a>
                         </li>
                         <li class="menu-item <?= ($currentControllerId == 'plantilla') ? 'active' : '' ?>">
