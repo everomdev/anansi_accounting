@@ -429,7 +429,8 @@ class IngredientStock extends \yii\db\ActiveRecord
     public function getValueInMoney()
     {
         $latestPrice = $this->lastUnitPrice;
-        return $this->quantity * $latestPrice / $this->portions_per_unit;
+        //return $this->quantity * $latestPrice / $this->portions_per_unit;
+        return $this->quantity * $latestPrice;
     }
 
     public function getName()

@@ -116,6 +116,10 @@ $this->registerCss("
                 'attribute' => 'quantity',
                 'filter' => false, // Deshabilitar filtro para evitar quantity=0
             ],
+             [
+                'attribute' => 'portion_um',
+                'filter' => false, // Deshabilitar filtro para evitar quantity=0
+            ],
             [
                 'label' => Yii::t('app', "Value"),
                 'value' => function ($data) {
