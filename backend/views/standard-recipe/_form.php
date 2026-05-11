@@ -141,7 +141,7 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     <?php if (!$model->isNewRecord): ?>
                     <div class="pending-field-group" data-field="title">
                         <?= $form->field($model, 'title', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}{error}</div></div>"
                         ])->textInput([
                             'id' => 'title-input',
                             'placeholder' => $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
@@ -157,8 +157,8 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     <?php endif; ?>
                     <div class="pending-field-group" data-field="type_of_recipe">
                         <?= $form->field($model, 'type_of_recipe', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
-                        ])->dropDownList($recipesCategoriesMap)->label(
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}{error}</div></div>"
+                        ])->dropDownList($recipesCategoriesMap, ['prompt' => Yii::t('app', 'Seleccione una categoría...')])->label(
                             $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
                                 ? Yii::t('app', 'Categoría de subreceta')
                                 : Yii::t('app', 'Categoría de receta'),
@@ -231,11 +231,17 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     $yieldUmOptions = \yii\helpers\ArrayHelper::map($yieldUms, 'name', 'name');
                     $yieldUmOptions = ['' => 'Sin unidades'] + $yieldUmOptions;
                     //var_dump($model);
-                    $inputUm = $form->field($model, 'yield_um', ['template' => "{input}"])->dropDownList($yieldUmOptions, ['class' => 'form-control', 'id' => 'standardrecipe-yield_um'])->label(false);
+                    $selectYieldUmHtml = \yii\helpers\Html::dropDownList(
+                        'StandardRecipe[yield_um]',
+                        $model->yield_um,
+                        $yieldUmOptions,
+                        ['class' => 'form-control', 'id' => 'standardrecipe-yield_um-visible']
+                    );
+                    $yieldUmErrorDiv = '<div id="yield-um-error" class="text-danger small mt-1" style="display:none">' . Yii::t('app', 'Unidad de medida no puede estar vacío.') . '</div>';
                     ?>
                     <div class="pending-field-group" data-field="yield">
                         <?= $form->field($model, 'yield', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$inputUm</div>{error}</div></div>"
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'><div class='input-group'>{input}$selectYieldUmHtml</div>{error}$yieldUmErrorDiv</div></div>"
                         ])->textInput()->label(null, ['class' => 'col-sm-4 text-start required']) ?>
                     </div>
                     <?php if ($model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN): ?>
@@ -260,7 +266,7 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     $finalUmOptions = ['' => 'Sin unidades'] + $finalUmOptions;
                     echo '<div class="pending-field-group" data-field="um">';
                     echo $form->field($model, 'um', [
-                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}</div></div>"
+                        'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}{error}</div></div>"
                     ])->dropDownList($finalUmOptions)->label(
                         $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
                             ? Yii::t('app', 'Unidad de medida')
@@ -512,6 +518,45 @@ $js = <<<JS
 })(jQuery);
 JS;
 $this->registerJs($js);
+
+// Validación visual de yield_um y botón de carga al guardar
+$this->registerJs(<<<JS
+(function() {
+    var select  = document.getElementById('standardrecipe-yield_um-visible');
+    var errorEl = document.getElementById('yield-um-error');
+    var saveBtn = document.getElementById('btn-save-recipe');
+    var saveBtnOriginalHtml = saveBtn ? saveBtn.innerHTML : '';
+
+    function validateYieldUm() {
+        if (!select || !errorEl) return true;
+        if (!select.value) {
+            select.classList.add('is-invalid');
+            errorEl.style.display = 'block';
+            return false;
+        } else {
+            select.classList.remove('is-invalid');
+            errorEl.style.display = 'none';
+            return true;
+        }
+    }
+
+    if (select) {
+        select.addEventListener('change', validateYieldUm);
+    }
+
+    \$(document).on('beforeSubmit', '#form-recipe', function() {
+        var yieldUmOk = validateYieldUm();
+        if (!yieldUmOk) {
+            return false;
+        }
+        // Validation passed — put button in loading state
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Guardando...';
+        }
+    });
+})();
+JS, \yii\web\View::POS_READY);
 
 // --- JS de pasos de procedimiento (aquí para que pjax no lo duplique) ---
 $confirmStepMsg = Yii::t('app', 'Are you sure you want to delete this step?');
@@ -923,7 +968,7 @@ JS, \yii\web\View::POS_READY);
         </div>
         <div class="card-footer">
             <div class="form-group">
-                <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', "Save"), ['class' => 'btn btn-success']) ?>
+                <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', "Save"), ['class' => 'btn btn-success', 'id' => 'btn-save-recipe']) ?>
                 <?= \yii\bootstrap5\Html::a(Yii::t('app', "Cancel"), [Yii::$app->request->get('type') == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB ? 'sub-standard-recipe/index' : 'standard-recipe/index'], ['class' => 'btn btn-outline-secondary']) ?>
             </div>
         </div>
@@ -1258,7 +1303,7 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
     document.addEventListener('DOMContentLoaded', function() {
         const umField = document.getElementById('standardrecipe-um');
         const yieldField = document.getElementById('standardrecipe-yield');
-        const yieldUmField = document.getElementById('standardrecipe-yield_um');
+        const yieldUmField = document.getElementById('standardrecipe-yield_um-visible');
         const portionsField = document.getElementById('standardrecipe-portions');
         const portionsContainer = document.getElementById('portions-container');
         const portionSizeContainer = document.getElementById('portion-size-container');

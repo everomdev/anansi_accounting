@@ -788,10 +788,7 @@ class StandardRecipeController extends Controller
                 return $this->redirect(['sub-standard-recipe/index']);
             }
         } elseif ($model->hasErrors()) {
-            foreach ($model->errors as $field => $error) {
-                Yii::$app->session->setFlash('error', implode('\n', $error));
-            }
-
+            // Errors are shown inline in the form via AJAX validation
         }
         return $this->render('create', [
             'model' => $model,

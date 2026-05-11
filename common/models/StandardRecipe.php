@@ -122,12 +122,9 @@ class StandardRecipe extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['business_id', 'type', 'title'], 'required'],
+            [['business_id', 'type', 'title', 'type_of_recipe', 'yield', 'yield_um', 'portions', 'um'], 'required'],
             [['title'], 'trim'], // Eliminar espacios al inicio y final
             [['business_id', 'convoy_id'], 'integer'],
-            [['yield', 'yield_um', 'portions'], 'required', 'when' => function () {
-                return !$this->isNewRecord;
-            }, 'message' => "{attribute} no puede estar vacío"],
             [['flowchart', 'equipment', 'steps', 'allergies', 'title', 'time_of_preparation', 'yield_um', 'lifetime', 'type_of_recipe', 'other_specs'], 'string'],
             [['type', 'um'], 'string', 'max' => 255],
             [['observation'], 'string'],
