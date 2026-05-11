@@ -1369,9 +1369,12 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
                 
                 if (yieldUnitNormalized.includes('litro') || 
-                    yieldUnitNormalized.includes('lt') || 
-                    yieldUnitNormalized.includes('l')) {
-                    return "Tamaño de cada pieza";
+                    yieldUnitNormalized === 'lt' || 
+                    yieldUnitNormalized === 'l' ||
+                    yieldUnitNormalized === 'ml' ||
+                    yieldUnitNormalized === 'dl' ||
+                    yieldUnitNormalized === 'cl') {
+                    return "Volumen de cada pieza";
                 }
                 return "Peso de cada pieza";
             }
@@ -1468,11 +1471,16 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
                         } else if (normalizedUnit.includes('lata') || normalizedUnit.includes('bote')) {
                             helpText.textContent = `Define el contenido de cada ${finalUnitRaw} en ${yieldUmField.value}`;
                         } else if (normalizedUnit.includes('pieza')) {
-                            // Check if yield unit is a liter
-                            if (yieldUmField.value.toLowerCase().includes('litro') || 
-                                yieldUmField.value.toLowerCase().includes('lt') || 
-                                yieldUmField.value.toLowerCase().includes('l')) {
-                                helpText.textContent = `Define cuántos litros contiene cada pieza`;
+                            // Check if yield unit is a volume unit
+                            const yieldUnitNorm = yieldUmField.value.toLowerCase().trim()
+                                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                            if (yieldUnitNorm.includes('litro') || 
+                                yieldUnitNorm === 'lt' || 
+                                yieldUnitNorm === 'l' ||
+                                yieldUnitNorm === 'ml' ||
+                                yieldUnitNorm === 'dl' ||
+                                yieldUnitNorm === 'cl') {
+                                helpText.textContent = `Define cuántos ${yieldUmField.value} contiene cada pieza`;
                             } else {
                                 helpText.textContent = `Define el peso de cada pieza en ${yieldUmField.value}`;
                             }
