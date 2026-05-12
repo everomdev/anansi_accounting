@@ -140,7 +140,7 @@ class StandardRecipe extends \yii\db\ActiveRecord
             [['price'], 'validatePrice'],
             [['in_construction', 'in_menu', 'is_food'], 'boolean'],
             [['mainImage', 'stepsImages'], 'safe'],
-            [['title', 'type', 'business_id'], 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
+            ['title', 'unique', 'targetAttribute' => ['title', 'type', 'business_id'], 'message' => Yii::t('app', "This name is already taken")],
 
         ];
     }

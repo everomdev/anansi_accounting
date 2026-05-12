@@ -141,7 +141,8 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                     <?php if (!$model->isNewRecord): ?>
                     <div class="pending-field-group" data-field="title">
                         <?= $form->field($model, 'title', [
-                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}{error}</div></div>"
+                            'template' => "<div class='row mb-3'>{label}<div class='col-sm-8'>{input}{error}</div></div>",
+                            'inputOptions' => ['id' => 'title-input', 'class' => 'form-control'],
                         ])->textInput([
                             'id' => 'title-input',
                             'placeholder' => $model->type == \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN
