@@ -380,8 +380,8 @@ public function actionCreate()
             foreach ($allModels as $model) {
                 // calcular suma por modelo (todos los centros)
                 $sumaModel = 0;
+                // lastUnitPrice devuelve adjusted_price que ya ES el precio por porción
                 $precio = ($model->ingredientStock && isset($model->ingredientStock->lastUnitPrice)) ? $model->ingredientStock->lastUnitPrice : 0;
-                $precio = $precio / $model->ingredientStock->portions_per_unit;
                 //var_dump('precio: ' . $precio .''. 'porciones: ' . $model->ingredientStock->portions_per_unit);
                 foreach ($model->inventoryConsumptionCenters as $icc) {
                     $sumaModel += $icc->quantity;

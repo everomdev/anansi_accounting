@@ -346,7 +346,7 @@ $this->registerCss('
                 'attribute' => 'lastUnitPrice',
                 'label' => 'Último<br>precio',
                 'value' => function ($data) {
-                    return formatPrice($data->lastUnitPrice / $data->portions_per_unit);
+                    return formatPrice($data->lastUnitPrice);
                 },
                 'encodeLabel' => false,
                 'filter' => false, // Columna calculada, no filtrable
@@ -361,7 +361,7 @@ $this->registerCss('
                 'attribute' => 'avgUnitPrice',
                 'label' => 'Precio<br>promedio',
                 'value' => function ($data) {
-                    return formatPrice($data->avgUnitPrice / $data->portions_per_unit);
+                    return formatPrice($data->avgUnitPrice);
                 },
                 'encodeLabel' => false,
                 'filter' => false, // Columna calculada, no filtrable
@@ -376,7 +376,7 @@ $this->registerCss('
                 'attribute' => 'higherUnitPrice',
                 'label' => 'Precio<br>más alto',
                 'value' => function ($data) {
-                    return formatPrice($data->higherUnitPrice / $data->portions_per_unit);
+                    return formatPrice($data->higherUnitPrice);
                 },
                 'encodeLabel' => false,
                 'filter' => false, // Columna calculada, no filtrable

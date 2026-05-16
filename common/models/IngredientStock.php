@@ -285,8 +285,8 @@ class IngredientStock extends \yii\db\ActiveRecord
                 'price' => $this->price,
                 'date' => date('Y-m-d'),
                 'unit_price' => $this->price,
-                //'adjusted_price' => $this->adjustedPrice,
-                'adjusted_price' => $this->price,
+                'adjusted_price' => $this->adjustedPrice,
+                //'adjusted_price' => $this->price,
             ]);
             $stockPrice->save(false);
         }
@@ -588,9 +588,10 @@ public function addPrice($source)
             $stockPrice->unit_price_yield = $source->unit_price / ($this->yield / 100);
         }
         
-        // Calcular adjusted_price si existe unit_price
-        if ($source->unit_price && $this->yield && $this->yield > 0) {
-            $stockPrice->adjusted_price = $source->unit_price / ($this->yield / 100);
+        // Calcular adjusted_price: precio por porción de uso = unit_price / porciones_por_unidad
+        // Ej: $300/kg ÷ 12 porciones/kg = $25 por porción
+        if ($source->unit_price && $this->portions_per_unit > 0) {
+            $stockPrice->adjusted_price = round($source->unit_price / $this->portions_per_unit, 4);
         }
         
     } elseif ($source instanceof Purchase) {

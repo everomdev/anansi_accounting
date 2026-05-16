@@ -296,10 +296,10 @@ $inventarios = $inventarios ?? [];
             'filter' => false
         ],
         [
-            'label' => 'Unidad<br>Compra',
+            'label' => 'Unidad<br>Uso',
             'encodeLabel' => false,
             'value' => function($insumo) {
-                return isset($insumo->um) ? $insumo->um : '-';
+                return isset($insumo->portion_um) ? $insumo->portion_um : '-';
             },
             'headerOptions' => ['style' => 'min-width: 120px; width: 10%;'],
         ],

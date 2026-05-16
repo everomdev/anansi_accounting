@@ -270,9 +270,10 @@ class Movement extends \yii\db\ActiveRecord
             if ($lastStockPrice && $ingredient->portions_per_unit > 0) {
                 $pricePerPortion = null;
                 
-                // Prioridad 1: Si hay adjusted_price, dividirlo entre porciones
+                // Prioridad 1: adjusted_price ya ES el precio por porción de uso
+                // Ej: $25/porción (calculado al registrar la entrada)
                 if (!empty($lastStockPrice->adjusted_price)) {
-                    $pricePerPortion = $lastStockPrice->adjusted_price / $ingredient->portions_per_unit;
+                    $pricePerPortion = $lastStockPrice->adjusted_price;
                 }
                 // Prioridad 2: Si hay unit_price, dividirlo entre porciones
                 elseif (!empty($lastStockPrice->unit_price)) {

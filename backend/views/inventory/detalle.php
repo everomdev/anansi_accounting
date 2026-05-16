@@ -291,8 +291,9 @@ $this->params['breadcrumbs'][] = $this->title;
                 'headerOptions' => ['style' => 'text-align:center;'],
                 'contentOptions' => ['style' => 'text-align:center;'],
                 'value' => function($model) {
+                    // lastUnitPrice devuelve adjusted_price que ya ES el precio por porción
                     return $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ?
-                        formatPrice($model->ingredientStock->lastUnitPrice / $model->ingredientStock->portions_per_unit) : '-';
+                        formatPrice($model->ingredientStock->lastUnitPrice) : '-';
                 },
             ],
             [
@@ -306,7 +307,8 @@ $this->params['breadcrumbs'][] = $this->title;
                             $total += $icc->quantity;
                         }
                     }
-                    $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice / $model->ingredientStock->portions_per_unit : 0;
+                    // lastUnitPrice devuelve adjusted_price que ya ES el precio por porción
+                    $precio = $model->ingredientStock && isset($model->ingredientStock->lastUnitPrice) ? $model->ingredientStock->lastUnitPrice : 0;
                     return formatCost($total * $precio);
                 },
                 'contentOptions' => ['style' => 'font-weight:bold; background:#eaf7ea;text-align:center;'],
