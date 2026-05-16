@@ -579,7 +579,7 @@ public function addPrice($source)
     
     if ($source instanceof Movement) {
         // Para movimientos, usar los datos del movimiento
-        $stockPrice->price = $source->amount;
+        $stockPrice->price = $source->unit_price; // precio por unidad, no el total
         $stockPrice->unit_price = $source->unit_price;
         $stockPrice->date = $source->date ?? date('Y-m-d');
         
