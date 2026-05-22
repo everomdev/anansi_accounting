@@ -17,7 +17,8 @@ class RedisKeys
         }
         $value = \Yii::$app->cache->get($key);
         if($value == null || empty($value)){
-            \Yii::$app->response->redirect(['user/login']);
+            \Yii::$app->response->redirect(['user/login'])->send();
+            \Yii::$app->end();
         }
         return json_decode(\Yii::$app->cache->get($key), true);
     }
@@ -38,6 +39,10 @@ class RedisKeys
 
     public static function getBusiness()
     {
-        return \Yii::$app->user->identity->business;
+        $identity = \Yii::$app->user->identity;
+        if ($identity === null) {
+            return null;
+        }
+        return $identity->business;
     }
 }
