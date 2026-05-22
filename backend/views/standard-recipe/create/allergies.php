@@ -32,4 +32,5 @@ foreach ($selectedAllergies as $selectedAllergy) {
 <div class="form-group">
     <?= \yii\bootstrap5\Html::label("Otros (Escribir un nuevo alérgeno y al finalizar ; para insertarlo)", 'allergies-other') ?>
     <?= \yii\bootstrap5\Html::textInput('allergies-other', '', ['class' => 'form-control', 'id' => 'allergies-other']) ?>
+    <div id="allergen-duplicate-msg" class="text-danger small mt-1" style="display:none">Este alérgeno ya existe en la lista.</div>
 </div>

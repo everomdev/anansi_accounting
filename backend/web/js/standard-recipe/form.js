@@ -366,10 +366,23 @@ $(document).on('keyup', "#allergies-other", function (event) {
     let input = $(this);
     let value = input.val();
     if(value.indexOf(";") === value.length - 1){
-        value = value.slice(0, -1);
+        value = value.slice(0, -1).trim();
+        input.val('');
+        if (value === '') {
+            return;
+        }
+        // Validar duplicado: ignorar mayúsculas/minúsculas y espacios
+        const normalizedNew = value.toLowerCase();
+        const existingLabels = Array.from(document.querySelectorAll('#allergies-list label'));
+        const duplicate = existingLabels.find(label => label.textContent.trim().toLowerCase() === normalizedNew);
+        if (duplicate) {
+            $('#allergen-duplicate-msg').show();
+            setTimeout(() => $('#allergen-duplicate-msg').hide(), 3000);
+            return;
+        }
+        $('#allergen-duplicate-msg').hide();
         addAllergiesOption(value);
         selectUnselectAllergies(value);
-        input.val('');
     }
 })
 function selectUnselectAllergies(allergen) {
@@ -380,10 +393,13 @@ function selectUnselectAllergies(allergen) {
         selectedAllergies = [];
     }
 
-    if (selectedAllergies.indexOf(allergen) === -1) {
-        selectedAllergies.push(allergen);
+    const normalizedAllergen = allergen.trim().toLowerCase();
+    const existingIndex = selectedAllergies.findIndex(a => a.trim().toLowerCase() === normalizedAllergen);
+
+    if (existingIndex === -1) {
+        selectedAllergies.push(allergen.trim());
     } else {
-        selectedAllergies = selectedAllergies.filter(a => a !== allergen);
+        selectedAllergies.splice(existingIndex, 1);
     }
 
     $("#standardrecipe-allergies").val(selectedAllergies.join(';'));

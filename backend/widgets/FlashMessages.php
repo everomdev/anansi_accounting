@@ -78,7 +78,7 @@ class FlashMessages extends \yii\bootstrap5\Widget
 
     private function getType($type){
         switch ($type){
-            case 'success': return Growl::TYPE_SUCCESS;
+            case 'success': return Growl::TYPE_INFO;
             case 'warning': return Growl::TYPE_WARNING;
             case 'info': return Growl::TYPE_INFO;
             case 'error':

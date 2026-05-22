@@ -116,7 +116,7 @@ $this->registerCss('
 <div class="standard-recipe-index">
     <p>
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-12 d-flex flex-wrap gap-2">
                 <?= Html::a(Yii::t('app', 'Create new recipe'), \yii\helpers\Url::to(['standard-recipe/create', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN]), ['class' => 'btn btn-success']) ?>
                 <?= Html::a(Yii::t('app', 'Duplicate'), \yii\helpers\Url::to(['standard-recipe/duplicate-recipes']), ['class' => 'btn btn-success', 'id' => 'btn-duplicate-recipes']) ?>
                 <?= Html::a(Yii::t('app', 'Descargar PDF'), \yii\helpers\Url::to(['standard-recipe/download-recipes-pdf', 'type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_MAIN]), ['class' => 'btn btn-success', 'id' => 'btn-download-recipes']) ?>
@@ -128,7 +128,7 @@ $this->registerCss('
             </div>
         </div>
         <div class="row" style="margin-top: 10px; margin-bottom: 10px;">
-            <div class="col-md-12">
+            <div class="col-12 d-flex flex-wrap gap-2 align-items-start">
             <?= Html::a(
                 'Descargar recetario en PDF',
                 '#',
@@ -385,7 +385,7 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ]);
 ?>
 <p>¿Deseas eliminar todas las recetas seleccionadas o solo las de la página actual?</p>
-<div class="d-flex justify-content-end gap-3">
+<div class="d-flex flex-wrap justify-content-end gap-2">
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
         'class' => 'btn btn-secondary',
         'data-bs-dismiss' => 'modal'
@@ -448,7 +448,7 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ]);
 ?>
 <p>¿Deseas exportar todas las recetas seleccionadas o solo las de la página actual?</p>
-<div class="d-flex justify-content-end gap-3">
+<div class="d-flex flex-wrap justify-content-end gap-2">
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
         'class' => 'btn btn-secondary',
         'data-bs-dismiss' => 'modal'
@@ -474,7 +474,7 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ]);
 ?>
 <p>¿Deseas descargar el recetario de todas las recetas seleccionadas o solo las de la página actual?</p>
-<div class="d-flex justify-content-end gap-3">
+<div class="d-flex flex-wrap justify-content-end gap-2">
     <?= \yii\bootstrap5\Html::button(Yii::t('app', 'Cancelar'), [
         'class' => 'btn btn-secondary',
         'data-bs-dismiss' => 'modal'

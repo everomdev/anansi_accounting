@@ -54,7 +54,7 @@ if ($promotionCode === '15% de descuento por renovación de suscripción.') {
                                     ?>
                                     
                                     <?php if ($hasPromotion && $discountPercentage > 0): ?>
-                                    <div class="text-center mb-2">
+                                    <div class="text-center mb-2 price-discount-block">
                                         <span class="text-decoration-line-through text-muted">
                                             $<?= $originalPrice ?> <?= strtoupper($price->currency) ?>
                                         </span>
@@ -186,21 +186,17 @@ $(document).on('click', '#apply-coupon', function() {
                     updatedUrl.searchParams.set('nickname', interval); // Agrega el nickname a la URL
                     $(this).attr('href', updatedUrl.toString()); // Actualiza el atributo href con la URL modificada
                     
-                    // Mostrar el precio original tachado
+                    // Mostrar el precio original tachado (eliminar bloque previo si ya existe)
                     var originalPrice = $(this).data('original-price') || prices[index];
-                    if (!$(this).prev('.text-decoration-line-through').length) {
-                        // Verificar el tipo de descuento
-                        if (response.type_discount === 'amount') {
-                            // Si es un monto fijo
-                            $(this).before('<div class="text-center mb-2"><span class="text-decoration-line-through text-muted">$' + 
-                                           originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-$' + 
-                                           response.discount.toFixed(2) + '</span></div>');
-                        } else {
-                            // Si es un porcentaje
-                            $(this).before('<div class="text-center mb-2"><span class="text-decoration-line-through text-muted">$' + 
-                                           originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-' + 
-                                           response.discount + '%</span></div>');
-                        }
+                    $(this).prev('.price-discount-block').remove();
+                    if (response.type_discount === 'amount') {
+                        $(this).before('<div class="text-center mb-2 price-discount-block"><span class="text-decoration-line-through text-muted">$' +
+                                       originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-$' +
+                                       response.discount.toFixed(2) + '</span></div>');
+                    } else {
+                        $(this).before('<div class="text-center mb-2 price-discount-block"><span class="text-decoration-line-through text-muted">$' +
+                                       originalPrice.toFixed(2) + ' ' + currency + '</span> <span class="badge bg-success">-' +
+                                       response.discount + '%</span></div>');
                     }
                 });            } else {
                 // Manejo de errores más específico basado en el tipo de error
