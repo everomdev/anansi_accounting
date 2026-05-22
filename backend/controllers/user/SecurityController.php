@@ -230,7 +230,7 @@ class SecurityController extends Controller
                     } catch (\Stripe\Exception\InvalidRequestException $e) {
                         // Suscripción no encontrada en Stripe (ID inválido o eliminada)
                         Yii::error('Suscripción no encontrada en Stripe: ' . $e->getMessage(), __METHOD__);
-                        Yii::$app->session->setFlash('warning', Yii::t('app', 'No se pudo verificar tu suscripción. Por favor contacta soporte.'));
+                        Yii::$app->session->setFlash('warning', Yii::t('app', 'No se pudo verificar tu suscripción. Por favor contacta soporte soporte@restacore.com para resolver este problema.'));
                         return $this->redirect(['/site/enable-subscription', 'source' => 'stripe_error']);
                     } catch (\Exception $e) {
                         // Error de red u otro error inesperado — usar estado local como fallback
