@@ -80,10 +80,17 @@ $this->params['breadcrumbs'][] = $this->title;
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?= Html::a('<i class="bx bx-edit"></i>', ['update-puesto', 'id' => $puesto->id], [
+                                        <?php
+                                        $editOptions = [
                                             'class' => 'btn btn-sm btn-primary',
-                                            'title' => 'Editar'
-                                        ]) ?>
+                                            'title' => 'Editar',
+                                        ];
+                                        if ($actual > 0) {
+                                            $editOptions['data']['confirm'] = "Este puesto tiene {$actual} trabajador(es) asignado(s). Si modifica el puesto (nombre, salario u otros datos clave) podría afectar registros existentes y perder información relacionada. ¿Desea continuar de todas formas?";
+                                            $editOptions['data']['method'] = false;
+                                        }
+                                        ?>
+                                        <?= Html::a('<i class="bx bx-edit"></i>', ['update-puesto', 'id' => $puesto->id], $editOptions) ?>
                                         <?= Html::a('<i class="bx bx-trash"></i>', ['delete-puesto', 'id' => $puesto->id], [
                                             'class' => 'btn btn-sm btn-danger',
                                             'title' => 'Eliminar',
