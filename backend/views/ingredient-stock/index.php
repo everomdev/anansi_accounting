@@ -424,7 +424,8 @@ $this->registerCss('
                     'priceTrend' => function ($url, $model, $key) {
                         return \yii\bootstrap5\Html::a(
                             \yii\bootstrap5\Html::tag('i', '', ['class' => 'bx bx-chart text-warning']),
-                            \yii\helpers\Url::to(['ingredient-stock/price-trend', 'ingredientId' => $model->id])
+                            \yii\helpers\Url::to(['ingredient-stock/price-trend', 'ingredientId' => $model->id]),
+                            ['title' => 'Tendencia']
                         );
                     },
                     'update' => function ($url, $model, $key) use ($count) {

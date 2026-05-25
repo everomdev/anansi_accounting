@@ -472,6 +472,54 @@ class StandardRecipe extends \yii\db\ActiveRecord
         }
     }
 
+    /**
+     * Returns all IDs of recipes that are ancestors of this recipe
+     * (i.e., recipes that directly or indirectly contain this recipe as a sub-recipe).
+     * Adding any of these as a sub-recipe would create a circular dependency.
+     *
+     * @return int[]
+     */
+    public function getAncestorIds(): array
+    {
+        $forbiddenIds = [$this->id];
+        $queue = [$this->id];
+        $visited = [];
+
+        while (!empty($queue)) {
+            $currentId = array_shift($queue);
+            if (in_array($currentId, $visited, true)) {
+                continue;
+            }
+            $visited[] = $currentId;
+
+            $parentIds = (new \yii\db\Query())
+                ->select('standard_recipe_id')
+                ->from('standard_recipe_sub_standard_recipe')
+                ->where(['sub_standard_recipe_id' => $currentId])
+                ->column();
+
+            foreach ($parentIds as $parentId) {
+                if (!in_array($parentId, $forbiddenIds, true)) {
+                    $forbiddenIds[] = (int)$parentId;
+                }
+                $queue[] = $parentId;
+            }
+        }
+
+        return $forbiddenIds;
+    }
+
+    /**
+     * Checks whether adding the given sub-recipe would create a circular dependency.
+     *
+     * @param int $subRecipeId
+     * @return bool
+     */
+    public function wouldCreateCircularDependency(int $subRecipeId): bool
+    {
+        return in_array($subRecipeId, $this->getAncestorIds(), true);
+    }
+
     public function removeIngredient($id)
     {
         Yii::$app->db->createCommand()

@@ -37,6 +37,7 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
             'sr.business_id' => $business['id'],
             'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
         ])
+        ->andFilterWhere(['not in', 'sr.id', $recipe ? $recipe->getAncestorIds() : []])
         ->all(),
     'id', function($sr){
         return sprintf("%s (%s)", $sr['label'], $sr['um']);

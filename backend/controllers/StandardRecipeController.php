@@ -809,6 +809,12 @@ class StandardRecipeController extends Controller
             if (empty($form->subRecipeId)) {
                 $model->addUpdateIngredient($form->ingredientId, $form->quantity);
             } else {
+                if ($model->wouldCreateCircularDependency((int)$form->subRecipeId)) {
+                    return $this->asJson([
+                        'success' => false,
+                        'errors' => ['subRecipeId' => [Yii::t('app', 'No se puede agregar esta subreceta porque crearía una dependencia circular.')]]
+                    ]);
+                }
                 $model->addUpdateSubRecipe($form->subRecipeId, $form->quantity);
             }
             
@@ -893,6 +899,12 @@ class StandardRecipeController extends Controller
         }
         // Agregar el nuevo elemento según su tipo
         if ($newIsRecipe) {
+            if ($model->wouldCreateCircularDependency((int)$newItemId)) {
+                return $this->asJson([
+                    'success' => false,
+                    'error' => Yii::t('app', 'No se puede agregar esta subreceta porque crearía una dependencia circular.')
+                ]);
+            }
             $model->addUpdateSubRecipe($newItemId, $quantity);
         } else {
             $model->addUpdateIngredient($newItemId, $quantity);
