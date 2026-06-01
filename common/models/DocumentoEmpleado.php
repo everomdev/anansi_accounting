@@ -121,8 +121,9 @@ class DocumentoEmpleado extends ActiveRecord
             $uploadsPath = Yii::getAlias('@backend/web/uploads/documentos-empleados/');
             
             // Crear directorio si no existe
-            if (!file_exists($uploadsPath)) {
-                mkdir($uploadsPath, 0777, true);
+            if (!file_exists($uploadsPath) && !mkdir($uploadsPath, 0775, true) && !is_dir($uploadsPath)) {
+                Yii::error("No se pudo crear el directorio de uploads: $uploadsPath");
+                return false;
             }
             
             // Generar nombre único para el archivo

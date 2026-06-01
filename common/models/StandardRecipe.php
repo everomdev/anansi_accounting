@@ -601,6 +601,12 @@ class StandardRecipe extends \yii\db\ActiveRecord
     {
         $ingredients = $this->ingredientRelations;
         $lastPrices = ArrayHelper::getColumn($ingredients, function ($ingredient) {
+            if ($ingredient->exclude_from_cost) {
+                if ($ingredient->cost_percentage > 0) {
+                    return $ingredient->lastUnitPrice * $ingredient->quantity * ($ingredient->cost_percentage / 100);
+                }
+                return 0;
+            }
             return $ingredient->lastUnitPrice * $ingredient->quantity;
         });
 
