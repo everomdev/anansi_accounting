@@ -53,6 +53,9 @@ class Empleado extends ActiveRecord
         'comprobante_cursos',
         'test_personalidad',
         'test_psicometrico',
+        'clabe',
+        'constancia_situacion_fiscal',
+        'curp',
     ];
 
     const SEMAFORO_VERDE = 'verde';
@@ -300,6 +303,9 @@ class Empleado extends ActiveRecord
             'comprobante_cursos' => 'Comprobante de Cursos',
             'test_personalidad' => 'Test de Personalidad',
             'test_psicometrico' => 'Test Psicométrico',
+            'clabe' => 'Clabe de Banca Electrónica',
+            'constancia_situacion_fiscal' => 'Constancia de Situación Fiscal',
+            'curp' => 'CURP',
         ];
     }
 
