@@ -425,7 +425,7 @@ $this->registerCss('
                         return \yii\bootstrap5\Html::a(
                             \yii\bootstrap5\Html::tag('i', '', ['class' => 'bx bx-chart text-warning']),
                             \yii\helpers\Url::to(['ingredient-stock/price-trend', 'ingredientId' => $model->id]),
-                            ['title' => 'Tendencia']
+                            ['title' => 'Tendencia', 'data-bs-toggle' => 'tooltip', 'data-bs-placement' => 'top']
                         );
                     },
                     'update' => function ($url, $model, $key) use ($count) {
@@ -557,6 +557,11 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ?>
 <?php
 $this->registerJs("
+// Inicializar tooltips de Bootstrap 5
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+    new bootstrap.Tooltip(el);
+});
+
 // Definir las funciones globales primero
 // Funciones globales para limpiar filtros
 window.clearTitleFilter = function() {
