@@ -1011,6 +1011,10 @@ public function actionGetSubStandardRecipes()
             $post['RecipeStep']['time'] = "$h:$m:$s";
             Yii::info(['Tiempo combinado' => $post['RecipeStep']['time']], 'debug.step');
         }
+        // Si N/A está marcado, ignorar el tiempo
+        if (!empty($post['time_na'])) {
+            $post['RecipeStep']['time'] = null;
+        }
 
         $okLoad = $step->load($post);
         Yii::info(['okLoad' => $okLoad, 'step->attributes' => $step->attributes], 'debug.step');
@@ -3921,7 +3925,8 @@ public function actionEditStep()
 
     if ($step) {
         $step->activity = Yii::$app->request->post('activity');
-        $step->time = Yii::$app->request->post('time');
+        $timeNa = Yii::$app->request->post('time_na');
+        $step->time = ($timeNa === '1') ? null : Yii::$app->request->post('time');
         $step->indicator = Yii::$app->request->post('indicator');
         $removeImage = Yii::$app->request->post('remove_image');
         $step->_image = UploadedFile::getInstanceByName('_image');

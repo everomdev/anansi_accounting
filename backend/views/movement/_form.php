@@ -65,6 +65,13 @@ $providerNames = array_values(
         \yii\helpers\ArrayHelper::getColumn($providerNames, 'business_name')
     )
 );
+
+// Mapa id => clave para búsqueda directa por clave en Select2
+$ingredientKeyMap = [];
+foreach ($stock as $item) {
+    $ingredientKeyMap[$item['id']] = $item['key'] ?? '';
+}
+$this->registerJsVar('ingredientKeyMap', $ingredientKeyMap);
 ?>
 
 <div class="movement-form">
@@ -98,19 +105,27 @@ $providerNames = array_values(
                             'placeholder' => 'Buscar por clave o nombre del ingrediente...'
                         ],
                         'pluginOptions' => [
-                            'width' => '60%',
+                            'width' => '100%',
                             'allowClear' => true,
                             'matcher' => new \yii\web\JsExpression("function(params, data) {
-                                // Si no hay término de búsqueda, mostrar todo
                                 if ($.trim(params.term) === '') {
                                     return data;
                                 }
-                                
-                                // Buscar en el texto del option (que incluye clave y nombre)
-                                if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                                var term = params.term.toLowerCase();
+
+                                // Buscar en el label completo (ya incluye la clave si existe)
+                                if (data.text.toLowerCase().indexOf(term) > -1) {
                                     return data;
                                 }
-                                
+
+                                // Buscar directamente en la clave (ingredientKeyMap viene del servidor)
+                                var key = (typeof ingredientKeyMap !== 'undefined' && ingredientKeyMap[data.id])
+                                    ? String(ingredientKeyMap[data.id]).toLowerCase()
+                                    : '';
+                                if (key && key.indexOf(term) > -1) {
+                                    return data;
+                                }
+
                                 return null;
                             }")
                         ]

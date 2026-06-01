@@ -235,7 +235,8 @@ $(document).ready(function () {
 
         var stepId = $('#edit-special-step-id').val();
         var activity = $('#edit-special-step-activity').val();
-        var time = $('#edit-special-step-time').val();
+        var timeNa = $('#edit-special-step-time-na').is(':checked');
+        var time = timeNa ? '' : $('#edit-special-step-time').val();
         var indicator = $('#edit-special-step-indicator').val();
         var fileInput = $('#edit-special-step-image')[0];
         var _image = (fileInput && fileInput.files.length > 0) ? fileInput.files[0] : null;
@@ -244,6 +245,7 @@ $(document).ready(function () {
         formData.append('id', stepId);
         formData.append('activity', activity);
         formData.append('time', time);
+        formData.append('time_na', timeNa ? '1' : '0');
         formData.append('indicator', indicator);
         if (_image) formData.append('_image', _image);
         formData.append('remove_image', removeImage);

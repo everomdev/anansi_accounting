@@ -20,21 +20,44 @@
     <div class="col-12">
         <?= $form->field($model, 'activity')->textarea() ?>
     </div>
-    <div class="col-12 row g-2 align-items-end">
+    <div class="col-12">
+        <div class="form-check">
+            <input class="form-check-input step-time-na-cb" type="checkbox" name="time_na" value="1"
+                <?= (isset($model->time) && ($model->time === null || $model->time === '')) ? 'checked' : '' ?>>
+            <label class="form-check-label fw-semibold">N/A &mdash; No aplica tiempo</label>
+        </div>
+    </div>
+    <div class="step-time-inputs-group col-12 row g-2 align-items-end">
         <div class="col-4">
-            <label for="input-hours" class="form-label">Horas</label>
-            <input type="number" min="0" max="23" class="form-control" id="input-hours" name="input-hours" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[0] : '00' ?>">
+            <label class="form-label">Horas</label>
+            <input type="number" min="0" max="23" class="form-control" name="input-hours" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[0] : '00' ?>">
         </div>
         <div class="col-4">
-            <label for="input-minutes" class="form-label">Minutos</label>
-            <input type="number" min="0" max="59" class="form-control" id="input-minutes" name="input-minutes" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[1] : '00' ?>">
+            <label class="form-label">Minutos</label>
+            <input type="number" min="0" max="59" class="form-control" name="input-minutes" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[1] : '00' ?>">
         </div>
         <div class="col-4">
-            <label for="input-seconds" class="form-label">Segundos</label>
-            <input type="number" min="0" max="59" class="form-control" id="input-seconds" name="input-seconds" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[2] : '00' ?>">
+            <label class="form-label">Segundos</label>
+            <input type="number" min="0" max="59" class="form-control" name="input-seconds" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[2] : '00' ?>">
         </div>
         <div class="form-text">Selecciona la duración: horas, minutos y segundos. Ejemplo: 0 horas, 5 minutos y 40 segundos.</div>
     </div>
+    <script>
+    (function() {
+        var sc   = document.currentScript;
+        var root = sc ? sc.parentElement : document.body;
+        var cb   = root.querySelector('.step-time-na-cb');
+        var grp  = root.querySelector('.step-time-inputs-group');
+        if (!cb || !grp) return;
+        function toggle() {
+            var na = cb.checked;
+            grp.querySelectorAll('input[type="number"]').forEach(function(i) { i.disabled = na; });
+            grp.style.opacity = na ? '0.4' : '1';
+        }
+        cb.addEventListener('change', toggle);
+        toggle();
+    })();
+    </script>
     <div class="col-12">
         <?= $form->field($model, 'indicator')->textInput() ?>
     </div>

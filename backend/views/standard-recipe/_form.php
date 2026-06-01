@@ -780,8 +780,18 @@ $this->registerJs(<<<JS
         var fileInput        = document.getElementById('edit-special-step-image');
         document.getElementById('edit-special-step-id').value        = this.getAttribute('data-id');
         document.getElementById('edit-special-step-activity').value  = this.getAttribute('data-activity');
-        document.getElementById('edit-special-step-time').value      = this.getAttribute('data-time');
+        document.getElementById('edit-special-step-time').value      = this.getAttribute('data-time') || '';
         document.getElementById('edit-special-step-indicator').value = this.getAttribute('data-indicator');
+        var timeNa    = this.getAttribute('data-time-na') === '1';
+        var timeNaCb  = document.getElementById('edit-special-step-time-na');
+        var timeInput = document.getElementById('edit-special-step-time');
+        if (timeNaCb) {
+            timeNaCb.checked = timeNa;
+            if (timeInput) {
+                timeInput.disabled = timeNa;
+                timeInput.style.opacity = timeNa ? '0.4' : '1';
+            }
+        }
         if (removeInput) removeInput.value = '0';
         if (fileInput) fileInput.value = '';
         if (imgUrl) {

@@ -38,7 +38,7 @@ use yii\helpers\ArrayHelper;
                             <?= $step->activity ?>
                         </td>
                         <td class="text-center align-middle">
-                            <?= $step->time ?>
+                            <?= ($step->time !== null && $step->time !== '') ? $step->time : '<span class="text-muted fst-italic">N/A</span>' ?>
                         </td>
                         <td class="text-center align-middle">
                             <?= $step->indicator ?>
@@ -75,6 +75,7 @@ use yii\helpers\ArrayHelper;
                                     'data-number' => $step->number,
                                     'data-activity' => $step->activity,
                                     'data-time' => $step->time,
+                                    'data-time-na' => ($step->time === null || $step->time === '') ? '1' : '0',
                                     'data-indicator' => $step->indicator,
                                     'data-img' => $isRealImage ? $imgUrl : '',
                                 ]) ?>
@@ -121,6 +122,10 @@ use yii\helpers\ArrayHelper;
                     </div>
                     <div class="mb-3">
                         <label for="edit-special-step-time" class="form-label"><?= Yii::t('app', 'Time') ?></label>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" id="edit-special-step-time-na">
+                            <label class="form-check-label fw-semibold" for="edit-special-step-time-na">N/A &mdash; No aplica tiempo</label>
+                        </div>
                         <input type="text" class="form-control" id="edit-special-step-time" name="time" autocomplete="off" autocorrect="off" spellcheck="false">
                     </div>
                     <div class="mb-3">
@@ -150,3 +155,17 @@ use yii\helpers\ArrayHelper;
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    var cb    = document.getElementById('edit-special-step-time-na');
+    var input = document.getElementById('edit-special-step-time');
+    if (!cb || !input) return;
+    function toggleTimeNa() {
+        input.disabled = cb.checked;
+        input.style.opacity = cb.checked ? '0.4' : '1';
+        if (cb.checked) input.value = '';
+    }
+    cb.addEventListener('change', toggleTimeNa);
+})();
+</script>
