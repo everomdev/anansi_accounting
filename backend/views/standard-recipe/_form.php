@@ -22,6 +22,17 @@
     display: inline-flex !important;
     align-items: center !important;
 }
+/* Fix Summernote toolbar cursor flicker (aplica a other_specs) */
+.note-editor .note-toolbar {
+    position: relative !important;
+    z-index: 10 !important;
+}
+.note-editor .note-editing-area {
+    position: relative !important;
+    z-index: 1 !important;
+}
+/* Custom observation editor toolbar */
+.obs-toolbar .btn { line-height: 1.2; }
 </style>
 
 <?php
@@ -445,20 +456,50 @@ $this->registerJs('window.convoyAmounts = ' . json_encode($convoyAmounts) . ';',
                         </div>
                     <?php endif; ?>
                     <div class="pending-field-group" data-field="observation">
-                    <?= $form->field($model, 'observation')->widget(Summernote::class, [
-                        'useKrajeePresets' => true,
-                        'useKrajeeStyle' => false,
-                        'pluginOptions' => [
-                            'height' => 100,
-                            'toolbar' => [
-                                ['style', ['bold', 'italic', 'underline', 'clear']],
-                                ['font', ['strikethrough']],
-                                ['para', ['ul', 'ol']],
-                                ['insert', ['link']]
-                            ]
-                        ]
-                    ]) ?>
+                        <?= $form->field($model, 'observation')->hiddenInput(['id' => 'standardrecipe-observation'])->label(null) ?>
+                        <div class="obs-toolbar d-flex flex-wrap gap-1 p-1 border border-bottom-0 rounded-top bg-light">
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="bold"                 title="Negrita"><b>B</b></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="italic"               title="Cursiva"><em style="font-style:italic">I</em></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="underline"            title="Subrayado"><u>U</u></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="strikeThrough"        title="Tachado"><s>S</s></button>
+                            <span class="vr mx-1 align-self-center"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="insertUnorderedList"  title="Lista"><i class="fas fa-list-ul"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="insertOrderedList"    title="Lista ordenada"><i class="fas fa-list-ol"></i></button>
+                            <span class="vr mx-1 align-self-center"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary obs-fmt-btn" data-cmd="removeFormat"         title="Limpiar formato"><i class="fas fa-eraser"></i></button>
+                        </div>
+                        <div id="observation-editor"
+                             contenteditable="true"
+                             class="border rounded-bottom p-2"
+                             style="min-height: 160px; max-height: 350px; overflow-y: auto; cursor: text;"></div>
                     </div>
+                    <?php $this->registerJs(<<<JS
+(function() {
+    var editor = document.getElementById('observation-editor');
+    var hidden = document.getElementById('standardrecipe-observation');
+    if (!editor || !hidden) return;
+
+    // Cargar contenido existente
+    if (hidden.value) editor.innerHTML = hidden.value;
+
+    // Botones del toolbar: mousedown + preventDefault mantiene el foco y la selección en el editor
+    document.querySelectorAll('.obs-fmt-btn').forEach(function(btn) {
+        btn.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            document.execCommand(this.getAttribute('data-cmd'), false, null);
+            editor.focus();
+        });
+    });
+
+    // Sincronizar al campo oculto
+    editor.addEventListener('input', function() { hidden.value = this.innerHTML; });
+    editor.addEventListener('blur',  function() { hidden.value = this.innerHTML; });
+
+    // Sincronizar antes del submit (validación Ajax de Yii y submit normal)
+    \$(document).on('beforeSubmit', '#form-recipe', function() { hidden.value = editor.innerHTML; });
+    document.getElementById('form-recipe').addEventListener('submit', function() { hidden.value = editor.innerHTML; });
+})();
+JS, \yii\web\View::POS_READY); ?>
                 </div>
             </div>
             <?= $this->render('create/_ingredients_selection', [
