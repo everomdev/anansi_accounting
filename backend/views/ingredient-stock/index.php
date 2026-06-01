@@ -557,11 +557,6 @@ echo \yii\bootstrap5\Html::submitButton(Yii::t('app', "Import"), [
 ?>
 <?php
 $this->registerJs("
-// Inicializar tooltips de Bootstrap 5
-document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
-    new bootstrap.Tooltip(el);
-});
-
 // Definir las funciones globales primero
 // Funciones globales para limpiar filtros
 window.clearTitleFilter = function() {
