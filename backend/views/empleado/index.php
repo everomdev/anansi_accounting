@@ -10,73 +10,85 @@ use common\models\Empleado;
 /* @var $dataProvider yii\data\ActiveDataProvider */
 /* @var $estadisticasDocumentos array */
 
-$this->title = 'Empleados';
+$this->title = 'Colaboradores';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="empleado-index">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <?= Html::a('<i class="bx bx-plus"></i> Crear Empleado', ['create'], ['class' => 'btn btn-success']) ?>
+            <?= Html::a('<i class="bx bx-plus"></i> Crear Colaborador', ['create'], ['class' => 'btn btn-success']) ?>
             <?= Html::a('<i class="bx bx-bar-chart"></i> Estadísticas', ['estadisticas'], ['class' => 'btn btn-success']) ?>
         </div>
     </div>
 
-    <!-- Resumen de semáforo -->
+    <!-- Resumen de estado del expediente -->
     <div class="row mb-3">
-        <div class="col-md-4">
+        <?php
+        $empleadosActivos = Empleado::find()
+            ->where(['business_id' => $searchModel->business_id, 'estado' => Empleado::ESTADO_ACTIVO])
+            ->all();
+        $countCompleto = 0;
+        $countIncompleto = 0;
+        $countCriticoOperativo = 0;
+        $countCriticoLegal = 0;
+        foreach ($empleadosActivos as $e) {
+            switch ($e->getSemaforoExpediente()) {
+                case Empleado::SEMAFORO_COMPLETO:          $countCompleto++;          break;
+                case Empleado::SEMAFORO_INCOMPLETO:        $countIncompleto++;        break;
+                case Empleado::SEMAFORO_CRITICO_OPERATIVO: $countCriticoOperativo++;  break;
+                case Empleado::SEMAFORO_CRITICO_LEGAL:     $countCriticoLegal++;      break;
+            }
+        }
+        ?>
+        <div class="col-md-3">
             <div class="card border-success mb-0">
                 <div class="card-body text-center py-2 px-3">
                     <div class="d-flex align-items-center justify-content-center">
                         <i class="bx bx-check-circle text-success" style="font-size: 2.5rem;"></i>
-                        <h1 class="text-success mb-0 ms-2" style="font-weight: bold;">
-                            <?php
-                            $verde = Empleado::find()
-                                ->where(['business_id' => $searchModel->business_id, 'estado' => Empleado::ESTADO_ACTIVO])
-                                ->all();
-                            $countVerde = 0;
-                            foreach ($verde as $e) {
-                                if ($e->getSemaforoExpediente() === Empleado::SEMAFORO_VERDE) $countVerde++;
-                            }
-                            echo $countVerde;
-                            ?>
-                        </h1>
+                        <div class="ms-2">
+                            <h1 class="text-success mb-0" style="font-weight: bold;"><?= $countCompleto ?></h1>
+                            <small class="text-muted">Completo</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="card border-info mb-0">
+                <div class="card-body text-center py-2 px-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="bx bx-info-circle text-info" style="font-size: 2.5rem;"></i>
+                        <div class="ms-2">
+                            <h1 class="text-info mb-0" style="font-weight: bold;"><?= $countIncompleto ?></h1>
+                            <small class="text-muted">Incompleto</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
             <div class="card border-warning mb-0">
                 <div class="card-body text-center py-2 px-3">
                     <div class="d-flex align-items-center justify-content-center">
                         <i class="bx bx-error-circle text-warning" style="font-size: 2.5rem;"></i>
-                        <h1 class="text-warning mb-0 ms-2" style="font-weight: bold;">
-                            <?php
-                            $countAmarillo = 0;
-                            foreach ($verde as $e) {
-                                if ($e->getSemaforoExpediente() === Empleado::SEMAFORO_AMARILLO) $countAmarillo++;
-                            }
-                            echo $countAmarillo;
-                            ?>
-                        </h1>
+                        <div class="ms-2">
+                            <h1 class="text-warning mb-0" style="font-weight: bold;"><?= $countCriticoOperativo ?></h1>
+                            <small class="text-muted">Crítico Operativo</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card border-danger mb-0">
                 <div class="card-body text-center py-2 px-3">
                     <div class="d-flex align-items-center justify-content-center">
                         <i class="bx bx-x-circle text-danger" style="font-size: 2.5rem;"></i>
-                        <h1 class="text-danger mb-0 ms-2" style="font-weight: bold;">
-                            <?php
-                            $countRojo = 0;
-                            foreach ($verde as $e) {
-                                if ($e->getSemaforoExpediente() === Empleado::SEMAFORO_ROJO) $countRojo++;
-                            }
-                            echo $countRojo;
-                            ?>
-                        </h1>
+                        <div class="ms-2">
+                            <h1 class="text-danger mb-0" style="font-weight: bold;"><?= $countCriticoLegal ?></h1>
+                            <small class="text-muted">Crítico Legal</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -122,9 +134,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => 'Expediente',
                 'attribute' => 'semaforo_filter',
                 'filter' => [
-                    Empleado::SEMAFORO_VERDE => 'Completo',
-                    Empleado::SEMAFORO_AMARILLO => 'Incompleto',
-                    Empleado::SEMAFORO_ROJO => 'Crítico',
+                    Empleado::SEMAFORO_COMPLETO          => 'Completo',
+                    Empleado::SEMAFORO_INCOMPLETO        => 'Incompleto',
+                    Empleado::SEMAFORO_CRITICO_OPERATIVO => 'Crítico Operativo',
+                    Empleado::SEMAFORO_CRITICO_LEGAL     => 'Crítico Legal',
                 ],
                 'value' => function ($model) {
                     $semaforo = $model->getSemaforoExpediente();

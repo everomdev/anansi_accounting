@@ -8,7 +8,7 @@ use common\models\Empleado;
 /* @var $model common\models\Empleado */
 
 $this->title = $model->getNombreCompleto();
-$this->params['breadcrumbs'][] = ['label' => 'Empleados', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Colaboradores', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
@@ -21,7 +21,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <?= Html::a('<i class="bx bx-trash"></i> Eliminar', ['delete', 'id' => $model->id], [
                 'class' => 'btn btn-danger',
                 'data' => [
-                    'confirm' => '¿Está seguro de eliminar este empleado?',
+                    'confirm' => '¿Está seguro de eliminar este colaborador?',
                     'method' => 'post',
                 ],
             ]) ?>
@@ -33,7 +33,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <div class="card-header bg-light border-bottom">
             <h5 class="mb-0 text-dark">
                 <i class="bx bx-folder"></i>
-                Estado del Expediente: 
+                Estado del Expediente del Colaborador: 
                 <span class="badge <?= $model->getSemaforoBadgeClass() ?>"><?= $model->getSemaforoTexto() ?></span>
                 <span class="float-end"><?= $model->getPorcentajeCompletitud() ?>% Completo</span>
             </h5>
@@ -50,20 +50,41 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
             </div>
 
-            <?php if (!empty($model->getDocumentosFaltantes())): ?>
-                <div class="alert alert-warning mt-3">
-                    <strong>Documentos faltantes:</strong>
-                    <ul class="mb-0 mt-2">
-                        <?php 
-                        $labels = Empleado::getTiposDocumentosLabels();
-                        foreach ($model->getDocumentosFaltantes() as $documento): 
-                        ?>
-                            <li>
-                                <?= $labels[$documento] ?? $documento ?>
-                                <?php if (Empleado::esDocumentoCritico($documento)): ?>
-                                    <span class="badge bg-danger">Crítico</span>
-                                <?php endif; ?>
-                            </li>
+            <?php
+            $labels = Empleado::getTiposDocumentosLabels();
+            $legalesFaltantes      = $model->getDocumentosCriticosLegalesFaltantes();
+            $operativosFaltantes   = $model->getDocumentosCriticosOperativosFaltantes();
+            $complementariosFaltantes = $model->getDocumentosComplementariosFaltantes();
+            ?>
+
+            <?php if (!empty($legalesFaltantes)): ?>
+                <div class="alert alert-danger mt-3 mb-2">
+                    <strong><i class="bx bx-shield-x"></i> Documentos críticos legales faltantes:</strong>
+                    <ul class="mb-0 mt-1">
+                        <?php foreach ($legalesFaltantes as $doc): ?>
+                            <li><?= Html::encode($labels[$doc] ?? $doc) ?> <span class="badge bg-danger">Crítico Legal</span></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($operativosFaltantes)): ?>
+                <div class="alert alert-warning mt-2 mb-2">
+                    <strong><i class="bx bx-error"></i> Documentos críticos operativos faltantes:</strong>
+                    <ul class="mb-0 mt-1">
+                        <?php foreach ($operativosFaltantes as $doc): ?>
+                            <li><?= Html::encode($labels[$doc] ?? $doc) ?> <span class="badge bg-warning">Crítico Operativo</span></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($complementariosFaltantes)): ?>
+                <div class="alert alert-info mt-2 mb-0">
+                    <strong><i class="bx bx-info-circle"></i> Documentos complementarios faltantes:</strong>
+                    <ul class="mb-0 mt-1">
+                        <?php foreach ($complementariosFaltantes as $doc): ?>
+                            <li><?= Html::encode($labels[$doc] ?? $doc) ?></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
@@ -125,7 +146,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <!-- Documentos -->
     <div class="card mt-4">
         <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 text-dark"><i class="bx bx-file"></i> Documentos (<?= count($model->documentos) ?>)</h5>
+            <h5 class="mb-0 text-dark"><i class="bx bx-file"></i> Documentos del Colaborador (<?= count($model->documentos) ?>)</h5>
             <?= Html::a('<i class="bx bx-plus"></i> Agregar Documento', ['upload-documento', 'id' => $model->id], [
                 'class' => 'btn btn-sm btn-success'
             ]) ?>
@@ -134,7 +155,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <?php if (empty($model->documentos)): ?>
                 <div class="alert alert-info">
                     <i class="bx bx-info-circle"></i>
-                    No hay documentos cargados para este empleado.
+                    No hay documentos cargados para este colaborador.
                 </div>
             <?php else: ?>
                 <div class="table-responsive">
@@ -160,9 +181,12 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <td>
                                         <?php 
                                         $clasificacion = Empleado::getClasificacionDocumento($documento->tipo_documento);
-                                        $badgeClass = 'bg-secondary';
-                                        if (strpos($clasificacion, 'Crítico') !== false) {
+                                        if ($clasificacion === 'Crítico Legal') {
                                             $badgeClass = 'bg-danger';
+                                        } elseif ($clasificacion === 'Crítico Operativo') {
+                                            $badgeClass = 'bg-warning';
+                                        } else {
+                                            $badgeClass = 'bg-secondary';
                                         }
                                         ?>
                                         <span class="badge <?= $badgeClass ?>"><?= $clasificacion ?></span>

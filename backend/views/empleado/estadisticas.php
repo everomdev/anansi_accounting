@@ -9,7 +9,7 @@ use common\models\Empleado;
 /* @var $totalEmpleados int */
 
 $this->title = 'Estadísticas de Documentación';
-$this->params['breadcrumbs'][] = ['label' => 'Empleados', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Colaboradores', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="empleado-estadisticas">
@@ -18,9 +18,9 @@ $this->params['breadcrumbs'][] = $this->title;
         <?= Html::a('<i class="bx bx-arrow-back"></i> Volver', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 
-    <!-- Resumen de Semáforo -->
+    <!-- Resumen de Estado del Expediente -->
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card border-success mb-0" style="border-width: 2px;">
                 <div class="card-body text-center py-2 px-3">
                     <div class="d-flex align-items-center justify-content-center">
@@ -28,46 +28,64 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="ms-3 text-start">
                             <h5 class="mb-0 text-muted">Completos</h5>
                             <h2 class="mb-0 text-success" style="font-weight: bold;">
-                                <?= $semaforoStats[Empleado::SEMAFORO_VERDE] ?>
+                                <?= $semaforoStats[Empleado::SEMAFORO_COMPLETO] ?>
                             </h2>
                             <small class="text-muted">
-                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_VERDE] / $totalEmpleados) * 100, 2) : 0 ?>%
+                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_COMPLETO] / $totalEmpleados) * 100, 2) : 0 ?>%
                             </small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="card border-info mb-0" style="border-width: 2px;">
+                <div class="card-body text-center py-2 px-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="bx bx-info-circle text-info" style="font-size: 2.5rem;"></i>
+                        <div class="ms-3 text-start">
+                            <h5 class="mb-0 text-muted">Incompletos</h5>
+                            <h2 class="mb-0 text-info" style="font-weight: bold;">
+                                <?= $semaforoStats[Empleado::SEMAFORO_INCOMPLETO] ?>
+                            </h2>
+                            <small class="text-muted">
+                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_INCOMPLETO] / $totalEmpleados) * 100, 2) : 0 ?>%
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
             <div class="card border-warning mb-0" style="border-width: 2px;">
                 <div class="card-body text-center py-2 px-3">
                     <div class="d-flex align-items-center justify-content-center">
                         <i class="bx bx-error-circle text-warning" style="font-size: 2.5rem;"></i>
                         <div class="ms-3 text-start">
-                            <h5 class="mb-0 text-muted">Incompletos</h5>
+                            <h5 class="mb-0 text-muted">Crítico Operativo</h5>
                             <h2 class="mb-0 text-warning" style="font-weight: bold;">
-                                <?= $semaforoStats[Empleado::SEMAFORO_AMARILLO] ?>
+                                <?= $semaforoStats[Empleado::SEMAFORO_CRITICO_OPERATIVO] ?>
                             </h2>
                             <small class="text-muted">
-                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_AMARILLO] / $totalEmpleados) * 100, 2) : 0 ?>%
+                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_CRITICO_OPERATIVO] / $totalEmpleados) * 100, 2) : 0 ?>%
                             </small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card border-danger mb-0" style="border-width: 2px;">
                 <div class="card-body text-center py-2 px-3">
                     <div class="d-flex align-items-center justify-content-center">
                         <i class="bx bx-x-circle text-danger" style="font-size: 2.5rem;"></i>
                         <div class="ms-3 text-start">
-                            <h5 class="mb-0 text-muted">Críticos</h5>
+                            <h5 class="mb-0 text-muted">Crítico Legal</h5>
                             <h2 class="mb-0 text-danger" style="font-weight: bold;">
-                                <?= $semaforoStats[Empleado::SEMAFORO_ROJO] ?>
+                                <?= $semaforoStats[Empleado::SEMAFORO_CRITICO_LEGAL] ?>
                             </h2>
                             <small class="text-muted">
-                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_ROJO] / $totalEmpleados) * 100, 2) : 0 ?>%
+                                <?= $totalEmpleados > 0 ? round(($semaforoStats[Empleado::SEMAFORO_CRITICO_LEGAL] / $totalEmpleados) * 100, 2) : 0 ?>%
                             </small>
                         </div>
                     </div>
@@ -105,8 +123,10 @@ $this->params['breadcrumbs'][] = $this->title;
                                 <td>
                                     <?php
                                     $badgeClass = 'bg-secondary';
-                                    if ($stats['clasificacion'] === 'Crítico Legal' || $stats['clasificacion'] === 'Crítico Operativo') {
+                                    if ($stats['clasificacion'] === 'Crítico Legal') {
                                         $badgeClass = 'bg-danger';
+                                    } elseif ($stats['clasificacion'] === 'Crítico Operativo') {
+                                        $badgeClass = 'bg-warning';
                                     }
                                     ?>
                                     <span class="badge <?= $badgeClass ?>"><?= $stats['clasificacion'] ?></span>

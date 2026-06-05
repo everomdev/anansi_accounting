@@ -5,8 +5,8 @@ use yii\helpers\Html;
 /* @var $this yii\web\View */
 /* @var $model common\models\Empleado */
 
-$this->title = 'Actualizar Empleado: ' . $model->getNombreCompleto();
-$this->params['breadcrumbs'][] = ['label' => 'Empleados', 'url' => ['index']];
+$this->title = 'Actualizar Colaborador: ' . $model->getNombreCompleto();
+$this->params['breadcrumbs'][] = ['label' => 'Colaboradores', 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->getNombreCompleto(), 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Actualizar';
 ?>

@@ -47,7 +47,7 @@ $puestosArray = ArrayHelper::map($puestos, 'nombre_puesto', 'nombre_puesto');
             <strong>No hay áreas de trabajo configuradas.</strong>
             Debe crear áreas y puestos en el módulo de 
             <?= Html::a('Plantilla Estándar', ['/plantilla/index'], ['target' => '_blank', 'class' => 'alert-link']) ?>
-            antes de crear empleados.
+            antes de crear colaboradores.
         </div>
     <?php endif; ?>
 

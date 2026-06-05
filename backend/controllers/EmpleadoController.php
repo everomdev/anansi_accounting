@@ -286,9 +286,10 @@ class EmpleadoController extends Controller
             ->all();
 
         $semaforoStats = [
-            Empleado::SEMAFORO_VERDE => 0,
-            Empleado::SEMAFORO_AMARILLO => 0,
-            Empleado::SEMAFORO_ROJO => 0,
+            Empleado::SEMAFORO_COMPLETO          => 0,
+            Empleado::SEMAFORO_INCOMPLETO        => 0,
+            Empleado::SEMAFORO_CRITICO_OPERATIVO => 0,
+            Empleado::SEMAFORO_CRITICO_LEGAL     => 0,
         ];
 
         foreach ($empleados as $empleado) {

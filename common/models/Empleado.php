@@ -37,30 +37,34 @@ class Empleado extends ActiveRecord
         'identificacion',
         'numero_seguro_social',
         'contrato',
+        'curp',
+        'constancia_situacion_fiscal',
+        'acta_nacimiento',
+        'clabe',
     ];
 
     const DOCUMENTOS_CRITICOS_OPERATIVOS = [
+        'cv',
         'curso_higiene',
         'induccion',
+        'cartas_recomendacion',
+
     ];
 
     const DOCUMENTOS_DESEABLES = [
         'comprobante_domicilio',
         'estudios',
-        'cartas_recomendacion',
-        'acta_nacimiento',
-        'identificacion_fotografia',
+        'certificado_medico',
         'comprobante_cursos',
         'test_personalidad',
         'test_psicometrico',
-        'clabe',
-        'constancia_situacion_fiscal',
-        'curp',
+        'otros',
     ];
 
-    const SEMAFORO_VERDE = 'verde';
-    const SEMAFORO_AMARILLO = 'amarillo';
-    const SEMAFORO_ROJO = 'rojo';
+    const SEMAFORO_COMPLETO = 'completo';
+    const SEMAFORO_INCOMPLETO = 'incompleto';
+    const SEMAFORO_CRITICO_OPERATIVO = 'critico_operativo';
+    const SEMAFORO_CRITICO_LEGAL = 'critico_legal';
 
     /**
      * {@inheritdoc}
@@ -168,33 +172,25 @@ class Empleado extends ActiveRecord
             ->select('tipo_documento')
             ->column();
 
-        // Obtener todos los tipos de documentos
-        $todosLosDocumentos = array_merge(
-            self::DOCUMENTOS_CRITICOS_LEGALES,
-            self::DOCUMENTOS_CRITICOS_OPERATIVOS,
-            self::DOCUMENTOS_DESEABLES
-        );
-
-        // Verificar documentos críticos legales
+        // Si falta al menos un documento crítico legal
         $faltanCriticosLegales = array_diff(self::DOCUMENTOS_CRITICOS_LEGALES, $documentosCargados);
         if (!empty($faltanCriticosLegales)) {
-            return self::SEMAFORO_ROJO;
+            return self::SEMAFORO_CRITICO_LEGAL;
         }
 
-        // Verificar documentos críticos operativos
+        // Si no faltan legales pero falta al menos uno crítico operativo
         $faltanCriticosOperativos = array_diff(self::DOCUMENTOS_CRITICOS_OPERATIVOS, $documentosCargados);
         if (!empty($faltanCriticosOperativos)) {
-            return self::SEMAFORO_ROJO;
+            return self::SEMAFORO_CRITICO_OPERATIVO;
         }
 
-        // Verificar si todos los documentos están cargados
-        $faltanDocumentos = array_diff($todosLosDocumentos, $documentosCargados);
-        if (empty($faltanDocumentos)) {
-            return self::SEMAFORO_VERDE;
+        // Si solo faltan documentos complementarios
+        $faltanComplementarios = array_diff(self::DOCUMENTOS_DESEABLES, $documentosCargados);
+        if (!empty($faltanComplementarios)) {
+            return self::SEMAFORO_INCOMPLETO;
         }
 
-        // Si solo faltan documentos deseables
-        return self::SEMAFORO_AMARILLO;
+        return self::SEMAFORO_COMPLETO;
     }
 
     /**
@@ -207,11 +203,13 @@ class Empleado extends ActiveRecord
         $semaforo = $this->getSemaforoExpediente();
         
         switch ($semaforo) {
-            case self::SEMAFORO_VERDE:
+            case self::SEMAFORO_COMPLETO:
                 return 'bg-success';
-            case self::SEMAFORO_AMARILLO:
+            case self::SEMAFORO_INCOMPLETO:
+                return 'bg-info';
+            case self::SEMAFORO_CRITICO_OPERATIVO:
                 return 'bg-warning';
-            case self::SEMAFORO_ROJO:
+            case self::SEMAFORO_CRITICO_LEGAL:
                 return 'bg-danger';
             default:
                 return 'bg-secondary';
@@ -228,12 +226,14 @@ class Empleado extends ActiveRecord
         $semaforo = $this->getSemaforoExpediente();
         
         switch ($semaforo) {
-            case self::SEMAFORO_VERDE:
+            case self::SEMAFORO_COMPLETO:
                 return 'Completo';
-            case self::SEMAFORO_AMARILLO:
+            case self::SEMAFORO_INCOMPLETO:
                 return 'Incompleto';
-            case self::SEMAFORO_ROJO:
-                return 'Crítico';
+            case self::SEMAFORO_CRITICO_OPERATIVO:
+                return 'Crítico Operativo';
+            case self::SEMAFORO_CRITICO_LEGAL:
+                return 'Crítico Legal';
             default:
                 return 'Sin documentos';
         }
@@ -297,15 +297,17 @@ class Empleado extends ActiveRecord
             'induccion' => 'Inducción',
             'comprobante_domicilio' => 'Comprobante de Domicilio',
             'estudios' => 'Comprobante de Estudios',
-            'cartas_recomendacion' => 'Cartas de Recomendación',
+            'cartas_recomendacion' => 'Referencias Laborales',
+            'cv' => 'Currículum Vitae',
             'acta_nacimiento' => 'Acta de Nacimiento',
-            'identificacion_fotografia' => 'Fotografía de Identificación',
             'comprobante_cursos' => 'Comprobante de Cursos',
             'test_personalidad' => 'Test de Personalidad',
             'test_psicometrico' => 'Test Psicométrico',
             'clabe' => 'Clabe de Banca Electrónica',
             'constancia_situacion_fiscal' => 'Constancia de Situación Fiscal',
             'curp' => 'CURP',
+            'certificado_medico' => 'Certificado Médico',
+            'otros' => 'Otros',
         ];
     }
 
@@ -321,6 +323,39 @@ class Empleado extends ActiveRecord
             self::DOCUMENTOS_CRITICOS_LEGALES,
             self::DOCUMENTOS_CRITICOS_OPERATIVOS
         ));
+    }
+
+    /**
+     * Obtiene los documentos críticos legales faltantes
+     *
+     * @return array
+     */
+    public function getDocumentosCriticosLegalesFaltantes()
+    {
+        $documentosCargados = $this->getDocumentos()->select('tipo_documento')->column();
+        return array_values(array_diff(self::DOCUMENTOS_CRITICOS_LEGALES, $documentosCargados));
+    }
+
+    /**
+     * Obtiene los documentos críticos operativos faltantes
+     *
+     * @return array
+     */
+    public function getDocumentosCriticosOperativosFaltantes()
+    {
+        $documentosCargados = $this->getDocumentos()->select('tipo_documento')->column();
+        return array_values(array_diff(self::DOCUMENTOS_CRITICOS_OPERATIVOS, $documentosCargados));
+    }
+
+    /**
+     * Obtiene los documentos complementarios faltantes
+     *
+     * @return array
+     */
+    public function getDocumentosComplementariosFaltantes()
+    {
+        $documentosCargados = $this->getDocumentos()->select('tipo_documento')->column();
+        return array_values(array_diff(self::DOCUMENTOS_DESEABLES, $documentosCargados));
     }
 
     /**

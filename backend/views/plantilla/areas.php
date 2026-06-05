@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             <th>Nombre</th>
                             <th>Descripción</th>
                             <th class="text-center">Puestos</th>
-                            <th class="text-center">Empleados</th>
+                            <th class="text-center">Colaboradores</th>
                             <th>Orden</th>
                             <th>Estado</th>
                             <th>Acciones</th>
