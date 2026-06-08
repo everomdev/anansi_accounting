@@ -1501,7 +1501,7 @@ if ($ccRow > 2) {
         $mainSheet->getProtection()->setInsertColumns(true);   // true = bloqueado en OOXML
         $mainSheet->getProtection()->setDeleteColumns(true);   // true = bloqueado en OOXML
         $mainSheet->getProtection()->setFormatCells(false);    // false = permitido en OOXML
-        $mainSheet->getProtection()->setFormatColumns(true);   // true = bloqueado en OOXML
+        $mainSheet->getProtection()->setFormatColumns(false);  // false = permitido en OOXML (permite ajustar ancho de columnas)
         $mainSheet->getProtection()->setFormatRows(false);     // false = permitido en OOXML
         
         // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
@@ -1590,11 +1590,12 @@ if ($ccRow > 2) {
                     throw new \Exception(implode("\n", $errors));
                 }
                 
-                $price = preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
-                $data['unit_price'] = $price / $data['portions_per_unit'];
-                $yield = preg_replace('/[^\d.]/', '', $data['yield']); // Eliminar símbolos no numéricos
-                //$data['adjusted_price'] = $data['unit_price'] / ($yield / 100);
-                $data['adjusted_price'] = $price;
+                $price = (float)preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
+                $yieldNum = (float)preg_replace('/[^\d.]/', '', $data['yield']); // Eliminar símbolos no numéricos
+                // unit_price = purchase price ÷ kitchen units per purchase unit
+                $data['unit_price'] = ($data['portions_per_unit'] > 0) ? ($price / (float)$data['portions_per_unit']) : $price;
+                // adjusted_price = unit_price ÷ yield factor  (matches JS formula: (price/portions)/(yield/100))
+                $data['adjusted_price'] = ($yieldNum > 0) ? ($data['unit_price'] / ($yieldNum / 100.0)) : $data['unit_price'];
                 $data['business_id'] = $business->id;
                 $data['quantity'] = 0;
                 /// extract category id
