@@ -928,6 +928,7 @@ class StandardRecipeController extends Controller
     $ingredients = IngredientStock::find()
         ->select(['id', 'ingredient as name', 'portion_um as um'])
         ->where(['business_id' => $business->id])
+        ->orderBy(['ingredient' => SORT_ASC])
         ->asArray()
         ->all();
     
@@ -947,6 +948,7 @@ public function actionGetSubStandardRecipes()
             'type' => StandardRecipe::STANDARD_RECIPE_TYPE_SUB
         ])
         ->select(['id', 'title', 'um'])
+        ->orderBy(['title' => SORT_ASC])
         ->asArray()
         ->all();
     

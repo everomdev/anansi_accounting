@@ -12,6 +12,7 @@ if(empty($recipe)){
             ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
             ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
             ->andWhere(['i.business_id' => $business['id']])
+            ->orderBy(['i.ingredient' => SORT_ASC])
             ->all(),
         'id', 'label'
     );
@@ -24,6 +25,7 @@ if(empty($recipe)){
             ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
             ->where(['or', ['sr.id' => null], ['<>', 'sr.id', $recipe->id]])
             ->andWhere(['i.business_id' => $business['id']])
+            ->orderBy(['i.ingredient' => SORT_ASC])
             ->all(),
         'id', 'label'
     );
@@ -38,6 +40,7 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
             'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
         ])
         ->andFilterWhere(['not in', 'sr.id', $recipe ? $recipe->getAncestorIds() : []])
+        ->orderBy(['sr.title' => SORT_ASC])
         ->all(),
     'id', function($sr){
         return sprintf("%s (%s)", $sr['label'], $sr['um']);

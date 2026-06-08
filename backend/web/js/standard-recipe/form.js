@@ -260,6 +260,16 @@ $(document).on('click', '.update-ingredient', function (event) {
         let subrecipes = subrecipesRes[0] || [];
         let selectOptions = '';
 
+        // Ordenar ingredientes alfabéticamente por nombre
+        ingredients.sort(function(a, b) {
+            return a.name.localeCompare(b.name, undefined, {sensitivity: 'base'});
+        });
+
+        // Ordenar subrecetas alfabéticamente por título
+        subrecipes.sort(function(a, b) {
+            return a.title.localeCompare(b.title, undefined, {sensitivity: 'base'});
+        });
+
         // Ingredientes (mayúsculas)
         if (ingredients.length > 0) {
             selectOptions += '<optgroup label="INGREDIENTES">';
