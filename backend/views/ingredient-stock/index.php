@@ -343,10 +343,10 @@ $this->registerCss('
                 'headerOptions' => ['style' => 'text-align: center;'],
             ],
             [
-                'attribute' => 'lastUnitPrice',
-                'label' => 'Último<br>precio',
+                'attribute' => 'lastPrice',
+                'label' => 'Último<br>precio<br>compra',
                 'value' => function ($data) {
-                    return formatPrice($data->lastUnitPrice);
+                    return formatPrice($data->lastPrice);
                 },
                 'encodeLabel' => false,
                 'filter' => false, // Columna calculada, no filtrable
@@ -354,12 +354,12 @@ $this->registerCss('
                 'headerOptions' => [
                     'style' => 'text-align: center; font-weight: bold; cursor: pointer;',
                     'class' => 'sortable-column',
-                    'data-sort-by' => 'lastUnitPrice'
+                    'data-sort-by' => 'lastPrice'
                 ],
             ],
             [
                 'attribute' => 'avgUnitPrice',
-                'label' => 'Precio<br>promedio',
+                'label' => 'Precio<br>promedio<br>compra',
                 'value' => function ($data) {
                     return formatPrice($data->avgUnitPrice);
                 },
@@ -374,7 +374,7 @@ $this->registerCss('
             ],
             [
                 'attribute' => 'higherUnitPrice',
-                'label' => 'Precio<br>más alto',
+                'label' => 'Precio<br>más alto<br>compra',
                 'value' => function ($data) {
                     return formatPrice($data->higherUnitPrice);
                 },

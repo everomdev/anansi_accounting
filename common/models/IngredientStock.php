@@ -381,14 +381,14 @@ class IngredientStock extends \yii\db\ActiveRecord
 
     public function getHigherUnitPrice()
     {
-        $higherPrice = $this->getStockPrices()->orderBy(['adjusted_price' => SORT_DESC, 'id' => SORT_DESC])->one();
-        return empty($higherPrice) ? 0.0 : round($higherPrice->adjusted_price, 2);
+        $higherPrice = $this->getStockPrices()->orderBy(['price' => SORT_DESC, 'id' => SORT_DESC])->one();
+        return empty($higherPrice) ? 0.0 : round($higherPrice->price, 2);
     }
 
     public function getAvgUnitPrice()
     {
         return round($this->getStockPrices()
-            ->select(["avg(adjusted_price) as avg_price"])
+            ->select(["avg(price) as avg_price"])
             ->asArray(true)
             ->one()['avg_price'],
             2
