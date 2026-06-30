@@ -3501,7 +3501,7 @@ public function actionAnalytics($family = 'all', $sort = null, $direction = 'asc
          $insumosSheet->setCellValue('A'.$insumosRow, strtolower($ingredient->ingredient));
          $insumosSheet->setCellValue('B'.$insumosRow, $ingredient->quantity);
          $insumosSheet->setCellValue('C'.$insumosRow, $ingredient->portion_um);
-         $insumosSheet->setCellValue('D'.$insumosRow, number_format($ingredient->lastUnitPrice / $ingredient->portions_per_unit, 2, '.', ''));
+         $insumosSheet->setCellValue('D'.$insumosRow, number_format($ingredient->lastUnitPrice, 2, '.', ''));
          $insumosRow++;
      }
       $subrecetaRow = 2;
@@ -3591,7 +3591,7 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
     }
 
     // Fórmula mejorada que funciona incluso cuando no hay datos inicialmente
-    $dynamicFormula = "=OFFSET('$sheetName'!A$2,0,0,COUNTA('$sheetName'!A:A)-1,1)";
+    $dynamicFormula = "=OFFSET('$sheetName'!A\$2,0,0,COUNTA('$sheetName'!A:A)-1,1)";
     $validation->setFormula1($dynamicFormula);
      
      // Aplicar a 500 filas para permitir múltiples ingredientes por receta
@@ -3667,43 +3667,54 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
         // If no convoy items, use an empty list
         $dataValidationConvoy->setFormula1('""');
     }
+   // Calculate actual last rows for direct range references (no INDIRECT, no COUNTA)
+    $lastInsumoRow = $insumosRow - 1;
+    $lastSubRow = $subrecetaRow - 1;
+    // Build range references for data validation
+    $insumosRange = ($lastInsumoRow >= 2) ? "INSUMOS!\$A\$2:\$A\$$lastInsumoRow" : "";
+    $subrecetasRange = ($lastSubRow >= 2) ? "SUBRECETAS!\$A\$2:\$A\$$lastSubRow" : "";
+
    for ($i = 2; $i <= 500; $i++) {
-    // Validación dinámica para la columna Item basada en el tipo seleccionado
-    $ingredientsSheet->setCellValue(
-        "C$i",
-        "=IF(B$i=\"INSUMO\",INDIRECT(\"INSUMOS!A2:A\"&COUNTA(INSUMOS!A:A)),IF(B$i=\"SUBRECETA\",INDIRECT(\"SUBRECETAS!A2:A\"&COUNTA(SUBRECETAS!A:A)),\"\"))"
-    );
-    // Configurar la validación de datos para la columna Item
-    $itemValidation = $ingredientsSheet->getCell("C$i")->getDataValidation();
-    $itemValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $itemValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $itemValidation->setAllowBlank(false);
-    $itemValidation->setShowInputMessage(true);
-    $itemValidation->setShowErrorMessage(true);
-    $itemValidation->setShowDropDown(true);
-    $itemValidation->setErrorTitle('Error de entrada');
-    $itemValidation->setError('Seleccione un item válido');
-    $itemValidation->setPromptTitle('Seleccionar item');
-    $itemValidation->setPrompt('Seleccione un insumo o subreceta según el tipo');
-    // Use dynamic range references with named ranges like the UM validation
-    $itemValidation->setFormula1("=IF(B$i=\"INSUMO\",INDIRECT(\"INSUMOS!A2:A\"&COUNTA(INSUMOS!A:A)),IF(B$i=\"SUBRECETA\",INDIRECT(\"SUBRECETAS!A2:A\"&COUNTA(SUBRECETAS!A:A)),\"\"))");
-    
-    $ingredientsSheet->getCell("C$i")->setDataValidation($itemValidation);
+     // Dejar la celda vacía para que el usuario seleccione del dropdown manualmente
+     // Configurar la validación de datos para la columna Item
+     $itemValidation = $ingredientsSheet->getCell("C$i")->getDataValidation();
+     $itemValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+     $itemValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+     $itemValidation->setAllowBlank(false);
+     $itemValidation->setShowInputMessage(true);
+     $itemValidation->setShowErrorMessage(true);
+     $itemValidation->setShowDropDown(true);
+     $itemValidation->setErrorTitle('Error de entrada');
+     $itemValidation->setError('Seleccione un item válido');
+     $itemValidation->setPromptTitle('Seleccionar item');
+     $itemValidation->setPrompt('Seleccione un insumo o subreceta según el tipo');
+     // Use direct range references instead of INDIRECT+COUNTA for better compatibility
+     if (!empty($insumosRange) && !empty($subrecetasRange)) {
+         $itemValidation->setFormula1("=IF(B$i=\"INSUMO\",$insumosRange,$subrecetasRange)");
+     } elseif (!empty($insumosRange)) {
+         $itemValidation->setFormula1("=$insumosRange");
+     } elseif (!empty($subrecetasRange)) {
+         $itemValidation->setFormula1("=$subrecetasRange");
+     } else {
+         $itemValidation->setFormula1('""');
+     }
+     
+     $ingredientsSheet->getCell("C$i")->setDataValidation($itemValidation);
       // Fórmulas corregidas para UM y costo
-    $ingredientsSheet->setCellValue(
-        "E$i", 
-        "=IF(B$i=\"INSUMO\",VLOOKUP(C$i,INSUMOS!A:D,3,FALSE),IF(B$i=\"SUBRECETA\",VLOOKUP(C$i,SUBRECETAS!A:D,3,FALSE),\"\"))"
-    );
+      $ingredientsSheet->setCellValue(
+         "E$i", 
+         "=IF(B$i=\"INSUMO\",IFERROR(VLOOKUP(C$i,INSUMOS!A:D,3,FALSE),\"\"),IF(B$i=\"SUBRECETA\",IFERROR(VLOOKUP(C$i,SUBRECETAS!A:D,3,FALSE),\"\"),\"\"))"
+     );
 
     $ingredientsSheet->setCellValue(
         "F$i", 
         "=IF(B$i=\"INSUMO\",
-            IF(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE)=\"\",\"\", 
-                TEXT(D$i*VLOOKUP(C$i,INSUMOS!A:D,4,FALSE),\"0.00\")
+            IF(D$i=\"\",\"\",
+                IFERROR(TEXT(D$i*IFERROR(VLOOKUP(C$i,INSUMOS!A:D,4,FALSE),0),\"0.00\"),\"\")
             ),
             IF(B$i=\"SUBRECETA\",
-                IF(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE)=\"\",\"\", 
-                    TEXT(D$i*VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE),\"0.00\")
+                IF(D$i=\"\",\"\",
+                    IFERROR(TEXT(D$i*IFERROR(VLOOKUP(C$i,SUBRECETAS!A:D,4,FALSE),0),\"0.00\"),\"\")
                 ),
                 \"\"
             )
