@@ -353,7 +353,7 @@ class IngredientStock extends \yii\db\ActiveRecord
 
     public function getLastPrice()
     {
-        $lastPrice = $this->getStockPrices()->orderBy(['date' => SORT_DESC])->one();
+        $lastPrice = $this->getStockPrices()->orderBy(['date' => SORT_DESC, 'id' => SORT_DESC])->one();
         return empty($lastPrice) ? 0.0 : $lastPrice->price;
     }
 
