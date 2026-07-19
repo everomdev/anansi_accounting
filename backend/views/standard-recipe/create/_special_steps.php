@@ -4,11 +4,30 @@
 /** @var $this \yii\web\View */
 
 use yii\helpers\ArrayHelper;
+use common\models\RecipeStep;
+use rico\yii2images\models\Image;
 
 ?>
 <?php
-\yii\widgets\Pjax::begin(['id' => 'pjax-list-special-steps', 'timeout' => false])
+$steps = $model->getRecipeSteps()->andWhere(['type' => RecipeStep::STEP_TYPE_SPECIAL])->all();
+// Batch-load images (elimina N+1 queries)
+$imageMap = [];
+if (!empty($steps)) {
+    $stepIds = ArrayHelper::getColumn($steps, 'id');
+    $imageRecords = Image::find()
+        ->where(['itemId' => $stepIds, 'modelName' => 'RecipeStep'])
+        ->orderBy(['isMain' => SORT_DESC, 'id' => SORT_ASC])
+        ->all();
+    foreach ($imageRecords as $img) {
+        if (!isset($imageMap[$img->itemId])) {
+            $imageMap[$img->itemId] = $img;
+        }
+    }
+}
 ?>
+<?php if (empty($contentOnly)): ?>
+<?php \yii\widgets\Pjax::begin(['id' => 'pjax-list-special-steps', 'timeout' => false]); ?>
+<?php endif; ?>
 <div class="row gap-3 mt-5">
     <div class="col-12">
         <h4><?= Yii::t('app', "Cares and special steps") ?></h4>
@@ -29,7 +48,12 @@ use yii\helpers\ArrayHelper;
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($model->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_SPECIAL])->all() as $step): ?>
+                <?php foreach ($steps as $step):
+                    $image = isset($imageMap[$step->id]) ? $imageMap[$step->id] : null;
+                    $imgUrl = $image ? $image->getUrl() : null;
+                    $imgThumb = $image ? $image->getUrl('200x200') : null;
+                    $isRealImage = $image && $imgUrl;
+                ?>
                     <tr>
                         <td class="text-center align-middle">
                             <?= $step->number ?>
@@ -44,12 +68,6 @@ use yii\helpers\ArrayHelper;
                             <?= $step->indicator ?>
                         </td>
                         <td class="text-center">
-                            <?php $image = $step->getImage(); ?>
-                            <?php
-                                $imgUrl = $image ? $image->getUrl() : null;
-                                $imgThumb = $image ? $image->getUrl('200x200') : null;
-                                $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false && strpos($imgThumb, 'placeHolder') === false;
-                            ?>
                             <?php if ($isRealImage): ?>
                                 <a href="#" class="procedure-step-img-link" data-img="<?= $imgUrl ?>">
                                     <img src="<?= $imgThumb ?>" alt="Imagen" style="max-width: 80px; max-height: 80px; border-radius: 6px; cursor:pointer;" />
@@ -60,13 +78,11 @@ use yii\helpers\ArrayHelper;
                         </td>
                         <td class="text-center align-middle">
                             <div class="d-flex justify-content-center gap-2">
-                                <?= \yii\bootstrap5\Html::a(Yii::t('app', "Remove"), \yii\helpers\Url::to(['standard-recipe/remove-step', 'recipeId' => $model->id, 'id' => $step->id]), [
-                                    'class' => "btn btn-sm btn-danger delete",
-                                    'data' => [
-                                        'confirm-message' => Yii::t('app', 'Are you sure you want to delete this step?'),
-                                        'pjax' => "#pjax-list-special-steps"
-                                    ]
-                                ]) ?>
+                                <button type="button"
+                                    class="btn btn-sm btn-danger btn-delete-special-step"
+                                    data-url="<?= \yii\helpers\Url::to(['standard-recipe/remove-step', 'recipeId' => $model->id, 'id' => $step->id]) ?>">
+                                    <?= Yii::t('app', "Remove") ?>
+                                </button>
                                 <?= \yii\bootstrap5\Html::a(Yii::t('app', "Modificar"), '#', [
                                     'class' => "btn btn-sm btn-warning edit-special-step",
                                     'data-bs-toggle' => "modal",
@@ -88,8 +104,11 @@ use yii\helpers\ArrayHelper;
         </div>
     </div>
 </div>
+<?php if (empty($contentOnly)): ?>
 <?php \yii\widgets\Pjax::end(); ?>
+<?php endif; ?>
 
+<?php if (empty($contentOnly)): ?>
 <!-- Modal imagen grande (fuera del pjax para evitar duplicados) -->
 <div class="modal fade" id="specialStepImageModal" tabindex="-1" aria-labelledby="specialStepImageModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -169,3 +188,4 @@ use yii\helpers\ArrayHelper;
     cb.addEventListener('change', toggleTimeNa);
 })();
 </script>
+<?php endif; ?>

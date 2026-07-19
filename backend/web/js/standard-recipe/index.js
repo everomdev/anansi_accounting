@@ -187,8 +187,11 @@ $(document).ready(function () {
         $('#edit-step-time').val(time);
         $('#edit-step-indicator').val(indicator);
     });
+    function getRecipeId() {
+        return new URLSearchParams(window.location.search).get('id');
+    }
     // Código para guardar los cambios de paso normal
-    $('#save-edit-step').on('click', function () {
+$(document).on('click', '#save-edit-step', function () {
         var stepId = $('#edit-step-id').val();
         var activity = $('#edit-step-activity').val();
         var time = $('#edit-step-time').val();
@@ -202,8 +205,6 @@ $(document).ready(function () {
         formData.append('indicator', indicator);
         formData.append('_image', _image);
         formData.append('remove_image', removeImage);
-        // Depuración
-        console.log('remove_image:', removeImage);
         $.ajax({
             url: '/standard-recipe/edit-step',
             type: 'POST',
@@ -211,21 +212,22 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function (response) {
-                // Mover el foco fuera del modal antes de ocultarlo para evitar advertencia aria-hidden
-                $('body').focus();
+                var rid = getRecipeId();
+                $('#modal-edit-step').one('hidden.bs.modal', function () {
+                    $.getJSON('/standard-recipe/render-steps?id=' + rid, function(data) {
+                        window.replaceStepsHtml('#pjax-list-steps', data.html);
+                    });
+                });
                 $('#modal-edit-step').modal('hide');
-                console.log('Cambios guardados exitosamente:', response);
-                $.pjax.reload({container: '#pjax-list-steps'});
             },
             error: function (xhr, status, error) {
-                console.error('Error al guardar los cambios:', error);
                 alert('Error al guardar los cambios.');
             }
         });
     });
 
     // Código para guardar los cambios de paso especial
-    $('#save-edit-special-step').on('click', function () {
+    $(document).on('click', '#save-edit-special-step', function () {
         var $btn     = $(this);
         var $spinner = $('#save-edit-special-step-spinner');
         var $text    = $('#save-edit-special-step-text');
@@ -256,12 +258,15 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             success: function (response) {
-                $('body').focus();
+                var rid = getRecipeId();
+                $('#modal-edit-special-step').one('hidden.bs.modal', function () {
+                    $.getJSON('/standard-recipe/render-special-steps?id=' + rid, function(data) {
+                        window.replaceStepsHtml('#pjax-list-special-steps', data.html);
+                    });
+                });
                 $('#modal-edit-special-step').modal('hide');
-                $.pjax.reload({container: '#pjax-list-special-steps'});
             },
             error: function (xhr, status, error) {
-                console.error('Error al guardar los cambios (special):', error);
                 alert('Error al guardar los cambios.');
             },
             complete: function() {

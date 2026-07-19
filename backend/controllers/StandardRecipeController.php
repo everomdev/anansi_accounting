@@ -89,10 +89,9 @@ class StandardRecipeController extends Controller
                             'get-available-ingredients',
                             'get-sub-standard-recipes',
                             'import-sales-excel',
-                            'download-sales-template'
-                            
-
-
+                            'download-sales-template',
+                            'render-steps',
+                            'render-special-steps'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -123,8 +122,9 @@ class StandardRecipeController extends Controller
                             'get-available-ingredients',
                             'get-sub-standard-recipes',
                             'import-sales-excel',
-                            'download-sales-template'
-
+                            'download-sales-template',
+                            'render-steps',
+                            'render-special-steps'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -3955,6 +3955,21 @@ public function actionEditStep()
 
     return $this->asJson(['success' => false]);
 }
+
+public function actionRenderSteps($id)
+{
+    $model = $this->findModel($id);
+    $html = $this->renderPartial('create/_steps', ['model' => $model, 'contentOnly' => true]);
+    return $this->asJson(['html' => $html]);
+}
+
+public function actionRenderSpecialSteps($id)
+{
+    $model = $this->findModel($id);
+    $html = $this->renderPartial('create/_special_steps', ['model' => $model, 'contentOnly' => true]);
+    return $this->asJson(['html' => $html]);
+}
+
     /**
      * Importa ventas desde un archivo Excel con formato ABC de Ventas
      * Extrae información de la columna Descripción (nombre del producto) y Unidades (cantidad vendida)

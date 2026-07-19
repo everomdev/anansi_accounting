@@ -4,11 +4,39 @@
 /** @var $this \yii\web\View */
 
 use yii\helpers\ArrayHelper;
+use common\models\RecipeStep;
+use rico\yii2images\models\Image;
 
 ?>
 <?php
-\yii\widgets\Pjax::begin(['id' => 'pjax-list-steps', 'timeout' => false])
+$steps = $model->getRecipeSteps()->andWhere(['type' => RecipeStep::STEP_TYPE_PROCEDURE])->all();
+// Batch-load images for all steps (elimina N+1 queries)
+$imageMap = [];
+if (!empty($steps)) {
+    $stepIds = ArrayHelper::getColumn($steps, 'id');
+    $imageRecords = Image::find()
+        ->where(['itemId' => $stepIds, 'modelName' => 'RecipeStep'])
+        ->orderBy(['isMain' => SORT_DESC, 'id' => SORT_ASC])
+        ->all();
+    foreach ($imageRecords as $img) {
+        if (!isset($imageMap[$img->itemId])) {
+            $imageMap[$img->itemId] = $img;
+        }
+    }
+}
+if (!function_exists('getStepImageHtml')) {
+    function getStepImageHtml($step, $imageMap) {
+        $image = isset($imageMap[$step->id]) ? $imageMap[$step->id] : null;
+        $imgUrl = $image ? $image->getUrl() : null;
+        $imgThumb = $image ? $image->getUrl('200x200') : null;
+        $real = $image && $imgUrl;
+        return [$imgUrl, $imgThumb, $real];
+    }
+}
 ?>
+<?php if (empty($contentOnly)): ?>
+<?php \yii\widgets\Pjax::begin(['id' => 'pjax-list-steps', 'timeout' => false]); ?>
+<?php endif; ?>
 <div class="row gap-3 mt-5">
     <div class="col-12">
         <h4><?= Yii::t('app', "Procedure") ?></h4>
@@ -28,7 +56,9 @@ use yii\helpers\ArrayHelper;
                         </button>
                     </th>
                 </tr>
-                <?php foreach ($model->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_PROCEDURE])->all() as $step): ?>
+                <?php foreach ($steps as $step):
+                    [$imgUrl, $imgThumb, $isRealImage] = getStepImageHtml($step, $imageMap);
+                ?>
                     <tr>
                         <td class="text-center">
                             <?= $step->number ?>
@@ -43,12 +73,6 @@ use yii\helpers\ArrayHelper;
                             <?= $step->indicator ?>
                         </td>
                         <td class="text-center">
-                            <?php $image = $step->getImage(); ?>
-                            <?php
-                                $imgUrl = $image ? $image->getUrl() : null;
-                                $imgThumb = $image ? $image->getUrl('200x200') : null;
-                                $isRealImage = $imgUrl && strpos($imgUrl, 'no-image') === false && strpos($imgThumb, 'no-image') === false && strpos($imgThumb, 'placeHolder') === false;
-                            ?>
                             <?php if ($isRealImage): ?>
                                 <a href="#" class="procedure-step-img-link" data-img="<?= $imgUrl ?>">
                                     <img src="<?= $imgThumb ?>" alt="Imagen" style="max-width: 80px; max-height: 80px; border-radius: 6px; cursor:pointer;" />
@@ -77,20 +101,6 @@ use yii\helpers\ArrayHelper;
                                 ]) ?>
                             </div>
                         </td>
-                        <?php /*
-                        <td class="text-center">
-                            <?php if ($step->number > 1): ?>
-                                <?= \yii\bootstrap5\Html::a('<i class="bx bx-up-arrow"></i>', ['standard-recipe/move-step', 'recipeId' => $model->id, 'id' => $step->id, 'direction' => 'up'], [
-                                    'class' => "btn btn-sm btn-secondary move-step",
-                                    'data-pjax' => "#pjax-list-steps",
-                                ]) ?>
-                            <?php endif; ?>
-                            <?= \yii\bootstrap5\Html::a('<i class="bx bx-down-arrow"></i>', ['standard-recipe/move-step', 'recipeId' => $model->id, 'id' => $step->id, 'direction' => 'down'], [
-                                'class' => "btn btn-sm btn-secondary move-step",
-                                'data-pjax' => "#pjax-list-steps",
-                            ]) ?>
-                        </td>
-                        */?>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -102,13 +112,16 @@ use yii\helpers\ArrayHelper;
     <div class="align-self-center"><span
                 class="flowchart-circle"><?= Yii::t('app', "Start") ?></span></div>
     <div class="align-self-center"><i class="bx bx-right-arrow"></i></div>
-    <?php foreach ($model->getRecipeSteps()->andWhere(['type' => \common\models\RecipeStep::STEP_TYPE_PROCEDURE])->all() as $step): ?>
+    <?php foreach ($steps as $step): ?>
         <?= $this->render('../_step', ['step' => $step]) ?>
         <div class="align-self-center"><i class="bx bx-right-arrow"></i></div>
     <?php endforeach; ?>
     <div class="align-self-center"><span class="flowchart-circle"><?= Yii::t('app', "End") ?></span>
     </div>
 </div>
+<?php if (empty($contentOnly)): ?>
+<?php \yii\widgets\Pjax::end(); ?>
+
 <div class="modal fade" id="modal-edit-step" tabindex="-1" aria-labelledby="modal-edit-step-label" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -167,8 +180,5 @@ use yii\helpers\ArrayHelper;
   </div>
 </div>
 
-<?php \yii\widgets\Pjax::end(); ?>
-
-<?php
-$this->registerJsFile('@web/js/standard-recipe/index.js', ['depends' => [\yii\web\JqueryAsset::class]]);
-?>
+<?php $this->registerJsFile('@web/js/standard-recipe/index.js', ['depends' => [\yii\web\JqueryAsset::class]]); ?>
+<?php endif; ?>

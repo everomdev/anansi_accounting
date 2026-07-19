@@ -130,15 +130,14 @@ class RecipeStep extends \yii\db\ActiveRecord
 
     public function computeNumber()
     {
-        $lastStep = RecipeStep::find()
+        $maxNumber = RecipeStep::find()
             ->where([
                 'recipe_id' => $this->recipe_id,
                 'type' => $this->type
             ])
-            ->orderBy(['number' => SORT_DESC])
-            ->one();
+            ->max('number');
 
-        $this->number = empty($lastStep) ? 1 : $lastStep->number + 1;
+        $this->number = $maxNumber ? $maxNumber + 1 : 1;
     }
 
     public function fixNumbers()

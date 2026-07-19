@@ -14,6 +14,9 @@
         'options' => [
             'enctype' => 'multipart/form-data',
             'data-pjax-container' => $pjaxId,
+            'data-pjax-reload-url' => $pjaxId === '#pjax-list-steps'
+                ? \yii\helpers\Url::to(['standard-recipe/render-steps', 'id' => $recipe->id])
+                : \yii\helpers\Url::to(['standard-recipe/render-special-steps', 'id' => $recipe->id]),
         ]
     ]) ?>
     <?= $form->field($model, 'type')->hiddenInput()->label(false) ?>
@@ -40,24 +43,8 @@
             <label class="form-label">Segundos</label>
             <input type="number" min="0" max="59" class="form-control" name="input-seconds" value="<?= isset($model->time) && $model->time ? explode(':', str_pad($model->time, 8, '0', STR_PAD_LEFT))[2] : '00' ?>">
         </div>
-        <div class="form-text">Selecciona la duración: horas, minutos y segundos. Ejemplo: 0 horas, 5 minutos y 40 segundos.</div>
-    </div>
-    <script>
-    (function() {
-        var sc   = document.currentScript;
-        var root = sc ? sc.parentElement : document.body;
-        var cb   = root.querySelector('.step-time-na-cb');
-        var grp  = root.querySelector('.step-time-inputs-group');
-        if (!cb || !grp) return;
-        function toggle() {
-            var na = cb.checked;
-            grp.querySelectorAll('input[type="number"]').forEach(function(i) { i.disabled = na; });
-            grp.style.opacity = na ? '0.4' : '1';
-        }
-        cb.addEventListener('change', toggle);
-        toggle();
-    })();
-    </script>
+    <div class="form-text">Selecciona la duración: horas, minutos y segundos. Ejemplo: 0 horas, 5 minutos y 40 segundos.</div>
+</div>
     <div class="col-12">
         <?= $form->field($model, 'indicator')->textInput() ?>
     </div>

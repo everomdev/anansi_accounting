@@ -612,6 +612,17 @@ $this->registerJs(<<<JS
         document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
     }
 
+    function restoreBtn(\$btn, html) {
+        \$btn.prop('disabled', false).html(html);
+    }
+    function getRecipeId() {
+        return new URLSearchParams(window.location.search).get('id');
+    }
+    window.replaceStepsHtml = function(containerId, html) {
+        var el = document.querySelector(containerId);
+        if (!el) return;
+        el.innerHTML = html;
+    }
     // --- Agregar paso con AJAX ---
     \$(document).on('submit', '#form_step', function(e) {
         e.preventDefault();
@@ -629,28 +640,60 @@ $this->registerJs(<<<JS
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    var container = \$form[0].getAttribute('data-pjax-container') || '#pjax-list-steps';
-                    if (container === '#pjax-list-steps') window._stepJustAdded = true;
-                    \$form[0].reset();
-                    \$.pjax.reload({ container: container, timeout: 10000 });
+                    var wasAdded = \$form[0].getAttribute('data-pjax-container') === '#pjax-list-steps';
+                    var reloadUrl  = \$form[0].getAttribute('data-pjax-reload-url');
+                    var container = wasAdded ? '#pjax-list-steps' : '#pjax-list-special-steps';
+                    var collapseId = wasAdded ? 'collapseSteps' : 'collapseSpecialSteps';
+                    var modalId = wasAdded ? '#modal-add-step' : '#modal-add-special-step';
+                    \$(modalId).one('hidden.bs.modal', function () {
+                        rebuildStepsContainer(container, reloadUrl, wasAdded, collapseId);
+                    });
+                    \$(modalId).modal('hide');
+                    restoreBtn(\$btn, originalHtml);
                 } else {
                     alert(response.message || 'Error al agregar el paso');
-                    \$btn.prop('disabled', false).html(originalHtml);
+                    restoreBtn(\$btn, originalHtml);
                 }
             },
             error: function() {
                 alert('Error al agregar el paso');
-                \$btn.prop('disabled', false).html(originalHtml);
+                restoreBtn(\$btn, originalHtml);
             }
         });
     });
 
-    // --- Restaurar botón al cerrar modal ---
+    // --- Inicializar toggle de tiempo al abrir modal ---
+    function initTimeToggle(modalEl) {
+        var cb  = modalEl.querySelector('.step-time-na-cb');
+        var grp = modalEl.querySelector('.step-time-inputs-group');
+        if (!cb || !grp) return;
+        function toggle() {
+            var na = cb.checked;
+            grp.querySelectorAll('input[type="number"]').forEach(function(i) { i.disabled = na; });
+            grp.style.opacity = na ? '0.4' : '1';
+        }
+        cb.removeEventListener('change', toggle);
+        cb.addEventListener('change', toggle);
+        toggle();
+    }
+    \$(document).on('shown.bs.modal', '#modal-add-step, #modal-add-special-step', function() {
+        initTimeToggle(this);
+    });
+
+    // --- Restaurar botón y limpiar estado al cerrar modal ---
     \$(document).on('hidden.bs.modal', '#modal-add-step, #modal-add-special-step', function() {
         var \$btn = \$(this).find('#btn-submit-step');
         \$btn.prop('disabled', false).html('$addBtnLabel');
         var \$form = \$(this).find('#form_step');
-        if (\$form.length) \$form[0].reset();
+        if (\$form.length) {
+            \$form[0].reset();
+            // Reiniciar estado disabled de los inputs de tiempo
+            var grp = \$form[0].querySelector('.step-time-inputs-group');
+            if (grp) {
+                grp.querySelectorAll('input[type="number"]').forEach(function(i) { i.disabled = false; });
+                grp.style.opacity = '1';
+            }
+        }
         cleanModalBackdrop();
     });
 
@@ -665,7 +708,10 @@ $this->registerJs(<<<JS
             data: { _csrf: yii.getCsrfToken() },
             success: function(response) {
                 if (response.success) {
-                    \$.pjax.reload({ container: '#pjax-list-steps', timeout: 10000 });
+                    var rid = getRecipeId();
+                    \$.getJSON('/standard-recipe/render-steps?id=' + rid, function(data) {
+                        replaceStepsHtml('#pjax-list-steps', data.html);
+                    });
                 } else {
                     alert(response.message || 'Error al eliminar el paso');
                 }
@@ -674,54 +720,56 @@ $this->registerJs(<<<JS
         });
     });
 
-    // --- Abrir collapse y scroll tras agregar paso ---
-    \$(document).off('pjax:complete.steps').on('pjax:complete.steps', '#pjax-list-steps', function() {
-        if (!window._stepJustAdded) return;
-        window._stepJustAdded = false;
-        var collapseEl = document.getElementById('collapseSteps');
-        if (!collapseEl) return;
-        collapseEl.style.transition = 'none';
-        collapseEl.classList.remove('collapsing');
-        collapseEl.classList.add('show');
-        collapseEl.style.height = '';
-        var toggleBtn = document.querySelector('[data-bs-target="#collapseSteps"]');
-        if (toggleBtn) {
-            toggleBtn.classList.remove('collapsed');
-            toggleBtn.setAttribute('aria-expanded', 'true');
-        }
-        setTimeout(function() {
-            collapseEl.style.transition = '';
-            collapseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
-    });
-
-    \$(document).off('pjax:complete.special-steps').on('pjax:complete.special-steps', '#pjax-list-special-steps', function() {
-        window._stepJustAdded = false;
-        var collapseEl = document.getElementById('collapseSpecialSteps');
-        if (!collapseEl) return;
-        collapseEl.style.transition = 'none';
-        collapseEl.classList.remove('collapsing');
-        collapseEl.classList.add('show');
-        collapseEl.style.height = '';
-        var toggleBtn = document.querySelector('[data-bs-target="#collapseSpecialSteps"]');
-        if (toggleBtn) {
-            toggleBtn.classList.remove('collapsed');
-            toggleBtn.setAttribute('aria-expanded', 'true');
-        }
-        setTimeout(function() {
-            collapseEl.style.transition = '';
-            collapseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
-    });
-
-    // --- Cerrar modal y limpiar backdrop tras pjax ---
-    \$(document).on('pjax:end', '#pjax-list-steps, #pjax-list-special-steps', function() {
-        ['modal-add-step', 'modal-add-special-step'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) { var inst = bootstrap.Modal.getInstance(el); if (inst) inst.hide(); }
+    // --- Eliminar paso especial con AJAX ---
+    \$(document).on('click', '.btn-delete-special-step', function() {
+        var url = \$(this).data('url');
+        if (!confirm('$confirmStepMsg')) return;
+        \$.ajax({
+            url: url,
+            type: 'POST',
+            dataType: 'json',
+            data: { _csrf: yii.getCsrfToken() },
+            success: function(response) {
+                if (response.success) {
+                    var rid = getRecipeId();
+                    \$.getJSON('/standard-recipe/render-special-steps?id=' + rid, function(data) {
+                        replaceStepsHtml('#pjax-list-special-steps', data.html);
+                    });
+                } else {
+                    alert(response.message || 'Error al eliminar el paso');
+                }
+            },
+            error: function() { alert('Error al eliminar el paso'); }
         });
-        cleanModalBackdrop();
     });
+
+    function openCollapseAndScroll(collapseId, flag) {
+        if (!flag) return;
+        var collapseEl = document.getElementById(collapseId);
+        if (!collapseEl) return;
+        collapseEl.style.transition = 'none';
+        collapseEl.classList.remove('collapsing');
+        collapseEl.classList.add('show');
+        collapseEl.style.height = '';
+        var target = '[data-bs-target="#' + collapseId + '"]';
+        var toggleBtn = document.querySelector(target);
+        if (toggleBtn) {
+            toggleBtn.classList.remove('collapsed');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+        }
+        setTimeout(function() {
+            collapseEl.style.transition = '';
+            collapseEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+    }
+
+    function rebuildStepsContainer(container, reloadUrl, wasAdded, collapseId) {
+        \$.getJSON(reloadUrl, function(data) {
+            replaceStepsHtml(container, data.html);
+            cleanModalBackdrop();
+            openCollapseAndScroll(collapseId, wasAdded);
+        });
+    }
 
     // --- Modal imagen grande de paso ---
     \$(document).on('click', '.procedure-step-img-link', function(e) {
@@ -740,11 +788,6 @@ $this->registerJs(<<<JS
         if (c) c.style.display = 'none';
         if (p) p.src = '';
         if (r) r.value = '0';
-    });
-    \$(document).on('click', '#save-edit-step', function() {
-        var modal = bootstrap.Modal.getInstance(document.getElementById('modal-edit-step'));
-        if (modal) modal.hide();
-        setTimeout(cleanModalBackdrop, 500);
     });
     \$(document).on('click', '.edit-step', function() {
         var imgUrl = this.getAttribute('data-img');
@@ -809,11 +852,6 @@ $this->registerJs(<<<JS
         document.getElementById('edit-special-step-image-preview-container').style.display = 'none';
         document.getElementById('edit-special-step-image-preview').src = '';
         document.getElementById('edit-special-step-remove-image').value = '1';
-    });
-    \$(document).on('click', '#save-edit-special-step', function() {
-        var modal = bootstrap.Modal.getInstance(document.getElementById('modal-edit-special-step'));
-        if (modal) modal.hide();
-        setTimeout(cleanModalBackdrop, 500);
     });
     \$(document).on('hidden.bs.modal', '#modal-edit-special-step', function() { cleanModalBackdrop(); });
 })();
