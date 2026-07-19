@@ -376,29 +376,14 @@ $('#confirm-delete-ingredient-btn').on('click', function(e) {
             type: 'POST',
             dataType: 'json',
             success: function(response) {
-                // Recargar solo la tabla de ingredientes
-                $.pjax.reload({
-                    container: '#pjax-ingredients-selection',
-                    timeout: 10000,
-                    complete: function() {
-                        if (typeof computeCost === 'function') {
-                            computeCost();
-                        }
-                    }
-                });
-                // Recargar el formulario completo después de un pequeño delay
-                setTimeout(function() {
-                    if (typeof computeCost === 'function') {
-                        computeCost();
-                    }
-                    location.reload();
-                }, 500);
-            },
-            complete: function() {
-                // Cerrar el modal siempre
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modal-delete-ingredient'));
                 modal.hide();
                 deleteIngredientUrl = '';
+                if (typeof reloadIngredients === 'function') {
+                    reloadIngredients();
+                }
+            },
+            complete: function() {
                 $btn.prop('disabled', false).html(originalHtml);
             }
         });

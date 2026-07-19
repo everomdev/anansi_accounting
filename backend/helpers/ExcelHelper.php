@@ -2702,7 +2702,7 @@ if ($ccRow > 2) {
                                 ->one();
 
                             if (!$ingredientStock) {
-                                $validationErrors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el negocio.";
+                                $validationErrors[] = "Fila $ingRow: No se encontró el insumo \"{$ingredient['item']}\" en el catálogo de insumos.";
                             }
                         } else if ($ingredient['type'] === 'SUBRECETA') {
                             $subrecipe = StandardRecipe::find()
@@ -2714,7 +2714,7 @@ if ($ccRow > 2) {
                                 ->one();
 
                             if (!$subrecipe) {
-                                $validationErrors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en el negocio.";
+                                $validationErrors[] = "Fila $ingRow: No se encontró la subreceta \"{$ingredient['item']}\" en las subrecetas.";
                             }
                         }
                     }

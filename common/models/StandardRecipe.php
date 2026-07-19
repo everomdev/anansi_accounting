@@ -441,6 +441,8 @@ class StandardRecipe extends \yii\db\ActiveRecord
             ]);
             $model->save();
         }
+
+        return $isLinked;
     }
 
     public function addUpdateSubRecipe($recipeId, $quantity)
@@ -470,6 +472,8 @@ class StandardRecipe extends \yii\db\ActiveRecord
                 )
                 ->execute();
         }
+
+        return $isLinked;
     }
 
     /**

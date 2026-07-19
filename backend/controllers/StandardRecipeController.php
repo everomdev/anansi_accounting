@@ -91,7 +91,8 @@ class StandardRecipeController extends Controller
                             'import-sales-excel',
                             'download-sales-template',
                             'render-steps',
-                            'render-special-steps'
+                            'render-special-steps',
+                            'render-ingredients'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -806,13 +807,35 @@ class StandardRecipeController extends Controller
             $this->make(AjaxRequestModelValidator::class, [$form])->validate();
         }
         if ($form->load($post) && $form->validate()) {
+            $force = !empty($post['force']);
+
             if (empty($form->subRecipeId)) {
+                $isLinked = $model->getIngredientRelations()
+                    ->where(['ingredient_id' => $form->ingredientId])
+                    ->exists();
+                if ($isLinked && !$force) {
+                    return $this->asJson([
+                        'success' => false,
+                        'isDuplicate' => true,
+                        'message' => Yii::t('app', 'Este ingrediente ya está agregado. Debe modificar su cantidad desde la lista de ingredientes.')
+                    ]);
+                }
                 $model->addUpdateIngredient($form->ingredientId, $form->quantity);
             } else {
                 if ($model->wouldCreateCircularDependency((int)$form->subRecipeId)) {
                     return $this->asJson([
                         'success' => false,
                         'errors' => ['subRecipeId' => [Yii::t('app', 'No se puede agregar esta subreceta porque crearía una dependencia circular.')]]
+                    ]);
+                }
+                $isLinked = $model->getSubStandardRecipes()
+                    ->andWhere(['standard_recipe.id' => $form->subRecipeId])
+                    ->exists();
+                if ($isLinked && !$force) {
+                    return $this->asJson([
+                        'success' => false,
+                        'isDuplicate' => true,
+                        'message' => Yii::t('app', 'Esta subreceta ya está agregada. ¿Desea modificar la cantidad?')
                     ]);
                 }
                 $model->addUpdateSubRecipe($form->subRecipeId, $form->quantity);
@@ -3967,6 +3990,13 @@ public function actionRenderSpecialSteps($id)
 {
     $model = $this->findModel($id);
     $html = $this->renderPartial('create/_special_steps', ['model' => $model, 'contentOnly' => true]);
+    return $this->asJson(['html' => $html]);
+}
+
+public function actionRenderIngredients($id)
+{
+    $model = $this->findModel($id);
+    $html = $this->renderPartial('create/_ingredients_selection', ['model' => $model]);
     return $this->asJson(['html' => $html]);
 }
 

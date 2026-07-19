@@ -83,6 +83,21 @@ $(document).on("filedeleted", "#stepsImagesInput", function (event, key, data) {
     return aborted;
 });
 
+function getRecipeId() {
+    var m = window.location.search.match(/id=(\d+)/);
+    return m ? m[1] : null;
+}
+
+function reloadIngredients() {
+    var rid = getRecipeId();
+    if (!rid) return;
+    $.getJSON('/standard-recipe/render-ingredients?id=' + rid, function(data) {
+        document.querySelector('#pjax-ingredients-selection').innerHTML = data.html;
+        computeCost();
+        $("#standardrecipe-price").trigger('change');
+    });
+}
+
 $(document).on('beforeSubmit', "#form_ingredient", function (event) {
     event.preventDefault();
     const _form = $(this);
@@ -90,26 +105,27 @@ $(document).on('beforeSubmit', "#form_ingredient", function (event) {
     let url = _form.attr('action');
     let method = _form.attr('method');
 
-    $.ajax({
-        url,
-        data,
-        type: method
-    }).done(function (response) {
-        $.pjax.reload({container: "#pjax-ingredients-selection"});
-        $("#standardrecipe-price").trigger('change');
-    })
+    function doSubmit(force) {
+        var fd = _form.serializeArray();
+        if (force) fd.push({name: 'force', value: '1'});
+        return $.ajax({
+            url: url,
+            data: fd,
+            type: method
+        }).done(function (response) {
+            if (response.isDuplicate) {
+                if (confirm(response.message)) {
+                    doSubmit(true);
+                }
+                return;
+            }
+            $("#modal-add-ingredient").modal('hide');
+            reloadIngredients();
+        });
+    }
 
+    doSubmit(false);
     return false;
-});
-
-$(document).on('pjax:complete', "#pjax-ingredients-selection", (event) => {
-    // Ocultar el modal y limpiar backdrop y clases del body
-    $("#modal-add-ingredient").modal('hide');
-    setTimeout(function() {
-        $(".modal-backdrop").remove();
-        $('body').removeClass('modal-open').removeAttr('style');
-    }, 100);
-    computeCost();
 });
 
 // Refuerzo: limpiar backdrop y clases del body al cerrar cualquier modal de ingredientes
@@ -126,7 +142,6 @@ $(document).on('change', '#standardrecipe-yield, #standardrecipe-portions', func
 
 function computeCost() {
     let totalCost = 0;
-    console.log('--- computeCost called ---');
 
     $('table tbody tr').each(function(index) {
         if ($(this).find('.exclude-checkbox').length > 0) {
@@ -136,12 +151,10 @@ function computeCost() {
             let cost = parseUserNumber(costText);
             let isExcluded = $(this).find('.exclude-checkbox').is(':checked');
             let discountPercentage = parseInt($(this).find('.cost-percentage').val(), 10);
-            console.log(`[Row ${index}] Ingredient: ${ingredientName}, Cost: ${cost}, Excluded: ${isExcluded}, Discount: ${discountPercentage}`);
             if (isExcluded) {
                 if (discountPercentage > 0) {
                     let discountedCost = cost * (discountPercentage / 100);
                     totalCost += discountedCost;
-                    console.log(`  -> Excluded with discount. DiscountedCost: ${discountedCost}, totalCost: ${totalCost}`);
                 } else {
                     console.log('  -> Excluded without discount. Not added.');
                 }
@@ -155,12 +168,10 @@ function computeCost() {
     // Sumar el costo del convoy seleccionado si existe
     let convoyCost = 0;
     let convoyId = $("#standardrecipe-convoy_id").val();
-    console.log('Convoy seleccionado:', convoyId, 'convoyAmounts:', convoyAmounts);
     if (convoyId && typeof convoyAmounts[convoyId] !== 'undefined') {
         convoyCost = parseFloat(convoyAmounts[convoyId]) || 0;
         if (!isNaN(convoyCost)) {
             totalCost += convoyCost;
-            console.log(`Convoy cost (${convoyId}):`, convoyCost, 'totalCost after convoy:', totalCost);
         } else {
             console.log('Convoy cost is NaN para id', convoyId, convoyAmounts[convoyId]);
         }
@@ -178,7 +189,6 @@ function computeCost() {
         costPerPortion = portions > 0 && _yield > 0 ? (ingredientsCost / _yield / portions) : ingredientsCost;
     }
     let finalTotal = costPerPortion + convoyCost;
-    console.log('Final totalCost:', totalCost, 'ingredientsCost:', ingredientsCost, 'convoyCost:', convoyCost, 'costPerPortion:', costPerPortion, 'finalTotal:', finalTotal, 'portions:', portions, 'yield:', _yield);
     if (!isNaN(finalTotal)) {
         $("#ingredients-selection-total-cost").data('total', finalTotal.toFixed(2));
         $("#standardrecipe-custom_cost").val(finalTotal.toFixed(2));
@@ -274,7 +284,8 @@ $(document).on('click', '.update-ingredient', function (event) {
         if (ingredients.length > 0) {
             selectOptions += '<optgroup label="INGREDIENTES">';
             ingredients.forEach(function(ingredient) {
-                let label = (ingredient.name + ' (' + ingredient.um + ')').toUpperCase();
+                var um = ingredient.um || '';
+                let label = (um ? ingredient.name + ' (' + um + ')' : ingredient.name).toUpperCase();
                 let selected = (isRecipe !== 1 && ingredient.id == currentItemId) ? 'selected' : '';
                 selectOptions += `<option value="${ingredient.id}" data-type="ingredient" ${selected}>${label}</option>`;
             });
@@ -285,7 +296,8 @@ $(document).on('click', '.update-ingredient', function (event) {
         if (subrecipes.length > 0) {
             selectOptions += '<optgroup label="subrecetas">';
             subrecipes.forEach(function(subrecipe) {
-                let label = (subrecipe.title + ' (' + subrecipe.um + ')').toLowerCase();
+                var um = subrecipe.um || '';
+                let label = (um ? subrecipe.title + ' (' + um + ')' : subrecipe.title).toLowerCase();
                 let selected = (isRecipe === 1 && subrecipe.id == currentItemId) ? 'selected' : '';
                 selectOptions += `<option value="${subrecipe.id}" data-type="subrecipe" ${selected}>${label}</option>`;
             });
@@ -321,7 +333,6 @@ $(document).on('click', '#btn-update-ingredient', function (event) {
     // Detectar el tipo del nuevo elemento seleccionado
     let selectedOption = $("#ingredient-select option:selected");
     let isRecipe = selectedOption.data('type') === 'subrecipe' ? 1 : 0;
-    console.log(selectedItem, quantity, isRecipe);
 
     // Validar que la cantidad sea un número válido
     if (!quantity || isNaN(parseFloat(quantity))) {
@@ -341,9 +352,8 @@ $(document).on('click', '#btn-update-ingredient', function (event) {
             isRecipe: isRecipe
         }
     }).done((response) => {
-        $.pjax.reload({container: "#pjax-ingredients-selection"});
-        $("#standardrecipe-price").trigger('change');
         $("#modal-update-ingredient").modal('hide');
+        reloadIngredients();
     }).fail((error) => {
         console.error('Error al actualizar:', error);
         alert('Ha ocurrido un error al actualizar. Por favor, inténtalo de nuevo.');
