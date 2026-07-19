@@ -3672,24 +3672,44 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
      $dataValidationYield->setFormula2(999999);
      
      // f) Validación para convoy (ahora en columna L, ya que Alimento/Bebida fue eliminado)
-     $dataValidationConvoy = $recipesSheet->getCell('L2')->getDataValidation();
-     $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-     $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-     $dataValidationConvoy->setAllowBlank(false);
-     $dataValidationConvoy->setShowInputMessage(true);
-     $dataValidationConvoy->setShowErrorMessage(true);
-     $dataValidationConvoy->setShowDropDown(true);
-     $dataValidationConvoy->setErrorTitle('Error de entrada');
-     $dataValidationConvoy->setError('Este valor no es admitido');
-     $dataValidationConvoy->setPromptTitle('Selecciona un convoy');
-     $dataValidationConvoy->setPrompt('Por favor, selecciona un valor del desplegable.');
-    if ($rowConvoy > 2) {
-        // If there are convoy items, use them for validation
-        $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
-    } else {
-        // If no convoy items, use an empty list
-        $dataValidationConvoy->setFormula1('""');
-    }
+     if ($type !== 'sub') {
+         $dataValidationConvoy = $recipesSheet->getCell('L2')->getDataValidation();
+         $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+         $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+         $dataValidationConvoy->setAllowBlank(false);
+         $dataValidationConvoy->setShowInputMessage(true);
+         $dataValidationConvoy->setShowErrorMessage(true);
+         $dataValidationConvoy->setShowDropDown(true);
+         $dataValidationConvoy->setErrorTitle('Error de entrada');
+         $dataValidationConvoy->setError('Este valor no es admitido');
+         $dataValidationConvoy->setPromptTitle('Selecciona un convoy');
+         $dataValidationConvoy->setPrompt('Por favor, selecciona un valor del desplegable.');
+         if ($rowConvoy > 2) {
+             // If there are convoy items, use them for validation
+             $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
+         } else {
+             // If no convoy items, use an empty list
+             $dataValidationConvoy->setFormula1('""');
+         }
+     }
+    //  $dataValidationConvoy = $recipesSheet->getCell('L2')->getDataValidation();
+    //  $dataValidationConvoy->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+    //  $dataValidationConvoy->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+    //  $dataValidationConvoy->setAllowBlank(false);
+    //  $dataValidationConvoy->setShowInputMessage(true);
+    //  $dataValidationConvoy->setShowErrorMessage(true);
+    //  $dataValidationConvoy->setShowDropDown(true);
+    //  $dataValidationConvoy->setErrorTitle('Error de entrada');
+    //  $dataValidationConvoy->setError('Este valor no es admitido');
+    //  $dataValidationConvoy->setPromptTitle('Selecciona un convoy');
+    //  $dataValidationConvoy->setPrompt('Por favor, selecciona un valor del desplegable.');
+    // if ($rowConvoy > 2) {
+    //     // If there are convoy items, use them for validation
+    //     $dataValidationConvoy->setFormula1('=CONVOY!$B$2:$B$' . ($rowConvoy - 1));
+    // } else {
+    //     // If no convoy items, use an empty list
+    //     $dataValidationConvoy->setFormula1('""');
+    // }
    // Calculate actual last rows for direct range references (no INDIRECT, no COUNTA)
     $lastInsumoRow = $insumosRow - 1;
     $lastSubRow = $subrecetaRow - 1;
@@ -3829,7 +3849,9 @@ $recipesSheet->getColumnDimension($colFinalUM)->setWidth(20);
          }
          
          $recipesSheet->getCell("E$i")->setDataValidation(clone $dataValidationYield);
-         $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationConvoy);
+         if ($type !== 'sub') {
+            $recipesSheet->getCell("L$i")->setDataValidation(clone $dataValidationConvoy);
+         }
          $recipesSheet->getCell("D$i")->setDataValidation(clone $dataValidationTimeUnits);
          $recipesSheet->getCell("J$i")->setDataValidation(clone $dataValidationTimeUnits);
          $recipesSheet->getCell("C$i")->setDataValidation(clone $dataValidationTimeValue);
