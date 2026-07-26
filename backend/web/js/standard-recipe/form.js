@@ -84,6 +84,7 @@ $(document).on("filedeleted", "#stepsImagesInput", function (event, key, data) {
 });
 
 function getRecipeId() {
+    if (window.recipeId) return window.recipeId;
     var m = window.location.search.match(/id=(\d+)/);
     return m ? m[1] : null;
 }

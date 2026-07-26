@@ -87,6 +87,7 @@ $ingredients = (new \yii\db\Query())
     ->all();
 $autocompleteUm = array_values(array_unique(\yii\helpers\ArrayHelper::getColumn($ingredients, 'um')));
 $this->registerJsVar('formUrl', \yii\helpers\Url::to(['standard-recipe/form-select-ingredient', 'id' => $model->id]));
+$this->registerJsVar('recipeId', $model->id);
 $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/form.js"), [
     'position' => $this::POS_END,
     'depends' => [\yii\web\JqueryAsset::class, \yii\web\YiiAsset::class]
@@ -616,6 +617,7 @@ $this->registerJs(<<<JS
         \$btn.prop('disabled', false).html(html);
     }
     function getRecipeId() {
+        if (window.recipeId) return window.recipeId;
         return new URLSearchParams(window.location.search).get('id');
     }
     window.replaceStepsHtml = function(containerId, html) {

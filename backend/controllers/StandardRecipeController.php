@@ -125,7 +125,9 @@ class StandardRecipeController extends Controller
                             'import-sales-excel',
                             'download-sales-template',
                             'render-steps',
-                            'render-special-steps'
+                            'render-special-steps',
+                            'render-ingredients',
+                            'ingredient-list'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -4013,6 +4015,33 @@ public function actionRenderSpecialSteps($id)
     $model = $this->findModel($id);
     $html = $this->renderPartial('create/_special_steps', ['model' => $model, 'contentOnly' => true]);
     return $this->asJson(['html' => $html]);
+}
+
+public function actionIngredientList($q = null, $recipeId = null)
+{
+    \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+    $business = \backend\helpers\RedisKeys::getBusiness();
+
+    $query = (new \yii\db\Query())
+        ->select(["id", "CONCAT(key, ' - ', ingredient, ' (', portion_um, ')') as text"])
+        ->from('ingredient_stock')
+        ->where(['business_id' => $business->id]);
+
+    if (!empty($q)) {
+        $query->andWhere(['like', 'ingredient', $q]);
+    }
+
+    if (!empty($recipeId)) {
+        $query->andWhere(['not exists', (new \yii\db\Query())
+            ->from('ingredient_standard_recipe')
+            ->where('ingredient_id = ingredient_stock.id')
+            ->andWhere(['standard_recipe_id' => $recipeId])
+        ]);
+    }
+
+    $results = $query->limit(20)->all();
+
+    return ['results' => $results];
 }
 
 public function actionRenderIngredients($id)

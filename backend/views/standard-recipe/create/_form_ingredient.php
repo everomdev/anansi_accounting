@@ -2,35 +2,21 @@
 /** @var $this \yii\web\View */
 /** @var $recipe \common\models\StandardRecipe */
 
-use kartik\typeahead\Typeahead;
 $business = \backend\helpers\RedisKeys::getValue(\backend\helpers\RedisKeys::BUSINESS_KEY);
-if(empty($recipe)){
-    $stock = \yii\helpers\ArrayHelper::map(
-        (new \yii\db\Query())
-            ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.portion_um,')') as label"])
-            ->from('ingredient_stock i')
-            ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
-            ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
-            ->andWhere(['i.business_id' => $business['id']])
-            ->orderBy(['i.ingredient' => SORT_ASC])
-            ->all(),
-        'id', 'label'
-    );
-}else {
-    $stock = \yii\helpers\ArrayHelper::map(
-        (new \yii\db\Query())
-            ->select(['i.*', "CONCAT(i.key, ' - ',i.ingredient, ' (', i.portion_um,')') as label"])
-            ->from('ingredient_stock i')
-            ->leftJoin('ingredient_standard_recipe isr', 'i.id=isr.ingredient_id')
-            ->leftJoin('standard_recipe sr', 'isr.standard_recipe_id = sr.id')
-            ->where(['or', ['sr.id' => null], ['<>', 'sr.id', $recipe->id]])
-            ->andWhere(['i.business_id' => $business['id']])
-            ->orderBy(['i.ingredient' => SORT_ASC])
-            ->all(),
-        'id', 'label'
-    );
-
-}
+$stock = \yii\helpers\ArrayHelper::map(
+    (new \yii\db\Query())
+        ->select(["i.id", "CONCAT(i.key, ' - ', i.ingredient, ' (', i.portion_um, ')') as label"])
+        ->from('ingredient_stock i')
+        ->where(['i.business_id' => $business['id']])
+        ->andWhere(['not exists', (new \yii\db\Query())
+            ->from('ingredient_standard_recipe')
+            ->where('ingredient_id = i.id')
+            ->andWhere(['standard_recipe_id' => $recipe ? $recipe->id : null])
+        ])
+        ->orderBy(['i.ingredient' => SORT_ASC])
+        ->all(),
+    'id', 'label'
+);
 $subRecipes = \yii\helpers\ArrayHelper::map(
     (new \yii\db\Query())
         ->select(["id", "sr.title as label", "um"])
@@ -51,7 +37,7 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
         <?php $form = \yii\bootstrap5\ActiveForm::begin([
             'id' => 'form_ingredient',
             'enableClientValidation' => true,
-            'enableAjaxValidation' => true,
+            'enableAjaxValidation' => false,
             'action' => \yii\helpers\Url::to(['standard-recipe/select-ingredients', 'id' => $recipe == null ? null : $recipe->id]),
             'method' => 'post'
         ]) ?>
@@ -64,7 +50,8 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
                 'theme' => \kartik\select2\Select2::THEME_KRAJEE_BS5,
                 'pluginOptions' => [
                     'dropdownParent' => '#modal-add-ingredient',
-                    'allowClear' => true
+                    'allowClear' => true,
+                    'placeholder' => Yii::t('app', "--------")
                 ],
                 'options' => [
                     'placeholder' => Yii::t('app', "--------")

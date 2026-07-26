@@ -325,8 +325,8 @@ $(document).on('select2:select', '#movement-ingredient_id', function(e) {
     var selectedData = e.params.data;
     var selectedText = selectedData.text;
     
-    // Extraer la unidad de medida del texto entre paréntesis
-    var umMatch = selectedText.match(/\(([^)]+)\)/);
+    // Extraer la unidad de medida del último paréntesis
+    var umMatch = selectedText.match(/\(([^)]+)\)$/);
     var um = umMatch ? umMatch[1] : '';
     
     if (movementType === movementTypeOutput) {
@@ -344,8 +344,8 @@ $(document).on('change', '#movement-ingredient_id', function() {
     var selectedOption = $(this).find('option:selected');
     var selectedText = selectedOption.text();
     
-    // Extraer la unidad de medida del texto entre paréntesis
-    var umMatch = selectedText.match(/\(([^)]+)\)/);
+    // Extraer la unidad de medida del último paréntesis
+    var umMatch = selectedText.match(/\(([^)]+)\)$/);
     var um = umMatch ? umMatch[1] : '';
     
     if (movementType === movementTypeOutput) {
@@ -366,8 +366,8 @@ function updateIngredientUM() {
         var selectedOption = ingredientSelect.find('option:selected');
         var selectedText = selectedOption.text();
         
-        // Extraer la unidad de medida del texto entre paréntesis
-        var umMatch = selectedText.match(/\(([^)]+)\)/);
+        // Extraer la unidad de medida del último paréntesis
+        var umMatch = selectedText.match(/\(([^)]+)\)$/);
         var um = umMatch ? umMatch[1] : '';
         
         if (movementType === movementTypeOutput) {
