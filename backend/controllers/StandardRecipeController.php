@@ -92,7 +92,8 @@ class StandardRecipeController extends Controller
                             'download-sales-template',
                             'render-steps',
                             'render-special-steps',
-                            'render-ingredients'
+                            'render-ingredients',
+                            'ingredient-list'
                         ],
                         'allow' => true,
                         'roles' => [
@@ -4047,7 +4048,7 @@ public function actionIngredientList($q = null, $recipeId = null)
 public function actionRenderIngredients($id)
 {
     $model = $this->findModel($id);
-    $html = $this->renderPartial('create/_ingredients_selection', ['model' => $model]);
+    $html = $this->renderPartial('create/_ingredients_table', ['model' => $model]);
     return $this->asJson(['html' => $html]);
 }
 

@@ -84,7 +84,8 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
         </div>
         <div class="col-12">
             <?= \yii\bootstrap5\Html::submitButton(Yii::t('app', 'Add'), [
-                'class' => 'btn btn-success'
+                'class' => 'btn btn-success',
+                'id' => 'btn-add-ingredient-submit'
             ]) ?>
         </div>
         <?php \yii\bootstrap5\ActiveForm::end(); ?>

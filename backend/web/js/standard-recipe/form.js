@@ -91,20 +91,40 @@ function getRecipeId() {
 
 function reloadIngredients() {
     var rid = getRecipeId();
-    if (!rid) return;
-    $.getJSON('/standard-recipe/render-ingredients?id=' + rid, function(data) {
-        document.querySelector('#pjax-ingredients-selection').innerHTML = data.html;
+    if (!rid) return null;
+    return $.getJSON('/standard-recipe/render-ingredients?id=' + rid, function(data) {
+        var container = document.querySelector('#pjax-ingredients-selection');
+        if (container) container.innerHTML = data.html;
         computeCost();
         $("#standardrecipe-price").trigger('change');
+    }).fail(function () {
+        alert('Error al recargar la lista de ingredientes. Inténtalo de nuevo.');
     });
 }
 
 $(document).on('beforeSubmit', "#form_ingredient", function (event) {
     event.preventDefault();
     const _form = $(this);
-    let data = _form.serializeArray();
     let url = _form.attr('action');
     let method = _form.attr('method');
+    const $submitBtn = _form.find('#btn-add-ingredient-submit');
+    const submitOriginalHtml = $submitBtn.html();
+
+    // Bloquear ambos botones mientras se agrega el ingrediente y se recarga la lista
+    const $addBtn = $('#btn-open-add-ingredient');
+    $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span> Agregando...');
+    $addBtn.prop('disabled', true);
+
+    var failsafeTimer = null;
+
+    function restoreBtns() {
+        if (failsafeTimer) clearTimeout(failsafeTimer);
+        $submitBtn.prop('disabled', false).html(submitOriginalHtml);
+        $('#btn-open-add-ingredient').prop('disabled', false);
+    }
+
+    // Failsafe: nunca dejar bloqueados los botones, incluso si una petición se queda colgada
+    failsafeTimer = setTimeout(restoreBtns, 30000);
 
     function doSubmit(force) {
         var fd = _form.serializeArray();
@@ -117,11 +137,20 @@ $(document).on('beforeSubmit', "#form_ingredient", function (event) {
             if (response.isDuplicate) {
                 if (confirm(response.message)) {
                     doSubmit(true);
+                } else {
+                    restoreBtns();
                 }
                 return;
             }
             $("#modal-add-ingredient").modal('hide');
-            reloadIngredients();
+            var reload = reloadIngredients();
+            if (reload && $.isFunction(reload.always)) {
+                reload.always(restoreBtns);
+            } else {
+                restoreBtns();
+            }
+        }).fail(function () {
+            restoreBtns();
         });
     }
 
