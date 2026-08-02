@@ -257,6 +257,13 @@ $(document).on('show.bs.modal', "#modal-add-ingredient", (event) => {
         type: 'get'
     }).done((response) => {
         $("#container-form-ingredient").html(response);
+        // Enfocar la búsqueda del insumo al abrir el modal (evita un click de más)
+        setTimeout(function () {
+            const $select = $("#standardrecipeingredientform-ingredientid");
+            if ($select.length) {
+                $select.select2('open');
+            }
+        }, 100);
     })
 })
 
