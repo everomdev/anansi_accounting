@@ -50,7 +50,7 @@ if (!function_exists('getStepImageHtml')) {
                     <th class="text-center"><?= Yii::t('app', "Indicator") ?></th>
                     <th class="text-center">Imagen</th>
                     <th>
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-open-add-step"
                                 data-bs-target="#modal-add-step">
                             <?= Yii::t('app', 'Add') ?>
                         </button>
@@ -96,6 +96,7 @@ if (!function_exists('getStepImageHtml')) {
                                     'data-number' => $step->number,
                                     'data-activity' => $step->activity,
                                     'data-time' => $step->time,
+                                    'data-time-na' => ($step->time === null || $step->time === '') ? '1' : '0',
                                     'data-indicator' => $step->indicator,
                                     'data-img' => $isRealImage ? $imgUrl : '',
                                 ]) ?>
@@ -138,6 +139,10 @@ if (!function_exists('getStepImageHtml')) {
                     </div>
                     <div class="mb-3">
                         <label for="edit-step-time" class="form-label"><?= Yii::t('app', 'Time') ?></label>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" id="edit-step-time-na">
+                            <label class="form-check-label fw-semibold" for="edit-step-time-na">N/A &mdash; No aplica tiempo</label>
+                        </div>
                         <input type="text" class="form-control" id="edit-step-time" name="time">
                     </div>
                     <div class="mb-3">
@@ -179,6 +184,20 @@ if (!function_exists('getStepImageHtml')) {
     </div>
   </div>
 </div>
+
+<script>
+(function() {
+    var cb    = document.getElementById('edit-step-time-na');
+    var input = document.getElementById('edit-step-time');
+    if (!cb || !input) return;
+    function toggleTimeNa() {
+        input.disabled = cb.checked;
+        input.style.opacity = cb.checked ? '0.4' : '1';
+        if (cb.checked) input.value = '';
+    }
+    cb.addEventListener('change', toggleTimeNa);
+})();
+</script>
 
 <?php $this->registerJsFile('@web/js/standard-recipe/index.js', ['depends' => [\yii\web\JqueryAsset::class]]); ?>
 <?php endif; ?>

@@ -33,6 +33,11 @@ $consumptionCenters = \yii\helpers\ArrayHelper::map(
         'enableAjaxValidation' => true
     ]) ?>
     <div class="card-body">
+        <?php if ($model->hasErrors()): ?>
+            <?= $form->errorSummary($model, [
+                'header' => '<strong>' . Yii::t('app', 'No se pudo crear el usuario. Corrige los siguientes errores:') . '</strong>',
+            ]) ?>
+        <?php endif; ?>
         <?= $form->field($model, 'name')->textInput() ?>
         <?= $form->field($model, 'email')->textInput() ?>
         <div class="mb-3">

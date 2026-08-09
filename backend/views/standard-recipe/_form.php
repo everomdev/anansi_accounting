@@ -613,9 +613,49 @@ $this->registerJs(<<<JS
         document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
     }
 
-    function restoreBtn(\$btn, html) {
-        \$btn.prop('disabled', false).html(html);
+    function getModalElement(modalId) {
+        return document.getElementById(String(modalId).replace(/^#/, ''));
     }
+
+    function resetStepForm(\$modal) {
+        if (!\$modal || !\$modal.length) return;
+        var \$btn = \$modal.find('#btn-submit-step');
+        \$btn.prop('disabled', false).html('$addBtnLabel');
+        var \$form = \$modal.find('#form_step');
+        if (\$form.length) {
+            \$form[0].reset();
+            var grp = \$form[0].querySelector('.step-time-inputs-group');
+            if (grp) {
+                grp.querySelectorAll('input[type="number"]').forEach(function(i) { i.disabled = false; });
+                grp.style.opacity = '1';
+            }
+        }
+    }
+
+    // Abre el modal siempre desde cero (nueva instancia) para que nunca quede en un estado atascado
+    function forceShowModal(modalId) {
+        var modalEl = getModalElement(modalId);
+        if (!modalEl || !window.bootstrap || !bootstrap.Modal) return;
+        var inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.dispose();
+        modalEl.classList.remove('show');
+        modalEl.removeAttribute('aria-hidden');
+        modalEl.removeAttribute('aria-modal');
+        modalEl.removeAttribute('role');
+        modalEl.style.display = 'none';
+        cleanModalBackdrop();
+        new bootstrap.Modal(modalEl).show();
+    }
+
+    // Abrir modal de paso de forma robusta (evita que cueste abrirlo tras haber agregado uno anterior)
+    \$(document).on('click', '#btn-open-add-step, #btn-open-add-special-step', function(e) {
+        var target = this.getAttribute('data-bs-target');
+        if (!target) return;
+        e.preventDefault();
+        e.stopPropagation();
+        forceShowModal(target);
+    });
+
     function getRecipeId() {
         if (window.recipeId) return window.recipeId;
         return new URLSearchParams(window.location.search).get('id');
@@ -626,13 +666,30 @@ $this->registerJs(<<<JS
         el.innerHTML = html;
     }
     // --- Agregar paso con AJAX ---
+    function restoreStepButtons(\$btn, originalBtnHtml, \$openBtn) {
+        \$btn.prop('disabled', false).html(originalBtnHtml);
+        \$('#btn-open-add-step, #btn-open-add-special-step').prop('disabled', false);
+        if (\$openBtn) \$openBtn.prop('disabled', false);
+    }
     \$(document).on('submit', '#form_step', function(e) {
         e.preventDefault();
         e.stopImmediatePropagation();
         var \$form = \$(this);
+        var wasAdded = \$form[0].getAttribute('data-pjax-container') === '#pjax-list-steps';
+        var \$openBtn = \$('#btn-open-add-step, #btn-open-add-special-step');
         var \$btn = \$form.find('#btn-submit-step');
         var originalHtml = \$btn.html();
         \$btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+        \$openBtn.prop('disabled', true);
+
+        var failsafeTimer = null;
+        function restoreBtns() {
+            if (failsafeTimer) clearTimeout(failsafeTimer);
+            restoreStepButtons(\$btn, originalHtml, \$openBtn);
+        }
+        // Failsafe: nunca dejar deshabilitado el botón de añadir
+        failsafeTimer = setTimeout(restoreBtns, 30000);
+
         \$.ajax({
             url: \$form.attr('action'),
             type: 'POST',
@@ -642,24 +699,32 @@ $this->registerJs(<<<JS
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    var wasAdded = \$form[0].getAttribute('data-pjax-container') === '#pjax-list-steps';
                     var reloadUrl  = \$form[0].getAttribute('data-pjax-reload-url');
                     var container = wasAdded ? '#pjax-list-steps' : '#pjax-list-special-steps';
                     var collapseId = wasAdded ? 'collapseSteps' : 'collapseSpecialSteps';
                     var modalId = wasAdded ? '#modal-add-step' : '#modal-add-special-step';
-                    \$(modalId).one('hidden.bs.modal', function () {
-                        rebuildStepsContainer(container, reloadUrl, wasAdded, collapseId);
-                    });
-                    \$(modalId).modal('hide');
-                    restoreBtn(\$btn, originalHtml);
+                    var \$modal = \$(modalId);
+                    // Forzar cierre y limpieza completa del modal (evita overlays invisibles que bloquean clics al reabrir)
+                    if (window.bootstrap && bootstrap.Modal) {
+                        var inst = bootstrap.Modal.getInstance(\$modal[0]);
+                        if (inst) inst.dispose();
+                    }
+                    \$modal.removeClass('show');
+                    \$modal.attr('aria-hidden', 'true');
+                    \$modal.removeAttr('aria-modal');
+                    \$modal.removeAttr('role');
+                    \$modal.css('display', 'none');
+                    cleanModalBackdrop();
+                    resetStepForm(\$modal);
+                    rebuildStepsContainer(container, reloadUrl, wasAdded, collapseId, restoreBtns);
                 } else {
                     alert(response.message || 'Error al agregar el paso');
-                    restoreBtn(\$btn, originalHtml);
+                    restoreBtns();
                 }
             },
             error: function() {
                 alert('Error al agregar el paso');
-                restoreBtn(\$btn, originalHtml);
+                restoreBtns();
             }
         });
     });
@@ -680,22 +745,16 @@ $this->registerJs(<<<JS
     }
     \$(document).on('shown.bs.modal', '#modal-add-step, #modal-add-special-step', function() {
         initTimeToggle(this);
+        // Enfocar el primer campo (Actividad) al abrir el modal
+        var \$activity = \$(this).find('#recipestep-activity');
+        if (\$activity.length) {
+            setTimeout(function() { \$activity.trigger('focus'); }, 100);
+        }
     });
 
     // --- Restaurar botón y limpiar estado al cerrar modal ---
     \$(document).on('hidden.bs.modal', '#modal-add-step, #modal-add-special-step', function() {
-        var \$btn = \$(this).find('#btn-submit-step');
-        \$btn.prop('disabled', false).html('$addBtnLabel');
-        var \$form = \$(this).find('#form_step');
-        if (\$form.length) {
-            \$form[0].reset();
-            // Reiniciar estado disabled de los inputs de tiempo
-            var grp = \$form[0].querySelector('.step-time-inputs-group');
-            if (grp) {
-                grp.querySelectorAll('input[type="number"]').forEach(function(i) { i.disabled = false; });
-                grp.style.opacity = '1';
-            }
-        }
+        resetStepForm(\$(this));
         cleanModalBackdrop();
     });
 
@@ -765,11 +824,14 @@ $this->registerJs(<<<JS
         }, 50);
     }
 
-    function rebuildStepsContainer(container, reloadUrl, wasAdded, collapseId) {
+    function rebuildStepsContainer(container, reloadUrl, wasAdded, collapseId, done) {
         \$.getJSON(reloadUrl, function(data) {
             replaceStepsHtml(container, data.html);
             cleanModalBackdrop();
             openCollapseAndScroll(collapseId, wasAdded);
+            if (done) done();
+        }).fail(function() {
+            if (done) done();
         });
     }
 
@@ -797,6 +859,17 @@ $this->registerJs(<<<JS
         var previewImg = document.getElementById('edit-step-image-preview');
         var removeInput = document.getElementById('edit-step-remove-image');
         var removeBtn = document.getElementById('edit-step-remove-image-btn');
+        var timeNa    = this.getAttribute('data-time-na') === '1';
+        var timeNaCb  = document.getElementById('edit-step-time-na');
+        var timeInput = document.getElementById('edit-step-time');
+        if (timeNaCb) {
+            timeNaCb.checked = timeNa;
+            if (timeInput) {
+                timeInput.disabled = timeNa;
+                timeInput.style.opacity = timeNa ? '0.4' : '1';
+                if (timeNa) timeInput.value = '';
+            }
+        }
         if (removeInput.value !== '1') removeInput.value = '0';
         if (imgUrl && removeInput.value !== '1') {
             previewImg.src = imgUrl;
@@ -1804,6 +1877,11 @@ echo $this->render('create/_form_steps', ['recipe' => $model, 'model' => new \co
             clearModal();
             equipmentModalLabel.textContent = '<?= Yii::t('app', 'Añadir equipo') ?>';
             equipmentModal.show();
+        });
+
+        // Enfocar el primer campo (Equipo o utensilio) al abrir el modal
+        document.getElementById('equipment-modal').addEventListener('shown.bs.modal', function() {
+            equipmentName.focus();
         });
 
         // Evento para guardar equipo

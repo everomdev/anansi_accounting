@@ -73,10 +73,11 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                     <?= Yii::t('app', "Excluído del costeo") ?>
                 </th>
                 <th>
-                    <?= Yii::t('app', "Porcentaje") ?>
+                    <?= Yii::t('app', "Porcentaje") ?><br>
+                    <?= Yii::t('app', "incluido") ?>
                 </th>
                 <th>
-                    <button type="button" class="btn btn-sm btn-primary" id="btn-open-add-ingredient" data-bs-toggle="modal"
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-open-add-ingredient"
                             data-bs-target="#modal-add-ingredient">
                         <?= Yii::t('app', 'Add') ?>
                     </button>
@@ -152,6 +153,7 @@ $this->registerJsFile(Yii::getAlias("@web/js/standard-recipe/format-utils.js"), 
                                        class="form-control form-control-sm cost-percentage"
                                        style="width: 80px;"
                                        value="<?= $ingredientStandardRecipe->cost_percentage ?? 0 ?>">
+                                <div>%</div>
                                 <input type="checkbox"
                                     class="form-check-input ms-2 pending-checkbox d-none"
                                     data-field="cost_percentage"

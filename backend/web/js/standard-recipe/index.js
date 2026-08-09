@@ -180,11 +180,21 @@ $(document).ready(function () {
         var stepId = $(this).data('id');
         var activity = $(this).data('activity');
         var time = $(this).data('time');
+        var timeNa = $(this).data('time-na') === '1' || $(this).data('time-na') === 1;
         var indicator = $(this).data('indicator');
 
         $('#edit-step-id').val(stepId);
         $('#edit-step-activity').val(activity);
-        $('#edit-step-time').val(time);
+        var timeNaCb = $('#edit-step-time-na');
+        var timeInput = $('#edit-step-time');
+        if (timeNaCb.length) {
+            timeNaCb.prop('checked', timeNa);
+            timeInput.prop('disabled', timeNa);
+            timeInput.css('opacity', timeNa ? '0.4' : '1');
+            timeInput.val(timeNa ? '' : time);
+        } else {
+            timeInput.val(time);
+        }
         $('#edit-step-indicator').val(indicator);
     });
     function getRecipeId() {
@@ -194,7 +204,8 @@ $(document).ready(function () {
 $(document).on('click', '#save-edit-step', function () {
         var stepId = $('#edit-step-id').val();
         var activity = $('#edit-step-activity').val();
-        var time = $('#edit-step-time').val();
+        var timeNa = $('#edit-step-time-na').is(':checked');
+        var time = timeNa ? '' : $('#edit-step-time').val();
         var indicator = $('#edit-step-indicator').val();
         var _image = $('#edit-step-image')[0].files[0];
         var removeImage = $('#edit-step-remove-image').val();
@@ -202,6 +213,7 @@ $(document).on('click', '#save-edit-step', function () {
         formData.append('id', stepId);
         formData.append('activity', activity);
         formData.append('time', time);
+        formData.append('time_na', timeNa ? '1' : '0');
         formData.append('indicator', indicator);
         formData.append('_image', _image);
         formData.append('remove_image', removeImage);

@@ -56,7 +56,7 @@ class ExcelHelper
     $activeWorksheet->getStyle('F1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
     // Ajusta la altura de la fila si hace falta
     $activeWorksheet->getRowDimension(1)->setRowHeight(30);
-    $activeWorksheet->setCellValue('G1', "Insumos\n(Cocina)");
+    $activeWorksheet->setCellValue('G1', "Insumos\n(Uso)");
     $activeWorksheet->setCellValue('H1', "Subreceta\n(Rendimiento)");
     $activeWorksheet->setCellValue('I1', "Subreceta\n(UM)");
     $activeWorksheet->setCellValue('J1', "Recetas\n(Rendimiento)");

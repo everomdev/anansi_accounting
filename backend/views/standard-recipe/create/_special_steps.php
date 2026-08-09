@@ -40,7 +40,7 @@ if (!empty($steps)) {
                         <th class="text-center" style="width: 15%;"><?= Yii::t('app', "Time") ?></th>
                         <th class="text-center" style="width: 25%;"><?= Yii::t('app', "Indicator") ?></th>
                         <th class="text-center" style="width: 12%;">
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                            <button type="button" class="btn btn-sm btn-primary" id="btn-open-add-special-step"
                                     data-bs-target="#modal-add-special-step">
                                 <?= Yii::t('app', 'Add') ?>
                             </button>

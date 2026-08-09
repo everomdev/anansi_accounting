@@ -89,6 +89,50 @@ function getRecipeId() {
     return m ? m[1] : null;
 }
 
+function cleanIngredientModalState() {
+    document.querySelectorAll('.modal-backdrop').forEach(function(el) { el.remove(); });
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
+// Abre el modal de ingredientes siempre desde cero (nueva instancia) para evitar estados atascados
+function showIngredientModal() {
+    var modalEl = document.getElementById('modal-add-ingredient');
+    if (!modalEl || !window.bootstrap || !bootstrap.Modal) return;
+    var inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.dispose();
+    modalEl.classList.remove('show');
+    modalEl.removeAttribute('aria-hidden');
+    modalEl.removeAttribute('aria-modal');
+    modalEl.removeAttribute('role');
+    modalEl.style.display = 'none';
+    cleanIngredientModalState();
+    new bootstrap.Modal(modalEl).show();
+}
+
+// Fuerza el cierre y limpieza completa del modal de ingredientes
+function closeIngredientModal() {
+    var modalEl = document.getElementById('modal-add-ingredient');
+    if (modalEl) {
+        if (window.bootstrap && bootstrap.Modal) {
+            var inst = bootstrap.Modal.getInstance(modalEl);
+            if (inst) inst.dispose();
+        }
+        modalEl.classList.remove('show');
+        modalEl.removeAttribute('aria-hidden');
+        modalEl.removeAttribute('aria-modal');
+        modalEl.removeAttribute('role');
+        modalEl.style.display = 'none';
+    }
+    cleanIngredientModalState();
+}
+
+$(document).on('click', '#btn-open-add-ingredient', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    showIngredientModal();
+});
+
 function reloadIngredients() {
     var rid = getRecipeId();
     if (!rid) return null;
@@ -143,6 +187,7 @@ $(document).on('beforeSubmit', "#form_ingredient", function (event) {
                 return;
             }
             $("#modal-add-ingredient").modal('hide');
+            closeIngredientModal();
             var reload = reloadIngredients();
             if (reload && $.isFunction(reload.always)) {
                 reload.always(restoreBtns);
