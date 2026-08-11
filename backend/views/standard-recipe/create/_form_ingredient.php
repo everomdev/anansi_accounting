@@ -23,7 +23,9 @@ $subRecipes = \yii\helpers\ArrayHelper::map(
         ->from("standard_recipe sr")
         ->where([
             'sr.business_id' => $business['id'],
-            'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB
+            'sr.type' => \common\models\StandardRecipe::STANDARD_RECIPE_TYPE_SUB,
+            'sr.in_construction' => false
+
         ])
         ->orderBy(['sr.title' => SORT_ASC])
         ->all(),
