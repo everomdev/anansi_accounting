@@ -5,7 +5,7 @@
     <div class="container">
         <nav class="navbar navbar-dark navbar-expand-lg py-lg-0">
             <a href="<?= \yii\helpers\Url::to(['site/index']) ?>" class="navbar-brand">
-                <img src="<?= Yii::getAlias("@web/images/logo.png") ?>" alt="" width="150">
+                <img src="<?= Yii::getAlias("@web/images/logo1.png") ?>" alt="" width="150">
             </a>
             <button class="navbar-toggler bg-primary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                 <span class="fa fa-bars text-dark"></span>
