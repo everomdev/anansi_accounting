@@ -680,468 +680,462 @@ public static function generateIngredientsTemplate($id)
     $writer->save('php://output');
     exit(200);
 }
-    public static function generateMovementTemplate($businessId = null)
-    {
-        $spreadsheet = new Spreadsheet();
-        $activeWorksheet = $spreadsheet->getActiveSheet();
-        $activeWorksheet->setTitle('Movimientos');
+public static function generateMovementTemplate($businessId = null)
+{
+    $spreadsheet = new Spreadsheet();
+    $activeWorksheet = $spreadsheet->getActiveSheet();
+    $activeWorksheet->setTitle('Movimientos');
 
-        // Configurar estilos
-        $centerStyle = [
-            'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-            ],
-        ];
+    // Configurar estilos
+    $centerStyle = [
+        'alignment' => [
+            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+        ],
+    ];
 
-        // Configurar bordes ANTES de cualquier otro estilo para no sobrescribir RichText
-        $borderStyle = [
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['rgb' => 'E0E0E0']
-                ]
+    // Configurar bordes ANTES de cualquier otro estilo para no sobrescribir RichText
+    $borderStyle = [
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                'color' => ['rgb' => 'E0E0E0']
             ]
-        ];
-        $activeWorksheet->getStyle('A1:N500')->applyFromArray($borderStyle);
+        ]
+    ];
+    $activeWorksheet->getStyle('A1:N500')->applyFromArray($borderStyle);
 
-        // Aplicar estilo centrado ANTES de configurar RichText para no sobrescribir
-        $activeWorksheet->getStyle('A1:N1')->applyFromArray($centerStyle);
+    // Aplicar estilo centrado ANTES de configurar RichText para no sobrescribir
+    $activeWorksheet->getStyle('A1:N1')->applyFromArray($centerStyle);
 
-        // Encabezados en texto plano con indicadores: [T]=Todos, [E]=Entrada, [S]=Salida
-        $activeWorksheet->setCellValue("A1", "Movimiento [T]");
-        $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia) [T]");
-        $activeWorksheet->setCellValue("C1", "Insumo [T]");
-        $activeWorksheet->setCellValue("D1", "Clave");
-        $activeWorksheet->setCellValue("E1", "Proveedor [E]");
-        $activeWorksheet->setCellValue("F1", "Tipo de Pago [E]");
-        $activeWorksheet->setCellValue("G1", "Factura");
-        $activeWorksheet->setCellValue("H1", "Centro de Consumo [S]");
-        $activeWorksheet->setCellValue("I1", "Cantidad [T]");
-        $activeWorksheet->setCellValue("J1", "Precio de Compra [E]");
-        $activeWorksheet->setCellValue("K1", "Impuesto");
-        $activeWorksheet->setCellValue("L1", "Precio Unitario [E]");
-        $activeWorksheet->setCellValue("M1", "Total [E]");
-        $activeWorksheet->setCellValue("N1", "Observaciones");
+    // Encabezados en texto plano con indicadores: [T]=Todos, [E]=Entrada, [S]=Salida
+    $activeWorksheet->setCellValue("A1", "Movimiento [T]");
+    $activeWorksheet->setCellValue("B1", "Fecha (año-mes-dia) [T]");
+    $activeWorksheet->setCellValue("C1", "Insumo [T]");
+    $activeWorksheet->setCellValue("D1", "Clave");
+    $activeWorksheet->setCellValue("E1", "Proveedor [E]");
+    $activeWorksheet->setCellValue("F1", "Tipo de Pago [E]");
+    $activeWorksheet->setCellValue("G1", "Factura");
+    $activeWorksheet->setCellValue("H1", "Centro de Consumo [S]");
+    $activeWorksheet->setCellValue("I1", "Cantidad [T]");
+    $activeWorksheet->setCellValue("J1", "Precio de Compra [E]");
+    $activeWorksheet->setCellValue("K1", "Impuesto");
+    $activeWorksheet->setCellValue("L1", "Precio Unitario [E]");
+    $activeWorksheet->setCellValue("M1", "Total [E]");
+    $activeWorksheet->setCellValue("N1", "Observaciones");
 
-        // Agregar comentarios descriptivos a los encabezados
-        $comment = $activeWorksheet->getComment('A1');
-        $textRun = $comment->getText()->createTextRun('Selecciona si el movimiento es una Entrada (compra o ingreso al almacén) o una Salida (requisición, consumo, merma o traspaso).');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('100px');
-        
-        $comment = $activeWorksheet->getComment('D1');
-        $textRun = $comment->getText()->createTextRun('(Opcional) Clave única del insumo. Si ya está registrado en el sistema, se llenará automáticamente al seleccionarla. Si no lo conoces, déjalo en blanco.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('C1');
-        $textRun = $comment->getText()->createTextRun('Selecciona un insumo de la lista desplegable. También se completará automáticamente al seleccionar una clave.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('B1');
-        $textRun = $comment->getText()->createTextRun('Fecha en que se realizó la entrada o salida del insumo. Usa el formato AAAA-MM-DD (ej. 2025-08-06).');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('E1');
-        $textRun = $comment->getText()->createTextRun('Nombre del proveedor o empresa a quien se compró el insumo. Si no tienes proveedor fijo, escribe o selecciona "Por definir".');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('F1');
-        $textRun = $comment->getText()->createTextRun('Selecciona la forma en que se realizó el pago. Ejemplos: Efectivo, Transferencia, etc.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('60px');
-        
-        $comment = $activeWorksheet->getComment('G1');
-        $textRun = $comment->getText()->createTextRun('(Opcional) Número de factura o comprobante de la compra. Si no aplica, puedes dejarlo en blanco.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('H1');
-        $textRun = $comment->getText()->createTextRun('Solo para SALIDAS: indica en qué área se utilizó el insumo. No llenar si el movimiento es una Entrada.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('I1');
-        $textRun = $comment->getText()->createTextRun('Número de unidades compradas. Debe coincidir con la unidad de compra registrada (kg, litros, piezas, etc.).');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('J1');
-        $textRun = $comment->getText()->createTextRun('Precio total pagado por el insumo, antes de impuestos. Este dato se usa para calcular el precio unitario.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('K1');
-        $textRun = $comment->getText()->createTextRun('Monto del impuesto aplicado (ej. IVA). Si no hubo impuestos, deja en blanco o coloca 0.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('L1');
-        $textRun = $comment->getText()->createTextRun('Se calcula automáticamente si no lo llenas. Es el precio por unidad del insumo ((Precio de Compra + Impuesto) ÷ Cantidad).');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('450px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('M1');
-        $textRun = $comment->getText()->createTextRun('Total con impuestos. Se usa para validar los datos. Si no lo llenas, el sistema lo calcula automáticamente.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('400px');
-        $comment->setHeight('80px');
-        
-        $comment = $activeWorksheet->getComment('N1');
-        $textRun = $comment->getText()->createTextRun('(Opcional) Notas adicionales como promociones, aclaraciones, devoluciones, detalles del insumo o cualquier información útil.');
-        $textRun->getFont()->setSize(12);
-        $comment->setWidth('450px');
-        $comment->setHeight('80px');
+    // Agregar comentarios descriptivos a los encabezados
+    $comment = $activeWorksheet->getComment('A1');
+    $textRun = $comment->getText()->createTextRun('Selecciona si el movimiento es una Entrada (compra o ingreso al almacén) o una Salida (requisición, consumo, merma o traspaso).');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('100px');
 
-        // Aplicar estilo centrado a todas las celdas de datos (sin incluir encabezados que ya tienen RichText)
-        $activeWorksheet->freezePane('D2');
+    $comment = $activeWorksheet->getComment('D1');
+    $textRun = $comment->getText()->createTextRun('(Opcional) Clave única del insumo. Si ya está registrado en el sistema, se llenará automáticamente al seleccionarla. Si no lo conoces, déjalo en blanco.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
 
-        // Aplicar estilo centrado a todas las celdas de datos
-        $activeWorksheet->getStyle('A2:N500')->applyFromArray($centerStyle);
+    $comment = $activeWorksheet->getComment('C1');
+    $textRun = $comment->getText()->createTextRun('Selecciona un insumo de la lista desplegable. También se completará automáticamente al seleccionar una clave.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
 
-        // Configurar anchos de columnas
-        $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(19); // Movimiento
-        $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(15); // Clave
-        $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
-        $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(27); // Fecha
-        $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(25); // Proveedor
-        $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(25); // Tipo de Pago
-        $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(15); // Factura
-        $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(26); // Centro de Consumo
-        $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(17); // Cantidad
-        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(25); // Precio de Compra
-        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(15); // Impuesto
-        $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(21); // Precio Unitario
-        $spreadsheet->getActiveSheet()->getColumnDimension('M')->setWidth(15); // Total
-        $spreadsheet->getActiveSheet()->getColumnDimension('N')->setWidth(30); // Observaciones
+    $comment = $activeWorksheet->getComment('B1');
+    $textRun = $comment->getText()->createTextRun('Fecha en que se realizó la entrada o salida del insumo. Usa el formato AAAA-MM-DD (ej. 2025-08-06).');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
 
-        // Configurar formato de fecha para la columna B (Fecha)
-        $spreadsheet->getActiveSheet()->getStyle('B2:B500')
-            ->getNumberFormat()
-            ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
+    $comment = $activeWorksheet->getComment('E1');
+    $textRun = $comment->getText()->createTextRun('Nombre del proveedor o empresa a quien se compró el insumo. Si no tienes proveedor fijo, escribe o selecciona "Por definir".');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
 
-        // Hoja de insumos
-        if ($businessId) {
-            $ingredientsSheet = $spreadsheet->createSheet();
-            $ingredientsSheet->setTitle('Insumos');
-            $ingredientsSheet->setCellValue('A1', 'Clave');
-            $ingredientsSheet->setCellValue('B1', 'Insumo');
-            $ingredientsSheet->setCellValue('C1', 'Unidad');
-            $ingredientsSheet->setCellValue('D1', 'UnidadCocina');
+    $comment = $activeWorksheet->getComment('F1');
+    $textRun = $comment->getText()->createTextRun('Selecciona la forma en que se realizó el pago. Ejemplos: Efectivo, Transferencia, etc.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('60px');
 
-            $ingredients = IngredientStock::find()
-                ->where(['business_id' => $businessId])
-                ->orderBy(['ingredient' => SORT_ASC])
-                ->all();
+    $comment = $activeWorksheet->getComment('G1');
+    $textRun = $comment->getText()->createTextRun('(Opcional) Número de factura o comprobante de la compra. Si no aplica, puedes dejarlo en blanco.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
 
-            $row = 2;
-            foreach ($ingredients as $ingredient) {
-                // Concatenar el nombre del insumo con la unidad de medida entre paréntesis
-                $ingredientWithUnit = $ingredient->ingredient;
-                if (!empty($ingredient->um)) {
-                    $ingredientWithUnit .= ' (' . $ingredient->um . ')';
-                }
-                // Crear versión para Salida con unidad porción (portion_um)
-                $ingredientWithPortionUnit = $ingredient->ingredient;
-                if (!empty($ingredient->portion_um)) {
-                    $ingredientWithPortionUnit .= ' (' . $ingredient->portion_um . ')';
-                } else if (!empty($ingredient->um)) {
-                    // Si no hay portion_um, usar um como fallback
-                    $ingredientWithPortionUnit .= ' (' . $ingredient->um . ')';
-                }
-                $ingredientsSheet->setCellValue("A$row", $ingredient->key);
-                $ingredientsSheet->setCellValue("B$row", $ingredientWithUnit);
-                $ingredientsSheet->setCellValue("C$row", $ingredient->um);
-                $ingredientsSheet->setCellValue("D$row", $ingredientWithPortionUnit);
-                $row++;
+    $comment = $activeWorksheet->getComment('H1');
+    $textRun = $comment->getText()->createTextRun('Solo para SALIDAS: indica en qué área se utilizó el insumo. No llenar si el movimiento es una Entrada.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
+
+    $comment = $activeWorksheet->getComment('I1');
+    $textRun = $comment->getText()->createTextRun('Número de unidades compradas. Debe coincidir con la unidad de compra registrada (kg, litros, piezas, etc.).');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
+
+    $comment = $activeWorksheet->getComment('J1');
+    $textRun = $comment->getText()->createTextRun('Precio total pagado por el insumo, antes de impuestos. Este dato se usa para calcular el precio unitario.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
+
+    $comment = $activeWorksheet->getComment('K1');
+    $textRun = $comment->getText()->createTextRun('Monto del impuesto aplicado (ej. IVA). Si no hubo impuestos, deja en blanco o coloca 0.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
+
+    $comment = $activeWorksheet->getComment('L1');
+    $textRun = $comment->getText()->createTextRun('Se calcula automáticamente si no lo llenas. Es el precio por unidad del insumo ((Precio de Compra + Impuesto) ÷ Cantidad).');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('450px');
+    $comment->setHeight('80px');
+
+    $comment = $activeWorksheet->getComment('M1');
+    $textRun = $comment->getText()->createTextRun('Total con impuestos. Se usa para validar los datos. Si no lo llenas, el sistema lo calcula automáticamente.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('400px');
+    $comment->setHeight('80px');
+
+    $comment = $activeWorksheet->getComment('N1');
+    $textRun = $comment->getText()->createTextRun('(Opcional) Notas adicionales como promociones, aclaraciones, devoluciones, detalles del insumo o cualquier información útil.');
+    $textRun->getFont()->setSize(12);
+    $comment->setWidth('450px');
+    $comment->setHeight('80px');
+
+    // Aplicar estilo centrado a todas las celdas de datos (sin incluir encabezados que ya tienen RichText)
+    $activeWorksheet->freezePane('D2');
+
+    // Aplicar estilo centrado a todas las celdas de datos
+    $activeWorksheet->getStyle('A2:N500')->applyFromArray($centerStyle);
+
+    // Configurar anchos de columnas
+    $spreadsheet->getActiveSheet()->getColumnDimension('A')->setWidth(19); // Movimiento
+    $spreadsheet->getActiveSheet()->getColumnDimension('D')->setWidth(15); // Clave
+    $spreadsheet->getActiveSheet()->getColumnDimension('C')->setWidth(35); // Insumo
+    $spreadsheet->getActiveSheet()->getColumnDimension('B')->setWidth(27); // Fecha
+    $spreadsheet->getActiveSheet()->getColumnDimension('E')->setWidth(25); // Proveedor
+    $spreadsheet->getActiveSheet()->getColumnDimension('F')->setWidth(25); // Tipo de Pago
+    $spreadsheet->getActiveSheet()->getColumnDimension('G')->setWidth(15); // Factura
+    $spreadsheet->getActiveSheet()->getColumnDimension('H')->setWidth(26); // Centro de Consumo
+    $spreadsheet->getActiveSheet()->getColumnDimension('I')->setWidth(17); // Cantidad
+    $spreadsheet->getActiveSheet()->getColumnDimension('J')->setWidth(25); // Precio de Compra
+    $spreadsheet->getActiveSheet()->getColumnDimension('K')->setWidth(15); // Impuesto
+    $spreadsheet->getActiveSheet()->getColumnDimension('L')->setWidth(21); // Precio Unitario
+    $spreadsheet->getActiveSheet()->getColumnDimension('M')->setWidth(15); // Total
+    $spreadsheet->getActiveSheet()->getColumnDimension('N')->setWidth(30); // Observaciones
+
+    // Configurar formato de fecha para la columna B (Fecha)
+    $spreadsheet->getActiveSheet()->getStyle('B2:B500')
+        ->getNumberFormat()
+        ->setFormatCode(\PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD);
+
+    // Hoja de insumos
+    if ($businessId) {
+        $ingredientsSheet = $spreadsheet->createSheet();
+        $ingredientsSheet->setTitle('Insumos');
+        $ingredientsSheet->setCellValue('A1', 'Clave');
+        $ingredientsSheet->setCellValue('B1', 'Insumo');
+        $ingredientsSheet->setCellValue('C1', 'Unidad');
+        $ingredientsSheet->setCellValue('D1', 'UnidadCocina');
+
+        $ingredients = IngredientStock::find()
+            ->where(['business_id' => $businessId])
+            ->orderBy(['ingredient' => SORT_ASC])
+            ->all();
+
+        $row = 2;
+        foreach ($ingredients as $ingredient) {
+            // Concatenar el nombre del insumo con la unidad de medida entre paréntesis
+            $ingredientWithUnit = $ingredient->ingredient;
+            if (!empty($ingredient->um)) {
+                $ingredientWithUnit .= ' (' . $ingredient->um . ')';
             }
-
-            $ingredientsSheet->getColumnDimension('A')->setWidth(15);
-            $ingredientsSheet->getColumnDimension('B')->setWidth(40);
-            $ingredientsSheet->getColumnDimension('C')->setWidth(15);
-            $ingredientsSheet->getColumnDimension('D')->setWidth(15);
-
-            // Aplicar validación de datos a las columnas en la hoja principal
-            if ($row > 2) {
-                $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
-                
-                // Validación para columna A (Movimiento) - desplegable con Entrada/Salida
-                $movementValidation = $mainSheet->getCell('A2')->getDataValidation();
-                $movementValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-                $movementValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $movementValidation->setAllowBlank(false);
-                $movementValidation->setShowInputMessage(true);
-                $movementValidation->setShowErrorMessage(true);
-                $movementValidation->setShowDropDown(true);
-                $movementValidation->setErrorTitle('Error de entrada');
-                $movementValidation->setError('Este valor no es admitido. Debe seleccionar Entrada o Salida.');
-                $movementValidation->setPromptTitle('Tipo de Movimiento');
-                $movementValidation->setPrompt('Seleccione el tipo de movimiento: Entrada o Salida.');
-                $movementValidation->setFormula1('"Entrada,Salida"');
-                
-                // Validación para columna B (Fecha) - solo fechas desde 2025 usando validación custom
-                $dateValidation = $mainSheet->getCell('B2')->getDataValidation();
-                $dateValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
-                $dateValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $dateValidation->setAllowBlank(true);
-                $dateValidation->setShowInputMessage(true);
-                $dateValidation->setShowErrorMessage(true);
-                $dateValidation->setShowDropDown(false);
-                $dateValidation->setErrorTitle('Error de fecha');
-                $dateValidation->setError('Solo se permiten fechas desde el 1 de enero de 2025 en adelante. Formato: año-mes-día (ej: 2025-08-19)');
-                $dateValidation->setPromptTitle('Fecha del movimiento');
-                $dateValidation->setPrompt('Ingrese una fecha desde 2025 en adelante en formato año-mes-día (ej: 2025-08-19)');
-                // Fórmula personalizada que verifica que el año sea >= 2025
-                $dateValidation->setFormula1('AND(ISNUMBER(B2),YEAR(B2)>=2025)');
-                
-                // Validación para columna D (Clave) - desplegable con todas las claves
-                $keyValidation = $mainSheet->getCell('D2')->getDataValidation();
-                $keyValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-                $keyValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $keyValidation->setAllowBlank(true); // Permitir vacío
-                $keyValidation->setShowInputMessage(true);
-                $keyValidation->setShowErrorMessage(true);
-                $keyValidation->setShowDropDown(true);
-                $keyValidation->setErrorTitle('Error de entrada');
-                $keyValidation->setError('Este valor no es admitido. Debe seleccionar una clave válida.');
-                $keyValidation->setPromptTitle('Selecciona una clave');
-                $keyValidation->setPrompt('Selecciona una clave del desplegable. El insumo se completará automáticamente.');
-                $keyValidation->setFormula1('Insumos!$A$2:$A$' . ($row - 1));
-                
-                // Validación para columna C (Insumo) - desplegable con todos los nombres de insumos
-                // $ingredientValidation = $mainSheet->getCell('C2')->getDataValidation();
-                // $ingredientValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-                // $ingredientValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                // $ingredientValidation->setAllowBlank(true); // Permitir vacío
-                // $ingredientValidation->setShowInputMessage(true);
-                // $ingredientValidation->setShowErrorMessage(true);
-                // $ingredientValidation->setShowDropDown(true);
-                // $ingredientValidation->setErrorTitle('Error de entrada');
-                // $ingredientValidation->setError('Este valor no es admitido. Debe seleccionar un insumo válido.');
-                // $ingredientValidation->setPromptTitle('Selecciona un insumo');
-                // $ingredientValidation->setPrompt('Selecciona un insumo de la lista desplegable. También se completa automáticamente al seleccionar una clave.');
-                // $ingredientValidation->setFormula1('Insumos!$B$2:$B$' . ($row - 1));
-
-                // Validación para columna I (Cantidad) - solo números decimales positivos
-                $quantityValidation = $mainSheet->getCell('I2')->getDataValidation();
-                $quantityValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
-                $quantityValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $quantityValidation->setAllowBlank(true);
-                $quantityValidation->setShowInputMessage(true);
-                $quantityValidation->setShowErrorMessage(true);
-                $quantityValidation->setErrorTitle('Error de entrada');
-                $quantityValidation->setError('Solo se permiten números decimales positivos (ej: 5, 2.5, 10.75).');
-                $quantityValidation->setPromptTitle('Cantidad');
-                $quantityValidation->setPrompt('Ingrese la cantidad como número decimal positivo.');
-                $quantityValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHAN);
-                $quantityValidation->setFormula1(0);
-
-                // Validación para columna J (Precio de Compra) - solo números decimales positivos
-                $priceValidation = $mainSheet->getCell('J2')->getDataValidation();
-                $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
-                $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $priceValidation->setAllowBlank(true);
-                $priceValidation->setShowInputMessage(true);
-                $priceValidation->setShowErrorMessage(true);
-                $priceValidation->setErrorTitle('Error de entrada');
-                $priceValidation->setError('Solo se permiten números decimales positivos (ej: 25.50, 100, 15.99).');
-                $priceValidation->setPromptTitle('Precio de Compra');
-                $priceValidation->setPrompt('Ingrese el precio como número decimal positivo.');
-                $priceValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
-                $priceValidation->setFormula1(0);
-
-                // Validación para columna K (Impuesto) - solo números decimales positivos o cero
-                $taxValidation = $mainSheet->getCell('K2')->getDataValidation();
-                $taxValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
-                $taxValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $taxValidation->setAllowBlank(true);
-                $taxValidation->setShowInputMessage(true);
-                $taxValidation->setShowErrorMessage(true);
-                $taxValidation->setErrorTitle('Error de entrada');
-                $taxValidation->setError('Solo se permiten números decimales positivos o cero (ej: 0, 16.5, 25.00).');
-                $taxValidation->setPromptTitle('Impuesto');
-                $taxValidation->setPrompt('Ingrese el impuesto como número decimal positivo o cero.');
-                $taxValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
-                $taxValidation->setFormula1(0);
-
-                // Aplicar validaciones y fórmulas a todas las filas
-                for ($i = 2; $i <= 500; $i++) {
-                    // Aplicar validación a columna A (Movimiento)
-                    $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
-                    
-                    // Aplicar validación a columna B (Fecha) - crear validación específica para cada fila
-                    $rowDateValidation = clone $dateValidation;
-                    $rowDateValidation->setFormula1("AND(ISNUMBER(B$i),YEAR(B$i)>=2025)");
-                    $mainSheet->getCell("B$i")->setDataValidation($rowDateValidation);
-                    
-                    // Aplicar validación a columna D (Clave)
-                    $mainSheet->getCell("D$i")->setDataValidation(clone $keyValidation);
-                    
-                    // Aplicar validación a columna C (Insumo)
-                    //$mainSheet->getCell("C$i")->setDataValidation(clone $ingredientValidation);
-                    
-                    // Aplicar validación a columna I (Cantidad) - solo números
-                    $mainSheet->getCell("I$i")->setDataValidation(clone $quantityValidation);
-                    
-                    // Aplicar validación a columna J (Precio de Compra) - solo números
-                    $mainSheet->getCell("J$i")->setDataValidation(clone $priceValidation);
-                    
-                    // Aplicar validación a columna K (Impuesto) - solo números
-                    $mainSheet->getCell("K$i")->setDataValidation(clone $taxValidation);
-                    
-                    // Fórmula BUSCARV en columna C (Insumo) como solicitó el usuario
-                    $mainSheet->setCellValue("C$i", "=IF(D$i<>\"\",IF(A$i=\"Salida\",VLOOKUP(D$i,Insumos!\$A\$2:\$D\$1000,4,FALSE),VLOOKUP(D$i,Insumos!\$A\$2:\$D\$1000,2,FALSE)),\"\")");
-                }
-                
-                // Aplicar formato condicional a la columna B (Clave)
-                // Condición: Si C (Insumo) no está vacía Y B (Clave) está vacía, poner en gris
-                $conditionalFormatting = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-                $conditionalFormatting->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-                $conditionalFormatting->addCondition('AND($C2<>"",$D2="")');
-                $conditionalFormatting->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-                $conditionalFormatting->getStyle()->getFill()->getStartColor()->setRGB('D3D3D3'); // Gris claro
-
-                $mainSheet->getStyle('D2:D500')->setConditionalStyles([$conditionalFormatting]);
-
-                // Crear rangos con nombre para ambas columnas
-                $ingredientsSheet = $spreadsheet->getSheetByName('Insumos');
-                $spreadsheet->addNamedRange(
-                    new \PhpOffice\PhpSpreadsheet\NamedRange(
-                        'ListaInsumosEntrada',
-                        $ingredientsSheet,
-                        "'Insumos'!\$B\$2:\$B\$" . ($row - 1)
-                    )
-                );
-                $spreadsheet->addNamedRange(
-                    new \PhpOffice\PhpSpreadsheet\NamedRange(
-                        'ListaInsumosSalida', 
-                        $ingredientsSheet,
-                        "'Insumos'!\$D\$2:\$D\$" . ($row - 1)
-                    )
-                );
-
-                 // Validación para columna C (Insumo) - desplegable dinámico según tipo de movimiento
-                $ingredientValidation = $mainSheet->getCell('C2')->getDataValidation();
-                $ingredientValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-                $ingredientValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $ingredientValidation->setAllowBlank(true);
-                $ingredientValidation->setShowInputMessage(true);
-                $ingredientValidation->setShowErrorMessage(true);
-                $ingredientValidation->setShowDropDown(true);
-                $ingredientValidation->setErrorTitle('Error de entrada');
-                $ingredientValidation->setError('Este valor no es admitido. Debe seleccionar un insumo válido.');
-                $ingredientValidation->setPromptTitle('Selecciona un insumo');
-                $ingredientValidation->setPrompt('Selecciona un insumo de la lista desplegable. También se completa automáticamente al seleccionar una clave.');
-
-                // Aplicar validación dinámica a múltiples filas
-                for ($i = 2; $i <= 500; $i++) {
-                    $validation = clone $ingredientValidation;
-                    // Fórmula que cambia según el tipo de movimiento
-                    $validation->setFormula1("=IF(A$i=\"Salida\",ListaInsumosSalida,ListaInsumosEntrada)");
-                    $mainSheet->getCell("C$i")->setDataValidation($validation);
-                }
-
+            // Crear versión para Salida con unidad porción (portion_um)
+            $ingredientWithPortionUnit = $ingredient->ingredient;
+            if (!empty($ingredient->portion_um)) {
+                $ingredientWithPortionUnit .= ' (' . $ingredient->portion_um . ')';
+            } else if (!empty($ingredient->um)) {
+                // Si no hay portion_um, usar um como fallback
+                $ingredientWithPortionUnit .= ' (' . $ingredient->um . ')';
             }
+            $ingredientsSheet->setCellValue("A$row", $ingredient->key);
+            $ingredientsSheet->setCellValue("B$row", $ingredientWithUnit);
+            $ingredientsSheet->setCellValue("C$row", $ingredient->um);
+            $ingredientsSheet->setCellValue("D$row", $ingredientWithPortionUnit);
+            $row++;
         }
 
-        // Hoja de proveedores
-        if ($businessId) {
-            $providersSheet = $spreadsheet->createSheet();
-            $providersSheet->setTitle('Proveedores');
-            $providersSheet->setCellValue('A1', 'Proveedor');
-            $providersSheet->setCellValue('B1', 'Métodos de Pago');
+        $ingredientsSheet->getColumnDimension('A')->setWidth(15);
+        $ingredientsSheet->getColumnDimension('B')->setWidth(40);
+        $ingredientsSheet->getColumnDimension('C')->setWidth(15);
+        $ingredientsSheet->getColumnDimension('D')->setWidth(15);
 
-            $providers = Provider::find()
-                ->where(['business_id' => $businessId])
-                ->all();
+        // Aplicar validación de datos a las columnas en la hoja principal
+        if ($row > 2) {
+            $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
 
-            $row = 2;
-            $allProviders = [];
-            
-            // Agregar siempre "Por definir" como primera opción
-            $providersSheet->setCellValue("A$row", "Por definir");
-            $providersSheet->setCellValue("B$row", "Todos los métodos disponibles");
-            $providersSheet->setCellValue("C$row", "PM_PorDefinir");
-            $allProviders[] = "Por definir";
-            $row++;
-            
-            // Para cada proveedor crear también una hoja con sus métodos de pago
-            foreach ($providers as $providerIndex => $provider) {
-                $providersSheet->setCellValue("A$row", $provider->business_name);
-                $paymentMethods = is_array($provider->payment_method) ? 
-                    $provider->payment_method : 
-                    explode(',', $provider->payment_method);
-                    
-                $paymentMethodStr = is_array($provider->payment_method) ? 
-                    implode(', ', $provider->payment_method) : 
-                    $provider->payment_method;
-                $providersSheet->setCellValue("B$row", $paymentMethodStr);
-                $allProviders[] = $provider->business_name;
-                
-                // Crear una hoja para los métodos de pago de este proveedor
-                $providerName = preg_replace('/[^\w\s]/', '', $provider->business_name);
-                $providerName = substr(str_replace(' ', '_', $providerName), 0, 20); // Limitar longitud
-                $providerSheetName = 'PM_' . ($providerIndex + 1); // Nombre corto para evitar problemas
-                
-                $providerPaymentSheet = $spreadsheet->createSheet();
-                $providerPaymentSheet->setTitle($providerSheetName);
-                $providerPaymentSheet->setCellValue('A1', 'Valor');
-                $providerPaymentSheet->setCellValue('B1', 'Descripción');
-                
-                // Mapear códigos de pago a descripciones en español
-                $paymentDescriptions = [
-                    Movement::PAYMENT_METHOD_CASH => 'Efectivo',
-                    Movement::PAYMENT_METHOD_TRANSFER => 'Transferencia Bancaria',
-                    Movement::PAYMENT_METHOD_CHECK => 'Cheque',
-                    Movement::PAYMENT_METHOD_CREDIT_CARD => 'Tarjeta de Crédito',
-                    Movement::PAYMENT_METHOD_DEBIT_CARD => 'Tarjeta de Débito',
-                    Movement::PAYMENT_METHOD_OTHER => 'Otro Método de Pago'
-                ];
-                
-                // Agregar solo los métodos de pago disponibles para este proveedor
-                $pmRow = 2;
-                foreach ($paymentMethods as $method) {
-                    $method = trim($method);
-                    if (!empty($method)) {
-                        // Mostrar la descripción en español en lugar del código
-                        $description = isset($paymentDescriptions[$method]) ? $paymentDescriptions[$method] : $method;
-                        $providerPaymentSheet->setCellValue("A$pmRow", $description);
-                        $providerPaymentSheet->setCellValue("B$pmRow", $method); // Código interno para referencia
-                        $pmRow++;
-                    }
-                }
-                
-                $providerPaymentSheet->getColumnDimension('A')->setWidth(25);
-                $providerPaymentSheet->getColumnDimension('B')->setWidth(20);
-                
-                // Asociar el nombre de la hoja con el proveedor para uso posterior
-                $providersSheet->setCellValue("C$row", $providerSheetName);
-                
-                $row++;
+            // Validación para columna A (Movimiento) - desplegable con Entrada/Salida
+            $movementValidation = $mainSheet->getCell('A2')->getDataValidation();
+            $movementValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $movementValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $movementValidation->setAllowBlank(false);
+            $movementValidation->setShowInputMessage(true);
+            $movementValidation->setShowErrorMessage(true);
+            $movementValidation->setShowDropDown(true);
+            $movementValidation->setErrorTitle('Error de entrada');
+            $movementValidation->setError('Este valor no es admitido. Debe seleccionar Entrada o Salida.');
+            $movementValidation->setPromptTitle('Tipo de Movimiento');
+            $movementValidation->setPrompt('Seleccione el tipo de movimiento: Entrada o Salida.');
+            $movementValidation->setFormula1('"Entrada,Salida"');
+
+            // Validación para columna B (Fecha) - solo fechas desde 2025 usando validación custom
+            $dateValidation = $mainSheet->getCell('B2')->getDataValidation();
+            $dateValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_CUSTOM);
+            $dateValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $dateValidation->setAllowBlank(true);
+            $dateValidation->setShowInputMessage(true);
+            $dateValidation->setShowErrorMessage(true);
+            $dateValidation->setShowDropDown(false);
+            $dateValidation->setErrorTitle('Error de fecha');
+            $dateValidation->setError('Solo se permiten fechas desde el 1 de enero de 2025 en adelante. Formato: año-mes-día (ej: 2025-08-19)');
+            $dateValidation->setPromptTitle('Fecha del movimiento');
+            $dateValidation->setPrompt('Ingrese una fecha desde 2025 en adelante en formato año-mes-día (ej: 2025-08-19)');
+            // Fórmula personalizada que verifica que el año sea >= 2025
+            $dateValidation->setFormula1('AND(ISNUMBER(B2),YEAR(B2)>=2025)');
+
+            // Validación para columna D (Clave) - desplegable con todas las claves
+            $keyValidation = $mainSheet->getCell('D2')->getDataValidation();
+            $keyValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $keyValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $keyValidation->setAllowBlank(true); // Permitir vacío
+            $keyValidation->setShowInputMessage(true);
+            $keyValidation->setShowErrorMessage(true);
+            $keyValidation->setShowDropDown(true);
+            $keyValidation->setErrorTitle('Error de entrada');
+            $keyValidation->setError('Este valor no es admitido. Debe seleccionar una clave válida.');
+            $keyValidation->setPromptTitle('Selecciona una clave');
+            $keyValidation->setPrompt('Selecciona una clave del desplegable. El insumo se completará automáticamente.');
+            $keyValidation->setFormula1('Insumos!$A$2:$A$' . ($row - 1));
+
+            // Validación para columna I (Cantidad) - solo números decimales positivos
+            $quantityValidation = $mainSheet->getCell('I2')->getDataValidation();
+            $quantityValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+            $quantityValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $quantityValidation->setAllowBlank(true);
+            $quantityValidation->setShowInputMessage(true);
+            $quantityValidation->setShowErrorMessage(true);
+            $quantityValidation->setErrorTitle('Error de entrada');
+            $quantityValidation->setError('Solo se permiten números decimales positivos (ej: 5, 2.5, 10.75).');
+            $quantityValidation->setPromptTitle('Cantidad');
+            $quantityValidation->setPrompt('Ingrese la cantidad como número decimal positivo.');
+            $quantityValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHAN);
+            $quantityValidation->setFormula1(0);
+
+            // Validación para columna J (Precio de Compra) - solo números decimales positivos
+            $priceValidation = $mainSheet->getCell('J2')->getDataValidation();
+            $priceValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+            $priceValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $priceValidation->setAllowBlank(true);
+            $priceValidation->setShowInputMessage(true);
+            $priceValidation->setShowErrorMessage(true);
+            $priceValidation->setErrorTitle('Error de entrada');
+            $priceValidation->setError('Solo se permiten números decimales positivos (ej: 25.50, 100, 15.99).');
+            $priceValidation->setPromptTitle('Precio de Compra');
+            $priceValidation->setPrompt('Ingrese el precio como número decimal positivo.');
+            $priceValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
+            $priceValidation->setFormula1(0);
+
+            // Validación para columna K (Impuesto) - solo números decimales positivos o cero
+            $taxValidation = $mainSheet->getCell('K2')->getDataValidation();
+            $taxValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_DECIMAL);
+            $taxValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $taxValidation->setAllowBlank(true);
+            $taxValidation->setShowInputMessage(true);
+            $taxValidation->setShowErrorMessage(true);
+            $taxValidation->setErrorTitle('Error de entrada');
+            $taxValidation->setError('Solo se permiten números decimales positivos o cero (ej: 0, 16.5, 25.00).');
+            $taxValidation->setPromptTitle('Impuesto');
+            $taxValidation->setPrompt('Ingrese el impuesto como número decimal positivo o cero.');
+            $taxValidation->setOperator(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::OPERATOR_GREATERTHANOREQUAL);
+            $taxValidation->setFormula1(0);
+
+            // Aplicar validaciones y fórmulas a todas las filas
+            for ($i = 2; $i <= 500; $i++) {
+                // Aplicar validación a columna A (Movimiento)
+                $mainSheet->getCell("A$i")->setDataValidation(clone $movementValidation);
+
+                // Aplicar validación a columna B (Fecha) - crear validación específica para cada fila
+                $rowDateValidation = clone $dateValidation;
+                $rowDateValidation->setFormula1("AND(ISNUMBER(B$i),YEAR(B$i)>=2025)");
+                $mainSheet->getCell("B$i")->setDataValidation($rowDateValidation);
+
+                // Aplicar validación a columna D (Clave)
+                $mainSheet->getCell("D$i")->setDataValidation(clone $keyValidation);
+
+                // Aplicar validación a columna I (Cantidad) - solo números
+                $mainSheet->getCell("I$i")->setDataValidation(clone $quantityValidation);
+
+                // Aplicar validación a columna J (Precio de Compra) - solo números
+                $mainSheet->getCell("J$i")->setDataValidation(clone $priceValidation);
+
+                // Aplicar validación a columna K (Impuesto) - solo números
+                $mainSheet->getCell("K$i")->setDataValidation(clone $taxValidation);
+
+                // Fórmula BUSCARV en columna C (Insumo) - solo autocompleta si A está definido
+                $mainSheet->setCellValue("C$i", "=IF(D$i<>\"\",IF(A$i=\"Salida\",VLOOKUP(D$i,Insumos!\$A\$2:\$D\$1000,4,FALSE),IF(A$i=\"Entrada\",VLOOKUP(D$i,Insumos!\$A\$2:\$D\$1000,2,FALSE),\"\")),\"\")");
             }
-            
-            // Crear hoja especial para "Por definir" con todos los tipos de pago
-            $porDefinirSheet = $spreadsheet->createSheet();
-            $porDefinirSheet->setTitle('PM_PorDefinir');
-            $porDefinirSheet->setCellValue('A1', 'Valor');
-            $porDefinirSheet->setCellValue('B1', 'Descripción');
-            
+
+            // Aplicar formato condicional a la columna D (Clave)
+            // Condición: Si C (Insumo) no está vacía Y D (Clave) está vacía, poner en gris
+            $conditionalFormatting = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+            $conditionalFormatting->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+            $conditionalFormatting->addCondition('AND($C2<>"",$D2="")');
+            $conditionalFormatting->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+            $conditionalFormatting->getStyle()->getFill()->getStartColor()->setRGB('D3D3D3'); // Gris claro
+
+            $mainSheet->getStyle('D2:D500')->setConditionalStyles([$conditionalFormatting]);
+
+            // Crear rangos con nombre para ambas columnas
+            $ingredientsSheet = $spreadsheet->getSheetByName('Insumos');
+            $spreadsheet->addNamedRange(
+                new \PhpOffice\PhpSpreadsheet\NamedRange(
+                    'ListaInsumosEntrada',
+                    $ingredientsSheet,
+                    "'Insumos'!\$B\$2:\$B\$" . ($row - 1)
+                )
+            );
+            $spreadsheet->addNamedRange(
+                new \PhpOffice\PhpSpreadsheet\NamedRange(
+                    'ListaInsumosSalida',
+                    $ingredientsSheet,
+                    "'Insumos'!\$D\$2:\$D\$" . ($row - 1)
+                )
+            );
+
+            // Dummy no vacío para bloquear C cuando A está vacío.
+            // IMPORTANTE: se mantiene con texto no vacío (no cadena "") porque un rango
+            // origen con celdas realmente en blanco hace que Excel acepte cualquier valor.
+            $mainSheet->setCellValue('Z1', 'SELECCIONE_MOVIMIENTO');
+            $mainSheet->setCellValue('Z2', 'SELECCIONE_MOVIMIENTO');
+            $mainSheet->getColumnDimension('Z')->setVisible(false);
+            $ingredientsSheet->setCellValue('Z1', 'SELECCIONE_MOVIMIENTO');
+            $ingredientsSheet->setCellValue('Z2', 'SELECCIONE_MOVIMIENTO');
+            $ingredientsSheet->getColumnDimension('Z')->setVisible(false);
+
+            $existingEmpty = $spreadsheet->getNamedRange('ListaVaciaInsumos');
+            if ($existingEmpty === null) {
+                $spreadsheet->addNamedRange(
+                    new \PhpOffice\PhpSpreadsheet\NamedRange(
+                        'ListaVaciaInsumos',
+                        $ingredientsSheet,
+                        "'Insumos'!\$Z\$1:\$Z\$2"
+                    )
+                );
+            }
+            $existingEmptyMain = $spreadsheet->getNamedRange('ListaVaciaMain');
+            if ($existingEmptyMain === null) {
+                $spreadsheet->addNamedRange(
+                    new \PhpOffice\PhpSpreadsheet\NamedRange(
+                        'ListaVaciaMain',
+                        $mainSheet,
+                        "'Movimientos'!\$Z\$1:\$Z\$2"
+                    )
+                );
+            }
+
+            // FIX CLAVE: columna auxiliar oculta P que calcula, como TEXTO, el NOMBRE
+            // del rango con nombre que corresponde según el tipo de movimiento.
+            // Esto es necesario porque un IF(...) que devuelve rangos directamente
+            // dentro de Formula1 no siempre bloquea el texto tecleado a mano en Excel;
+            // en cambio, INDIRECT(referencia_a_celda_con_el_nombre_del_rango) sí lo hace
+            // de forma confiable (mismo patrón que ya usábamos en la columna F).
+            for ($i = 2; $i <= 500; $i++) {
+                $mainSheet->setCellValue("P$i", "=IF(\$A$i=\"Salida\",\"ListaInsumosSalida\",IF(\$A$i=\"Entrada\",\"ListaInsumosEntrada\",\"ListaVaciaMain\"))");
+            }
+            $mainSheet->getColumnDimension('P')->setVisible(false);
+
+            // Validación para columna C (Insumo) - desplegable dinámico según tipo de movimiento
+            $ingredientValidation = $mainSheet->getCell('C2')->getDataValidation();
+            $ingredientValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $ingredientValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $ingredientValidation->setAllowBlank(true);
+            $ingredientValidation->setShowInputMessage(true);
+            $ingredientValidation->setShowErrorMessage(true);
+            $ingredientValidation->setShowDropDown(true);
+            $ingredientValidation->setErrorTitle('Error de entrada');
+            $ingredientValidation->setError('Este valor no es admitido. Debe seleccionar un insumo válido. Asegúrate de elegir primero el tipo de movimiento (Entrada/Salida) en la columna A.');
+            $ingredientValidation->setPromptTitle('Selecciona un insumo');
+            $ingredientValidation->setPrompt('Primero selecciona Entrada o Salida en la columna A, luego selecciona un insumo de la lista. También se completa automáticamente al seleccionar una clave.');
+
+            // Aplicar validación dinámica a múltiples filas usando INDIRECT sobre la columna auxiliar P
+            for ($i = 2; $i <= 500; $i++) {
+                $validation = clone $ingredientValidation;
+                $validation->setFormula1("INDIRECT(\$P$i)");
+                $mainSheet->getCell("C$i")->setDataValidation($validation);
+            }
+
+            // Formato condicional en C para marcar en rojo valores que no pertenecen a la lista correspondiente
+            $invalidInsumoConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+            $invalidInsumoConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+            $invalidInsumoConditional->addCondition('OR(AND($C2<>"",$A2=""),AND($C2<>"",$A2="Entrada",ISNA(MATCH($C2,ListaInsumosEntrada,0))),AND($C2<>"",$A2="Salida",ISNA(MATCH($C2,ListaInsumosSalida,0))))');
+            $invalidInsumoConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+            $invalidInsumoConditional->getStyle()->getFill()->getStartColor()->setRGB('FFC7CE');
+            $invalidInsumoConditional->getStyle()->getFont()->getColor()->setRGB('9C0006');
+            $mainSheet->getStyle('C2:C500')->setConditionalStyles([$invalidInsumoConditional]);
+        }
+    }
+
+    // Hoja de proveedores
+    if ($businessId) {
+        $providersSheet = $spreadsheet->createSheet();
+        $providersSheet->setTitle('Proveedores');
+        $providersSheet->setCellValue('A1', 'Proveedor');
+        $providersSheet->setCellValue('B1', 'Métodos de Pago');
+
+        $providers = Provider::find()
+            ->where(['business_id' => $businessId])
+            ->all();
+
+        $row = 2;
+        $allProviders = [];
+
+        // Agregar siempre "Por definir" como primera opción
+        $providersSheet->setCellValue("A$row", "Por definir");
+        $providersSheet->setCellValue("B$row", "Todos los métodos disponibles");
+        $providersSheet->setCellValue("C$row", "PM_PorDefinir");
+        $allProviders[] = "Por definir";
+        $row++;
+
+        // Para cada proveedor crear también una hoja con sus métodos de pago
+        foreach ($providers as $providerIndex => $provider) {
+            $providersSheet->setCellValue("A$row", $provider->business_name);
+            $paymentMethods = is_array($provider->payment_method) ?
+                $provider->payment_method :
+                explode(',', $provider->payment_method);
+
+            $paymentMethodStr = is_array($provider->payment_method) ?
+                implode(', ', $provider->payment_method) :
+                $provider->payment_method;
+            $providersSheet->setCellValue("B$row", $paymentMethodStr);
+            $allProviders[] = $provider->business_name;
+
+            // Crear una hoja para los métodos de pago de este proveedor
+            $providerName = preg_replace('/[^\w\s]/', '', $provider->business_name);
+            $providerName = substr(str_replace(' ', '_', $providerName), 0, 20); // Limitar longitud
+            $providerSheetName = 'PM_' . ($providerIndex + 1); // Nombre corto para evitar problemas
+
+            $providerPaymentSheet = $spreadsheet->createSheet();
+            $providerPaymentSheet->setTitle($providerSheetName);
+            $providerPaymentSheet->setCellValue('A1', 'Valor');
+            $providerPaymentSheet->setCellValue('B1', 'Descripción');
+
             // Mapear códigos de pago a descripciones en español
             $paymentDescriptions = [
                 Movement::PAYMENT_METHOD_CASH => 'Efectivo',
@@ -1151,531 +1145,410 @@ public static function generateIngredientsTemplate($id)
                 Movement::PAYMENT_METHOD_DEBIT_CARD => 'Tarjeta de Débito',
                 Movement::PAYMENT_METHOD_OTHER => 'Otro Método de Pago'
             ];
-            
-            // Agregar "Por definir" primero
-            $porDefinirSheet->setCellValue('A2', 'Por definir');
-            $porDefinirSheet->setCellValue('B2', 'Por definir');
-            
-            // Agregar todos los métodos de pago disponibles
-            $pmRow = 3;
-            foreach ($paymentDescriptions as $code => $description) {
-                $porDefinirSheet->setCellValue("A$pmRow", $description);
-                $porDefinirSheet->setCellValue("B$pmRow", $code);
-                $pmRow++;
-            }
-            
-            $porDefinirSheet->getColumnDimension('A')->setWidth(25);
-            $porDefinirSheet->getColumnDimension('B')->setWidth(20);
 
-            $providersSheet->getColumnDimension('A')->setWidth(30);
-            $providersSheet->getColumnDimension('B')->setWidth(40);
-
-            // Aplicar validación de datos a la columna de proveedor (ahora columna E) en la hoja principal
-            if ($row > 2) {
-                $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
-                $providerValidation = $mainSheet->getCell('E2')->getDataValidation();
-                $providerValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-                $providerValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-                $providerValidation->setAllowBlank(false);
-                $providerValidation->setShowInputMessage(true);
-                $providerValidation->setShowErrorMessage(true);
-                $providerValidation->setShowDropDown(true);
-                $providerValidation->setErrorTitle('Error de entrada');
-                $providerValidation->setError('Este valor no es admitido. Debe seleccionar un proveedor válido.');
-                $providerValidation->setPromptTitle('Selecciona un proveedor');
-                $providerValidation->setPrompt('Por favor, selecciona un proveedor de la lista desplegable.');
-                $providerValidation->setFormula1('Proveedores!$A$2:$A$' . ($row - 1));
-
-                // Aplicar validación a múltiples filas
-                for ($i = 2; $i <= 500; $i++) {
-                    $mainSheet->getCell("E$i")->setDataValidation(clone $providerValidation);
+            // Agregar solo los métodos de pago disponibles para este proveedor
+            $pmRow = 2;
+            foreach ($paymentMethods as $method) {
+                $method = trim($method);
+                if (!empty($method)) {
+                    // Mostrar la descripción en español en lugar del código
+                    $description = isset($paymentDescriptions[$method]) ? $paymentDescriptions[$method] : $method;
+                    $providerPaymentSheet->setCellValue("A$pmRow", $description);
+                    $providerPaymentSheet->setCellValue("B$pmRow", $method); // Código interno para referencia
+                    $pmRow++;
                 }
             }
+
+            $providerPaymentSheet->getColumnDimension('A')->setWidth(25);
+            $providerPaymentSheet->getColumnDimension('B')->setWidth(20);
+
+            // Asociar el nombre de la hoja con el proveedor para uso posterior
+            $providersSheet->setCellValue("C$row", $providerSheetName);
+
+            $row++;
         }
 
-        // Hoja de centros de consumo
-        if ($businessId) {
-            $consumptionCentersSheet = $spreadsheet->createSheet();
-            $consumptionCentersSheet->setTitle('Centros de Consumo');
-            $consumptionCentersSheet->setCellValue('A1', 'Centro de Consumo');
+        // Crear hoja especial para "Por definir" con todos los tipos de pago
+        $porDefinirSheet = $spreadsheet->createSheet();
+        $porDefinirSheet->setTitle('PM_PorDefinir');
+        $porDefinirSheet->setCellValue('A1', 'Valor');
+        $porDefinirSheet->setCellValue('B1', 'Descripción');
 
-            $consumptionCenters = ConsumptionCenter::find()
-                ->where(['business_id' => $businessId])
-                ->all();
+        // Mapear códigos de pago a descripciones en español
+        $paymentDescriptions = [
+            Movement::PAYMENT_METHOD_CASH => 'Efectivo',
+            Movement::PAYMENT_METHOD_TRANSFER => 'Transferencia Bancaria',
+            Movement::PAYMENT_METHOD_CHECK => 'Cheque',
+            Movement::PAYMENT_METHOD_CREDIT_CARD => 'Tarjeta de Crédito',
+            Movement::PAYMENT_METHOD_DEBIT_CARD => 'Tarjeta de Débito',
+            Movement::PAYMENT_METHOD_OTHER => 'Otro Método de Pago'
+        ];
 
-            $ccRow = 2;
-            foreach ($consumptionCenters as $center) {
-                $consumptionCentersSheet->setCellValue("A$ccRow", $center->name);
-                $ccRow++;
+        // Agregar "Por definir" primero
+        $porDefinirSheet->setCellValue('A2', 'Por definir');
+        $porDefinirSheet->setCellValue('B2', 'Por definir');
+
+        // Agregar todos los métodos de pago disponibles
+        $pmRow = 3;
+        foreach ($paymentDescriptions as $code => $description) {
+            $porDefinirSheet->setCellValue("A$pmRow", $description);
+            $porDefinirSheet->setCellValue("B$pmRow", $code);
+            $pmRow++;
+        }
+
+        $porDefinirSheet->getColumnDimension('A')->setWidth(25);
+        $porDefinirSheet->getColumnDimension('B')->setWidth(20);
+
+        $providersSheet->getColumnDimension('A')->setWidth(30);
+        $providersSheet->getColumnDimension('B')->setWidth(40);
+
+        // Aplicar validación de datos a la columna de proveedor (ahora columna E) en la hoja principal
+        if ($row > 2) {
+            $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
+            $providerValidation = $mainSheet->getCell('E2')->getDataValidation();
+            $providerValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $providerValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $providerValidation->setAllowBlank(false);
+            $providerValidation->setShowInputMessage(true);
+            $providerValidation->setShowErrorMessage(true);
+            $providerValidation->setShowDropDown(true);
+            $providerValidation->setErrorTitle('Error de entrada');
+            $providerValidation->setError('Este valor no es admitido. Debe seleccionar un proveedor válido.');
+            $providerValidation->setPromptTitle('Selecciona un proveedor');
+            $providerValidation->setPrompt('Por favor, selecciona un proveedor de la lista desplegable.');
+            $providerValidation->setFormula1('Proveedores!$A$2:$A$' . ($row - 1));
+
+            // Aplicar validación a múltiples filas
+            for ($i = 2; $i <= 500; $i++) {
+                $mainSheet->getCell("E$i")->setDataValidation(clone $providerValidation);
             }
+        }
+    }
 
-            $consumptionCentersSheet->getColumnDimension('A')->setWidth(30);
+    // Hoja de centros de consumo
+    if ($businessId) {
+        $consumptionCentersSheet = $spreadsheet->createSheet();
+        $consumptionCentersSheet->setTitle('Centros de Consumo');
+        $consumptionCentersSheet->setCellValue('A1', 'Centro de Consumo');
 
-            // Aplicar validación de datos a la columna de Centro de Consumo (columna H)
-if ($ccRow > 2) {
-    $mainSheet = $spreadsheet->getSheet(0); // Hoja principal
-    $ccSheet   = $spreadsheet->getSheetByName('Centros de Consumo'); // Hoja de lista de CC
+        $consumptionCenters = ConsumptionCenter::find()
+            ->where(['business_id' => $businessId])
+            ->all();
 
-    // 1️⃣ Crear la lista de centros de consumo como rango con nombre "ListaCC"
-    $spreadsheet->addNamedRange(
-        new \PhpOffice\PhpSpreadsheet\NamedRange(
-            'ListaCC',
-            $ccSheet,
-            "'Centros de Consumo'!\$A\$2:\$A\$" . ($ccRow - 1)
-        )
-    );
+        $ccRow = 2;
+        foreach ($consumptionCenters as $center) {
+            $consumptionCentersSheet->setCellValue("A$ccRow", $center->name);
+            $ccRow++;
+        }
 
-    // 2️⃣ Crear una celda vacía como lista vacía (rango con nombre "ListaVacia")
-    $ccSheet->setCellValue('B1', ''); // Dejarla vacía
-    $spreadsheet->addNamedRange(
-        new \PhpOffice\PhpSpreadsheet\NamedRange(
-            'ListaVacia',
-            $ccSheet,
-            "'Centros de Consumo'!\$B\$1"
-        )
-    );
+        $consumptionCentersSheet->getColumnDimension('A')->setWidth(30);
 
-    // 3️⃣ Configurar validación base (TYPE_LIST)
-    $baseValidation = $mainSheet->getCell('H2')->getDataValidation();
-    $baseValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-    $baseValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-    $baseValidation->setAllowBlank(true);
-    $baseValidation->setShowDropDown(true);
-    $baseValidation->setShowInputMessage(true);
-    $baseValidation->setShowErrorMessage(true);
-    $baseValidation->setErrorTitle('Error de entrada');
-    $baseValidation->setError('Debe seleccionar un centro de consumo válido de la lista (solo si es SALIDA).');
-    $baseValidation->setPromptTitle('Centro de Consumo');
-    $baseValidation->setPrompt('Selecciona el centro de consumo solo cuando el movimiento es SALIDA.');
+        // Aplicar validación de datos a la columna de Centro de Consumo (columna H)
+        if ($ccRow > 2) {
+            $mainSheet = $spreadsheet->getSheet(0); // Hoja principal
+            $ccSheet   = $spreadsheet->getSheetByName('Centros de Consumo'); // Hoja de lista de CC
 
-    // 4️⃣ Aplicar la validación a cada fila con fórmula condicional
+            // 1️⃣ Crear la lista de centros de consumo como rango con nombre "ListaCC"
+            $spreadsheet->addNamedRange(
+                new \PhpOffice\PhpSpreadsheet\NamedRange(
+                    'ListaCC',
+                    $ccSheet,
+                    "'Centros de Consumo'!\$A\$2:\$A\$" . ($ccRow - 1)
+                )
+            );
+
+            // 2️⃣ Rango dummy "vacío" con texto NO vacío (evita el bug de blancos en lista de origen)
+            $ccSheet->setCellValue('B1', 'NA');
+            $ccSheet->setCellValue('B2', 'NA');
+            $spreadsheet->addNamedRange(
+                new \PhpOffice\PhpSpreadsheet\NamedRange(
+                    'ListaVacia',
+                    $ccSheet,
+                    "'Centros de Consumo'!\$B\$1:\$B\$2"
+                )
+            );
+
+            // 3️⃣ Configurar validación base (TYPE_LIST)
+            $baseValidation = $mainSheet->getCell('H2')->getDataValidation();
+            $baseValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+            $baseValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+            $baseValidation->setAllowBlank(true);
+            $baseValidation->setShowDropDown(true);
+            $baseValidation->setShowInputMessage(true);
+            $baseValidation->setShowErrorMessage(true);
+            $baseValidation->setErrorTitle('Error de entrada');
+            $baseValidation->setError('Debe seleccionar un centro de consumo válido de la lista (solo si es SALIDA).');
+            $baseValidation->setPromptTitle('Centro de Consumo');
+            $baseValidation->setPrompt('Selecciona el centro de consumo solo cuando el movimiento es SALIDA.');
+
+            // 4️⃣ FIX: columna auxiliar oculta Q con el NOMBRE del rango como texto,
+            // y validación por INDIRECT (mismo patrón que columna P para Insumo).
+            for ($i = 2; $i <= 500; $i++) {
+                $mainSheet->setCellValue("Q$i", "=IF(\$A$i=\"Salida\",\"ListaCC\",\"ListaVacia\")");
+            }
+            $mainSheet->getColumnDimension('Q')->setVisible(false);
+
+            for ($i = 2; $i <= 500; $i++) {
+                $validation = clone $baseValidation;
+                $validation->setFormula1("INDIRECT(\$Q$i)");
+                $mainSheet->getCell("H{$i}")->setDataValidation($validation);
+            }
+        }
+    }
+
+    // Hoja de referencia de tipos de pago
+    $paymentTypesSheet = $spreadsheet->createSheet();
+    $paymentTypesSheet->setTitle('Tipos de Pago');
+    $paymentTypesSheet->setCellValue("A1", "Descripción");
+    $paymentTypesSheet->setCellValue("B1", "Código Interno");
+
+    $paymentTypesSheet->setCellValue("A2", "Efectivo");
+    $paymentTypesSheet->setCellValue("B2", Movement::PAYMENT_METHOD_CASH);
+
+    $paymentTypesSheet->setCellValue("A3", "Transferencia Bancaria");
+    $paymentTypesSheet->setCellValue("B3", Movement::PAYMENT_METHOD_TRANSFER);
+
+    $paymentTypesSheet->setCellValue("A4", "Cheque");
+    $paymentTypesSheet->setCellValue("B4", Movement::PAYMENT_METHOD_CHECK);
+
+    $paymentTypesSheet->setCellValue("A5", "Tarjeta de Crédito");
+    $paymentTypesSheet->setCellValue("B5", Movement::PAYMENT_METHOD_CREDIT_CARD);
+
+    $paymentTypesSheet->setCellValue("A6", "Tarjeta de Débito");
+    $paymentTypesSheet->setCellValue("B6", Movement::PAYMENT_METHOD_DEBIT_CARD);
+
+    $paymentTypesSheet->setCellValue("A7", "Otro Método de Pago");
+    $paymentTypesSheet->setCellValue("B7", Movement::PAYMENT_METHOD_OTHER);
+
+    $paymentTypesSheet->getColumnDimension('A')->setWidth(25);
+    $paymentTypesSheet->getColumnDimension('B')->setWidth(20);
+
+    // Aplicar validación de datos a la columna de tipo de pago (ahora columna F) en la hoja principal
+    // con validación dependiente del proveedor seleccionado
+    $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
+
+    // Para cada fila, crear una validación dinámica que dependa del proveedor seleccionado
     for ($i = 2; $i <= 500; $i++) {
-        $validation = clone $baseValidation;
-        // Las fórmulas en Excel siempre deben estar en inglés: IF en lugar de SI
-        //revisar aqui
-        $validation->setFormula1("=IF(\$A{$i}=\"Salida\",ListaCC,ListaVacia)");
-        $mainSheet->getCell("H{$i}")->setDataValidation($validation);
+        $paymentValidation = $mainSheet->getCell("F$i")->getDataValidation();
+        $paymentValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
+        $paymentValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
+        $paymentValidation->setAllowBlank(false);
+        $paymentValidation->setShowInputMessage(true);
+        $paymentValidation->setShowErrorMessage(true);
+        $paymentValidation->setShowDropDown(true);
+        $paymentValidation->setErrorTitle('Error de entrada');
+        $paymentValidation->setError('Este valor no es admitido. Debe seleccionar un tipo de pago válido para este proveedor.');
+        $paymentValidation->setPromptTitle('Selecciona un tipo de pago');
+        $paymentValidation->setPrompt('Selecciona cómo se pagó este insumo: efectivo, transferencia, etc.');
+
+        // Fórmula que obtiene la referencia a la hoja de métodos de pago del proveedor seleccionado
+        $paymentValidation->setFormula1('INDIRECT(CONCATENATE(VLOOKUP(E' . $i . ',Proveedores!A:C,3,FALSE),"!$A$2:$A$20"))');
+
+        $mainSheet->getCell("F$i")->setDataValidation($paymentValidation);
     }
+
+    // Agregar formato condicional para ocultar/mostrar columnas según el tipo de movimiento
+    $mainSheet = $spreadsheet->getSheet(0);
+
+    // Columna E (Proveedor) - gris si es Salida
+    $providerConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $providerConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $providerConditional->addCondition('$A2="Salida"');
+    $providerConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $providerConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $providerConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('E2:E500')->setConditionalStyles([$providerConditional]);
+
+    // Columna F (Tipo de Pago) - gris si es Salida
+    $paymentConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $paymentConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $paymentConditional->addCondition('$A2="Salida"');
+    $paymentConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $paymentConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $paymentConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('F2:F500')->setConditionalStyles([$paymentConditional]);
+
+    // Columna G (Factura) - gris si es Salida
+    $invoiceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $invoiceConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $invoiceConditional->addCondition('$A2="Salida"');
+    $invoiceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $invoiceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $invoiceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('G2:G500')->setConditionalStyles([$invoiceConditional]);
+
+    // Columna H (Centro de Consumo) - gris si es Entrada
+    $consumptionCenterConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $consumptionCenterConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $consumptionCenterConditional->addCondition('$A2="Entrada"');
+    $consumptionCenterConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $consumptionCenterConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $consumptionCenterConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('H2:H500')->setConditionalStyles([$consumptionCenterConditional]);
+
+    // Columna J (Precio de Compra) - gris si es Salida
+    $priceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $priceConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $priceConditional->addCondition('$A2="Salida"');
+    $priceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $priceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $priceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('J2:J500')->setConditionalStyles([$priceConditional]);
+
+    // Columna K (Impuesto) - gris si es Salida
+    $taxConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $taxConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $taxConditional->addCondition('$A2="Salida"');
+    $taxConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $taxConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $taxConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('K2:K500')->setConditionalStyles([$taxConditional]);
+
+    // Columna L (Precio Unitario) - gris si es Salida
+    $unitPriceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $unitPriceConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $unitPriceConditional->addCondition('$A2="Salida"');
+    $unitPriceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $unitPriceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $unitPriceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('L2:L500')->setConditionalStyles([$unitPriceConditional]);
+
+    // Columna M (Total) - gris si es Salida
+    $totalConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
+    $totalConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
+    $totalConditional->addCondition('$A2="Salida"');
+    $totalConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
+    $totalConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
+    $totalConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
+    $mainSheet->getStyle('M2:M500')->setConditionalStyles([$totalConditional]);
+
+    // Agregar fórmulas automáticas para cálculos
+    $mainSheet = $spreadsheet->getSheet(0);
+
+    for ($i = 2; $i <= 500; $i++) {
+        // Fórmula para Precio Unitario (Columna L): (Precio de compra + Impuesto) / Cantidad - solo si es Entrada
+        $mainSheet->setCellValue("L$i", "=IF(AND(A$i=\"Entrada\",ISNUMBER(I$i),I$i>0,OR(ISNUMBER(J$i),ISNUMBER(K$i))),IFERROR((IFERROR(J$i,0)+IFERROR(K$i,0))/I$i,\"\"),\"\")");
+
+        // Fórmula para Total (Columna M): Cantidad * Precio Unitario - solo si es Entrada
+        $mainSheet->setCellValue("M$i", "=IF(AND(A$i=\"Entrada\",ISNUMBER(I$i),I$i>0,ISNUMBER(L$i),L$i>0),IFERROR(I$i*L$i,\"\"),\"\")");
+    }
+
+    // Proteger las celdas de fórmulas (L y M) para que no se puedan editar
+    $mainSheet->getStyle('L2:L500')->getProtection()->setLocked(true);
+    $mainSheet->getStyle('M2:M500')->getProtection()->setLocked(true);
+
+    // Aplicar formato numérico a las columnas de cálculo
+    $mainSheet->getStyle('I2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
+    $mainSheet->getStyle('L2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
+
+    // Crear hoja de leyenda
+    $legendSheet = $spreadsheet->createSheet();
+    $legendSheet->setTitle('Instrucciones de uso');
+    $legendSheet->setCellValue('A1', 'Columna');
+    $legendSheet->setCellValue('B1', 'Descripción');
+    $legendSheet->setCellValue('A2', 'Movimiento');
+    $legendSheet->setCellValue('B2', 'IMPORTANTE: Seleccione "Entrada" para ingresos de stock o "Salida" para egresos de stock. Esta selección determina qué columnas están disponibles.');
+    $legendSheet->setCellValue('A3', 'Entrada vs Salida');
+    $legendSheet->setCellValue('B3', 'ENTRADA: Usa Proveedor, Tipo de Pago, Factura, Precio de Compra, Impuesto, Precio Unitario y Total. La columna Centro de Consumo se vuelve gris. SALIDA: Usa Centro de Consumo. Las columnas de proveedor, precios e impuestos se vuelven grises.');
+    $legendSheet->setCellValue('A4', 'Clave');
+    $legendSheet->setCellValue('B4', 'Seleccione una clave del desplegable. El insumo aparecerá automáticamente en la columna C mediante fórmula BUSCARV.');
+    $legendSheet->setCellValue('A5', 'Insumo');
+    $legendSheet->setCellValue('B5', 'OPCIÓN 1: Se completa automáticamente cuando selecciona una clave en B mediante fórmula BUSCARV. OPCIÓN 2: También puede seleccionar directamente del desplegable si no recuerda la clave. Si esta columna tiene contenido pero la clave está vacía, la celda de clave se pondrá gris.');
+    $legendSheet->setCellValue('A6', 'Fecha');
+    $legendSheet->setCellValue('B6', 'Formato: año-mes-día (ej: 2025-08-07)');
+    $legendSheet->setCellValue('A7', 'Proveedor');
+    $legendSheet->setCellValue('B7', 'SOLO PARA ENTRADAS: Seleccione un proveedor del desplegable. Si no tiene proveedores cargados o no está definido, puede seleccionar "Por definir". Se vuelve gris automáticamente si selecciona "Salida".');
+    $legendSheet->setCellValue('A8', 'Tipo de Pago');
+    $legendSheet->setCellValue('B8', 'SOLO PARA ENTRADAS: Seleccione un tipo de pago del desplegable (en español). Los tipos disponibles dependen del proveedor seleccionado. Se vuelve gris automáticamente si selecciona "Salida".');
+    $legendSheet->setCellValue('A9', 'Centro de Consumo');
+    $legendSheet->setCellValue('B9', 'SOLO PARA SALIDAS: Seleccione el centro de consumo donde se utilizó el insumo. Se vuelve gris automáticamente si selecciona "Entrada".');
+    $legendSheet->setCellValue('A10', 'Cantidad');
+    $legendSheet->setCellValue('B10', 'Ingrese un valor numérico. Aplica tanto para entradas como para salidas.');
+    $legendSheet->setCellValue('A11', 'Precio de Compra');
+    $legendSheet->setCellValue('B11', 'SOLO PARA ENTRADAS: Ingrese un valor numérico. Se vuelve gris automáticamente si selecciona "Salida".');
+    $legendSheet->setCellValue('A12', 'Impuesto');
+    $legendSheet->setCellValue('B12', 'SOLO PARA ENTRADAS: Ingrese un valor numérico. Se vuelve gris automáticamente si selecciona "Salida".');
+    $legendSheet->setCellValue('A13', 'Precio Unitario');
+    $legendSheet->setCellValue('B13', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: (Precio de compra + Impuesto) ÷ Cantidad. CELDA PROTEGIDA: No se puede editar manualmente. Se vuelve gris automáticamente si selecciona "Salida".');
+    $legendSheet->setCellValue('A14', 'Total');
+    $legendSheet->setCellValue('B14', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: Cantidad × Precio Unitario. CELDA PROTEGIDA: No se puede editar manualmente. Se vuelve gris automáticamente si selecciona "Salida".');
+    $legendSheet->setCellValue('A15', 'Observaciones');
+    $legendSheet->setCellValue('B15', '(Opcional) Notas adicionales. Aplica tanto para entradas como para salidas.');
+    $legendSheet->setCellValue('A16', 'Autocompletado con BUSCARV');
+    $legendSheet->setCellValue('B16', 'FUNCIONAMIENTO: Cuando seleccione una clave en columna B, el insumo correspondiente aparece AUTOMÁTICAMENTE en columna C mediante fórmula BUSCARV. Alternativamente, puede seleccionar el insumo directamente del desplegable en columna C.');
+    $legendSheet->setCellValue('A17', 'Formato Condicional');
+    $legendSheet->setCellValue('B17', 'ALERTA VISUAL: Las columnas se vuelven grises automáticamente según el tipo de movimiento. Si selecciona "Entrada", solo las columnas relevantes para entrada permanecen activas. Si selecciona "Salida", solo las columnas relevantes para salida permanecen activas.');
+    $legendSheet->setCellValue('A18', 'Instrucciones de Uso');
+    $legendSheet->setCellValue('B18', 'PASOS: 1) Seleccione tipo de movimiento (Entrada/Salida) - esto determinará qué columnas usar, 2) Seleccione una clave O un insumo, 3) Complete solo las columnas que no estén en gris. FLEXIBILIDAD: El sistema se adapta automáticamente al tipo de movimiento seleccionado.');
+    $legendSheet->setCellValue('A19', 'Protección de Celdas');
+    $legendSheet->setCellValue('B19', 'CELDAS PROTEGIDAS: Las columnas Precio Unitario (L) y Total (M) están protegidas y no se pueden editar manualmente ya que se calculan automáticamente. El resto de celdas sí se pueden editar libremente.');
+
+    // Configurar estilo de título para la leyenda
+    $titleStyle = [
+        'font' => ['bold' => true, 'size' => 14],
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'DDDDDD']
+        ]
+    ];
+
+    // Configurar estilo de encabezados
+    $headerStyle = [
+        'font' => ['bold' => true, 'size' => 12],
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor' => ['rgb' => 'F0F0F0']
+        ]
+    ];
+
+    // Aplicar estilos
+    $legendSheet->getStyle('A1:B1')->applyFromArray($titleStyle);
+    $legendSheet->getStyle('A2:A19')->applyFromArray($headerStyle);
+
+    $legendSheet->getColumnDimension('A')->setWidth(20);
+    $legendSheet->getColumnDimension('B')->setWidth(80);
+
+    // Activar la primera hoja antes de guardar
+    $spreadsheet->setActiveSheetIndex(0);
+
+    // Configurar protección de celdas
+    $mainSheet = $spreadsheet->getActiveSheet();
+
+    // Desbloquear las celdas editables: fila de headers + datos (excepto L y M)
+    $mainSheet->getStyle('A1:N1')->getProtection()->setLocked(false);   // fila headers (necesario para AutoFilter)
+    $mainSheet->getStyle('A2:K500')->getProtection()->setLocked(false);
+    $mainSheet->getStyle('N2:N500')->getProtection()->setLocked(false);
+
+    // FIX: las columnas auxiliares ocultas P y Q deben quedar bloqueadas
+    // para que el usuario no pueda editarlas manualmente y romper la validación.
+    $mainSheet->getStyle('P2:Q500')->getProtection()->setLocked(true);
+
+    // Habilitar protección de la hoja (las celdas L, M, P y Q ya están bloqueadas)
+    $mainSheet->getProtection()->setSheet(true);
+    $mainSheet->getProtection()->setPassword('asd');
+    $mainSheet->getProtection()->setSort(false);           // false = permitido en OOXML
+    $mainSheet->getProtection()->setAutoFilter(false);     // false = permitido en OOXML (true lo bloquearía)
+    $mainSheet->getProtection()->setInsertRows(true);
+    $mainSheet->getProtection()->setDeleteRows(true);
+    $mainSheet->getProtection()->setInsertColumns(true);
+    $mainSheet->getProtection()->setDeleteColumns(true);
+    $mainSheet->getProtection()->setFormatCells(false);
+    $mainSheet->getProtection()->setFormatColumns(false);
+    $mainSheet->getProtection()->setFormatRows(false);
+
+    // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
+    $spreadsheet->getActiveSheet()->setSelectedCell('A2');
+
+    // Activar filtros rápidos en los encabezados
+    $spreadsheet->getActiveSheet()->setAutoFilter('A1:N1');
+
+    $writer = new Xlsx($spreadsheet);
+    $fileName = 'Plantilla_para_importar_movimientos.xlsx';
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+    $writer->save('php://output');
+    exit(200);
 }
-
-        }
-
-        // Hoja de referencia de tipos de pago
-        $paymentTypesSheet = $spreadsheet->createSheet();
-        $paymentTypesSheet->setTitle('Tipos de Pago');
-        $paymentTypesSheet->setCellValue("A1", "Descripción");
-        $paymentTypesSheet->setCellValue("B1", "Código Interno");
-
-        $paymentTypesSheet->setCellValue("A2", "Efectivo");
-        $paymentTypesSheet->setCellValue("B2", Movement::PAYMENT_METHOD_CASH);
-
-        $paymentTypesSheet->setCellValue("A3", "Transferencia Bancaria");
-        $paymentTypesSheet->setCellValue("B3", Movement::PAYMENT_METHOD_TRANSFER);
-
-        $paymentTypesSheet->setCellValue("A4", "Cheque");
-        $paymentTypesSheet->setCellValue("B4", Movement::PAYMENT_METHOD_CHECK);
-
-        $paymentTypesSheet->setCellValue("A5", "Tarjeta de Crédito");
-        $paymentTypesSheet->setCellValue("B5", Movement::PAYMENT_METHOD_CREDIT_CARD);
-
-        $paymentTypesSheet->setCellValue("A6", "Tarjeta de Débito");
-        $paymentTypesSheet->setCellValue("B6", Movement::PAYMENT_METHOD_DEBIT_CARD);
-
-        $paymentTypesSheet->setCellValue("A7", "Otro Método de Pago");
-        $paymentTypesSheet->setCellValue("B7", Movement::PAYMENT_METHOD_OTHER);
-
-        $paymentTypesSheet->getColumnDimension('A')->setWidth(25);
-        $paymentTypesSheet->getColumnDimension('B')->setWidth(20);
-
-        // Aplicar validación de datos a la columna de tipo de pago (ahora columna F) en la hoja principal
-        // con validación dependiente del proveedor seleccionado
-        $mainSheet = $spreadsheet->getSheet(0); // Obtener la hoja principal
-        
-        // Para cada fila, crear una validación dinámica que dependa del proveedor seleccionado
-        for ($i = 2; $i <= 500; $i++) {
-            $paymentValidation = $mainSheet->getCell("F$i")->getDataValidation();
-            $paymentValidation->setType(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST);
-            $paymentValidation->setErrorStyle(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::STYLE_STOP);
-            $paymentValidation->setAllowBlank(false);
-            $paymentValidation->setShowInputMessage(true);
-            $paymentValidation->setShowErrorMessage(true);
-            $paymentValidation->setShowDropDown(true);
-            $paymentValidation->setErrorTitle('Error de entrada');
-            $paymentValidation->setError('Este valor no es admitido. Debe seleccionar un tipo de pago válido para este proveedor.');
-            $paymentValidation->setPromptTitle('Selecciona un tipo de pago');
-            $paymentValidation->setPrompt('Selecciona cómo se pagó este insumo: efectivo, transferencia, etc.');
-            
-            // Fórmula que obtiene la referencia a la hoja de métodos de pago del proveedor seleccionado
-            // INDIRECTO busca en la columna C de la hoja Proveedores el nombre de la hoja correspondiente
-            // COINCIDIR busca el nombre del proveedor en la columna A de la hoja Proveedores (ahora columna E)
-            $paymentValidation->setFormula1('=INDIRECT(CONCATENATE(VLOOKUP(E'.$i.',Proveedores!A:C,3,FALSE),"!$A$2:$A$20"))');
-            
-            $mainSheet->getCell("F$i")->setDataValidation($paymentValidation);
-        }
-        
-        // Agregar formato condicional para ocultar/mostrar columnas según el tipo de movimiento
-        $mainSheet = $spreadsheet->getSheet(0);
-        
-        // Formato condicional para columnas de ENTRADA (E, F, G, J, K, L, M) - solo visibles si Movimiento = "Entrada"
-        // Columna E (Proveedor) - gris si es Salida
-        $providerConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $providerConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $providerConditional->addCondition('$A2="Salida"');
-        $providerConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $providerConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $providerConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('E2:E500')->setConditionalStyles([$providerConditional]);
-
-        // Columna F (Tipo de Pago) - gris si es Salida
-        $paymentConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $paymentConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $paymentConditional->addCondition('$A2="Salida"');
-        $paymentConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $paymentConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $paymentConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('F2:F500')->setConditionalStyles([$paymentConditional]);
-
-        // Columna G (Factura) - gris si es Salida
-        $invoiceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $invoiceConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $invoiceConditional->addCondition('$A2="Salida"');
-        $invoiceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $invoiceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $invoiceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('G2:G500')->setConditionalStyles([$invoiceConditional]);
-
-        // Columna H (Centro de Consumo) - gris si es Entrada
-        $consumptionCenterConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $consumptionCenterConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $consumptionCenterConditional->addCondition('$A2="Entrada"');
-        $consumptionCenterConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $consumptionCenterConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $consumptionCenterConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('H2:H500')->setConditionalStyles([$consumptionCenterConditional]);
-
-        // Columna J (Precio de Compra) - gris si es Salida
-        $priceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $priceConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $priceConditional->addCondition('$A2="Salida"');
-        $priceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $priceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $priceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('J2:J500')->setConditionalStyles([$priceConditional]);
-
-        // Columna K (Impuesto) - gris si es Salida
-        $taxConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $taxConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $taxConditional->addCondition('$A2="Salida"');
-        $taxConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $taxConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $taxConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('K2:K500')->setConditionalStyles([$taxConditional]);
-
-        // Columna L (Precio Unitario) - gris si es Salida
-        $unitPriceConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $unitPriceConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $unitPriceConditional->addCondition('$A2="Salida"');
-        $unitPriceConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $unitPriceConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $unitPriceConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('L2:L500')->setConditionalStyles([$unitPriceConditional]);
-
-        // Columna M (Total) - gris si es Salida
-        $totalConditional = new \PhpOffice\PhpSpreadsheet\Style\Conditional();
-        $totalConditional->setConditionType(\PhpOffice\PhpSpreadsheet\Style\Conditional::CONDITION_EXPRESSION);
-        $totalConditional->addCondition('$A2="Salida"');
-        $totalConditional->getStyle()->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $totalConditional->getStyle()->getFill()->getStartColor()->setRGB('CCCCCC');
-        $totalConditional->getStyle()->getFont()->getColor()->setRGB('CCCCCC');
-        $mainSheet->getStyle('M2:M500')->setConditionalStyles([$totalConditional]);
-
-        // Agregar fórmulas automáticas para cálculos
-        // Obtener la hoja principal
-        $mainSheet = $spreadsheet->getSheet(0);
-        
-        // Para cada fila de datos (desde la fila 2), agregar las fórmulas de cálculo
-        for ($i = 2; $i <= 500; $i++) {
-            // Fórmula para Precio Unitario (Columna L): (Precio de compra + Impuesto) / Cantidad - solo si es Entrada
-            // Columna J = Precio de Compra, Columna K = Impuesto, Columna I = Cantidad
-            // Mejorada para evitar #¡VALOR! cuando no hay precio de compra
-            $mainSheet->setCellValue("L$i", "=IF(AND(A$i=\"Entrada\",ISNUMBER(I$i),I$i>0,OR(ISNUMBER(J$i),ISNUMBER(K$i))),IFERROR((IFERROR(J$i,0)+IFERROR(K$i,0))/I$i,\"\"),\"\")");
-            
-            // Fórmula para Total (Columna M): Cantidad * Precio Unitario - solo si es Entrada
-            // Columna I = Cantidad, Columna L = Precio Unitario
-            $mainSheet->setCellValue("M$i", "=IF(AND(A$i=\"Entrada\",ISNUMBER(I$i),I$i>0,ISNUMBER(L$i),L$i>0),IFERROR(I$i*L$i,\"\"),\"\")");
-        }
-        
-        // Proteger las celdas de fórmulas (L y M) para que no se puedan editar
-        $mainSheet->getStyle('L2:L500')->getProtection()->setLocked(true);
-        $mainSheet->getStyle('M2:M500')->getProtection()->setLocked(true);
-
-        // Aplicar formato numérico a las columnas de cálculo
-        $mainSheet->getStyle('I2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
-        $mainSheet->getStyle('L2:M500')->getNumberFormat()->setFormatCode('#,##0.00');
-
-        // Crear hoja de leyenda
-        $legendSheet = $spreadsheet->createSheet();
-        $legendSheet->setTitle('Instrucciones de uso');
-        $legendSheet->setCellValue('A1', 'Columna');
-        $legendSheet->setCellValue('B1', 'Descripción');
-        $legendSheet->setCellValue('A2', 'Movimiento');
-        $legendSheet->setCellValue('B2', 'IMPORTANTE: Seleccione "Entrada" para ingresos de stock o "Salida" para egresos de stock. Esta selección determina qué columnas están disponibles.');
-        $legendSheet->setCellValue('A3', 'Entrada vs Salida');
-        $legendSheet->setCellValue('B3', 'ENTRADA: Usa Proveedor, Tipo de Pago, Factura, Precio de Compra, Impuesto, Precio Unitario y Total. La columna Centro de Consumo se vuelve gris. SALIDA: Usa Centro de Consumo. Las columnas de proveedor, precios e impuestos se vuelven grises.');
-        $legendSheet->setCellValue('A4', 'Clave');
-        $legendSheet->setCellValue('B4', 'Seleccione una clave del desplegable. El insumo aparecerá automáticamente en la columna C mediante fórmula BUSCARV.');
-        $legendSheet->setCellValue('A5', 'Insumo');
-        $legendSheet->setCellValue('B5', 'OPCIÓN 1: Se completa automáticamente cuando selecciona una clave en B mediante fórmula BUSCARV. OPCIÓN 2: También puede seleccionar directamente del desplegable si no recuerda la clave. Si esta columna tiene contenido pero la clave está vacía, la celda de clave se pondrá gris.');
-        $legendSheet->setCellValue('A6', 'Fecha');
-        $legendSheet->setCellValue('B6', 'Formato: año-mes-día (ej: 2025-08-07)');
-        $legendSheet->setCellValue('A7', 'Proveedor');
-        $legendSheet->setCellValue('B7', 'SOLO PARA ENTRADAS: Seleccione un proveedor del desplegable. Si no tiene proveedores cargados o no está definido, puede seleccionar "Por definir". Se vuelve gris automáticamente si selecciona "Salida".');
-        $legendSheet->setCellValue('A8', 'Tipo de Pago');
-        $legendSheet->setCellValue('B8', 'SOLO PARA ENTRADAS: Seleccione un tipo de pago del desplegable (en español). Los tipos disponibles dependen del proveedor seleccionado. Se vuelve gris automáticamente si selecciona "Salida".');
-        $legendSheet->setCellValue('A9', 'Centro de Consumo');
-        $legendSheet->setCellValue('B9', 'SOLO PARA SALIDAS: Seleccione el centro de consumo donde se utilizó el insumo. Se vuelve gris automáticamente si selecciona "Entrada".');
-        $legendSheet->setCellValue('A10', 'Cantidad');
-        $legendSheet->setCellValue('B10', 'Ingrese un valor numérico. Aplica tanto para entradas como para salidas.');
-        $legendSheet->setCellValue('A11', 'Precio de Compra');
-        $legendSheet->setCellValue('B11', 'SOLO PARA ENTRADAS: Ingrese un valor numérico. Se vuelve gris automáticamente si selecciona "Salida".');
-        $legendSheet->setCellValue('A12', 'Impuesto');
-        $legendSheet->setCellValue('B12', 'SOLO PARA ENTRADAS: Ingrese un valor numérico. Se vuelve gris automáticamente si selecciona "Salida".');
-        $legendSheet->setCellValue('A13', 'Precio Unitario');
-        $legendSheet->setCellValue('B13', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: (Precio de compra + Impuesto) ÷ Cantidad. CELDA PROTEGIDA: No se puede editar manualmente. Se vuelve gris automáticamente si selecciona "Salida".');
-        $legendSheet->setCellValue('A14', 'Total');
-        $legendSheet->setCellValue('B14', 'SOLO PARA ENTRADAS: SE CALCULA AUTOMÁTICAMENTE: Cantidad × Precio Unitario. CELDA PROTEGIDA: No se puede editar manualmente. Se vuelve gris automáticamente si selecciona "Salida".');
-        $legendSheet->setCellValue('A15', 'Observaciones');
-        $legendSheet->setCellValue('B15', '(Opcional) Notas adicionales. Aplica tanto para entradas como para salidas.');
-        $legendSheet->setCellValue('A16', 'Autocompletado con BUSCARV');
-        $legendSheet->setCellValue('B16', 'FUNCIONAMIENTO: Cuando seleccione una clave en columna B, el insumo correspondiente aparece AUTOMÁTICAMENTE en columna C mediante fórmula BUSCARV. Alternativamente, puede seleccionar el insumo directamente del desplegable en columna C.');
-        $legendSheet->setCellValue('A17', 'Formato Condicional');
-        $legendSheet->setCellValue('B17', 'ALERTA VISUAL: Las columnas se vuelven grises automáticamente según el tipo de movimiento. Si selecciona "Entrada", solo las columnas relevantes para entrada permanecen activas. Si selecciona "Salida", solo las columnas relevantes para salida permanecen activas.');
-        $legendSheet->setCellValue('A18', 'Instrucciones de Uso');
-        $legendSheet->setCellValue('B18', 'PASOS: 1) Seleccione tipo de movimiento (Entrada/Salida) - esto determinará qué columnas usar, 2) Seleccione una clave O un insumo, 3) Complete solo las columnas que no estén en gris. FLEXIBILIDAD: El sistema se adapta automáticamente al tipo de movimiento seleccionado.');
-        $legendSheet->setCellValue('A19', 'Protección de Celdas');
-        $legendSheet->setCellValue('B19', 'CELDAS PROTEGIDAS: Las columnas Precio Unitario (L) y Total (M) están protegidas y no se pueden editar manualmente ya que se calculan automáticamente. El resto de celdas sí se pueden editar libremente.');
-        
-        // Configurar estilo de título para la leyenda
-        $titleStyle = [
-            'font' => ['bold' => true, 'size' => 14],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'DDDDDD']
-            ]
-        ];
-        
-        // Configurar estilo de encabezados
-        $headerStyle = [
-            'font' => ['bold' => true, 'size' => 12],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'F0F0F0']
-            ]
-        ];
-        
-        // Aplicar estilos
-        $legendSheet->getStyle('A1:B1')->applyFromArray($titleStyle);
-        $legendSheet->getStyle('A2:A19')->applyFromArray($headerStyle);
-
-        $legendSheet->getColumnDimension('A')->setWidth(20);
-        $legendSheet->getColumnDimension('B')->setWidth(80);
-
-        // Activar la primera hoja antes de guardar
-        $spreadsheet->setActiveSheetIndex(0);
-        
-        // Configurar protección de celdas
-        $mainSheet = $spreadsheet->getActiveSheet();
-        
-        // Desbloquear las celdas editables: fila de headers + datos (excepto L y M)
-        $mainSheet->getStyle('A1:N1')->getProtection()->setLocked(false);   // fila headers (necesario para AutoFilter)
-        $mainSheet->getStyle('A2:K500')->getProtection()->setLocked(false);
-        $mainSheet->getStyle('N2:N500')->getProtection()->setLocked(false);
-
-        // Habilitar protección de la hoja (las celdas L y M ya están bloqueadas)
-        $mainSheet->getProtection()->setSheet(true);
-        $mainSheet->getProtection()->setPassword('asd');
-        $mainSheet->getProtection()->setSort(false);           // false = permitido en OOXML
-        $mainSheet->getProtection()->setAutoFilter(false);     // false = permitido en OOXML (true lo bloquearía)
-        $mainSheet->getProtection()->setInsertRows(true);     // false = permitido en OOXML
-        $mainSheet->getProtection()->setDeleteRows(true);     // false = permitido en OOXML
-        $mainSheet->getProtection()->setInsertColumns(true);   // true = bloqueado en OOXML
-        $mainSheet->getProtection()->setDeleteColumns(true);   // true = bloqueado en OOXML
-        $mainSheet->getProtection()->setFormatCells(false);    // false = permitido en OOXML
-        $mainSheet->getProtection()->setFormatColumns(false);  // false = permitido en OOXML (permite ajustar ancho de columnas)
-        $mainSheet->getProtection()->setFormatRows(false);     // false = permitido en OOXML
-        
-        // Establecer la celda activa en A2 para que el usuario pueda empezar a llenar datos inmediatamente
-        $spreadsheet->getActiveSheet()->setSelectedCell('A2');
-
-        // Activar filtros rápidos en los encabezados
-        $spreadsheet->getActiveSheet()->setAutoFilter('A1:N1');
-
-        $writer = new Xlsx($spreadsheet);
-        $fileName = 'Plantilla_para_importar_movimientos.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
-        $writer->save('php://output');
-        exit(200);
-    }
-
-    public static function importIngredients(Business $business, $fileName)
-    {
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
-
-        $ingredientData = [];
-        $test = array();
-
-        $rowIterator = $spreadsheet->getActiveSheet()->getRowIterator();
-
-        while (true) {
-            $cellIterator = $rowIterator->current()->getCellIterator('A', 'I');
-            //var_dump($cellIterator->current()->getValue());
-            if($rowIterator->current()->getRowIndex() != 1) {
-                if (empty($cellIterator->current()->getValue())) {
-                    break;
-                }
-                $data = [];
-                $data['_row'] = $rowIterator->current()->getRowIndex(); // Guardar número de fila para mensajes de error
-                $data['key'] = strval($cellIterator->current()->getValue()); // A - Clave
-                $cellIterator->next();
-                $data['ingredient'] = $cellIterator->current()->getValue(); // B - Insumo
-                $cellIterator->next();
-                $data['brand'] = $cellIterator->current()->getValue() !== null ? strval($cellIterator->current()->getValue()) : ''; // C - Marca
-                $cellIterator->next();
-                // Obtener presentación como string, manejando cualquier tipo de contenido
-                // Usar getFormattedValue() para obtener el texto tal como se ve en Excel
-                // Esto maneja correctamente números, texto, símbolos y fórmulas
-                $presentationCell = $cellIterator->current();
-                try {
-                    // Intentar obtener el valor formateado (como aparece en Excel)
-                    $presentationValue = $presentationCell->getFormattedValue();
-                } catch (\Exception $e) {
-                    // Si falla, usar el valor calculado o el raw value
-                    $presentationValue = $presentationCell->getCalculatedValue() ?? $presentationCell->getValue();
-                }
-                // Asegurar que sea string y manejar null/empty
-                $data['presentation'] = $presentationValue !== null ? strval($presentationValue) : '';
-                $cellIterator->next();
-                $data['category_id'] = $cellIterator->current()->getValue(); // C - Categoría
-                $cellIterator->next();
-                $data['um'] = $cellIterator->current()->getValue(); // D - Unidad de compra
-                $cellIterator->next();
-                $data['portion_um'] = $cellIterator->current()->getValue(); // E - Unidad de cocina
-                $cellIterator->next();
-                $data['yield'] = $cellIterator->current()->getValue(); // F - Factor de Rendimiento
-                $cellIterator->next();
-                $data['portions_per_unit'] = $cellIterator->current()->getValue(); // G - Porciones por unidad
-                $cellIterator->next();
-                $data['price'] = $cellIterator->current()->getValue(); // I - Precio
-                $cellIterator->next();
-                $data['observations'] = $cellIterator->current()->getValue(); // H - Observaciones
-                $cellIterator->next();
-                
-                // Validar campos requeridos para evitar divisiones por cero
-                $errors = [];
-                
-                if (empty($data['portion_um']) || trim($data['portion_um']) === '') {
-                    $errors[] = "La 'Unidad de Uso' es obligatoria para el insumo '{$data['ingredient']}'";
-                }
-                
-                if (empty($data['portions_per_unit']) || !is_numeric($data['portions_per_unit']) || $data['portions_per_unit'] <= 0) {
-                    $errors[] = "Las 'Equivalencias' son obligatorias y deben ser un número mayor a 0 para el insumo '{$data['ingredient']}'";
-                }
-                
-                if (empty($data['yield']) || !is_numeric($data['yield']) || $data['yield'] <= 0) {
-                    $errors[] = "El 'Factor de Rendimiento' es obligatorio y debe ser un número mayor a 0 para el insumo '{$data['ingredient']}'";
-                }
-                
-                if (!empty($errors)) {
-                    throw new \Exception(implode("\n", $errors));
-                }
-                
-                $price = (float)preg_replace('/[^\d.]/', '', $data['price']); // Eliminar símbolos no numéricos
-                $yieldNum = (float)preg_replace('/[^\d.]/', '', $data['yield']); // Eliminar símbolos no numéricos
-                // unit_price = purchase price ÷ kitchen units per purchase unit
-                $data['unit_price'] = ($data['portions_per_unit'] > 0) ? ($price / (float)$data['portions_per_unit']) : $price;
-                // adjusted_price = unit_price ÷ yield factor  (matches JS formula: (price/portions)/(yield/100))
-                $data['adjusted_price'] = ($yieldNum > 0) ? ($data['unit_price'] / ($yieldNum / 100.0)) : $data['unit_price'];
-                $data['business_id'] = $business->id;
-                $data['quantity'] = 0;
-                /// extract category id
-                //var_dump($data['category_id']);
-                $data['category_id'] = explode(' - ', $data['category_id'])[0];
-                $data['category_id'] = trim($data['category_id']);
-                //var_dump($data['category_id']);
-                /// check if category exists
-                $category = Category::find()
-                    ->where([
-                        'name' => $data['category_id'],
-                    ])
-                    ->andWhere([
-                        'or',
-                        ['business_id' => $business->id],
-                        ['business_id' => null]
-                    ])
-                    ->one();
-                if(empty($category)){
-                    throw new HttpException(400, "No existe ninguna categoría con el identificador \"{$data['category_id']}\"");
-                }
-
-                $data['category_id'] = $category->id;
-
-                $ingredientData[] = $data;
-                $test[] = $data;
-                
-            }
-
-            $rowIterator->next();
-        }
-        $transaction = \Yii::$app->db->beginTransaction();
-        try {
-            foreach ($ingredientData as $data) {
-                $rowNumber = $data['_row'] ?? '?';
-                unset($data['_row']);
-                $ingredientStock = new IngredientStock();
-                $_price = $data['price'];
-                unset($data['price']);
-                if ($ingredientStock->load($data, '') && $ingredientStock->save()) {
-                    if( $_price != 0) {
-                        $price = new StockPrice([
-                            'price' => $_price,
-                            'stock_id' => $ingredientStock->id,
-                            'date' => date('Y-m-d')
-                        ]);
-                        if (!($price->load($data, '') && $price->save()) && $price->hasErrors()) {
-                        throw new HttpException(400, json_encode($price->errors));
-                    }
-                    }
-
-                    
-                }elseif ($ingredientStock->hasErrors()) {
-                    $errors = $ingredientStock->errors;
-                    // Agregar número de fila a cada mensaje de error
-                    $errorMessages = [];
-                    foreach ($errors as $attribute => $messages) {
-                        foreach ($messages as $msg) {
-                            $errorMessages[] = "Fila {$rowNumber}: {$msg}";
-                        }
-                    }
-                    throw new HttpException(400, implode('; ', $errorMessages));
-                }
-            }
-            $transaction->commit();
-        }catch (\Exception $e) {
-            $transaction->rollBack();
-            throw $e;
-        }
-//        \Yii::$app->db->createCommand()
-//            ->batchInsert(
-//                'ingredient_stock',
-//                ['key', 'ingredient', 'category_id', 'um', 'portion_um', 'yield','portions_per_unit', 'observations', 'business_id', 'quantity'],
-//                $ingredientData
-//            )
-//            ->execute();
-
-        return;
-    }
-
     public static function importIngredientsAdmin($fileName)
     {
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($fileName);
