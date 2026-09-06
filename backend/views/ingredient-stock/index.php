@@ -415,7 +415,7 @@ $this->registerCss('
                     'data-sort-by' => 'subRecipeCount'
                 ],
             ],
-            //'observations:ntext',
+            'observations:ntext',
 
             [
                 'class' => \yii\grid\ActionColumn::class,
