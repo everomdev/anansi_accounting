@@ -427,7 +427,7 @@ for ($i = $currentYear - 5; $i <= $currentYear + 5; $i++) {
 <?php if ((int)$selectedMonth != 0 && (int)$selectedYear != 0): ?>
 <div class="sticky-save-bar">
     <?= Html::button('Guardar ventas de ' . getMonthName($selectedMonth) . ' ' . $selectedYear, [
-        'class' => 'btn btn-primary btn-lg',
+        'class' => 'btn btn-warning btn-lg',
         'id' => 'btn-save-sales'
     ]) ?>
 </div>
