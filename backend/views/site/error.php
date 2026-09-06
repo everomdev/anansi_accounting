@@ -36,7 +36,7 @@ if ($exception) {
         <?php if ($exception): ?>
             <?php if ($exception->statusCode == 403): ?>
                 <strong><?= Yii::t('app', 'No tienes permisos para acceder a esta sección.') ?></strong><br>
-                <?= Yii::t('app', 'Si necesitas acceso, contacta al administrador del sistema.') ?>
+                <?= Yii::t('app', 'Accede a la sección de ADMINISTRACIÓN Y CONFIGURACIÓN → AJUSTES → PLAN Y FACTURACIÓN → CAMBIAR PLAN → Selecciona el plan que deseas') ?>
             <?php elseif ($exception->statusCode == 404): ?>
                 <?= Yii::t('app', 'La página que buscas no existe o ha sido movida.') ?>
             <?php elseif ($exception->statusCode == 400): ?>
